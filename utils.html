@@ -1,0 +1,349 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+    <head>
+        <title>Kiss OS Utils</title>
+        <meta http-equiv="Content-Language" content="en" />
+        <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
+        <meta name="Steelsquid Kiss OS" content="Controll a rover from the web." />
+        <meta name="keywords" content="steelsquid, steelsquid-kiss-os, raspberry, pi, debian, linux, distribution, administrator, configure" />
+        <meta name="author" content="Andreas Nilsson (Steelsquid)" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+        <link rel="icon" href="favicon.ico" type="image/x-icon"/>
+        <link rel="shortcut icon" href="favicon.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="steelsquid.css"/>
+        <script type="text/javascript" src="jquery.js"></script>
+        <script type="text/javascript" src="steelsquid.js"></script>     
+        <script type="text/javascript">
+            //<![CDATA[ 
+            /**
+             * When the page is loaded
+             */
+            function onPageLoad(){
+                showLayer('main');
+            }
+            
+            /**
+             * When go back or middle mouse button or esc pressed
+             */
+            function onBack(){
+                showLayer('main');
+            }
+            
+            /**
+             * This will execute every 10 second
+             */
+            function onEvery05s(){
+            }
+
+            /**
+             * This will execute every 10 second
+             */
+            function onEvery10s(){
+            }
+
+            /**
+             * When a layer is shown
+             */
+            function onLayerShown(layer){
+                if(layer == "stream"){
+                    submitNoPW('stream');
+                }
+                if(layer == "rover"){
+                    submitNoPW('rover');
+                }
+            }
+            
+            /**
+             * On submit command
+             */
+            function onWork(command){
+            }
+
+            /**
+             * On answer from submit dommand
+             */
+            function onSleep(command){
+            }
+
+            
+            /**
+             * On window resize
+             */
+            function onResize(width, height){
+            }                
+            
+            /**
+             * On rover
+             */
+            function on_rover(paramaters){
+                if(paramaters[0] == "True"){
+                    show('rover_enabled');
+                    hide('rover_disabled');
+                    $("#wifi_connected").html(paramaters[1]);
+                    $("#wifi_wired").html(paramaters[2]);
+                    $("#wifi_wifi").html(paramaters[3]);
+                    $("#wifi_wan").html(paramaters[4]);
+                    $("#rover_img").attr("src", "http://"+window.location.hostname+":8080/?action=stream");         
+                }
+                else{
+                    hide('rover_enabled');
+                    show('rover_disabled');
+                }
+            }
+
+            /**
+             * On stream
+             */
+            function on_stream(paramaters){
+                if(paramaters[0] == "True"){
+                    show('stream_enabled');
+                    hide('stream_disabled');
+                    $("#stream_img").attr("src", "http://"+window.location.hostname+":8080/?action=stream");         
+                }
+                else{
+                    hide('stream_enabled');
+                    show('stream_disabled');
+                }
+            }
+            
+            /**
+             * On rover
+             */
+            function on_rover_enable(paramaters){
+                on_rover(paramaters);
+            }
+            
+            /**
+             * On rover
+             */
+            function on_rover_disable(paramaters){
+                on_rover(paramaters);
+            }
+            
+            //]]>
+        </script>
+        
+    </head>
+    <body>
+        <table class="bar">
+            <thead>
+                <tr>
+                    <td>
+                        <img alt="logo" src="img/bar_steelsquid.png"></img>
+                    </td>
+                    <td>
+                        Kiss OS Utils
+                    </td>
+                    <td>
+                        <img alt="logo" src="img/bar_menu.png"></img>
+                    </td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr onclick="javascript:window.location = 'http://www.steelsquid.org/steelsquid-kiss-os';">
+                    <td>
+                        <img alt="logo" src="img/bar_help.png"></img>
+                    </td>
+                    <td colspan="2" >
+                        Help
+                    </td>
+                </tr>
+                <tr onclick="javascript:window.location = '/';">
+                    <td>
+                        <img alt="logo" src="img/bar_admin.png"></img>
+                    </td>
+                    <td colspan="2" >
+                        Administrator
+                    </td>
+                </tr>
+                <tr onclick="javascript:window.location = '/download';">
+                    <td>
+                        <img alt="logo" src="img/bar_download.png"></img>
+                    </td>
+                    <td colspan="2" >
+                        Download Manager
+                    </td>
+                </tr>
+                <tr onclick="javascript:window.location = '/play';">
+                    <td>
+                        <img alt="logo" src="img/bar_play.png"></img>
+                    </td>
+                    <td colspan="2" >
+                        Media Player
+                    </td>
+                </tr>
+                <tr onclick="javascript:submitSyncConfirm('Are you sure you want to reboot?', 'reboot');">
+                    <td>
+                        <img alt="logo" src="img/bar_reboot.png"></img>
+                    </td>
+                    <td colspan="2" >
+                        Reboot
+                    </td>
+                </tr>
+                <tr onclick="javascript:submitSyncConfirm('Are you sure you want to shutdown?', 'shutdown');">
+                    <td>
+                        <img alt="logo" src="img/bar_shutdown.png"></img>
+                    </td>
+                    <td colspan="2" >
+                        Shutdown
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="flow">
+            <div class="layer" id="main">
+                <table class="menu">
+                    <tbody>
+                        <tr onclick="javascript:showLayer('stream');">
+                            <td>
+                                <img alt="logo" src="img/camera.png"></img>
+                            </td>
+                            <td>
+                                Camera streaming
+                            </td>
+                        </tr>
+                        <tr onclick="javascript:showLayer('rover');">
+                            <td>
+                                <img alt="logo" src="img/rover.png"></img>
+                            </td>
+                            <td>
+                                Rover Controller
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <!--####################################################################################################-->
+        <div class="layer" id="stream">
+            <table class="header">
+                <thead>
+                    <tr onclick="javascript:onBack();">
+                        <th>
+                            <img alt="logo" src="img/camera.png"></img>
+                        </th>
+                        <th>Camera streaming</th>
+                    </tr>
+                </thead>
+            </table>
+            <div id="stream_disabled" class="hide">
+                The streaming is not enabled on this system.<br/>
+                <br/>
+                You need to <span class="highlight">reboot</span> the device for any changes to take effect.
+                <table>
+                    <tr>
+                        <td><button onclick="javascript:submitSyncConfirm('Are you sure you want to disable the streaming?', 'stream', 'True');">Enable Streaming</button></td>
+                        <td><button onclick="javascript:submitSyncConfirm('Are you sure you want to reboot?', 'reboot');">Reboot</button></td>
+                    </tr>
+                </table>
+            </div>
+            <div id="stream_enabled" class="hide">
+                The streaming is enabled on this system.<br/>
+                <br/>
+                <img id="stream_img" src="" class="xform"/>
+                <br/>
+                You need to <span class="highlight">reboot</span> the device for any changes to take effect.
+                <table>
+                    <tr>
+                        <td><button onclick="javascript:submitSyncConfirm('Are you sure you want to disable the streaming?', 'stream', 'False');">Disable Streaming</button></td>
+                        <td><button onclick="javascript:submitSyncConfirm('Are you sure you want to reboot?', 'reboot');">Reboot</button></td>
+                    </tr>
+                </table>
+            </div>
+            <br />
+            <table class="footer">
+                <tr onclick="javascript:onBack();">
+                    <td>
+                        <img alt="logo" src="img/back.png"></img>
+                    </td>
+                    <td>
+                        Back to main menu
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <!--####################################################################################################-->
+        <div class="layer" id="rover">
+            <table class="header">
+                <thead>
+                    <tr onclick="javascript:onBack();">
+                        <th>
+                            <img alt="logo" src="img/rover.png"></img>
+                        </th>
+                        <th>Rover Controller</th>
+                    </tr>
+                </thead>
+            </table>
+            <div id="rover_disabled" class="hide">
+                The Rover Controller is not enabled on this system.<br/>
+                <br/>
+                <br/>
+                You need to <span class="highlight">reboot</span> the device for any changes to take effect.
+                <table>
+                    <tr>
+                        <td><button onclick="javascript:submitSyncFromPrompt('rover_enable', 'Please enter password for the user steelsquid?', '');">Enable Rover Controller</button></td>
+                        <td><button onclick="javascript:submitSyncConfirm('Are you sure you want to reboot?', 'reboot');">Reboot</button></td>
+                    </tr>
+                </table>
+            </div>
+            <div id="rover_enabled" class="hide">
+                The Rover Controller is enabled on this system.
+                <br/><br/>
+                <table class="keyvalue">
+                    <tr>
+                        <td>Connected to network:</td><td class="highlight" id="wifi_connected">---</td>
+                    </tr>
+                    <tr>
+                        <td>Network Wired IP:</td><td id="wifi_wired">---</td>
+                    </tr>
+                    <tr>
+                        <td>Network Wifi IP:</td><td id="wifi_wifi">---</td>
+                    </tr>
+                    <tr>
+                        <td>Internet IP:</td><td id="wifi_wan">---</td>
+                    </tr>
+                </table>
+                <br/>
+                <img id="rover_img" src="" class="xform"/>
+                <br/>
+                <table>
+                    <tr>
+                        <td></td>
+                        <td><button onclick="javascript:submitAsync('rover_forward');">Forward</button></td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td><button onclick="javascript:submitAsync('rover_left');">Left</button></td>
+                        <td><button onclick="javascript:submitAsync('rover_stop');">Stop</button></td>
+                        <td><button onclick="javascript:submitAsync('rover_right');">Right</button></td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td><button onclick="javascript:submitAsync('rover_backward');">Backward</button></td>
+                        <td></td>
+                    </tr>
+                </table>
+                <br/>
+                <br/>
+                You need to <span class="highlight">reboot</span> the device for any changes to take effect.
+                <table>
+                    <tr>
+                        <td><button onclick="javascript:submitSyncFromPrompt('rover_disable', 'Please enter password for the user steelsquid?', '');">Disable Rover Controller</button></td>
+                        <td><button onclick="javascript:submitSyncConfirm('Are you sure you want to reboot?', 'reboot');">Reboot</button></td>
+                    </tr>
+                </table>
+            </div>
+            <br />
+            <table class="footer">
+                <tr onclick="javascript:onBack();">
+                    <td>
+                        <img alt="logo" src="img/back.png"></img>
+                    </td>
+                    <td>
+                        Back to main menu
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </body>
+</html>

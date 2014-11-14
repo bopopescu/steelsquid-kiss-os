@@ -1,0 +1,592 @@
+#!/usr/bin/python -OO
+
+
+'''
+Broadcast and subscribe to events, to use this you first must execute activate_event_handler(...)
+
+=======================================================================
+
+First activate the event handler:
+activate_event_handler()
+
+Then create the function to execute:
+def function_to_execute(args_from_subscription..., parameters_from_trigger):
+    print args_from_subscription
+    print parameters_from_trigger
+
+parameters_from_trigger is a tuple
+
+Then subscribe the event:
+subscribe_to_event("name_of_event", function_to_execute, args_from_subscription)
+
+args_from_subscription is a list
+
+If the function is long running use (The function will execute in new thread):
+subscribe_to_event("name_of_event", function_to_execute, args_from_subscription, True)
+
+Then you can trigger the event from other part of the system:
+broadcast_event("name_of_event", parameters_from_trigger)
+
+=======================================================================
+
+There are some built-in events that you dont need to execute your self:
+startup     Execute when system starts  (You must subscribe to this befor execute activate_event_handler)
+second      Execute every second
+seconds     Execute every 10 second
+minute      Execute every minute
+minutes     Execute every 10 minutes
+hourly      Execute hourly
+daily       Execute Daily
+shutdown    Stop this eventhandler
+shout       Will execute steelsquid_utils.shout()
+            First paramater is the message
+network     Will fire on network upp and down
+            Parameter 1: up/down
+            if Parameter 1 = up:
+              Para2: Fixed IP
+              Para3: Wifi IP
+              Para4: Wifi acces pont
+              Para5: Internet IP
+vpn         Will fire on vpn up/down
+            Parameter 1: up/down
+            Parameter 2: name of vpn
+            Parameter 3: VPN ip
+drop        If drop_privilege=True this will fire right after privileges is droped (10 seconds)
+keep        If drop_privilege=False this will fire after 10 seconds
+button      When button 1 to 4 i clicked on steelsquid_io_board
+            Parameter 1: Button 1 to 4
+dip         When dip 1 to 4 i changed on steelsquid_io_board
+            Parameter 1: DIP 1 to 4
+            Parameter 2: On/Off
+
+To subscribe to seconds (the method function_to_execute will execute every 10 seconds):
+subscribe_to_event("seconds", function_to_execute, args_from_subscription)
+
+Shutdown will stop this event handler:
+subscribe_to_event("shutdown", function_to_execute, args_from_subscription)
+
+=======================================================================
+
+There are also some special events.
+login   If first paramater is True the user is loggedin (all is ok)
+        If first paramater is False error when user login, after max_count the event will fire
+        Second paramater is ip-number and third username (steelsquid)
+        The error count will be reset daily
+reset   Will reset unauthorized count for ip
+
+First activate the event handler:
+activate_event_handler(create_ner_thread=True, max_countt=3)
+
+Then create the function to execute:
+def function_to_execute(args_from_subscription..., parameters_from_trigger):
+    print args_from_subscription
+    print parameters_from_trigger
+
+Then subscribe the login event:
+subscribe_to_event("login", function_to_execute, args_from_subscription)
+
+After you trigger the login error max_count times (3) the login event will fire
+broadcast_event("login", ["False", "ip", "username"])
+broadcast_event("login", ["False", "ip", "username"])
+broadcast_event("login", ["False", "ip", "username"])
+
+If trigger the login ok the event will also fire
+broadcast_event("login", ["True", "ip", "username"])
+
+If you want to reset the count for one ip:
+broadcast_event("reset", ["ip"])
+
+If you want to reset the count for all ip:
+broadcast_event("reset")
+
+=======================================================================
+
+Two additional special events are:
+start    Start to execute a event
+         This will create a new thread and execute the function in a loop
+         The function should not hang for a long time or the stop will not work
+         The first paramater will be the name of the function to loop
+stop     Stop execute a event
+         This will stop the looping
+
+First activate the event handler:
+activate_event_handler()
+
+Then create the function to execute (Return True = continue looping, False = Stop looping):
+def function_to_execute(args_from_subscription..., parameters_from_trigger):
+    print args_from_subscription
+    print parameters_from_trigger
+    return True
+
+Then subscribe the event:
+subscribe_to_event("loop", function_to_execute, args_from_subscription)
+
+To start the event:
+broadcast_event("loop", ["function_to_execute"])
+
+To stop the looping event:
+broadcast_event("stop", ["function_to_execute"])
+
+To stop all looping events:
+broadcast_event("stop")
+
+=======================================================================
+
+You can also trigger events by executing this python script (see __main__)
+
+=======================================================================
+
+If you create a executable file with the same name as the event under /opt/steelsquid/events that will also be excuted
+The parametars will be arg to the file
+If broadcast_event("kalle", ("arg1", "arg2"))
+This will exucute: /opt/steelsquid/events/kalle "arg1" "arg2"
+
+@organization: Steelsquid
+@author: Andreas Nilsson
+@contact: steelsquid@gmail.com
+@license: GNU General Public License
+@change: 2013-10-25 Created
+'''
+
+
+import steelsquid_utils
+import thread
+import Queue
+import os
+import shlex
+import threading
+import sys
+import subprocess
+import steelsquid_http_server
+
+running = True
+max_count = 30
+counters = {}
+system_event_dir = "/run/shm/steelsquid"
+system_event_execute_dir = "/opt/steelsquid/events/"
+queue = Queue.Queue(0)
+subscribers = []
+subscribers_second = []
+subscribers_seconds = []
+subscribers_count = []
+subscribers_loop = []
+lock = threading.Lock()
+lock_s = threading.Lock()
+drop_privilege = False
+dropped = False
+
+def subscribe_to_event(event, function, args, long_running=False):
+    '''
+    Subscribed to a event
+    Add a function to execute on event 
+    Make a new event or use one of the built in
+        
+    See top of this file for example...
+    
+    @param event: The event name
+    @param function: The function to execute
+    @param args: Arguments to the function (tuple)
+    @param long_running: If the function is long running execute in new thread
+    '''
+    with lock_s:
+        if args == None:
+            args = ()
+        if event == "second":
+            subscribers_second.append((event, function, args, long_running))
+        elif event == "seconds" or event == "keep" or event == "drop":
+            subscribers_seconds.append((event, function, args, long_running))
+        elif event == "login":
+            subscribers_count.append((event, function, args, long_running))
+        elif event == "loop":
+            subscribers_loop.append([function, args, False])
+        else:
+            subscribers.append((event, function, args, long_running))
+
+
+def unsubscribe_to_event(event=None, function=None):
+    '''
+    Unsubscribed to a event.
+    Matching separately or together.
+    @param event: The event name 
+    @param function: The function (can be the fuction or name of the function)
+    '''
+    global subscribers
+    global subscribers_second
+    global subscribers_seconds
+    global subscribers_count
+    global subscribers_loop
+    with lock_s:
+        is_str = isinstance(function, basestring)
+        for i in xrange(len(subscribers) - 1, -1, -1):
+            func = subscribers[i][1]
+            ev = subscribers[i][0]
+            check_it(subscribers, i, func, ev, is_str, function, event)
+        for i in xrange(len(subscribers_second) - 1, -1, -1):
+            func = subscribers_second[i][1]
+            ev = subscribers_second[i][0]
+            check_it(subscribers_second, i, func, ev, is_str, function, event)
+        for i in xrange(len(subscribers_seconds) - 1, -1, -1):
+            func = subscribers_seconds[i][1]
+            ev = subscribers_seconds[i][0]
+            check_it(subscribers_seconds, i, func, ev, is_str, function, event)
+        for i in xrange(len(subscribers_count) - 1, -1, -1):
+            func = subscribers_count[i][1]
+            ev = subscribers_count[i][0]
+            check_it(subscribers_count, i, func, ev, is_str, function, event)
+        for i in xrange(len(subscribers_loop) - 1, -1, -1):
+            func = subscribers_loop[i][0]
+            subscribers_loop[i][2] = False
+            ev = None
+            check_it(subscribers_loop, i, func, ev, is_str, function, event)
+ 
+
+def check_it(subscribers, i, func, ev, is_str, function, event):
+    if event != None and ev != None and function != None:
+        if ev == event:
+            if is_str and func.__name__ == function:
+                del subscribers[i]
+                return
+            elif func == function:
+                del subscribers[i]
+                return
+    if event != None and ev != None and function == None:
+        if ev == event:
+            del subscribers[i]
+            return
+    if function != None:
+        if is_str and func.__name__ == function:
+            del subscribers[i]
+            return
+        elif func == function:
+            del subscribers[i]
+            return
+
+
+def broadcast_event(event, parameters):
+    '''
+    Broadcast a event
+    See top of this file for example...
+    
+    @param event: The event name
+    @param parameters: List of parameters that accompany the event (None or 0 length list if no paramaters)
+    '''
+    if running:
+        if event == "login":
+            broadcast_login(parameters[0], parameters[1], parameters[2])
+        elif event == "reset":
+            if parameters == None or len(parameters) == 0:
+                broadcast_reset()
+            else:
+                broadcast_reset(parameters[0])
+        elif event == "loop":
+            if len(parameters[0])==1:
+                broadcast_loop(parameters[0])
+            else:
+                broadcast_loop(parameters[0], parameters[1:])
+        elif event == "stop":
+            if parameters == None or len(parameters) == 0:
+                broadcast_stop()
+            else:
+                broadcast_stop(parameters[0])
+        else:
+            queue.put((event, parameters))
+
+
+def broadcast_login(status, ip, username):
+    '''
+    Broadcast a login event
+    '''
+    with lock:
+        if status == True or status == "True":
+            try:
+                del counters[ip]
+            except:
+                pass
+            event_executer("login", subscribers_count, [True, ip, username])
+        else:            
+            if len(subscribers_count)>0:
+                k = counters.get(ip, 0)
+                k = k + 1
+                if k >= max_count:
+                    k = 0
+                    event_executer("login", subscribers_count, [False, ip, username])
+                if k == 0:
+                    if counters.has_key(ip):
+                        del counters[ip]
+                else:
+                    counters[ip] = k
+
+
+def broadcast_reset(ip=None):
+    '''
+    Broadcast a reset ip
+    @param event: If None reset all
+    '''
+    with lock:
+        if ip == None:
+            counters.clear()      
+        try:
+            del counters[ip]
+        except:
+            pass
+    
+       
+def start_thread(obj, paramaters):
+    '''
+    obj [function, args, False]
+    '''
+    try:
+        while obj[2]==True:
+            retur = obj[0](obj[1], paramaters)
+            if retur == False:
+                obj[2]==False
+    except:
+        steelsquid_utils.shout()
+    finally:
+        obj[2]==False
+        
+
+def broadcast_loop(function_name, paramaters=None):
+    '''
+    Start a event loop
+    '''
+    with lock:
+        for obj in subscribers_loop: #[function, args, False]
+            if obj[2]==False and function_name == obj[0].__name__:
+                obj[2]=True
+                thread.start_new_thread(start_thread, (obj, paramaters))
+
+
+def broadcast_stop(function_name=None):
+    '''
+    Stop event looping
+    '''
+    with lock:
+        if function_name == None:
+            for obj in subscribers_loop: #[function, args, False]
+                obj[2]=False
+        else:
+            for obj in subscribers_loop: #[function, args, False]
+                if function_name == obj[0].__name__:
+                    obj[2]=False
+        
+    
+def event_work():
+    '''
+    Listen for events
+    '''
+    global running
+    global dropped
+    running = True
+    event_executer("startup", subscribers, [])
+    counter_10 = 0
+    counter_60 = 0
+    counter_600 = 0
+    counter_3600 = 0
+    counter_86400 = 0
+    while running:
+        try:
+            if os.path.isdir(system_event_dir):
+                for f in os.listdir(system_event_dir):
+                    prop =  steelsquid_utils.read_from_file_and_delete(os.path.join(system_event_dir, f))
+                    if len(prop)>0:
+                        propSp = shlex.split(prop)
+                        broadcast_event(f, propSp)
+                    else:
+                        broadcast_event(f, [])
+            if len(subscribers_second)>0:
+                event_executer("second", subscribers_second, [])
+            if len(subscribers_seconds)>0:
+                if counter_10 >= 10:
+                    if not dropped:
+                        dropped = True
+                        if drop_privilege:
+                            steelsquid_utils.drop_privileges()
+                            event_executer("drop", subscribers_seconds, [])
+                        else:
+                            event_executer("keep", subscribers_seconds, [])
+                        for i in xrange(len(subscribers_seconds) - 1, -1, -1):
+                            ev = subscribers_seconds[i][0]
+                            if ev == "drop" or ev=="keep":
+                                del subscribers_seconds[i]
+                    counter_10 = 0
+                    event_executer("seconds", subscribers_seconds, [])
+                else:
+                    counter_10 = counter_10 + 1
+            if len(subscribers)>0:
+                if counter_60 >= 60:
+                    counter_60 = 0
+                    event_executer("minute", subscribers, [])
+                else:
+                    counter_60 = counter_60 + 1
+                if counter_600 >= 600:
+                    counter_600 = 0
+                    event_executer("minutes", subscribers, [])
+                else:
+                    counter_600 = counter_600 + 1
+                if counter_3600 >= 3600:
+                    counter_3600 = 0
+                    event_executer("hourly", subscribers, [])
+                else:
+                    counter_3600 = counter_3600 + 1
+                if counter_86400 >= 86400:
+                    counter_86400 = 0
+                    broadcast_reset()
+                    steelsquid_utils.clear_tmp()
+                    steelsquid_http_server.clear()
+                    event_executer("daily", subscribers, [])
+                else:
+                    counter_86400 = counter_86400 + 1
+            event, parameters = queue.get(timeout=1)
+            if event == "shutdown" or len(subscribers)>0:
+                event_executer(event, subscribers, parameters)
+        except Queue.Empty:
+            pass
+        except:
+            steelsquid_utils.shout()
+
+
+def event_executer(event, subs, parameters):
+    '''
+    Execute the events
+    '''
+    try:
+        if event=="network":
+            parameters = []
+            wired = steelsquid_utils.network_ip_wired()
+            wifi = steelsquid_utils.network_ip_wifi()
+            wan = "---"
+            if wired == "---" and wifi == "---":
+                net = "down"
+            else:
+                net = "up"
+                wan = steelsquid_utils.network_ip_wan()
+            parameters.append(net)
+            parameters.append(wired)
+            parameters.append(wifi)
+            if wifi == "---":
+                parameters.append("---")
+            else:
+                try:
+                    import steelsquid_nm
+                    parameters.append(steelsquid_nm.get_connected_access_point_name())
+                except:
+                    parameters.append("---")
+            parameters.append(wan)
+        elif event=="vpn":
+            name = "unknown"
+            try:
+                import steelsquid_nm
+                name = steelsquid_nm.vpn_configured()
+            except:
+                pass
+            parameters.append(name)
+            parameters.append(steelsquid_utils.network_ip_vpn())
+        for e, function, args, long_running in subs:
+            if e == event:
+                if long_running:
+                    thread.start_new_thread(function, (args, parameters))
+                else:
+                    function(args, parameters)
+        if event!="second":
+            fi = system_event_execute_dir + event
+            if os.path.isfile(fi) and os.access(fi, os.X_OK):
+                exe = []
+                exe.append(fi)
+                exe.extend(parameters)
+                steelsquid_utils.execute_system_command_blind(exe)
+        if event == "shutdown":
+            deactivate_event_handler()
+    except:
+        if event != "shout":
+            steelsquid_utils.shout()
+                
+
+def activate_event_handler(create_ner_thread=True, max_countt=30, drop_privilegee=False):
+    '''
+    Start the event handler
+    @param create_ner_thread: Run this is new thread
+    @param max_countt: How many count of broadcast_count untill event fire
+    @param drop_privilege: Drop privilege to steelsquid efter 10 seconds
+    '''
+    steelsquid_utils.make_dirs(system_event_dir)
+    steelsquid_utils.make_dirs(system_event_execute_dir)
+    global max_count
+    global drop_privilege
+    drop_privilege = drop_privilegee
+    steelsquid_utils.deleteFileOrFolder(system_event_dir + "/shutdown")
+    max_count = max_countt
+    if create_ner_thread:
+        thread.start_new_thread(event_work, ())
+    else:
+        event_work()
+
+
+def deactivate_event_handler():
+    '''
+    Stop the event handler
+    '''
+    global running
+    running = False
+    for sub in subscribers_loop:
+        sub[2] = False
+    del subscribers_loop[:]
+    del subscribers_second[:]
+    del subscribers_seconds[:]
+    del subscribers[:]
+    del subscribers_count[:]
+
+
+if __name__ == '__main__':
+    '''
+    The main
+    '''
+    if len(sys.argv) == 1:
+        print("")
+        steelsquid_utils.printb("DESCRIPTION")
+        print("Broadcast event to the python program.")
+        print("If you create a executable file with the same name as the event under /opt/steelsquid/ that will be excuted")
+        print("The python program steelsquid_event must liten for event for this to work...")
+        print("")
+        steelsquid_utils.printb("steelsquid-event <event>")
+        print("Broadcast event without parameters")
+        print("")
+        steelsquid_utils.printb("steelsquid-event <event> <parameter1> <parameter2>...")
+        print("Broadcast event with paramaters")
+        print("")
+        steelsquid_utils.printb("steelsquid-event login <True/False> <ip> <username>")
+        print("Count up authorizing try or login")
+        print("")
+        steelsquid_utils.printb("steelsquid-event reset")
+        print("Reset count for all ip")
+        print("")
+        steelsquid_utils.printb("steelsquid-event reset <ip>")
+        print("Reset count for a ip")
+        print("")
+        steelsquid_utils.printb("steelsquid-event start <name>")
+        print("Start execute (loop) a function with name <name>")
+        print("")
+        steelsquid_utils.printb("steelsquid-event stop")
+        print("Stop execute (loop) all functions")
+        print("")
+        steelsquid_utils.printb("steelsquid-event stop <name>")
+        print("Stop execute (loop) a function with name <name>")
+        print("")
+        steelsquid_utils.printb("steelsquid-event shutdown")
+        print("Stop the event handler (shutdown system)")
+        print("")
+    elif len(sys.argv) == 2:
+        steelsquid_utils.make_dirs(system_event_dir)
+        pa = os.path.join(system_event_dir, sys.argv[1])
+        steelsquid_utils.write_to_file(pa, "")
+        steelsquid_utils.set_permission(pa)
+    else:
+        steelsquid_utils.make_dirs(system_event_dir)
+        nl = []
+        for s in sys.argv[2:]:
+            nl.append("\"")
+            nl.append(s)
+            nl.append("\" ")
+        pa = os.path.join(system_event_dir, sys.argv[1])
+        steelsquid_utils.write_to_file(pa, "".join(nl))
+        steelsquid_utils.set_permission(pa)
