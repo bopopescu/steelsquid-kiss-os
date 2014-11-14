@@ -1677,9 +1677,6 @@ function swap_on()
 	echo "1" > /proc/sys/vm/swappiness
 	sed -i '/vm.swappiness=/d' /etc/sysctl.conf
 	echo "vm.swappiness=1" >> /etc/sysctl.conf
-    if [ $(get-flag "encrypt") == "true" ]; then
-        ecryptfs-setup-swap
-    fi
 	set-flag "swap"
 	log-reboot
 }
