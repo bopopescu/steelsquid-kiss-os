@@ -51,11 +51,9 @@ vpn         Will fire on vpn up/down
             Parameter 1: up/down
             Parameter 2: name of vpn
             Parameter 3: VPN ip
-drop        If drop_privilege=True this will fire right after privileges is droped (10 seconds)
-keep        If drop_privilege=False this will fire after 10 seconds
-button      When button 1 to 4 i clicked on steelsquid_io_board
+button      When button 1 to 4 i clicked on steelsquid_io
             Parameter 1: Button 1 to 4
-dip         When dip 1 to 4 i changed on steelsquid_io_board
+dip         When dip 1 to 4 i changed on steelsquid_io
             Parameter 1: DIP 1 to 4
             Parameter 2: On/Off
 
@@ -64,40 +62,6 @@ subscribe_to_event("seconds", function_to_execute, args_from_subscription)
 
 Shutdown will stop this event handler:
 subscribe_to_event("shutdown", function_to_execute, args_from_subscription)
-
-=======================================================================
-
-There are also some special events.
-login   If first paramater is True the user is loggedin (all is ok)
-        If first paramater is False error when user login, after max_count the event will fire
-        Second paramater is ip-number and third username (steelsquid)
-        The error count will be reset daily
-reset   Will reset unauthorized count for ip
-
-First activate the event handler:
-activate_event_handler(create_ner_thread=True, max_countt=3)
-
-Then create the function to execute:
-def function_to_execute(args_from_subscription..., parameters_from_trigger):
-    print args_from_subscription
-    print parameters_from_trigger
-
-Then subscribe the login event:
-subscribe_to_event("login", function_to_execute, args_from_subscription)
-
-After you trigger the login error max_count times (3) the login event will fire
-broadcast_event("login", ["False", "ip", "username"])
-broadcast_event("login", ["False", "ip", "username"])
-broadcast_event("login", ["False", "ip", "username"])
-
-If trigger the login ok the event will also fire
-broadcast_event("login", ["True", "ip", "username"])
-
-If you want to reset the count for one ip:
-broadcast_event("reset", ["ip"])
-
-If you want to reset the count for all ip:
-broadcast_event("reset")
 
 =======================================================================
 
@@ -160,20 +124,16 @@ import subprocess
 import steelsquid_http_server
 
 running = True
-max_count = 30
-counters = {}
 system_event_dir = "/run/shm/steelsquid"
 system_event_execute_dir = "/opt/steelsquid/events/"
 queue = Queue.Queue(0)
 subscribers = []
 subscribers_second = []
 subscribers_seconds = []
-subscribers_count = []
 subscribers_loop = []
 lock = threading.Lock()
 lock_s = threading.Lock()
-drop_privilege = False
-dropped = False
+
 
 def subscribe_to_event(event, function, args, long_running=False):
     '''
@@ -193,10 +153,8 @@ def subscribe_to_event(event, function, args, long_running=False):
             args = ()
         if event == "second":
             subscribers_second.append((event, function, args, long_running))
-        elif event == "seconds" or event == "keep" or event == "drop":
+        elif event == "seconds":
             subscribers_seconds.append((event, function, args, long_running))
-        elif event == "login":
-            subscribers_count.append((event, function, args, long_running))
         elif event == "loop":
             subscribers_loop.append([function, args, False])
         else:
@@ -213,7 +171,6 @@ def unsubscribe_to_event(event=None, function=None):
     global subscribers
     global subscribers_second
     global subscribers_seconds
-    global subscribers_count
     global subscribers_loop
     with lock_s:
         is_str = isinstance(function, basestring)
@@ -229,10 +186,6 @@ def unsubscribe_to_event(event=None, function=None):
             func = subscribers_seconds[i][1]
             ev = subscribers_seconds[i][0]
             check_it(subscribers_seconds, i, func, ev, is_str, function, event)
-        for i in xrange(len(subscribers_count) - 1, -1, -1):
-            func = subscribers_count[i][1]
-            ev = subscribers_count[i][0]
-            check_it(subscribers_count, i, func, ev, is_str, function, event)
         for i in xrange(len(subscribers_loop) - 1, -1, -1):
             func = subscribers_loop[i][0]
             subscribers_loop[i][2] = False
@@ -271,14 +224,7 @@ def broadcast_event(event, parameters):
     @param parameters: List of parameters that accompany the event (None or 0 length list if no paramaters)
     '''
     if running:
-        if event == "login":
-            broadcast_login(parameters[0], parameters[1], parameters[2])
-        elif event == "reset":
-            if parameters == None or len(parameters) == 0:
-                broadcast_reset()
-            else:
-                broadcast_reset(parameters[0])
-        elif event == "loop":
+        if event == "loop":
             if len(parameters[0])==1:
                 broadcast_loop(parameters[0])
             else:
@@ -290,45 +236,6 @@ def broadcast_event(event, parameters):
                 broadcast_stop(parameters[0])
         else:
             queue.put((event, parameters))
-
-
-def broadcast_login(status, ip, username):
-    '''
-    Broadcast a login event
-    '''
-    with lock:
-        if status == True or status == "True":
-            try:
-                del counters[ip]
-            except:
-                pass
-            event_executer("login", subscribers_count, [True, ip, username])
-        else:            
-            if len(subscribers_count)>0:
-                k = counters.get(ip, 0)
-                k = k + 1
-                if k >= max_count:
-                    k = 0
-                    event_executer("login", subscribers_count, [False, ip, username])
-                if k == 0:
-                    if counters.has_key(ip):
-                        del counters[ip]
-                else:
-                    counters[ip] = k
-
-
-def broadcast_reset(ip=None):
-    '''
-    Broadcast a reset ip
-    @param event: If None reset all
-    '''
-    with lock:
-        if ip == None:
-            counters.clear()      
-        try:
-            del counters[ip]
-        except:
-            pass
     
        
 def start_thread(obj, paramaters):
@@ -376,7 +283,6 @@ def event_work():
     Listen for events
     '''
     global running
-    global dropped
     running = True
     event_executer("startup", subscribers, [])
     counter_10 = 0
@@ -398,17 +304,6 @@ def event_work():
                 event_executer("second", subscribers_second, [])
             if len(subscribers_seconds)>0:
                 if counter_10 >= 10:
-                    if not dropped:
-                        dropped = True
-                        if drop_privilege:
-                            steelsquid_utils.drop_privileges()
-                            event_executer("drop", subscribers_seconds, [])
-                        else:
-                            event_executer("keep", subscribers_seconds, [])
-                        for i in xrange(len(subscribers_seconds) - 1, -1, -1):
-                            ev = subscribers_seconds[i][0]
-                            if ev == "drop" or ev=="keep":
-                                del subscribers_seconds[i]
                     counter_10 = 0
                     event_executer("seconds", subscribers_seconds, [])
                 else:
@@ -431,7 +326,6 @@ def event_work():
                     counter_3600 = counter_3600 + 1
                 if counter_86400 >= 86400:
                     counter_86400 = 0
-                    broadcast_reset()
                     steelsquid_utils.clear_tmp()
                     steelsquid_http_server.clear()
                     event_executer("daily", subscribers, [])
@@ -502,20 +396,14 @@ def event_executer(event, subs, parameters):
             steelsquid_utils.shout()
                 
 
-def activate_event_handler(create_ner_thread=True, max_countt=30, drop_privilegee=False):
+def activate_event_handler(create_ner_thread=True):
     '''
     Start the event handler
     @param create_ner_thread: Run this is new thread
-    @param max_countt: How many count of broadcast_count untill event fire
-    @param drop_privilege: Drop privilege to steelsquid efter 10 seconds
     '''
     steelsquid_utils.make_dirs(system_event_dir)
     steelsquid_utils.make_dirs(system_event_execute_dir)
-    global max_count
-    global drop_privilege
-    drop_privilege = drop_privilegee
     steelsquid_utils.deleteFileOrFolder(system_event_dir + "/shutdown")
-    max_count = max_countt
     if create_ner_thread:
         thread.start_new_thread(event_work, ())
     else:
@@ -526,15 +414,17 @@ def deactivate_event_handler():
     '''
     Stop the event handler
     '''
-    global running
-    running = False
-    for sub in subscribers_loop:
-        sub[2] = False
-    del subscribers_loop[:]
-    del subscribers_second[:]
-    del subscribers_seconds[:]
-    del subscribers[:]
-    del subscribers_count[:]
+    try:
+        global running
+        running = False
+        for sub in subscribers_loop:
+            sub[2] = False
+        del subscribers_loop[:]
+        del subscribers_second[:]
+        del subscribers_seconds[:]
+        del subscribers[:]
+    except:
+        pass
 
 
 if __name__ == '__main__':
@@ -554,15 +444,6 @@ if __name__ == '__main__':
         steelsquid_utils.printb("steelsquid-event <event> <parameter1> <parameter2>...")
         print("Broadcast event with paramaters")
         print("")
-        steelsquid_utils.printb("steelsquid-event login <True/False> <ip> <username>")
-        print("Count up authorizing try or login")
-        print("")
-        steelsquid_utils.printb("steelsquid-event reset")
-        print("Reset count for all ip")
-        print("")
-        steelsquid_utils.printb("steelsquid-event reset <ip>")
-        print("Reset count for a ip")
-        print("")
         steelsquid_utils.printb("steelsquid-event start <name>")
         print("Start execute (loop) a function with name <name>")
         print("")
@@ -579,7 +460,6 @@ if __name__ == '__main__':
         steelsquid_utils.make_dirs(system_event_dir)
         pa = os.path.join(system_event_dir, sys.argv[1])
         steelsquid_utils.write_to_file(pa, "")
-        steelsquid_utils.set_permission(pa)
     else:
         steelsquid_utils.make_dirs(system_event_dir)
         nl = []
@@ -589,4 +469,3 @@ if __name__ == '__main__':
             nl.append("\" ")
         pa = os.path.join(system_event_dir, sys.argv[1])
         steelsquid_utils.write_to_file(pa, "".join(nl))
-        steelsquid_utils.set_permission(pa)

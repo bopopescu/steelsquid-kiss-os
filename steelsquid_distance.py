@@ -25,7 +25,7 @@ if len(sys.argv)==1:
     print("")
 else:
 	try:
-		distance = steelsquid_pi.measure_distance(sys.argv[1], sys.argv[2])
+		distance = steelsquid_pi.hcsr04_distance(sys.argv[1], sys.argv[2])
 		if distance == -1:
 			print "Out of range!"
 		else:

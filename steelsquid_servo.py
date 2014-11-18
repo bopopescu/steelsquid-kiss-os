@@ -21,12 +21,12 @@ if len(sys.argv)==1:
     from steelsquid_utils import printb
     print("")
     printb("pi-servo <servo> <value>")
-    print("Move servo.")
+    print("Move Adafruit 16-channel I2c servo to position (pwm value)")
     print("servo: 0 to 15")
     print("value: min=150, max=600 (may differ between servos)")
 else:
     try:
-        steelsquid_pi.servo_move(sys.argv[1], sys.argv[2])
+        steelsquid_pi.rbada70_move(sys.argv[1], sys.argv[2])
     except KeyboardInterrupt:
         pass
 

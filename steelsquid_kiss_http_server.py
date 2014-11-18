@@ -24,21 +24,20 @@ import grp
 import xmlrpclib
 import steelsquid_boot
 import steelsquid_kiss_global
+import steelsquid_io
 from pprint import pprint
 
 
-USERNAME = "steelsquid"
 DOWNLOAD_RPC = "http://localhost:6800/rpc"
 DOWNLOAD_LIST =['gid', 'totalLength', 'completedLength', 'downloadSpeed', 'uploadSpeed', 'files', 'status']
-ALLOWED = ['/media/', '/mnt/', '/home/steelsquid/']
+ALLOWED = ['/media/', '/mnt/', '/root/']
 
 class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
-    
-    __slots__ = ['root_dir']
 
-    def __init__(self, port, root, authorization, only_localhost, local_web_password, ban_ip_after_30_fail, use_https, drop_privilege=False):
-        super(SteelsquidKissHttpServer, self).__init__(port, root, authorization, only_localhost, local_web_password, ban_ip_after_30_fail, use_https, drop_privilege)
-        self.root_dir = "/home/" + USERNAME
+
+    def __init__(self, port, root, authorization, only_localhost, local_web_password, use_https):
+        super(SteelsquidKissHttpServer, self).__init__(port, root, authorization, only_localhost, local_web_password, use_https)
+        self.root_dir = "/root"
     
     def is_localhost(self, session_id, parameters):
         '''
@@ -49,17 +48,11 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         else:
             return [False, steelsquid_utils.get_parameter("font").rstrip('\n')]
 
-    def desktop(self, session_id, parameters):
-        '''
-        Is desktop installed
-        '''
-        return [steelsquid_utils.get_flag("desktop")]
-
     def wifi_status(self, session_id, parameters):
         '''
         Where are you connected
         '''
-        answer = steelsquid_utils.execute_system_command(['sudo', 'steelsquid-nm', 'system-status'])
+        answer = steelsquid_utils.execute_system_command(['steelsquid-nm', 'system-status'])
         if answer[0] == 'None':
             return ["Not connected!", "---", "---", "---"]
         else:
@@ -89,11 +82,11 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         '''
         import steelsquid_nm
         if parameters[1] == "Open":
-            steelsquid_utils.execute_system_command(['sudo', 'steelsquid-nm', 'system-connect', parameters[0]])
+            steelsquid_utils.execute_system_command(['steelsquid-nm', 'system-connect', parameters[0]])
         elif parameters[1] == steelsquid_nm.WIRELESS_CAPABILITIES_WEP:
-            steelsquid_utils.execute_system_command(['sudo', 'steelsquid-nm', 'system-connect', parameters[0], parameters[2]])
+            steelsquid_utils.execute_system_command(['steelsquid-nm', 'system-connect', parameters[0], parameters[2]])
         elif parameters[1] == steelsquid_nm.WIRELESS_CAPABILITIES_WPA:
-            steelsquid_utils.execute_system_command(['sudo', 'steelsquid-nm', 'system-connect', parameters[0], parameters[2]])
+            steelsquid_utils.execute_system_command(['steelsquid-nm', 'system-connect', parameters[0], parameters[2]])
         else:
             raise Exception("Unknown WIFI type: " + parameters[1])
             
@@ -119,7 +112,7 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
             local = "/mnt/network/" + parameters[4]
             remote = parameters[5]
             
-            homedfolder = "/home/"+USERNAME+"/"+parameters[4]
+            homedfolder = "/root/"+parameters[4]
             if os.path.isdir(local) and os.listdir(local) != []:
                 raise Exception(local + " is not empty!")
             elif os.path.isdir(local) and steelsquid_utils.is_mounted(local):
@@ -132,16 +125,13 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
             steelsquid_utils.deleteFileOrFolder(local)
             os.makedirs(local)
             os.symlink(local, homedfolder)
-            os.system("chown steelsquid:steelsquid " + homedfolder)
             
-            mount_filename = "/home/"+USERNAME+"/Mount-" + local.split('/')[-1] + ".sh"
-            mount_cmd = "#!/bin/bash\nsudo umount %s\nsleep 0.3\nsudo umount -f %s\nsleep 0.3\nsudo umount -f -l %s\nsleep 0.3\nsudo sshfs -o allow_other,UserKnownHostsFile=/dev/null,StrictHostKeyChecking=no -p %s %s@%s:%s %s" % (local, local, local, port, user, ip, remote, local)
-            umount_filename = "/home/"+USERNAME+"/Umount-" + local.split('/')[-1] + ".sh"
-            umount_cmd = "#!/bin/bash\nsudo umount %s\nsleep 0.3\nsudo umount -f %s\nsleep 0.3\nsudo umount -f -l %s" % (local, local, local)
+            mount_filename = "/root/Mount-" + local.split('/')[-1] + ".sh"
+            mount_cmd = "#!/bin/bash\numount %s\nsleep 0.3\numount -f %s\nsleep 0.3\numount -f -l %s\nsleep 0.3\nsshfs -o allow_other,UserKnownHostsFile=/dev/null,StrictHostKeyChecking=no -p %s %s@%s:%s %s" % (local, local, local, port, user, ip, remote, local)
+            umount_filename = "/root/Umount-" + local.split('/')[-1] + ".sh"
+            umount_cmd = "#!/bin/bash\numount %s\nsleep 0.3\numount -f %s\nsleep 0.3\numount -f -l %s" % (local, local, local)
             steelsquid_utils.write_to_file(mount_filename, mount_cmd)
             steelsquid_utils.write_to_file(umount_filename, umount_cmd)
-            steelsquid_utils.set_permission(mount_filename)
-            steelsquid_utils.set_permission(umount_filename)
             os.system("chmod +x " + mount_filename)
             os.system("chmod +x " + umount_filename)
             row = ip + "|" + port + "|" + user + "|" + password + "|" + local + "|" + remote
@@ -205,9 +195,8 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         except:
             pass
         try:
-            homedfolder = "/home/"+USERNAME+"/"+local
+            homedfolder = "/root/"+local
             os.symlink(local, homedfolder)
-            os.system("chown steelsquid:steelsquid " + homedfolder)
         except:
             pass
         steelsquid_utils.mount_sshfs(ip, port, user, password, remote, local)
@@ -251,7 +240,7 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
                     if local == homed:
                         add_it = False
                 if add_it:
-                    homedfolder = "/home/"+USERNAME+"/"+d
+                    homedfolder = "/root/"+d
                     if os.path.isdir(homedfolder) and os.listdir(homedfolder) == [] and not steelsquid_utils.is_mounted(homedfolder):
                         answer.append(d)
                     elif os.path.isfile(homedfolder):
@@ -265,7 +254,7 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         Add directoris in home folder
         '''
         the_dir = steelsquid_utils.check_file_path("/mnt/network/" + parameters[0], "/mnt/network/", False)
-        homedfolder = "/home/"+USERNAME+"/"+parameters[0]
+        homedfolder = "/root/"+parameters[0]
         if os.path.isdir(the_dir) and os.listdir(the_dir) != []:
             raise Exception(the_dir + " is not empty!")
         elif os.path.isdir(the_dir) and steelsquid_utils.is_mounted(the_dir):
@@ -277,13 +266,11 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         elif os.path.isdir(the_dir):
             steelsquid_utils.deleteFileOrFolder(homedfolder)
             os.symlink(the_dir, homedfolder)
-            os.system("chown steelsquid:steelsquid " + homedfolder)
             raise Exception(parameters[0] + " already a mount point!")
         steelsquid_utils.deleteFileOrFolder(homedfolder)
         steelsquid_utils.deleteFileOrFolder(the_dir)
         os.makedirs(the_dir)
         os.symlink(the_dir, homedfolder)
-        os.system("chown steelsquid:steelsquid " + homedfolder)
         return "Local mount point created"
 
     def sshfs_local_del(self, session_id, parameters):
@@ -291,7 +278,7 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         Remove directoris in home folder
         '''
         the_dir = steelsquid_utils.check_file_path("/mnt/network/" + parameters[0], "/mnt/network/", False)
-        homedfolder = "/home/"+USERNAME+"/"+parameters[0]
+        homedfolder = "/root/"+parameters[0]
         if os.path.isdir(the_dir) and os.listdir(the_dir) != []:
             raise Exception(the_dir + " is not empty!")
         elif os.path.isdir(the_dir) and steelsquid_utils.is_mounted(the_dir):
@@ -321,7 +308,7 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
             local = "/mnt/network/" + parameters[3]
             remote = parameters[4]
             
-            homedfolder = "/home/"+USERNAME+"/"+parameters[3]
+            homedfolder = "/root/"+parameters[3]
             if os.path.isdir(local) and os.listdir(local) != []:
                 raise Exception(local + " is not empty!")
             elif os.path.isdir(local) and steelsquid_utils.is_mounted(local):
@@ -334,16 +321,13 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
             steelsquid_utils.deleteFileOrFolder(local)
             os.makedirs(local)
             os.symlink(local, homedfolder)
-            os.system("chown steelsquid:steelsquid " + homedfolder)
 
-            mount_filename = "/home/"+USERNAME+"/Mount-" + local.split('/')[-1] + ".sh"
-            mount_cmd = "#!/bin/bash\nsudo umount %s\nsleep 0.3\nsudo umount -f %s\nsleep 0.3\nsudo umount -f -l %s\nsleep 0.3\nsudo sshfs -o allow_other,UserKnownHostsFile=/dev/null,StrictHostKeyChecking=no -p %s %s@%s:%s" % (local, local, local, user, ip, remote, local)
-            umount_filename = "/home/"+USERNAME+"/Umount-" + local.split('/')[-1] + ".sh"
-            umount_cmd = "#!/bin/bash\nsudo umount %s\nsleep 0.3\nsudo umount -f %s\nsleep 0.3\nsudo umount -f -l %s" % (local, local, local)
+            mount_filename = "/root/Mount-" + local.split('/')[-1] + ".sh"
+            mount_cmd = "#!/bin/bash\numount %s\nsleep 0.3\numount -f %s\nsleep 0.3\numount -f -l %s\nsleep 0.3\nsshfs -o allow_other,UserKnownHostsFile=/dev/null,StrictHostKeyChecking=no -p %s %s@%s:%s" % (local, local, local, user, ip, remote, local)
+            umount_filename = "/root/Umount-" + local.split('/')[-1] + ".sh"
+            umount_cmd = "#!/bin/bash\numount %s\nsleep 0.3\numount -f %s\nsleep 0.3\numount -f -l %s" % (local, local, local)
             steelsquid_utils.write_to_file(mount_filename, mount_cmd)
             steelsquid_utils.write_to_file(umount_filename, umount_cmd)
-            steelsquid_utils.set_permission(mount_filename)
-            steelsquid_utils.set_permission(umount_filename)
             os.system("chmod +x " + mount_filename)
             os.system("chmod +x " + umount_filename)
             row = ip + "|" + user + "|" + password + "|" + local + "|" + remote
@@ -367,9 +351,8 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         except:
             pass
         try:
-            homedfolder = "/home/"+USERNAME+"/"+local
+            homedfolder = "/root/"+local
             os.symlink(local, homedfolder)
-            os.system("chown steelsquid:steelsquid " + homedfolder)
         except:
             pass
         steelsquid_utils.mount_samba(ip, user, password, remote, local)
@@ -457,7 +440,7 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
                     if local == homed:
                         add_it = False
                 if add_it:
-                    homedfolder = "/home/"+USERNAME+"/"+d
+                    homedfolder = "/root/"+d
                     if os.path.isdir(homedfolder) and os.listdir(homedfolder) == [] and not steelsquid_utils.is_mounted(homedfolder):
                         answer.append(d)
                     elif os.path.isfile(homedfolder):
@@ -471,7 +454,7 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         Add directoris in home folder
         '''
         the_dir = steelsquid_utils.check_file_path("/mnt/network/" + parameters[0], "/mnt/network/", False)
-        homedfolder = "/home/"+USERNAME+"/"+parameters[0]
+        homedfolder = "/root/"+parameters[0]
         if os.path.isdir(the_dir) and os.listdir(the_dir) != []:
             raise Exception(the_dir + " is not empty!")
         elif os.path.isdir(the_dir) and steelsquid_utils.is_mounted(the_dir):
@@ -483,13 +466,11 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         elif os.path.isdir(the_dir):
             steelsquid_utils.deleteFileOrFolder(homedfolder)
             os.symlink(the_dir, homedfolder)
-            os.system("chown steelsquid:steelsquid " + homedfolder)
             raise Exception(parameters[0] + " already a mount point!")
         steelsquid_utils.deleteFileOrFolder(homedfolder)
         steelsquid_utils.deleteFileOrFolder(the_dir)
         os.makedirs(the_dir)
         os.symlink(the_dir, homedfolder)
-        os.system("chown steelsquid:steelsquid " + homedfolder)
         return "Local mount point created"
 
     def samba_local_del(self, session_id, parameters):
@@ -497,7 +478,7 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         Remove directoris in home folder
         '''
         the_dir = steelsquid_utils.check_file_path("/mnt/network/" + parameters[0], "/mnt/network/", False)
-        homedfolder = "/home/"+USERNAME+"/"+parameters[0]
+        homedfolder = "/root/"+parameters[0]
         if os.path.isdir(the_dir) and os.listdir(the_dir) != []:
             raise Exception(the_dir + " is not empty!")
         elif os.path.isdir(the_dir) and steelsquid_utils.is_mounted(the_dir):
@@ -522,7 +503,7 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         '''
         if not steelsquid_utils.is_valid_hostname(parameters[0]):
             raise Exception("Not a valide hostname!") 
-        steelsquid_utils.execute_system_command(['sudo', 'steelsquid', 'hostname', parameters[0]])
+        steelsquid_utils.execute_system_command(['steelsquid', 'hostname', parameters[0]])
         return "Hostname changed"
         
     def download(self, session_id, parameters):
@@ -531,18 +512,18 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         '''
         if len(parameters)==1:
             if parameters[0]=="True":
-                steelsquid_utils.execute_system_command(['sudo', 'steelsquid', 'download-on'])
+                steelsquid_utils.execute_system_command(['steelsquid', 'download-on'])
             elif parameters[0]=="False":
-                steelsquid_utils.execute_system_command(['sudo', 'steelsquid', 'download-off'])
+                steelsquid_utils.execute_system_command(['steelsquid', 'download-off'])
             else:
                 if steelsquid_utils.is_file_ok(parameters[0], ALLOWED, check_if_exist=False):
-                    steelsquid_utils.execute_system_command(['sudo', 'steelsquid', 'download-dir', parameters[0]])
-                    steelsquid_utils.execute_system_command(['sudo', 'steelsquid', 'download-on'])
+                    steelsquid_utils.execute_system_command(['steelsquid', 'download-dir', parameters[0]])
+                    steelsquid_utils.execute_system_command(['steelsquid', 'download-on'])
                 else:
-                    raise Exception("Download directory must be inside /home/steelsquid/, /mnt/ or /media/") 
+                    raise Exception("Download directory must be inside /root/, /mnt/ or /media/") 
         par = steelsquid_utils.get_parameter("download_dir")
         if len(par)==0:
-            par = "/home/steelsquid/Downloads"
+            par = "/root/Downloads"
             steelsquid_utils.set_parameter("download_dir", par)
         return [steelsquid_utils.get_flag("download"), par]
         
@@ -558,7 +539,7 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         '''
         Set the curren timezone
         '''
-        steelsquid_utils.execute_system_command(['sudo', 'steelsquid', 'timezone-set', parameters[0]])
+        steelsquid_utils.execute_system_command(['steelsquid', 'timezone-set', parameters[0]])
 
     def tz_list(self, session_id, parameters):
         '''
@@ -593,7 +574,7 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         Set and get keyboard
         '''
         if len(parameters) > 0:
-            steelsquid_utils.execute_system_command(['sudo', 'steelsquid', 'keyboard', parameters[0]])
+            steelsquid_utils.execute_system_command(['steelsquid', 'keyboard', parameters[0]])
         return steelsquid_utils.get_parameter("keyboard")
 
     def keyboard_list(self, session_id, parameters):
@@ -789,84 +770,13 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         answer.append("Filipino")        
         return answer
 
-    def mouse_get(self, session_id, parameters):
-        '''
-        Get mouse
-        '''
-        return [steelsquid_utils.get_parameter("mouse_speed"), steelsquid_utils.get_parameter("mouse_acc")]
-
-    def mouse_set(self, session_id, parameters):
-        '''
-        Set mouse
-        '''
-        try:
-            speed = int(parameters[0])
-            acc = int(parameters[1])
-            if speed < 1 or speed > 10:
-                raise Exception("Speed must be between 1 and 10!")
-            if acc < 1 or acc > 20:
-                raise Exception("Acceleration must be between 1 and 20!")
-        except:
-            raise Exception("Value must be a number!")
-        if len(parameters) > 0:
-            steelsquid_utils.execute_system_command(['sudo', 'steelsquid', 'mouse', parameters[0], parameters[1]])
-        return [steelsquid_utils.get_parameter("mouse_speed"), steelsquid_utils.get_parameter("mouse_acc")]
-
-    def font_get(self, session_id, parameters):
-        '''
-        Get font
-        '''
-        return [steelsquid_utils.get_parameter("font")]
-
-    def font_set(self, session_id, parameters):
-        '''
-        Set font
-        '''
-        try:
-            font = int(parameters[0])
-            if font < 1 or font > 99:
-                raise Exception("Value must be between 1 and 99!")
-        except:
-            raise Exception("Value must be a number!")
-        if len(parameters) > 0:
-            steelsquid_utils.execute_system_command(['sudo', 'steelsquid', 'font', parameters[0]])
-        return [steelsquid_utils.get_parameter("font")]
-
-    def autologin(self, session_id, parameters):
-        '''
-        Get autologin
-        '''
-        if steelsquid_utils.get_flag("encrypt"):
-            return "Encrypt"
-        else:
-            return steelsquid_utils.get_flag("autologin")
-
-    def autologin_on(self, session_id, parameters):
-        '''
-        Set autologin
-        '''
-        if not steelsquid_utils.authenticate(USERNAME, parameters[0]):
-            raise Exception("Incorrect password for user "+USERNAME+"!")
-        else:
-            steelsquid_utils.execute_system_command(['sudo', 'steelsquid', 'autologin-on'])
-            return self.autologin(session_id, parameters)
-
-    def autologin_off(self, session_id, parameters):
-        '''
-        Set autologin
-        '''
-        steelsquid_utils.execute_system_command(['sudo', 'steelsquid', 'autologin-off'])
-        return self. autologin(session_id, parameters)
 
     def clean(self, session_id, parameters):
         '''
         Clear private data
         '''
         self.lock_command('clean')
-        if parameters[0]=='True':
-            self.execute_system_command(['sudo', 'steelsquid', 'clean-deep'], 'clean')
-        else:
-            self.execute_system_command(['sudo', 'steelsquid', 'clean'], 'clean')
+        self.execute_system_command(['steelsquid', 'clean'], 'clean')
 
     def password(self, session_id, parameters):
         '''
@@ -874,10 +784,10 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         '''
         if parameters[0] != parameters[1]:
             raise Exception("Password does not match the confirm password")
-        elif not steelsquid_utils.authenticate(USERNAME, parameters[2]):
+        elif not steelsquid_utils.authenticate("root", parameters[2]):
             raise Exception("You entered wrong current password")
         else:
-            proc=Popen(['passwd', 'steelsquid'], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+            proc=Popen(['passwd', 'root'], stdin=PIPE, stdout=PIPE, stderr=PIPE)
             if not steelsquid_utils.is_root():
                 proc.stdin.write(parameters[2] + '\n')
             proc.stdin.write(parameters[0] + '\n')
@@ -897,44 +807,18 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
                 raise Exception("Wrong password")
 
 
-    def ssh_disable(self, session_id, parameters):
+    def ssh_dis(self, session_id, parameters):
         '''
         Enable or disable ssh server
         '''
         if len(parameters) > 0:
             if parameters[0] == "True":
-                proc=Popen(['sudo', 'steelsquid', 'ssh-off'], stdout = PIPE, stderr = STDOUT)  
+                proc=Popen(['steelsquid', 'ssh-off'], stdout = PIPE, stderr = STDOUT)  
                 proc.wait()
             else:
-                proc=Popen(['sudo', 'steelsquid', 'ssh-on'], stdout = PIPE, stderr = STDOUT)  
+                proc=Popen(['steelsquid', 'ssh-on'], stdout = PIPE, stderr = STDOUT)  
                 proc.wait()
-        return steelsquid_utils.get_flag("disable_ssh")
-
-    def ssh_openssh(self, session_id, parameters):
-        '''
-        Use openssh instead of dropear
-        '''
-        if len(parameters) > 0:
-            if parameters[0] == "True":
-                proc=Popen(['sudo', 'steelsquid', 'ssh-openssh'], stdout = PIPE, stderr = STDOUT)  
-                proc.wait()
-            else:
-                proc=Popen(['sudo', 'steelsquid', 'ssh-dropbear'], stdout = PIPE, stderr = STDOUT)  
-                proc.wait()
-        return steelsquid_utils.get_flag("ssh_openssh")
-
-    def ssh_port(self, session_id, parameters):
-        '''
-        Change ssh port
-        '''
-        if len(parameters) > 0:
-            proc=Popen(['sudo', 'steelsquid', 'ssh-port', parameters[0]], stdout = PIPE, stderr = STDOUT)  
-            proc.wait()
-        port = steelsquid_utils.get_parameter("ssh_port")
-        if port == "":
-            port = "22"
-            steelsquid_utils.set_parameter("ssh_port", "22")
-        return port
+        return not steelsquid_utils.get_flag("ssh")
 
     def web_interface_disable(self, session_id, parameters):
         '''
@@ -942,35 +826,35 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         '''
         if len(parameters) > 0:
             if parameters[0] == "True":
-                proc=Popen(['sudo', 'steelsquid', 'web-off'], stdout = PIPE, stderr = STDOUT)  
+                proc=Popen(['steelsquid', 'web-off'], stdout = PIPE, stderr = STDOUT)  
                 proc.wait()
             else:
-                proc=Popen(['sudo', 'steelsquid', 'web-on'], stdout = PIPE, stderr = STDOUT)  
+                proc=Popen(['steelsquid', 'web-on'], stdout = PIPE, stderr = STDOUT)  
                 proc.wait()
-        return steelsquid_utils.get_flag("disable_web")
+        return not steelsquid_utils.get_flag("web")
 
     def web_interface_share(self, session_id, parameters):
         '''
-        On web interface share /mnt, /media and /home/steelsquid
+        On web interface share /mnt, /media and /root
         '''
         return steelsquid_utils.get_flag("web_interface_share")
 
     def web_interface_share_on(self, session_id, parameters):
         '''
-        On web interface share /mnt, /media and /home/steelsquid
+        On web interface share /mnt, /media and /root
         '''
-        if not steelsquid_utils.authenticate(USERNAME, parameters[0]):
-            raise Exception("Incorrect password for user "+USERNAME+"!")
+        if not steelsquid_utils.authenticate("root", parameters[0]):
+            raise Exception("Incorrect password for user root!")
         else:
             steelsquid_utils.set_flag("web_interface_share")
         return steelsquid_utils.get_flag("web_interface_share")
 
     def web_interface_share_off(self, session_id, parameters):
         '''
-        On web interface share /mnt, /media and /home/steelsquid
+        On web interface share /mnt, /media and /root
         '''
-        if not steelsquid_utils.authenticate(USERNAME, parameters[0]):
-            raise Exception("Incorrect password for user "+USERNAME+"!")
+        if not steelsquid_utils.authenticate("root", parameters[0]):
+            raise Exception("Incorrect password for user root!")
         else:
             steelsquid_utils.del_flag("web_interface_share")
         return steelsquid_utils.get_flag("web_interface_share")
@@ -981,10 +865,10 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         '''
         if len(parameters) > 0:
             if parameters[0] == "True":
-                proc=Popen(['sudo', 'steelsquid', 'web-local-on'], stdout = PIPE, stderr = STDOUT)  
+                proc=Popen(['steelsquid', 'web-local-on'], stdout = PIPE, stderr = STDOUT)  
                 proc.wait()
             else:
-                proc=Popen(['sudo', 'steelsquid', 'web-local-off'], stdout = PIPE, stderr = STDOUT)  
+                proc=Popen(['steelsquid', 'web-local-off'], stdout = PIPE, stderr = STDOUT)  
                 proc.wait()
         return steelsquid_utils.get_flag("local_web")
 
@@ -994,155 +878,60 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         '''
         if len(parameters) > 0:
             if parameters[0] == "True":
-                proc=Popen(['sudo', 'steelsquid', 'web-https'], stdout = PIPE, stderr = STDOUT)  
+                proc=Popen(['steelsquid', 'web-https'], stdout = PIPE, stderr = STDOUT)  
                 proc.wait()
             else:
-                proc=Popen(['sudo', 'steelsquid', 'web-http'], stdout = PIPE, stderr = STDOUT)  
+                proc=Popen(['steelsquid', 'web-http'], stdout = PIPE, stderr = STDOUT)  
                 proc.wait()
-        return [steelsquid_utils.get_flag("use_https"), steelsquid_utils.get_parameter("web_port")]
+        return [steelsquid_utils.get_flag("use_https")]
 
     def web_interface_authentication(self, session_id, parameters):
         '''
         http
         '''
-        return [not steelsquid_utils.get_flag("web_no_password")]
+        return [steelsquid_utils.get_flag("web_authentication")]
 
     def web_interface_authentication_on(self, session_id, parameters):
         '''
         http
         '''
-        if not steelsquid_utils.authenticate(USERNAME, parameters[0]):
-            raise Exception("Incorrect password for user "+USERNAME+"!")
+        if not steelsquid_utils.authenticate("root", parameters[0]):
+            raise Exception("Incorrect password for user root!")
         else:
-            proc=Popen(['sudo', 'steelsquid', 'web-aut-on'], stdout = PIPE, stderr = STDOUT)  
+            proc=Popen(['steelsquid', 'web-aut-on'], stdout = PIPE, stderr = STDOUT)  
             proc.wait()
-            return [not steelsquid_utils.get_flag("web_no_password")]
+            return [steelsquid_utils.get_flag("web_authentication")]
 
     def web_interface_authentication_off(self, session_id, parameters):
         '''
         http
         '''
-        if not steelsquid_utils.authenticate(USERNAME, parameters[0]):
-            raise Exception("Incorrect password for user "+USERNAME+"!")
+        if not steelsquid_utils.authenticate("root", parameters[0]):
+            raise Exception("Incorrect password for user root!")
         else:
-            proc=Popen(['sudo', 'steelsquid', 'web-aut-off'], stdout = PIPE, stderr = STDOUT)  
+            proc=Popen(['steelsquid', 'web-aut-off'], stdout = PIPE, stderr = STDOUT)  
             proc.wait()
-            return [not steelsquid_utils.get_flag("web_no_password")]
-
-    def web_interface_port(self, session_id, parameters):
-        '''
-        http
-        '''
-        if len(parameters) > 0:
-            proc=Popen(['sudo', 'steelsquid', 'web-port', parameters[0]], stdout = PIPE, stderr = STDOUT)  
-            proc.wait()
-        return steelsquid_utils.get_parameter("web_port") 
-
-    def encrypt_info(self, session_id, parameters):
-        '''
-        Is the filesystem encrypted
-        '''
-        return [steelsquid_utils.get_flag("encrypt"), steelsquid_utils.is_root()]
-
-    def encrypt_mode(self, session_id, parameters):
-        '''
-        restart to 
-        '''
-        if not steelsquid_utils.authenticate(USERNAME, parameters[0]):
-            raise Exception("Incorrect password for user "+USERNAME+"!")
-        else:
-            os.system("sudo /etc/init.d/steelsquid root")
-
-    def encrypt_mode_exit(self, session_id, parameters):
-        '''
-        restart to 
-        '''
-        os.system("sudo /etc/init.d/steelsquid restart")
-
-    def encrypt(self, session_id, parameters):
-        '''
-        Encrypt the filesystem
-        '''
-        import pexpect
-        if steelsquid_utils.get_flag("encrypt"):
-            raise Exception("The file system is already encrypted.")
-        lst = os.listdir("/home/"+USERNAME)
-        for d in lst:
-            if steelsquid_utils.is_mounted("/home/"+USERNAME+"/"+d):
-                raise Exception("You must umount folder /home/"+USERNAME+"/"+d)
-        proc = Popen(['ps', '-fu', USERNAME], stdout = PIPE, stderr = STDOUT)
-        proc.wait()
-        out = proc.stdout.read()
-        if out.count('\n') > 1:
-            raise Exception("All sessions of the user "+USERNAME+" must log out before you can begin encrypting!")
-        password = parameters[0]
-        if not steelsquid_utils.authenticate(USERNAME, password):
-            raise Exception("Incorrect password for user "+USERNAME+"!")
-        else:
-            self.execute_system_command(['steelsquid', 'ssh-openssh'], "encrypt")
-            try:
-                self.execute_system_command(['steelsquid', 'autologin-off'], "encrypt")
-                self.execute_system_command(["aptitude", "-R", "-y", "-o", "Aptitude::Cmdline::ignore-trust-violations=true", "install", "ecryptfs-utils", "cryptsetup"], "encrypt")
-                self.execute_system_command(["modprobe", "ecryptfs"], "encrypt")
-                cmd = "ecryptfs-migrate-home -u "+USERNAME
-                child=pexpect.spawn(cmd, timeout=99999)
-                i=child.expect_exact(['['+USERNAME+']: ', pexpect.EOF])
-                if i==0:
-                    child.sendline(password)
-                    i=child.expect_exact(['['+USERNAME+']: ', '\n'])
-                    if i==0:
-                        raise Exception("User/Password error")
-                    else:
-                        for line in iter(child.readline, b''):
-                            line = line.strip('\n').strip()
-                            self.add_async_answer("encrypt", line)
-                elif i==1:
-                    raise Exception(child.before)
-                os.chmod('/home/.ecryptfs', 0755)
-                self.add_async_answer("encrypt", steelsquid_utils.make_log_string("Testing login"))
-                cmd = "sudo login " + USERNAME
-                child=pexpect.spawn(cmd)
-                i=child.expect_exact(['Password: ', pexpect.EOF])
-                if i==0:
-                    child.sendline(password)
-                    time.sleep(4)
-                    child.sendline("exit")
-                    i=child.expect_exact(pexpect.EOF)
-                elif i==1:
-                    raise Exception(child.before)
-                self.add_async_answer("encrypt", steelsquid_utils.make_log_string("Remove backup"))
-                steelsquid_utils.execute_system_command(["/bin/bash", "-c", "rm -r /home/"+USERNAME+".*"])
-                steelsquid_utils.execute_system_command_blind("rm -r /home/nohup.out")
-                if steelsquid_utils.get_flag("swap"):
-                    self.add_async_answer("encrypt", steelsquid_utils.make_log_string("Encrypting swap"))
-                    self.execute_system_command(["ecryptfs-setup-swap", "-f"], "encrypt")
-                self.add_async_answer("encrypt", steelsquid_utils.make_log_string("The encryption is completed"))
-                steelsquid_utils.set_flag("encrypt")
-            finally:
-                try:
-                    child.close()
-                except:
-                    pass
+            return [steelsquid_utils.get_flag("web_authentication")]
 
     def shutdown(self, session_id, parameters):
         '''
         Shutdown the computer
         '''
-        os.system('sudo shutdown -h now')
+        os.system('shutdown -h now')
         return "System shutting down"
 
     def reboot(self, session_id, parameters):
         '''
         Reboot the computer
         '''
-        os.system('sudo reboot')
+        os.system('reboot')
         return "System reboots"
 
     def system_info(self, session_id, parameters):
         '''
         Return system info
         '''
-        return steelsquid_utils.system_info()
+        return steelsquid_utils.system_info_array()
 
     def upgrade(self, session_id, parameters):
         '''
@@ -1152,52 +941,18 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
             raise Exception("You must be connected to the internet to make an upgrade!")
         self.lock_command('upgrade')
         if parameters[0] == 'small':
-            self.execute_system_command(['sudo', 'steelsquid', 'update'], "upgrade")
-            self.execute_system_command(['sudo', 'steelsquid', 'update-web'], "upgrade")
-            self.execute_system_command(['sudo', 'steelsquid', 'update-python'], "upgrade")
+            self.execute_system_command(['steelsquid', 'update'], "upgrade")
+            self.execute_system_command(['steelsquid', 'update-web'], "upgrade")
+            self.execute_system_command(['steelsquid', 'update-python'], "upgrade")
         elif parameters[0] == 'full':
-            self.execute_system_command(['sudo', 'steelsquid', 'upgrade'], "upgrade")
+            self.execute_system_command(['steelsquid', 'upgrade'], "upgrade")
 
     def expand(self, session_id, parameters):
         '''
         Expand-rootfs
         '''
-        steelsquid_utils.execute_system_command(['sudo', 'steelsquid', 'expand']) 
+        steelsquid_utils.execute_system_command(['steelsquid', 'expand']) 
         return "Root partition has been resized.<br />The filesystem will be enlarged upon the next reboot."
-
-    def swap_disable(self, session_id, parameters):
-        '''
-        Get or set the use of swap
-        '''
-        self.lock_command('swap_disable')
-        if len(parameters) > 0:
-            if parameters[0] == "True":
-                proc=Popen(['sudo', 'steelsquid', 'swap-off'], stdout = PIPE, stderr = STDOUT)  
-                proc.wait()
-            else:
-                proc=Popen(['sudo', 'steelsquid', 'swap-on'], stdout = PIPE, stderr = STDOUT)  
-                proc.wait()
-        return not steelsquid_utils.get_flag("swap")
-
-    def root_on(self, session_id, parameters):
-        '''
-        Root mode
-        '''
-        if len(parameters)>0:
-            if not steelsquid_utils.authenticate(USERNAME, parameters[0]):
-                raise Exception("Incorrect password for user "+USERNAME+"!")
-            steelsquid_utils.execute_system_command(['sudo', 'steelsquid', 'root-on']) 
-        return steelsquid_utils.get_flag("root")
-
-    def root_off(self, session_id, parameters):
-        '''
-        Root mode
-        '''
-        if len(parameters)>0:
-            if not steelsquid_utils.authenticate(USERNAME, parameters[0]):
-                raise Exception("Incorrect password for user "+USERNAME+"!")
-            steelsquid_utils.execute_system_command(['sudo', 'steelsquid', 'root-off']) 
-        return steelsquid_utils.get_flag("root")
 
     def monitor_disable(self, session_id, parameters):
         '''
@@ -1205,10 +960,10 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         '''
         if len(parameters) > 0:
             if parameters[0] == "True":
-                proc=Popen(['sudo', 'steelsquid', 'display-off'], stdout = PIPE, stderr = STDOUT)  
+                proc=Popen(['steelsquid', 'display-off'], stdout = PIPE, stderr = STDOUT)  
                 proc.wait()
             else:
-                proc=Popen(['sudo', 'steelsquid', 'display-on'], stdout = PIPE, stderr = STDOUT)  
+                proc=Popen(['steelsquid', 'display-on'], stdout = PIPE, stderr = STDOUT)  
                 proc.wait()
         return steelsquid_utils.get_flag("disable_monitor")
 
@@ -1218,10 +973,10 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         '''
         if len(parameters) > 0:
             if parameters[0] == "True":
-                proc=Popen(['sudo', 'steelsquid', 'camera-on'], stdout = PIPE, stderr = STDOUT)  
+                proc=Popen(['steelsquid', 'camera-on'], stdout = PIPE, stderr = STDOUT)  
                 proc.wait()
             else:
-                proc=Popen(['sudo', 'steelsquid', 'camera-off'], stdout = PIPE, stderr = STDOUT)  
+                proc=Popen(['steelsquid', 'camera-off'], stdout = PIPE, stderr = STDOUT)  
                 proc.wait()
         return steelsquid_utils.get_flag("camera")
 
@@ -1231,10 +986,10 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         '''
         if len(parameters) > 0:
             if parameters[0] == "True":
-                proc=Popen(['sudo', 'steelsquid', 'stream-on'], stdout = PIPE, stderr = STDOUT)  
+                proc=Popen(['steelsquid', 'stream-on'], stdout = PIPE, stderr = STDOUT)  
                 proc.wait()
             else:
-                proc=Popen(['sudo', 'steelsquid', 'stream-off'], stdout = PIPE, stderr = STDOUT)  
+                proc=Popen(['steelsquid', 'stream-off'], stdout = PIPE, stderr = STDOUT)  
                 proc.wait()
         return steelsquid_utils.get_flag("stream")
 
@@ -1245,13 +1000,13 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         '''
         if len(parameters) > 0:
             if parameters[0] == "over":
-                proc=Popen(['sudo', 'steelsquid', 'overclock'], stdout = PIPE, stderr = STDOUT)  
+                proc=Popen(['steelsquid', 'overclock'], stdout = PIPE, stderr = STDOUT)  
                 proc.wait()
             elif parameters[0] == "under":
-                proc=Popen(['sudo', 'steelsquid', 'underclock'], stdout = PIPE, stderr = STDOUT)  
+                proc=Popen(['steelsquid', 'underclock'], stdout = PIPE, stderr = STDOUT)  
                 proc.wait()
             else:
-                proc=Popen(['sudo', 'steelsquid', 'defaultclock'], stdout = PIPE, stderr = STDOUT)  
+                proc=Popen(['steelsquid', 'defaultclock'], stdout = PIPE, stderr = STDOUT)  
                 proc.wait()
         if steelsquid_utils.get_flag("overclock"):
             return "over"
@@ -1264,48 +1019,23 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         '''
         Get the use of lcd to display ip
         '''
-        import steelsquid_pi
-        if steelsquid_utils.get_flag("lcd_direct"):
-            return "direct"
-        elif steelsquid_utils.get_flag("lcd_i2c"):
-            return "i2c"
-        else:
-            return "disable"
+        return steelsquid_utils.get_flag("lcd")
 
     def lcd_disable(self, session_id, parameters):
         '''
         Get and set the use of lcd to display ip
         '''
-        import steelsquid_pi
-        steelsquid_utils.del_flag("lcd_direct")
-        steelsquid_utils.del_flag("lcd_i2c")
-        return self.lcd(parameters)
+        proc=Popen(['steelsquid', 'lcd-off'], stdout = PIPE, stderr = STDOUT)  
+        proc.wait()
+        return self.lcd(session_id, parameters)
 
-    def lcd_direct(self, session_id, parameters):
+    def lcd_enable(self, session_id, parameters):
         '''
         Get and set the use of lcd to display ip
         '''
-        if not steelsquid_utils.authenticate(USERNAME, parameters[0]):
-            raise Exception("Incorrect password for user "+USERNAME+"!")
-        else:
-            import steelsquid_pi
-            steelsquid_utils.set_flag("root")
-            steelsquid_utils.set_flag("lcd_direct")
-            steelsquid_utils.del_flag("lcd_i2c")
-            return self.lcd(parameters)
-
-    def lcd_i2c(self, session_id, parameters):
-        '''
-        Get and set the use of lcd to display ip
-        '''
-        if not steelsquid_utils.authenticate(USERNAME, parameters[0]):
-            raise Exception("Incorrect password for user "+USERNAME+"!")
-        else:
-            import steelsquid_pi
-            steelsquid_utils.set_flag("root")
-            steelsquid_utils.del_flag("lcd_direct")
-            steelsquid_utils.set_flag("lcd_i2c")
-            return self.lcd(parameters)
+        proc=Popen(['steelsquid', 'lcd-on'], stdout = PIPE, stderr = STDOUT)  
+        proc.wait()
+        return self.lcd(session_id, parameters)
 
     def mail_set(self, session_id, parameters):
         '''
@@ -1356,7 +1086,7 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         '''
         Get gpu mem
         '''
-        return steelsquid_utils.execute_system_command(['sudo', 'steelsquid', 'gpu-mem'])
+        return steelsquid_utils.execute_system_command(['steelsquid', 'gpu-mem'])
 
     def gpu_mem_set(self, session_id, parameters):
         '''
@@ -1370,7 +1100,7 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
             if inte < 16 or inte > 448:
                 raise Exception("Min=16 and max=448")
             else:
-                steelsquid_utils.execute_system_command(['sudo', 'steelsquid', 'gpu-mem', str(inte)])
+                steelsquid_utils.execute_system_command(['steelsquid', 'gpu-mem', str(inte)])
                 return "Memory changed"
 
     def downman(self, session_id, parameters):
@@ -1385,10 +1115,10 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         '''
         
         '''
-        if not steelsquid_utils.authenticate(USERNAME, parameters[0]):
-            raise Exception("Incorrect password for user "+USERNAME+"!")
+        if not steelsquid_utils.authenticate("root", parameters[0]):
+            raise Exception("Incorrect password for user root!")
         else:
-            steelsquid_utils.execute_system_command(['sudo', 'steelsquid', 'download-on']) 
+            steelsquid_utils.execute_system_command(['steelsquid', 'download-on']) 
         return steelsquid_utils.get_flag("download")
 
 
@@ -1396,17 +1126,17 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         '''
         
         '''
-        if not steelsquid_utils.authenticate(USERNAME, parameters[0]):
-            raise Exception("Incorrect password for user "+USERNAME+"!")
+        if not steelsquid_utils.authenticate("root", parameters[0]):
+            raise Exception("Incorrect password for user root!")
         else:
-            steelsquid_utils.execute_system_command(['sudo', 'steelsquid', 'download-off']) 
+            steelsquid_utils.execute_system_command(['steelsquid', 'download-off']) 
         return steelsquid_utils.get_flag("dovnload")
 
     def download_activate(self, session_id, parameters):
         '''
         Add a download link
         '''
-        steelsquid_utils.execute_system_command(['sudo', 'steelsquid', 'download-on'])
+        steelsquid_utils.execute_system_command(['steelsquid', 'download-on'])
 
     def download_active(self, session_id, parameters):
         '''
@@ -1906,7 +1636,6 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
                     while d:
                         out.write(d)
                         d = stream.read(8192)       
-                steelsquid_utils.set_permission(the_file)
         else:
             raise Exception("Directory not allowed: "+the_file)
 
@@ -2018,7 +1747,7 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         '''
         enabled = steelsquid_utils.get_flag("rover")
         if enabled:
-            answer = steelsquid_utils.execute_system_command(['sudo', 'steelsquid-nm', 'system-status'])
+            answer = steelsquid_utils.execute_system_command(['steelsquid-nm', 'system-status'])
             if answer[0] == 'None':
                 return [True, "Not connected!", "---", "---", "---"]
             else:
@@ -2035,10 +1764,10 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         '''
         
         '''
-        if not steelsquid_utils.authenticate(USERNAME, parameters[0]):
-            raise Exception("Incorrect password for user "+USERNAME+"!")
+        if not steelsquid_utils.authenticate("root", parameters[0]):
+            raise Exception("Incorrect password for user root!")
         else:
-            steelsquid_utils.execute_system_command(['sudo', 'steelsquid', 'rover-on']) 
+            steelsquid_utils.execute_system_command(['steelsquid', 'rover-on']) 
         return steelsquid_utils.get_flag("rover")
 
 
@@ -2046,10 +1775,10 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         '''
         
         '''
-        if not steelsquid_utils.authenticate(USERNAME, parameters[0]):
-            raise Exception("Incorrect password for user "+USERNAME+"!")
+        if not steelsquid_utils.authenticate("root", parameters[0]):
+            raise Exception("Incorrect password for user root!")
         else:
-            steelsquid_utils.execute_system_command(['sudo', 'steelsquid', 'rover-off']) 
+            steelsquid_utils.execute_system_command(['steelsquid', 'rover-off']) 
         return steelsquid_utils.get_flag("rover")
 
 

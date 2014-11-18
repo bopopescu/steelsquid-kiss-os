@@ -27,6 +27,6 @@ if len(sys.argv)<3:
     print("See http://www.steelsquid.org/pi-io-example")
     print("")
 elif sys.argv[1] == 'direct':
-	steelsquid_pi.lcd_write_text(sys.argv[2:], is_i2c=False)
+	steelsquid_pi.hdd44780_write(sys.argv[2:], is_i2c=False)
 elif sys.argv[1] == 'i2c':
-	steelsquid_pi.lcd_write_text(sys.argv[2:], is_i2c=True)
+	steelsquid_pi.hdd44780_write(sys.argv[2:], is_i2c=True)

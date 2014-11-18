@@ -58,7 +58,6 @@ def is_raspberry_pi():
         return False
 
 if is_raspberry_pi:
-    import steelsquid_pi
     import steelsquid_io
 
 
@@ -353,25 +352,19 @@ def shout(string=None, to_lcd=True, debug=False, is_error=False, always_show=Fal
                 execute_system_command(['shout', string])
             except:
                 pass
-            if is_raspberry_pi():
+            if to_lcd and is_raspberry_pi():
                 if is_error:
                     try:
-                        steelsquid_io.red_led_flash_timer(2)
-                        steelsquid_io.summer_flash_timer(1)
+                        steelsquid_io.ledr_flash_timer(2)
+                        steelsquid_io.sum_flash_timer(1)
                     except:
                         pass
                 else:
                     try:
-                        steelsquid_io.green_led_timer(1)
+                        steelsquid_io.ledg_timer(1)
                     except:
                         pass
-            if to_lcd and is_raspberry_pi():
-                lc = lcd()
-                if lc:
-                    if lc == "direct":
-                        lc == False
-                    else:
-                        lc == True
+            if to_lcd and is_raspberry_pi() and get_flag("lcd"):
                     try:
                         sli = string.split("\n")
                         new_mes = []
@@ -380,9 +373,9 @@ def shout(string=None, to_lcd=True, debug=False, is_error=False, always_show=Fal
                                 line = line[:16]
                             new_mes.append(line)
                         if len(sli)==1:
-                            steelsquid_pi.lcd_write_text(sli[0], LCD_MESSAGE_TIME, force_setup = False, is_i2c=lc)
+                            steelsquid_io.lcd_write(sli[0], LCD_MESSAGE_TIME, force_setup = False)
                         elif len(sli)>1:
-                            steelsquid_pi.lcd_write_text(sli[0]+'\n'+sli[1], LCD_MESSAGE_TIME, force_setup = False, is_i2c=lc)
+                            steelsquid_io.lcd_write(sli[0]+'\n'+sli[1], LCD_MESSAGE_TIME, force_setup = False)
                     except:
                         pass
 
@@ -393,22 +386,6 @@ def notify(string):
     '''
     shout(string)
     mail(string)
-
-
-def lcd():
-    '''
-    Use lcd
-    @return: None = No lcd, direct or i2c 
-    '''
-    if is_raspberry_pi():
-        if get_flag("lcd_direct"):
-            return "direct"
-        elif get_flag("lcd_i2c"):
-            return "i2c"
-        else:
-            return None
-    else:
-        return None
 
 
 def mail(string):
@@ -443,16 +420,13 @@ def valid_get_string(string):
 def memory():
     """
     Get ram information in MByte
-    @return: ram_total, ram_free, ram_used, swap_total, swap_free, swap_used
+    @return: ram_total, ram_free, ram_used
     """
     ram_total = 0
     ram_free = 0
     ram_used = 0
     tmp_buffers = 0
     tmp_cached = 0
-    swap_total = 0
-    swap_free = 0
-    swap_used = 0
     with open('/proc/meminfo') as fp:
         for line in fp:
             sline = line.split()
@@ -464,14 +438,9 @@ def memory():
                 tmp_buffers = int(sline[1])
             elif sline[0] == "Cached:":
                 tmp_cached = int(sline[1])
-            elif sline[0] == "SwapTotal:":
-                swap_total = int(sline[1])
-            elif sline[0] == "SwapFree:":
-                swap_free = int(sline[1])
     ram_free = ram_free + tmp_buffers + tmp_cached
     ram_used = ram_total - ram_free
-    swap_used = swap_total - swap_free
-    return ram_total/1024, ram_free/1024, ram_used/1024, swap_total/1024, swap_free/1024, swap_used/1024
+    return ram_total/1024, ram_free/1024, ram_used/1024
 
 
 def network_info_string():
@@ -698,23 +667,16 @@ def system_info():
     p_temp = temp.replace('temp=','').replace('\n', '').replace('\r', '')
 
     # RAM
-    p_ram_total, p_ram_free, p_ram_used, p_swap_total, p_swap_free, p_swap_used = memory()
+    p_ram_total, p_ram_free, p_ram_used = memory()
     
     # Disk
-    f = os.popen('df -h | grep /dev/mmcblk0p2')
+    f = os.popen('df -h | grep /dev/root')
     disk = f.read().replace('\n', '').replace('\r', '')
     disk = disk.split()
     p_disk_size = disk[1]
     p_disk_used = disk[2]
     p_disk_aval = disk[3]
     
-    # SWAP
-    p_has_swap = get_flag("swap")
-    if p_has_swap:
-        p_has_swap = "Enabled"
-    else:
-        p_has_swap = "Disabled"    
-
     # Overclock
     overclock = "None"
     if is_raspberry_pi():
@@ -784,10 +746,8 @@ def system_info():
     # LCD
     p_has_lcd = "Disabled"
     if is_raspberry_pi():
-        if get_flag("lcd_direct"):
-            p_has_lcd = "Enabled (direct)"
-        elif get_flag("lcd_i2c"):
-            p_has_lcd = "Enabled (i2c)"
+        if get_flag("lcd"):
+            p_has_lcd = "Enabled"
         else:
             p_has_lcd = "Disabled"
 
@@ -816,22 +776,22 @@ def system_info():
     else:
         p_download = "Disabled"
         
-    return (p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_swap_total, p_swap_free, p_swap_used, p_disk_size, p_disk_used, p_disk_aval, p_has_swap, overclock, p_gpu_mem, p_log, p_disable_monitor, p_camera, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir)
+    return (p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_disk_size, p_disk_used, p_disk_aval, overclock, p_gpu_mem, p_log, p_disable_monitor, p_camera, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir)
 
 
 def system_info_array():
     '''
     Return system info array
     '''
-    p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_swap_total, p_swap_free, p_swap_used, p_disk_size, p_disk_used, p_disk_aval, p_has_swap, overclock, p_gpu_mem, p_log, p_disable_monitor, p_camera, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir = system_info()
-    return [p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_swap_total, p_swap_free, p_swap_used, p_disk_size, p_disk_used, p_disk_aval, p_has_swap, overclock, p_gpu_mem, p_log, p_disable_monitor, p_camera, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir]
+    p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_disk_size, p_disk_used, p_disk_aval, overclock, p_gpu_mem, p_log, p_disable_monitor, p_camera, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir = system_info()
+    return [p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_disk_size, p_disk_used, p_disk_aval, overclock, p_gpu_mem, p_log, p_disable_monitor, p_camera, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir]
 
 
 def print_system_info():
     '''
     Print system info to screen
     '''
-    p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_gpu_mem, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_swap_total, p_swap_free, p_swap_used, p_disk_size, p_disk_used, p_disk_aval, p_has_swap, overclock, p_disable_monitor, p_camera, p_log, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir = system_info()
+    p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_disk_size, p_disk_used, p_disk_aval, overclock, p_gpu_mem, p_log, p_disable_monitor, p_camera, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir = system_info()
     print
     printb("Device information (%s)" % p_date)
     print
@@ -856,11 +816,6 @@ def print_system_info():
     print("Used RAM: %s" % p_ram_used)
     print("Free RAM: %s" % p_ram_free)
     print
-    print("SWAP: %s" % p_has_swap)
-    print("Total swap: %s" % p_swap_total)
-    print("Used swap: %s" % p_swap_used)
-    print("Free swap: %s" % p_swap_free)
-    print
     print("Total root: %s" % p_disk_size)
     print("Used root: %s" % p_disk_used)
     print("Free root: %s" % p_disk_aval)
@@ -880,6 +835,7 @@ def print_system_info():
     print("Type: %s" % p_web_https)
     print("Authentication: %s" %  p_web_aut)
     print("Listening on: %s" % p_web_local)
+    print
     print("SSH-server: %s" % p_ssh)
     print("Socket server: %s" % p_socket)
     print

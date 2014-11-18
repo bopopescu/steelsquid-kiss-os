@@ -41,6 +41,7 @@ class SteelsquidSocketConnection(steelsquid_connection.SteelsquidConnection):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         steelsquid_utils.shout("Started as client", debug=True)
+        steelsquid_utils.shout("S Client: " + str(self.port) + "\n"+self.host)
         return sock
 
 
@@ -56,7 +57,7 @@ class SteelsquidSocketConnection(steelsquid_connection.SteelsquidConnection):
         s.settimeout(2)
         s.bind(('', self.port))
         s.listen(3)
-        steelsquid_utils.shout("Started as server", debug=True)
+        steelsquid_utils.shout("Socket Server\n" + str(self.port))
         return s
 
 

@@ -26,7 +26,7 @@ if len(sys.argv)==1:
     print("")
 else:
     try:
-        if(steelsquid_pi.mcp_get(sys.argv[1], sys.argv[2])):
+        if(steelsquid_pi.mcp23017_get(sys.argv[1], sys.argv[2])):
             print "On"
         else:
             print "Off"

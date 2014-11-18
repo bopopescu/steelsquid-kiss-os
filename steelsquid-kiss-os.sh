@@ -9,6 +9,7 @@
 # Homepage: http://steelsquid.org/steelsquid-kiss-os
 # 
 # Revision history:
+# Revision history:
 #  - 2013-10-20  Created
 #  - 2014-04-09  New version for raspbian-ua-netinst
 #  - 2014-11-09  Rewrite everything a little neater
@@ -20,18 +21,10 @@
 # Settings (Modify to meet your requirements)
 ##################################################################################
 
-# I in development mode (true/false)
-# If true no new file will be downloaded
-development=false
-
 # In paramater
 in_parameter_1=$1
 in_parameter_2=$2
 in_parameter_3=$3
-
-# Host for check if internet connection
-host1=google.com
-host2=wikipedia.org
 
 # This script name without suffix (Project name)
 project_name="steelsquid-kiss-os"
@@ -517,12 +510,6 @@ function help_security()
     echo " - Clean browser (History, Cookies, Saved password, Autofill)"
     echo " - Umount all external drivs (ssh, samba, usb)"
     echo 
-    echb "steelsquid clean-deep"
-    echo "Depending on the size of your hard drive, it may take several hours."
-    echo "Same as cleen but also this"
-    echo " - Delete thumbs.db, Desktop.ini and .DS_Store"
-    echo " - Write data to all of the free space on the hard drive, and the delete it."
-    echo 
     echb "steelsquid ssh"
     echo "Status on the SSH-server"
     echo 
@@ -533,7 +520,7 @@ function help_security()
     echo "Disable SSH server."
     echo 
     echb "steelsquid ssh-keys"
-    echo "Generate new keys for dropbear"
+    echo "Generate new keys for ssh"
     echo 
     echb "steelsquid web"
     echo "Status on the web interface."
@@ -600,15 +587,6 @@ function help_system()
     echo "This is only for raspberry-pi"
     echo "Will take effect on next reboot...."
     echo 
-    echb "steelsquid swap"
-    echo "Is swap enabled."
-    echo 
-    echb "steelsquid swap-on"
-    echo "Enable swap."
-    echo 
-    echb "steelsquid swap-off"
-    echo "Disable swap."
-    echo 
     echb "steelsquid display"
     echo "Is the display enabled"
     echo 
@@ -663,26 +641,6 @@ function help_system()
     echb "steelsquid gpu-mem <mem>"
     echo "Set the GPU memory (16 to 448) default 64"
     echo "ARM (CPU) gets the remaining memory"
-    echo "Will take effect on next reboot...."
-    echo 
-    echb "steelsquid lcd"
-    echo "Is print IP (and other stuff) to HDD44780 compatible LCD enabled."
-    echo "See http://www.steelsquid.org/pi-io-example"
-    echo 
-    echb "steelsquid lcd-direct"
-    echo "Enable Print IP (and other stuff) to HDD44780 compatible LCD."
-    echo "The LCD is connected directly to the raspberry pi"
-    echo "See http://www.steelsquid.org/pi-io-example"
-    echo "Will take effect on next reboot...."
-    echo 
-    echb "steelsquid lcd-i2c"
-    echo "Enable Print IP (and other stuff) to HDD44780 compatible LCD."
-    echo "The LCD is connected via i2c to the raspberry pi"
-    echo "See http://www.steelsquid.org/pi-io-example"
-    echo "Will take effect on next reboot...."
-    echo 
-    echb "steelsquid lcd-off"
-    echo "Disable print IP (and other stuff) to LCD."
     echo "Will take effect on next reboot...."
     echo 
     echb "set-flag <flagName>"
@@ -862,7 +820,27 @@ function help_io()
     echo 
     echb "is-raspberry-pi"
     echo "Is this device a raspberry pi"
-
+    echo 
+    echb "lcd"
+    echo "Is LCD enabled/disabled"
+    echo 
+    echb "lcd-on"
+    echo "Enable the LCD"
+    echo 
+    echb "lcd-off"
+    echo "Disable the LCD"
+    echo 
+    echb "adc"
+    echo "Read analog out from ADS1015 (0 to 5v)"
+    echo 
+    echb "dac"
+    echo "Write analog out from MCP4725 (0 to 5v)"
+    echo 
+    echb "mcp-set"
+    echo "Get gpio pin status on MCP230xx"
+    echo 
+    echb "servo"
+    echo "Move Adafruit 16-channel I2c servo to position (pwm value)"
 }
 if [ "$in_parameter_1" == "help-io" ]; then
     echo 
@@ -1011,6 +989,9 @@ fi
 function help_develop()
 {
     echo 
+    echb "steelsquid restart"
+    echo "Restart he steelsquid daemon"
+    echo 
     echb "steelsquid dev"
     echo "Is the system in development mode"
     echo 
@@ -1022,7 +1003,9 @@ function help_develop()
     echo 
     echb "set-flag expanded"
     echo "It will tell the upgrade script not to overwrite:"
-    echo " - steelsquid_kiss_expand.py"
+    echo " - steelsquid_kiss_http_expand.py"
+    echo " - steelsquid_kiss_socket_expand.py"
+    echo " - steelsquid_kiss_global.py"
     echb "This is useful if you have expanded functionality. otherwise, the changes will be overwritten when you execute upgrade."
     echo 
     echb "steelsquid download"
@@ -1240,7 +1223,7 @@ function help_top()
     echo 
     echb "steelsquid status"
     echo "Print information about the device."
-    echo "CPU, Swap, MEM, IP, Temp, Settings..."
+    echo "CPU, MEM, IP, Temp, Settings..."
     echo 
     echb "steelsquid help"
     echo "Display help from all help categories."
@@ -1294,33 +1277,6 @@ if [ "$in_parameter_1" == "help" ]; then
     echo 
     exit 0
 fi
-
-
-
-##################################################################################
-# Check for internet connection
-##################################################################################
-if [ $(get_uppdated) == "false" ]; then
-    if [ "$in_parameter_1" == "upgrade" ] || [ "$in_parameter_1" == "update" ] || [ "$in_parameter_1" == "update-python" ] || [ "$in_parameter_1" == "update-web" ] || [ "$in_parameter_1" == "swap-on" ] || [ "$in_parameter_1" == "swap-off" ]  || [ "$in_parameter_1" == "download" ] ; then
-        log "Check for internet access..."
-        internet=$(((ping -w10 -c1 $host1 || ping -w10 -c1 $host2) > /dev/null 2>&1) && echo "up" || (echo "down" && exit 1))
-        if [ "$internet" == "up" ]; then
-           log "Internet access"
-        fi
-        if [ "$internet" == "down" ]; then
-            sleep 1
-            internet=$(((ping -w10 -c1 $host1 || ping -w10 -c1 $host2) > /dev/null 2>&1) && echo "up" || (echo "down" && exit 1))
-            if [ "$internet" == "up" ]; then
-               log "Internet access"
-            fi
-            if [ "$internet" == "down" ]; then
-               do-err-exit "No internet access, you neet internet connection..."
-            fi
-        fi
-    fi
-fi
-
-
 
 
 ##################################################################################
@@ -1555,8 +1511,8 @@ function socket_on()
 {
 	log "Enable socket connection"
     set-flag "socket_connection"
-	log-reboot
-    
+	systemctl restart steelsquid
+    log-ok
 }
 if [ "$in_parameter_1" == "socket-on" ]; then
 	socket_on
@@ -1571,7 +1527,8 @@ function socket_off()
 {
 	log "Disable socket connection"
     del-flag "socket_connection"
-	log-reboot
+	systemctl restart steelsquid
+    log-ok
 }
 if [ "$in_parameter_1" == "socket-off" ]; then
 	socket_off
@@ -1609,10 +1566,9 @@ function rover_on()
     set-flag "rover"
     stream_on
     connection_on
-    del-flag "lcd_direct"
-    set-flag "lcd_i2c"
- 	log-reboot
-    
+    set-flag "lcd"
+	systemctl restart steelsquid
+    log-ok
 }
 if [ "$in_parameter_1" == "rover-on" ]; then
 	rover_on
@@ -1627,7 +1583,8 @@ function rover_off()
 {
 	log "Disable rover"
     del-flag "rover"
-	log-reboot
+	systemctl restart steelsquid
+    log-ok
 }
 if [ "$in_parameter_1" == "rover-off" ]; then
 	rover_off
@@ -1636,80 +1593,19 @@ fi
 
 
 ##################################################################################
-# swap info
+# Restart service
 ##################################################################################
-function swap_info()
+function restart_s()
 {
-    if [ $(get-flag "swap") == "true" ]; then
-        echo
-        echo "Swap: Enabled"
-        echo
-    else
-        echo
-        echo "Swap: Disable"
-        echo
-    fi
+    echo "Restart steelsquid service"
+    systemctl restart steelsquid
+    log-ok
 }
-if [ "$in_parameter_1" == "swap" ]; then
-	swap_info
+if [ "$in_parameter_1" == "restart" ]; then
+	restart_s
 	exit 0
 fi
 
-
-
-##################################################################################
-# Enable swap
-##################################################################################
-function swap_on()
-{
-	log "Enable swap"
-    rm /etc/dphys-swapfile
-	aptitude -y install dphys-swapfile
-    exit-check "Unable to install dphys-swapfile!"
-	sed -i '/CONF_SWAPSIZE=/d' /etc/dphys-swapfile
-	echo "CONF_SWAPSIZE=512" >> /etc/dphys-swapfile
-	dphys-swapfile setup
-    exit-check "Unable to setup swapfile!"
-	dphys-swapfile swapon
-    exit-check "Unable to activate swapfile!"
-	swapon -a
-    exit-check "Unable to activate swapfile!"
-	echo "1" > /proc/sys/vm/swappiness
-	sed -i '/vm.swappiness=/d' /etc/sysctl.conf
-	echo "vm.swappiness=1" >> /etc/sysctl.conf
-	set-flag "swap"
-	log-reboot
-}
-if [ "$in_parameter_1" == "swap-on" ]; then
-	swap_on
-	exit 0
-fi
-
-
-##################################################################################
-# Disable swap
-##################################################################################
-function swap_off()
-{
-	log "Disable swap"
-	swapoff -a
-    exit-check "Unable to deactivate swap!"
-	echo "0" > /proc/sys/vm/swappiness
-	sed -i '/vm.swappiness=/d' /etc/sysctl.conf
-	echo "vm.swappiness=0" >> /etc/sysctl.conf
-	dphys-swapfile swapoff > /dev/null 2>&1
-	dphys-swapfile uninstall > /dev/null 2>&1
-	sed -i '/CONF_SWAPSIZE=/d' /etc/dphys-swapfile
-	echo "CONF_SWAPSIZE=0" >> /etc/dphys-swapfile
-	aptitude -y purge dphys-swapfile > /dev/null 2>&1
-    rm /etc/dphys-swapfile
-	del-flag "swap"
-	log-reboot
-}
-if [ "$in_parameter_1" == "swap-off" ]; then
-	swap_off
-	exit 0
-fi  
 
     
 ##################################################################################
@@ -1739,9 +1635,13 @@ fi
 function ssh_on()
 {
 	log "Enable SSH"
+    #systemctl unmask ssh
+    #systemctl enable ssh
+    #systemctl stop ssh
+    #systemctl start ssh
     sed -i "/DROPBEAR_PORT=/c\DROPBEAR_PORT=22" /etc/default/dropbear
     sed -i 's/NO_START=1/NO_START=0/g' /etc/default/dropbear
-    sed -i 's#^\(DROPBEAR_EXTRA_ARGS\s*=\s*\).*$#\1"-w -E -m"#' /etc/default/dropbear
+    sed -i 's#^\(DROPBEAR_EXTRA_ARGS\s*=\s*\).*$#\1"-m"#' /etc/default/dropbear
     systemctl unmask dropbear
     systemctl enable dropbear
     systemctl stop dropbear
@@ -1762,6 +1662,9 @@ fi
 function ssh_off()
 {
 	log "Disable SSH server"
+    #systemctl stop ssh
+    #systemctl disable ssh
+    #systemctl mask ssh
     systemctl stop dropbear
     systemctl disable dropbear
     systemctl mask dropbear
@@ -1770,7 +1673,7 @@ function ssh_off()
 }
 
 if [ "$in_parameter_1" == "ssh-off" ]; then
-	disable_ssh
+	ssh_off
 	exit 0
 fi
 
@@ -1780,11 +1683,15 @@ fi
 ##################################################################################
 function ssh_keys()
 {
-    echo "Generating keys for dropbear"
+    echo "Generating keys for ssh"
+    #rm /etc/ssh/ssh_host_*
+    #dpkg-reconfigure openssh-server
+    #systemctl restart ssh
     rm /etc/dropbear/dropbear_rsa_host_key
     rm /etc/dropbear/dropbear_dss_host_key
     dropbearkey -t rsa -s 2048 -f /etc/dropbear/dropbear_rsa_host_key
     dropbearkey -t dss -s 1024 -f /etc/dropbear/dropbear_dss_host_key
+    systemctl restart dropbear
     log-ok
 }
 if [ "$in_parameter_1" == "ssh-keys" ]; then
@@ -1799,7 +1706,7 @@ fi
 function download_info()
 {
     echo 
-    if [ $(get-flag "download") == "false" ]; then
+    if [ $(get-flag "download") == "true" ]; then
         echo "Download server: Eanbled"
     else
         echo "Download server: Disabled"
@@ -1901,9 +1808,9 @@ function web_info()
             echo "WEB-interface: HTTP"
         fi
         if [ $(get-flag "web_authentication") == "true" ]; then
-            echo "Authentication: Disabled"
-        else
             echo "Authentication: Enabled"
+        else
+            echo "Authentication: Disabled"
         fi
         if [ $(get-flag "web_local") == "true" ]; then
             echo "Listening: Localhost"
@@ -2161,18 +2068,19 @@ function install_steelsquid_python()
 	for var in "${python_downloads[@]}"
 	do
         if [ $(get-flag "expanded") == "true" ]; then
-            if [[ $var != *_expand* ]]
-            then
-                sudo wget --progress=dot:giga --no-check-certificate -O /usr/local/lib/python2.7/dist-packages/$(basename $var) $var
-                if [ $? -ne 0 ]; then
-                    do-err-exit "Unable to download from $var"
-                else
-                    sudo chmod 755 /usr/local/lib/python2.7/dist-packages/$(basename $var)
-                    rm ${python_links[$index]} > /dev/null 2>&1
-                    sudo ln -s /usr/local/lib/python2.7/dist-packages/$(basename $var) ${python_links[$index]}
-                    index=$[$index +1]
-                    log "$var downloaded and installed"
-                fi
+            if [[ $var != *_expand* ]]; then
+                if [[ $var != *_global* ]]; then
+                    sudo wget --progress=dot:giga --no-check-certificate -O /usr/local/lib/python2.7/dist-packages/$(basename $var) $var
+                    if [ $? -ne 0 ]; then
+                        do-err-exit "Unable to download from $var"
+                    else
+                        sudo chmod 755 /usr/local/lib/python2.7/dist-packages/$(basename $var)
+                        rm ${python_links[$index]} > /dev/null 2>&1
+                        sudo ln -s /usr/local/lib/python2.7/dist-packages/$(basename $var) ${python_links[$index]}
+                        index=$[$index +1]
+                        log "$var downloaded and installed"
+                    fi
+                fi        
             fi        
         else
             sudo wget --progress=dot:giga --no-check-certificate -O /usr/local/lib/python2.7/dist-packages/$(basename $var) $var
@@ -2523,13 +2431,9 @@ fi
 ##################################################################################
 function lcd_info()
 {
-    if [ $(get-flag "lcd_direct") == "true" ]; then
+    if [ $(get-flag "lcd") == "true" ]; then
         echo
-        echo "LCD is enabled (direct)"
-        echo
-    elif [ $(get-flag "lcd_i2c") == "true" ]; then
-        echo
-        echo "LCD is enabled (i2c)"
+        echo "LCD is enabled"
         echo
     else
         echo
@@ -2547,31 +2451,15 @@ fi
 ##################################################################################
 # Enable print IP to lcd
 ##################################################################################
-function enable_lcd_direct()
+function enable_lcd()
 {
-	log "Enable print IP and messges to LCD (direct)"
-	set-flag "lcd_direct"
-	del-flag "lcd_i2c"
-	log "Enabled (Changes will be implemented at the next reboot)"
+	log "Enable print IP and messges to LCD"
+	set-flag "lcd"
+    systemctl restart steelsquid
+	log-ok
 }
-if [ "$in_parameter_1" == "lcd-direct" ]; then
-	enable_lcd_direct
-	exit 0
-fi
-
-
-##################################################################################
-# Enable print IP to lcd
-##################################################################################
-function enable_lcd_i2c()
-{
-	log "Enable print IP and messges to LCD (i2c)"
-	del-flag "lcd_direct"
-	set-flag "lcd_i2c"
-	log "Enabled (Changes will be implemented at the next reboot)"
-}
-if [ "$in_parameter_1" == "lcd-i2c" ]; then
-	enable_lcd_i2c
+if [ "$in_parameter_1" == "lcd-on" ]; then
+	enable_lcd
 	exit 0
 fi
 
@@ -2583,9 +2471,9 @@ fi
 function disable_lcd()
 {
 	log "Disable print IP and messges to LCD"
-	del-flag "lcd_direct"
-	del-flag "lcd_i2c"
-	log "Disabled (Changes will be implemented at the next reboot)"
+	del-flag "lcd"
+    systemctl restart steelsquid
+	log-ok
 }
 if [ "$in_parameter_1" == "lcd-off" ]; then
 	disable_lcd
@@ -2975,9 +2863,6 @@ function clean()
 	log "Clean bash"
     srm -r /root/.bash_history
     rm -rf /root/.nano_history
-}
-function clean_deep()
-{
 	log "Umount everything under /root"
     for d in /root/*/ ; do
         umount $d
@@ -3002,19 +2887,12 @@ function clean_deep()
         umount -f $d
         umount -f -l $d
     done    
-	log "Write data to all free space on the hard drive"
-    sfill -l /home
 }
 if [ "$in_parameter_1" == "clean" ]; then
 	clean
 	do-ok-exit "Temporary files and private data is clean"
 fi
-if [ "$in_parameter_1" == "clean-deep" ]; then
-	clean
-    clean_deep
-	clean
-	do-ok-exit "Temporary files and private data is clean"
-fi
+
 
 
 
@@ -3092,6 +2970,29 @@ fi
 ##################################################################################
 function remote_commit()
 {
+    extra_array=()
+    if [ -f config.txt ]; then
+        log "Reading config.txt"
+        echo ""
+        COUNTER=1
+        while read line           
+        do           
+            if [ "$COUNTER" = "1" ]; then
+                base_remote_server=$line
+            elif [ "$COUNTER" = "2" ]; then
+                base_remote_port=$line
+            elif [ "$COUNTER" = "3" ]; then
+                base_remote_user=$line
+            elif [ "$COUNTER" = "4" ]; then
+                base_remote_password=$line
+            elif [ "$COUNTER" = "5" ]; then
+                COUNTER=5
+            else
+                extra_array+=("$line")
+            fi
+            COUNTER=$((COUNTER + 1))
+        done <config.txt   
+    fi
     echo "Please enter password or enter for default"
     read -s -p "$base_remote_user@$base_remote_server ($base_remote_password): " tmp_pass
     echo
@@ -3111,11 +3012,19 @@ function remote_commit()
     done
     
 	log "Transmitting files"
-    sshpass -p $base_remote_password scp -o StrictHostKeyChecking=no -P $base_remote_port steelsquid-kiss-os.sh $base_remote_user@$base_remote_server:/opt/steelsquid
     sshpass -p $base_remote_password scp -o StrictHostKeyChecking=no -P $base_remote_port $cstring $base_remote_user@$base_remote_server:/var/tmp
 
 	log "Installing files"
     sshpass -p $base_remote_password ssh -o StrictHostKeyChecking=no -p $base_remote_port $base_remote_user@$base_remote_server 'sudo steelsquid commit-remote-install'
+
+    for var in "${extra_array[@]}"
+    do        
+        local=${var%|*}
+        remote=${var##*|}
+        log "Installing extra file: $remote"
+        sshpass -p $base_remote_password scp -o StrictHostKeyChecking=no -P $base_remote_port $local $base_remote_user@$base_remote_server:$remote
+    done 
+
 }
 if [ "$in_parameter_1" == "commit-remote" ]; then
     remote_commit
@@ -3176,72 +3085,55 @@ function version_check()
 	exit-check
 	sudo mkdir -p $home_folder
 	exit-check
-	if [ "$download" == "false" -o "$development" == "true" ]; then
-		log "Copy $project_name to $home_folder"
-		sudo cp -f $0 $home_folder/$project_name.sh
-		exit-check
-		sudo chown root $home_folder/$project_name.sh
-		exit-check
-		sudo chgrp root $home_folder/$project_name.sh
-		exit-check
-		sudo chmod +x $home_folder/$project_name.sh
-		exit-check
-		sudo rm /usr/bin/do-upgrade > /dev/null 2>&1
-		sudo rm /usr/bin/steelsquid > /dev/null 2>&1
-		sudo ln -s $home_folder/$project_name.sh /usr/bin/steelsquid
-		exit-check
-		log "Version check OK"
-	else
-		case $download in
-			*.sh)
-				log "Download and copy $project_name to $download"
-				sudo wget --progress=dot:giga --no-check-certificate -O $home_folder/$project_name.sh_down $download
-				if [ $? -ne 0 ]; then
-					sudo rm $home_folder/$project_name.sh_down > /dev/null 2>&1
-					do-err-exit "Unable to download from $download"
-				else
-					sudo mv -f $home_folder/$project_name.sh_down $home_folder/$project_name.sh
-					exit-check
-					sudo chown root $home_folder/$project_name.sh
-					exit-check
-					sudo chgrp root $home_folder/$project_name.sh
-					exit-check
-					sudo chmod +x $home_folder/$project_name.sh
-					exit-check
-					sudo rm /usr/bin/do-upgrade > /dev/null 2>&1
-					sudo rm /usr/bin/steelsquid > /dev/null 2>&1
-					sudo ln -s $home_folder/$project_name.sh /usr/bin/steelsquid
-					exit-check
-					log "Version check OK"
-				fi
-			;;
-			*.gz)
-				log "Download, extract and copy $project_name to $download"
-				sudo wget --progress=dot:giga --no-check-certificate -O $project_name.gz $download
-				if [ $? -ne 0 ]; then
-					sudo rm $project_name.gz > /dev/null 2>&1
-					do-err-exit "Unable to download from $download"
-				else
-					sudo tar -zxf $project_name.gz -C $home_folder
-					exit-check
-					sudo chown -R root $home_folder
-					exit-check
-					sudo chgrp -R root $home_folder
-					exit-check
-					sudo chmod +x $home_folder/$project_name.sh
-					exit-check
-					sudo rm /usr/bin/do-upgrade > /dev/null 2>&1
-					sudo rm /usr/bin/steelsquid > /dev/null 2>&1
-					sudo ln -s $home_folder/$project_name.sh /usr/bin/steelsquid
-					exit-check
-					log "Version check OK"
-				fi
-			;;
-			*)
-				do-err-exit "Unknown file type ($download) must be sh or gz"
-			;;
-		esac
-	fi
+    case $download in
+        *.sh)
+            log "Download and copy $project_name to $download"
+            sudo wget --progress=dot:giga --no-check-certificate -O $home_folder/$project_name.sh_down $download
+            if [ $? -ne 0 ]; then
+                sudo rm $home_folder/$project_name.sh_down > /dev/null 2>&1
+                do-err-exit "Unable to download from $download"
+            else
+                sudo mv -f $home_folder/$project_name.sh_down $home_folder/$project_name.sh
+                exit-check
+                sudo chown root $home_folder/$project_name.sh
+                exit-check
+                sudo chgrp root $home_folder/$project_name.sh
+                exit-check
+                sudo chmod +x $home_folder/$project_name.sh
+                exit-check
+                sudo rm /usr/bin/do-upgrade > /dev/null 2>&1
+                sudo rm /usr/bin/steelsquid > /dev/null 2>&1
+                sudo ln -s $home_folder/$project_name.sh /usr/bin/steelsquid
+                exit-check
+                log "Version check OK"
+            fi
+        ;;
+        *.gz)
+            log "Download, extract and copy $project_name to $download"
+            sudo wget --progress=dot:giga --no-check-certificate -O $project_name.gz $download
+            if [ $? -ne 0 ]; then
+                sudo rm $project_name.gz > /dev/null 2>&1
+                do-err-exit "Unable to download from $download"
+            else
+                sudo tar -zxf $project_name.gz -C $home_folder
+                exit-check
+                sudo chown -R root $home_folder
+                exit-check
+                sudo chgrp -R root $home_folder
+                exit-check
+                sudo chmod +x $home_folder/$project_name.sh
+                exit-check
+                sudo rm /usr/bin/do-upgrade > /dev/null 2>&1
+                sudo rm /usr/bin/steelsquid > /dev/null 2>&1
+                sudo ln -s $home_folder/$project_name.sh /usr/bin/steelsquid
+                exit-check
+                log "Version check OK"
+            fi
+        ;;
+        *)
+            do-err-exit "Unknown file type ($download) must be sh or gz"
+        ;;
+    esac
 }
 
 ##################################################################################
@@ -3289,6 +3181,7 @@ else
     set-flag "web"
     set-flag "web_authentication"
     set-flag "ssh"
+    set-flag "lcd"
 fi
 
 
@@ -3318,15 +3211,15 @@ log "Repository updated"
 ##################################################################################
 if [ $(get_installed) == "false" ]; then
 	log "Remove and install packages"
-    aptitude -y purge cron ifupdown rsyslog vim-common vim-tiny hdparm openssh-server
-    exit-check 
 	aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv linux-image-rpi-rpfv raspberrypi-bootloader-nokernel i2c-tools alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-ti-connectivity libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer zd1211-firmware libraspberrypi-bin fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw
     exit-check 
 	aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install build-essential python-dbus python-pexpect python-dev python-setuptools python-pip python-pam python-smbus psmisc git libudev-dev libmount-dev
     exit-check 
 	aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install deborphan network-manager dash nano sudo aptitude udev ntfs-3g console-setup beep ecryptfs-utils alsa-utils alsa-base va-driver-all vdpau-va-driver
     exit-check 
-	aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install telnet secure-delete beep sysstat dropbear openssh-client  cifs-utils smbclient keyutils sshfs curl samba-common lsof mc fgetty hdparm ftp htop elinks screenie nload mtr-tiny lzma zip unzip unrar-free p7zip-full bzip2 whiptail parted lua5.1 aria2 python-serial 
+	aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install telnet secure-delete beep sysstat dropbear openssh-client  cifs-utils smbclient keyutils sshfs curl samba-common lsof mc fgetty ftp htop elinks screenie nload mtr-tiny lzma zip unzip unrar-free p7zip-full bzip2 whiptail parted lua5.1 aria2 python-serial 
+    exit-check 
+    aptitude -y purge cron ifupdown rsyslog vim-common vim-tiny hdparm openssh-server
     exit-check 
 	log "Packages removed and installed"
 fi
@@ -3467,7 +3360,7 @@ cd ldm
 make
 make install
 systemctl enable ldm
-sed -i "/ExecStart/c\ExecStart=\/usr\/local\/bin\/ldm -u 1000 -g 1000 -p \/media -c \/usr\/bin\/ldm-shout" /usr/local/lib/systemd/system/ldm.service
+sed -i "/ExecStart/c\ExecStart=\/usr\/local\/bin\/ldm -u 0 -g 0 -p \/media -c \/usr\/bin\/ldm-shout" /usr/local/lib/systemd/system/ldm.service
 sed -i '/EnvironmentFile/d' /usr/local/lib/systemd/system/ldm.service
 systemctl --system daemon-reload
 systemctl enable ldm
@@ -3682,6 +3575,14 @@ fi
 
 
 ##################################################################################
+# Enable root login
+##################################################################################
+log "Enable root login"
+sed -i '/PermitRootLogin /c\PermitRootLogin yes' /etc/ssh/sshd_config
+
+
+
+##################################################################################
 # Enable i2c
 ##################################################################################
 log "Enable i2c"
@@ -3784,12 +3685,15 @@ update-rc.d -f mountnfs-bootclean.sh remove
 update-rc.d -f mountnfs.sh remove
 update-rc.d -f umountnfs.sh remove
 update-rc.d -f triggerhappy remove
-update-rc.d -f ssh remove
 systemctl mask polkitd.servic
 systemctl disable systemd-journald.service
-#systemctl mask keyboard-setup.service
 systemctl mask console-setup.service
 systemctl mask systemd-logind.service
+systemctl mask sys-kernel-debug.mount
+systemctl mask cryptsetup.target
+systemctl mask graphical.target
+systemctl mask remote-fs-pre.target
+systemctl mask remote-fs.target
 log "Services disabled"
 
 
@@ -3874,12 +3778,32 @@ echo "level=ERR" >> /etc/NetworkManager/NetworkManager.conf
 
 
 ##################################################################################
-# Fix display
+# Fix config.txt
 ##################################################################################
-log "Fix display"
+log "Fix config.txt"
 echo "disable_overscan=1" > /boot/config.txt
 echo "disable_splash=1" >> /boot/config.txt
 echo "boot_delay=0" >> /boot/config.txt
+echo "sdtv_mode=0" >> /boot/config.txt
+echo "sdtv_aspect=3" >> /boot/config.txt
+echo "hdmi_drive=2" >> /boot/config.txt
+if [ $(get-flag "camera") == "true" ]; then
+    enable_camera
+else
+    disable_camera
+fi
+if [ $(get-flag "disable_monitor") == "true" ]; then
+    disable_monitor
+else
+    enable_monitor
+fi
+if [ $(get-flag "overclock") == "true" ]; then
+	overclock
+elif [ $(get-flag "underclock") == "true" ]; then
+	underclock
+else
+	defaultclock
+fi
 
 
 
@@ -3896,14 +3820,6 @@ sed -i '/pam_mail.so/d' /etc/pam.d/login
 sed -i '/pam_lastlog.so/d' /etc/pam.d/sshd
 sed -i '/pam_motd.so/d' /etc/pam.d/sshd
 sed -i '/pam_mail.so/d' /etc/pam.d/sshd
-
-
-
-##################################################################################
-# Disable ConsoleKit
-##################################################################################
-log "Disable ConsoleKit"
-sed -i 's/Exec=/#E#xec=/g' /usr/share/dbus-1/system-services/org.freedesktop.ConsoleKit.service
 
 
 
@@ -3928,6 +3844,23 @@ usermod -a -G plugdev root
 usermod -a -G fuse root
 usermod -a -G sudo root
 usermod -a -G video root
+
+
+
+##################################################################################
+# Disable swap
+##################################################################################
+log "Disable swap"
+swapoff -a
+echo "0" > /proc/sys/vm/swappiness
+sed -i '/vm.swappiness=/d' /etc/sysctl.conf
+echo "vm.swappiness=0" >> /etc/sysctl.conf
+dphys-swapfile swapoff > /dev/null 2>&1
+dphys-swapfile uninstall > /dev/null 2>&1
+sed -i '/CONF_SWAPSIZE=/d' /etc/dphys-swapfile
+echo "CONF_SWAPSIZE=0" >> /etc/dphys-swapfile
+aptitude -y purge dphys-swapfile > /dev/null 2>&1
+rm /etc/dphys-swapfile
 
 
 
@@ -3964,9 +3897,9 @@ chmod +x /usr/bin/aria2shouterr
 ##################################################################################
 log "Generate shout command"
 echo "#"\!"/bin/bash" > /usr/bin/shout
-echo "beep $" >> /usr/bin/shout
 echo "export aa=\"\$@\"" >> /usr/bin/shout
 echo "echo -e \"\$aa\" | wall -n > /dev/null 2>&1" >> /usr/bin/shout
+echo "echo -e \"\\n\$aa\" | tee /dev/tty1" >> /usr/bin/shout
 echo "exit 0" >> /usr/bin/shout
 chmod +x /usr/bin/shout
 
@@ -4325,30 +4258,6 @@ fi
 
 
 
-##################################################################################
-# Disable/enable SWAP
-##################################################################################
-if [ $(get-flag "swap") == "true" ]; then
-	enable_swap
-else
-	disable_swap
-fi
-
-
-
-
-##################################################################################
-# Overclock
-##################################################################################
-if [ $(get-flag "overclock") == "true" ]; then
-	overclock
-elif [ $(get-flag "underclock") == "true" ]; then
-	underclock
-else
-	defaultclock
-fi
-
-
 
 ##################################################################################
 # GPU
@@ -4371,6 +4280,16 @@ if [ $(get-flag "ssh") == "true" ]; then
 	ssh_on
 else
 	ssh_off
+fi
+
+
+##################################################################################
+# Enable disable lcd
+##################################################################################
+if [ $(get-flag "lcd") == "true" ]; then
+	enable_lcd
+else
+	disable_lcd
 fi
 
 

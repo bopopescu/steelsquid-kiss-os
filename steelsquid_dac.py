@@ -25,6 +25,6 @@ if len(sys.argv)==1:
     print("")
 else:
     try:
-        steelsquid_pi.dac_set(sys.argv[1], sys.argv[2])
+        steelsquid_pi.mcp4725(sys.argv[1], sys.argv[2])
     except KeyboardInterrupt:
         pass

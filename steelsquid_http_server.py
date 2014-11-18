@@ -92,14 +92,10 @@ import uuid
 from SocketServer import ThreadingMixIn
 
 ThreadingMixIn.daemon_threads=True
-ip_and_user = []
 ALLOWED_ROOT = ['/opt/steelsquid/web/', '/media/', '/mnt/', '/home/steelsquid/']
 session_data = {}
 public_resources = []
 
-
-def clear():
-    ip_and_user = []
 
 
 class ThreadedHTTPServer(ThreadingMixIn, BaseHTTPServer.HTTPServer):
@@ -118,9 +114,9 @@ class ThreadedHTTPServer(ThreadingMixIn, BaseHTTPServer.HTTPServer):
 
 class SteelsquidHttpServer(steelsquid_server.SteelsquidServer):
 
-    __slots__ = ['port', 'root', 'authorization', 'only_localhost', 'client_ip', 'fire_login_event', 'use_https', 'drop_privilege']
+    __slots__ = ['port', 'root', 'authorization', 'only_localhost', 'client_ip', 'use_https']
 
-    def __init__(self, port, root, authorization, only_localhost, local_web_password, fire_login_event, use_https, drop_privilege=False):
+    def __init__(self, port, root, authorization, only_localhost, local_web_password, use_https):
         '''
         Init the http-server
         @param port: The port number to listen on
@@ -128,8 +124,6 @@ class SteelsquidHttpServer(steelsquid_server.SteelsquidServer):
         @param authorization: The user must login with user from th system
         @param only_localhost: Only listen to localhost
         @param local_web_password ..
-        @param fire_login_event Fire the login ok and login error event (see steelsquid_event.py)
-                            Will trigger on error in login and strange commands (GET, POST)
         @param use_https This will enable https will generate a Self-Sign Certificate (You will get a untrusted certificat in your browser)
                           You must have ssl installed
         '''
@@ -145,9 +139,11 @@ class SteelsquidHttpServer(steelsquid_server.SteelsquidServer):
         self.RequestHandler.authorization = authorization
         self.RequestHandler.local_web_password = local_web_password
         self.RequestHandler.http_server = self
-        self.fire_login_event = fire_login_event
         self.use_https = use_https
-        self.drop_privilege = drop_privilege
+        if port == None and use_https:
+            self.port = 443
+        if port == None and not use_https:
+            self.port = 80
 
     def set_session_data(self, session_id, key, value):
         '''
@@ -204,9 +200,10 @@ class SteelsquidHttpServer(steelsquid_server.SteelsquidServer):
                     child.close()
                 except:
                     pass
-        steelsquid_utils.shout("WEB port " + str(self.port))
-        if self.drop_privilege:
-            steelsquid_utils.drop_privileges()
+        if self.use_https:
+            steelsquid_utils.shout("HTTPS web server\n" + str(self.port))
+        else:
+            steelsquid_utils.shout("HTTP web server\n" + str(self.port))
         return httpd
             
     def on_listen(self, listener):
@@ -2056,7 +2053,6 @@ class SteelsquidHttpServer(steelsquid_server.SteelsquidServer):
                 self.wfile.write(data)
 
         def security(self, resource):
-            global ip_and_user
             global public_resources
             if len(resource) == 0:
                 resource = "index.html"
@@ -2069,8 +2065,6 @@ class SteelsquidHttpServer(steelsquid_server.SteelsquidServer):
                     if self.http_server.client_ip != "127.0.0.1" or self.local_web_password:
                         aut = self.headers.getheader("Authorization")
                         if aut == None:
-                            if self.http_server.fire_login_event:
-                                steelsquid_event.broadcast_event("login", [False, self.http_server.client_ip, "---"])
                             data = "No auth header received"
                             self.send_headers_data(self.HTTP_UNAUTHORIZED, self.MIME_PLAIN, len(data), None, use_cache=False)
                             self.wfile.write(data)
@@ -2079,13 +2073,8 @@ class SteelsquidHttpServer(steelsquid_server.SteelsquidServer):
                             aut = base64.b64decode(aut.split(" ")[1]).split(":")
                             useerr=aut[0]
                             if steelsquid_utils.authenticate(useerr, aut[1]):
-                                if self.http_server.fire_login_event:
-                                    if not self.http_server.client_ip+useerr in ip_and_user:
-                                        ip_and_user.append(self.http_server.client_ip+useerr)
-                                        steelsquid_event.broadcast_event("login", [True, self.http_server.client_ip, useerr])
+                                pass
                             else:
-                                if self.http_server.fire_login_event:
-                                    steelsquid_event.broadcast_event("login", [False, self.http_server.client_ip, useerr])
                                 data = "Not authorised!"
                                 self.send_headers_data(self.HTTP_UNAUTHORIZED, self.MIME_PLAIN, len(data), None, use_cache=False)
                                 self.wfile.write(data)
@@ -2097,12 +2086,6 @@ class SteelsquidHttpServer(steelsquid_server.SteelsquidServer):
             if response == self.HTTP_UNAUTHORIZED:
                 if self.client_address[0] != "127.0.0.1" or self.local_web_password:
                     self.send_header("WWW-Authenticate", "Basic realm=\"Steelsquid\"")
-            if response == self.HTTP_NOT_FOUND:
-                if self.http_server.fire_login_event:
-                    steelsquid_event.broadcast_event("login", [False, self.http_server.client_ip, "---"])
-            if response == self.HTTP_BAD_REQUEST:
-                if self.http_server.fire_login_event:
-                    steelsquid_event.broadcast_event("login", [False, self.http_server.client_ip, "---"])
             self.send_header("Content-type", content_type)
             self.send_header("Last-Modified", self.modify_date(tfile))
             self.send_header("Content-Length", os.path.getsize(tfile))
@@ -2122,12 +2105,6 @@ class SteelsquidHttpServer(steelsquid_server.SteelsquidServer):
             if response == self.HTTP_UNAUTHORIZED:
                 if self.client_address[0] != "127.0.0.1" or self.local_web_password:
                     self.send_header("WWW-Authenticate", "Basic realm=\"Steelsquid\"")
-            if response == self.HTTP_NOT_FOUND:
-                if self.http_server.fire_login_event:
-                    steelsquid_event.broadcast_event("login", [False, self.http_server.client_ip, "---"])
-            if response == self.HTTP_BAD_REQUEST:
-                if self.http_server.fire_login_event:
-                    steelsquid_event.broadcast_event("login", [False, self.http_server.client_ip, "---"])
             self.send_header("Content-type", content_type)
             if data_mod!=None:
                 self.send_header("Last-Modified", data_mod)

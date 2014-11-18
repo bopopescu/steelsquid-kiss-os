@@ -25,6 +25,6 @@ if len(sys.argv)==1:
     print("")
 else:
     try:
-        print steelsquid_pi.adc_get(sys.argv[1], sys.argv[2])
+        print steelsquid_pi.ads1015(sys.argv[1], sys.argv[2])
     except KeyboardInterrupt:
         pass

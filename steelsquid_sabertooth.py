@@ -39,7 +39,7 @@ class SteelsquidSabertooth(threading.Thread):
         self.ser = serial.Serial(self.serial_port, self.baudrate, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=8, writeTimeout=0, dsrdtr=True)                
 
 
-    def set_speed(self, left, right):
+    def set_dc_speed(self, left, right):
         '''
         Set the speed.
         from -100 to +100
@@ -88,8 +88,8 @@ if __name__ == "__main__":
     steelsquid_utils.set_development()
     sab = SteelsquidSabertooth()
     while True:
-        speed = raw_input()
-        steer = raw_input()
-        sab.set_speed(speed, steer)
+        left = raw_input()
+        right = raw_input()
+        sab.set_dc_speed(left, right)
 
 

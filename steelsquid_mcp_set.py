@@ -28,8 +28,8 @@ if len(sys.argv)==1:
 else:
     try:
         if sys.argv[3] == "on":
-            steelsquid_pi.mcp_set(sys.argv[1], sys.argv[2], True)
+            steelsquid_pi.mcp23017_set(sys.argv[1], sys.argv[2], True)
         else:
-            steelsquid_pi.mcp_set(sys.argv[1], sys.argv[2], False)
+            steelsquid_pi.mcp23017_set(sys.argv[1], sys.argv[2], False)
     except KeyboardInterrupt:
         pass

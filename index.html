@@ -30,119 +30,95 @@
                 }
             }
 
-            /**
-             * Is this a desktop computer
-             */
-            function on_desktop(paramaters){
-                if(paramaters[0] == "True"){
-                    if (isLayerShowing('main')){
-                        $("#mouse_menu").show();
-                        $("#font_menu").show();
-                    }
-                    else{
-                        $("#mouse_menu2").show();
-                        $("#font_menu2").show();
-                    }
-                }
-            }
 
             /**
              * system info
              */
             function on_system_info(paramaters){
-                $("#ram_total").html(paramaters[0] + "M");
-                $("#ram_used").html(paramaters[1] + "M");
-                $("#ram_free").html(paramaters[2] + "M");
-                $("#swap_total").html(paramaters[3] + "M");
-                $("#swap_used").html(paramaters[4] + "M");
-                $("#swap_free").html(paramaters[5] + "M");
-                $("#sdcard_total").html(paramaters[6]);
-                $("#sdcard_used").html(paramaters[7]);
-                $("#sdcard_free").html(paramaters[8]);
-                $("#temp").html(paramaters[9]);
-                $("#cpu").html(paramaters[10]+"%");
-                $("#count").html(paramaters[11]);
-                $("#date").html(paramaters[12]);
-                $("#up").html(paramaters[13]);
-                $("#users").html(paramaters[14]);
-                $("#load").html(paramaters[15]);
-                $("#boot").html(paramaters[16]);
-                $("#status_hostname").html(paramaters[17]);
-                $("#ip").html(paramaters[18]);
-                $("#wan_ip").html(paramaters[19]);
-                $("#connected_info").html(paramaters[20]);
-                $("#swap_enabled").html(paramaters[21]);
-                $("#web_enabled").html(paramaters[22]);
-                $("#overclocking_enabled").html(paramaters[23]);
-                $("#lcd_enabled").html(paramaters[24]);
-                $("#local_web").html(paramaters[25]);
-                $("#web_authentication").html(paramaters[39]);
-                $("#ip_wired").html(paramaters[26]);
-                $("#ip_wifi").html(paramaters[27]);
-                $("#ssh").html(paramaters[28]);
-                $("#info_timezone").html(paramaters[29]);
-                $("#info_keyboard").html(paramaters[30]);
-                $("#info_display").html(paramaters[36]);
-                $("#info_autologin").html(paramaters[32]);
-                if(paramaters[31]=="True"){
-                    $("#info_nano").html("Enabled");
-                    $("#info_mouse_speed").html(paramaters[33]);
-                    $("#info_mouse_acceleration").html(paramaters[34]);
-                    $("#info_font_size").html(paramaters[35]);
-                }
-                else{
-                    $("#info_nano").html("Not enabled");
-                }
-                $("#info_cpu_freq").html(paramaters[37]);
-                $("#info_ssh_port").html(paramaters[38]);
-                $("#status_root").html(paramaters[40]);
+                $("#p_date").html(paramaters[0]);
+                $("#p_hostname").html(paramaters[1]);
+                $("#p_development").html(paramaters[2]);
+                $("#p_boot").html(paramaters[3]);
+                $("#p_up").html(paramaters[4]);
+                $("#p_users").html(paramaters[5]);
+                $("#p_load").html(paramaters[6]);
+                $("#p_ip_wired").html(paramaters[7]);
+                $("#p_ip_wifi").html(paramaters[8]);
+                $("#p_ip_wan").html(paramaters[9]);
+                $("#p_access_point").html(paramaters[10]);
+                $("#p_cpu").html(paramaters[11]);
+                $("#p_cpu_f").html(paramaters[12]);
+                $("#p_count").html(paramaters[13]);
+                $("#p_temp").html(paramaters[14]);
+                $("#p_ram_total").html(paramaters[15]);
+                $("#p_ram_free").html(paramaters[16]);
+                $("#p_ram_used").html(paramaters[17]);
+                $("#p_disk_size").html(paramaters[18]);
+                $("#p_disk_used").html(paramaters[19]);
+                $("#p_disk_aval").html(paramaters[20]);
+                $("#p_overclock").html(paramaters[21]);
+                $("#p_gpu_mem").html(paramaters[22]);
+                $("#p_log").html(paramaters[23]);
+                $("#p_disable_monitor").html(paramaters[24]);
+                $("#p_camera").html(paramaters[25]);
+                $("#p_timezone").html(paramaters[26]);
+                $("#p_keyb").html(paramaters[27]);
+                $("#p_web").html(paramaters[28]);
+                $("#p_web_local").html(paramaters[29]);
+                $("#p_web_https").html(paramaters[30]);
+                $("#p_web_aut").html(paramaters[31]);
+                $("#p_ssh").html(paramaters[32]);
+                $("#p_has_lcd").html(paramaters[33]);
+                $("#p_stream").html(paramaters[34]);
+                $("#p_socket").html(paramaters[35]);
+                $("#p_rover").html(paramaters[36]);
+                $("#p_download").html(paramaters[37]);
+                $("#p_download_dir").html(paramaters[38]);
             }
 
             /**
              * System info error
              */
             function on_system_info_err(err){
-                $("#ram_total").html("---");
-                $("#ram_used").html("---");
-                $("#ram_free").html("---");
-                $("#swap_total").html("---");
-                $("#swap_used").html("---");
-                $("#swap_free").html("---");
-                $("#sdcard_total").html("---");
-                $("#sdcard_used").html("---");
-                $("#sdcard_free").html("---");
-                $("#temp").html("---");
-                $("#cpu").html("---");
-                $("#count").html("---");
-                $("#date").html("---");
-                $("#up").html("---");
-                $("#users").html("---");
-                $("#load").html("---");
-                $("#boot").html("---");
-                $("#status_hostname").html("---");
-                $("#ip").html("---");
-                $("#wan_ip").html("---");
-                $("#connected_info").html("---");
-                $("#swap_enabled").html("---");
-                $("#web_enabled").html("---");
-                $("#overclocking_enabled").html("---");
-                $("#lcd_enabled").html("---");
-                $("#local_web").html("---");
-                $("#web_authentication").html("---");
-                $("#ip_wired").html("---");
-                $("#ip_wifi").html("---");
-                $("#ssh").html("---");
-                $("#info_timezone").html("---");
-                $("#info_keyboard").html("---");
-                $("#info_display").html("---");
-                $("#info_nano").html("---");
-                $("#info_autologin").html("---");
-                $("#info_mouse_speed").html("---");
-                $("#info_mouse_acceleration").html("---");
-                $("#info_font_size").html("---");
-                $("#info_cpu_freq").html("---");
-                $("#info_ssh_port").html("---");
-                $("#status_root").html("---");
+                $("#p_date").html("---");
+                $("#p_hostname").html("---");
+                $("#p_development").html("---");
+                $("#p_boot").html("---");
+                $("#p_up").html("---");
+                $("#p_users").html("---");
+                $("#p_load").html("---");
+                $("#p_ip_wired").html("---");
+                $("#p_ip_wifi").html("---");
+                $("#p_ip_wan").html("---");
+                $("#p_access_point").html("---");
+                $("#p_cpu").html("---");
+                $("#p_cpu_f").html("---");
+                $("#p_count").html("---");
+                $("#p_temp").html("---");
+                $("#p_ram_total").html("---");
+                $("#p_ram_free").html("---");
+                $("#p_ram_used").html("---");
+                $("#p_disk_size").html("---");
+                $("#p_disk_used").html("---");
+                $("#p_disk_aval").html("---");
+                $("#p_overclock").html("---");
+                $("#p_gpu_mem").html("---");
+                $("#p_log").html("---");
+                $("#p_disable_monitor").html("---");
+                $("#p_camera").html("---");
+                $("#p_timezone").html("---");
+                $("#p_keyb").html("---");
+                $("#p_web").html("---");
+                $("#p_web_local").html("---");
+                $("#p_web_https").html("---");
+                $("#p_web_aut").html("---");
+                $("#p_ssh").html("---");
+                $("#p_has_lcd").html("---");
+                $("#p_stream").html("---");
+                $("#p_socket").html("---");
+                $("#p_rover").html("---");
+                $("#p_download").html("---");
+                $("#p_download_dir").html("---");
             }
 
             /**
@@ -546,73 +522,6 @@
             }
 
             /**
-             * On mouse set
-             */
-            function on_mouse_set(paramaters){
-                $("#mouse_speed").val(paramaters[0]);
-                $("#mouse_acc").val(paramaters[1]);
-                showAlertMedium("Mouse speed changed", false);
-            }
-
-            /**
-             * On mouse get
-             */
-            function on_mouse_get(paramaters){
-                $("#mouse_speed").val(paramaters[0]);
-                $("#mouse_acc").val(paramaters[1]);
-            }
-
-            /**
-             * On font set
-             */
-            function on_font_set(paramaters){
-                $("#font_size").val(paramaters[0]);
-                showAlertMedium("Font size changed", false);
-            }
-
-            /**
-             * On font get
-             */
-            function on_font_get(paramaters){
-                $("#font_size").val(paramaters[0]);
-            }
-
-            /**
-             * Autoligin
-             */
-            function on_autologin_on(paramaters){
-                on_autologin(paramaters);
-            }
-
-            /**
-             * Autoligin
-             */
-            function on_autologin_off(paramaters){
-                on_autologin(paramaters);
-            }
-
-            /**
-             * Autoligin
-             */
-            function on_autologin(paramaters){
-                if(paramaters[0] == "Encrypt"){
-                    disable("autologin_enable");
-                    disable("autologin_disable");
-                    $("#autologin_info").html("You can not enable autologin because the filesystem is encrypted!");
-                }
-                else if(paramaters[0] == "True"){
-                    disable("autologin_enable");
-                    enable("autologin_disable");
-                    $("#autologin_info").html("Autologin enabled");
-                }
-                else{
-                    enable("autologin_enable");
-                    disable("autologin_disable");
-                    $("#autologin_info").html("Autologin disabled");
-                }
-            }
-
-            /**
              * Get mail 
              */
             function on_mail_get(paramaters){
@@ -648,19 +557,16 @@
                 setContent("clean_log", paramaters, false);
                 if(status == "idle"){
                     enable("clean_button");
-                    enable("clean_button_deep");
                     enable("clean_button_reset");
                     status_idle("clean_status");
                 }
                 else if(status == "busy"){
                     disable("clean_button");
-                    disable("clean_button_deep");
                     disable("clean_button_reset");
                     status_busy("clean_status");
                 }
                 else if(status == "err"){
                     enable("clean_button");
-                    enable("clean_button_deep");
                     enable("clean_button_reset");
                     status_err("clean_status");
                     appendContent("clean_log", error, true);
@@ -668,7 +574,6 @@
                 }
                 else if(status == "ok"){
                     enable("clean_button");
-                    enable("clean_button_deep");
                     enable("clean_button_reset");
                     status_ok("clean_status");
                 }
@@ -678,36 +583,15 @@
             /**
              * On disable ssh server
              */
-            function on_ssh_disable(paramaters){
+            function on_ssh_dis(paramaters){
                 if(paramaters[0] == "True"){
-                    $("#ssh_disable_button").html("<button onclick=\"javascript:submitSyncConfirm('Are you sure you want to enable SSH server?', 'ssh_disable', 'False');\">Enable SSH-server</button>");
+                    $("#ssh_disable_button").html("<button onclick=\"javascript:submitSyncConfirm('Are you sure you want to enable SSH server?', 'ssh_dis', 'False');\">Enable SSH-server</button>");
                     $("#ssh_disable_info").html("SSH disabled");
                 }
                 else{
-                    $("#ssh_disable_button").html("<button onclick=\"javascript:submitSyncConfirm('Are you sure you want to disable SSH server?', 'ssh_disable', 'True');\">Disable SSH-server</button>");
+                    $("#ssh_disable_button").html("<button onclick=\"javascript:submitSyncConfirm('Are you sure you want to disable SSH server?', 'ssh_dis', 'True');\">Disable SSH-server</button>");
                     $("#ssh_disable_info").html("SSH enabled");
                 }
-            }
-
-            /**
-             * On use openssh instead of dropbear
-             */
-            function on_ssh_openssh(paramaters){
-                if(paramaters[0] == "True"){
-                    $("#ssh_openssh_button").html("<button onclick=\"javascript:submitSyncConfirm('Are you sure you want to switch to Dropbear SSH-server?', 'ssh_openssh', 'False');\">Switch to Dropbear</button>");
-                    $("#ssh_openssh_info").html("Using OpenSSH");
-                }
-                else{
-                    $("#ssh_openssh_button").html("<button onclick=\"javascript:submitSyncConfirm('Are you sure you want to switch to OpenSSH-server??', 'ssh_openssh', 'True');\">Switch to OpenSSH</button>");
-                    $("#ssh_openssh_info").html("Using Dropbear");
-                }
-            }
-
-            /**
-             * On change ssh port
-             */
-            function on_ssh_port(paramaters){
-                setValue('ssh_input_port', paramaters[0])
             }
 
             /**
@@ -771,35 +655,28 @@
              */
             function on_web_interface_authentication(paramaters){
                 if(paramaters[0] == "True"){
-                    $("#web_interface_authentication_button").html("<button onclick=\"javascript:submitSyncFromPrompt('web_interface_authentication_off', 'Please enter password for the user steelsquid?', '');\">Disable authentication</button>");
+                    $("#web_interface_authentication_button").html("<button onclick=\"javascript:submitSyncFromPrompt('web_interface_authentication_off', 'Please enter password for the user root?', '');\">Disable authentication</button>");
                     $("#web_interface_authentication_info").html("Authentication enabled");
                 }
                 else{
-                    $("#web_interface_authentication_button").html("<button onclick=\"javascript:submitSyncFromPrompt('web_interface_authentication_on', 'Please enter password for the user steelsquid?', '');\">Enable authentication</button>");
+                    $("#web_interface_authentication_button").html("<button onclick=\"javascript:submitSyncFromPrompt('web_interface_authentication_on', 'Please enter password for the user root?', '');\">Enable authentication</button>");
                     $("#web_interface_authentication_info").html("Authentication disabled");
                 }
                 setValue('web_interface_authentication', paramaters[1])
             }
 
-            /**
-             * On web interface port
-             */
-            function on_web_interface_port(paramaters){
-                setValue('web_interface_port', paramaters[0])
-                submitNoPW('web_interface_disable');
-            }
-            
+
             /**
              * On web interface share /mnt, /media and /home/steelsquid
              */
             function on_web_interface_share(paramaters){
                 if(paramaters[0] == "True"){
-                    $("#web_interface_share_button").html("<button onclick=\"javascript:submitSyncFromPrompt('web_interface_share_off', 'Please enter password for the user steelsquid?', '');\">Disable access</button>");
-                    $("#web_interface_share_info").html("Access to /home/steelsquid is enabled");
+                    $("#web_interface_share_button").html("<button onclick=\"javascript:submitSyncFromPrompt('web_interface_share_off', 'Please enter password for the user root?', '');\">Disable access</button>");
+                    $("#web_interface_share_info").html("Access to /root is enabled");
                 }
                 else{
-                    $("#web_interface_share_button").html("<button onclick=\"javascript:submitSyncFromPrompt('web_interface_share_on', 'Please enter password for the user steelsquid?', '');\">Enable access</button>");
-                    $("#web_interface_share_info").html("Access to /home/steelsquid is disabled");
+                    $("#web_interface_share_button").html("<button onclick=\"javascript:submitSyncFromPrompt('web_interface_share_on', 'Please enter password for the user root?', '');\">Enable access</button>");
+                    $("#web_interface_share_info").html("Access to /root is disabled");
                 }
             }
             function on_web_interface_share_on(paramaters){
@@ -814,11 +691,11 @@
              */
             function on_rover(paramaters){
                 if(paramaters[0] == "True"){
-                    $("#rover_button").html("<button onclick=\"javascript:submitSyncFromPrompt('rover_disable', 'Please enter password for the user steelsquid?', '');\">Disable Rover</button>");
+                    $("#rover_button").html("<button onclick=\"javascript:submitSyncFromPrompt('rover_disable', 'Please enter password for the user root?', '');\">Disable Rover</button>");
                     $("#rover_info").html("The Rover Controller is enabled");
                 }
                 else{
-                    $("#rover_button").html("<button onclick=\"javascript:submitSyncFromPrompt('rover_enable', 'Please enter password for the user steelsquid?', '');\">Enable Rover</button>");
+                    $("#rover_button").html("<button onclick=\"javascript:submitSyncFromPrompt('rover_enable', 'Please enter password for the user root?', '');\">Enable Rover</button>");
                     $("#rover_info").html("The Rover Controller  disabled");
                 }
             }
@@ -834,11 +711,11 @@
              */
             function on_downman(paramaters){
                 if(paramaters[0] == "True"){
-                    $("#download_button").html("<button onclick=\"javascript:submitSyncFromPrompt('downman_disable', 'Please enter password for the user steelsquid?', '');\">Disable Download manager</button>");
+                    $("#download_button").html("<button onclick=\"javascript:submitSyncFromPrompt('downman_disable', 'Please enter password for the user root?', '');\">Disable Download manager</button>");
                     $("#download_info").html("The Download manager is enabled");
                 }
                 else{
-                    $("#download_button").html("<button onclick=\"javascript:submitSyncFromPrompt('downman_enable', 'Please enter password for the user steelsquid?', '');\">Enable Download manager</button>");
+                    $("#download_button").html("<button onclick=\"javascript:submitSyncFromPrompt('downman_enable', 'Please enter password for the user root?', '');\">Enable Download manager</button>");
                     $("#download_info").html("The Download manager  disabled");
                 }
             }
@@ -847,80 +724,6 @@
             }
             function on_downman_disable(paramaters){
                 on_downman(paramaters);
-            }
-
-            /**
-             * Encrypt information
-             */
-            function on_encrypt_info(paramaters){
-                if(paramaters[0] == "True"){
-                    hide("encrypt_mode_button");
-                    hide("encrypt_button");
-                    hide("encrypt_mode_text");
-                    hide("encrypt_text");
-                    hide("encrypt_undo");
-                    if(paramaters[1] == "True"){
-                        show("encrypt_text_done");
-                        hide("encrypt_text_encrypted");
-                        show("encrypt_reboot");
-                    }
-                    else{
-                        show("encrypt_text_encrypted");
-                        hide("encrypt_text_done");
-                        hide("encrypt_reboot");
-                    }                        
-                }
-                else{
-                    if(paramaters[1] == "True"){
-                        hide("encrypt_mode_button");
-                        show("encrypt_button");
-                        hide("encrypt_mode_text");
-                        show("encrypt_text");
-                        hide("encrypt_reboot");
-                        show("encrypt_undo");
-                    }
-                    else{
-                        show("encrypt_mode_button");
-                        hide("encrypt_button");
-                        show("encrypt_mode_text");
-                        hide("encrypt_text");
-                        hide("encrypt_reboot");
-                        hide("encrypt_undo");
-                    }
-                }
-            }
-            
-            /**
-             * Check ansync encrypt work
-             * status: idle, busy, err, ok
-             *   idle=No work has executed
-             *   busy=Working
-             *   err=Work finish with error
-             *   ok=Work finish OK
-             * error: only if status=='err'
-             */
-            function on_encrypt(status, error, paramaters){
-                setContent("encrypt_log", paramaters, false);
-                if(status == "idle"){
-                    status_idle("encrypt_status");
-                    submitSync('encrypt_info');
-                }
-                else if(status == "busy"){
-                    disable("encrypt_button");
-                    status_busy("encrypt_status");
-                }
-                else if(status == "err"){
-                    enable("encrypt_button");
-                    status_err("encrypt_status");
-                    appendContent("encrypt_log", error, true);
-                    showAlertMedium(error, true, true);
-                }
-                else if(status == "ok"){
-                    enable("encrypt_button");
-                    enable("encrypt_button_reset");
-                    status_ok("encrypt_status");
-                }
-                scrollToBottomIfChanged("encrypt_log");
             }
 
             /**
@@ -969,37 +772,6 @@
             function on_expand(paramaters){
                 status_ok("expand_status", paramaters[0]);
                 show("expand_reboot");
-            }
-
-            /**
-             * On disable swap
-             */
-            function on_swap_disable(paramaters){
-                if(paramaters[0] == "True"){
-                    $("#swap_disable_button").html("<button onclick=\"javascript:submitSyncConfirm('Are you sure you want to enable SWAP?', 'swap_disable', 'False');\">Enable</button>");
-                    $("#swap_info").html("SWAP disabled");
-                }
-                else{
-                    $("#swap_disable_button").html("<button onclick=\"javascript:submitSyncConfirm('Are you sure you want to disable the SWAP?', 'swap_disable', 'True');\">Disable</button>");
-                    $("#swap_info").html("SWAP enabled");
-                }
-            }
-
-            /**
-             * Root mode
-             */
-            function on_root_on(paramaters){
-                if(paramaters[0] == "True"){
-                    $("#root_button").html("<button onclick=\"javascript:submitSyncFromPrompt('root_off', 'Please enter password for the user steelsquid?', '');\">Disable root mode</button>");
-                    $("#root_info").html("ROOT mode enabled");
-                }
-                else{
-                    $("#root_button").html("<button onclick=\"javascript:submitSyncFromPrompt('root_on', 'Please enter password for the user steelsquid?', '');\">Enable root mode</button>");
-                    $("#root_info").html("ROOT mode disabled");
-                }
-            }
-            function on_root_off(paramaters){
-                on_root_on(paramaters)
             }
             
             /**
@@ -1080,23 +852,15 @@
              * On lcd
              */
             function on_lcd(paramaters){
-                if(paramaters[0] == "disable"){
-                    enable("lcd_button_direct")
-                    enable("lcd_button_i2c")
+                if(paramaters[0] == "False"){
+                    enable("lcd_button_enable")
                     disable("lcd_button_disable")
                     status_ok("lcd_status", "LCD disabled");
                 }
-                else if(paramaters[0] == "direct"){
-                    disable("lcd_button_direct")
-                    enable("lcd_button_i2c")
+                else if(paramaters[0] == "True"){
+                    disable("lcd_button_enable")
                     enable("lcd_button_disable")
-                    status_ok("lcd_status", "LCD enabled (direct)");
-                }
-                else if(paramaters[0] == "i2c"){
-                    enable("lcd_button_direct")
-                    disable("lcd_button_i2c")
-                    enable("lcd_button_disable")
-                    status_ok("lcd_status", "LCD enabled (i2c)");
+                    status_ok("lcd_status", "LCD enabled");
                 }
             }
             
@@ -1110,17 +874,10 @@
             /**
              * On lcd
              */
-            function on_lcd_direct(paramaters){
+            function on_lcd_enable(paramaters){
                 on_lcd(paramaters);
             }
             
-            /**
-             * On lcd
-             */
-            function on_lcd_i2c(paramaters){
-                on_lcd(paramaters);
-            }
-                        
             /**
              * When the page is loaded
              */
@@ -1153,12 +910,11 @@
              * This will execute every 10 second
              */
             function onEvery05s(){
-                if (isLayerShowing('encrypt')){
-                    submitNoPW('encrypt_info');
-                    checkAsync('encrypt');
-                }
-                else if (isLayerShowing('clean')){
+                if (isLayerShowing('clean')){
                     checkAsync('clean');
+                }
+                else if(isLayerShowing("lcd")){
+                    submitNoPW('lcd');
                 }
             }
 
@@ -1181,7 +937,6 @@
                     submitSync('web_interface_localhost');
                     submitSync('web_interface_https');
                     submitSync('web_interface_authentication');
-                    submitSync('web_interface_port');
                 }
             }
 
@@ -1190,13 +945,7 @@
              */
             function onLayerShown(layer){
 
-                if(layer == "main"){
-                    submitSync('desktop');
-                }
-                else if(layer == "main2"){
-                    submitSync('desktop');
-                }
-                else if(layer == "wifi"){
+                if(layer == "wifi"){
                     submitSync('wifi_status');
                     submitSync('wifi_list');
                 }
@@ -1211,16 +960,13 @@
                     submitSync('tz_list');
                 }
                 else if(layer == "ssh_layer"){
-                    submitSync('ssh_disable');
-                    submitSync('ssh_openssh');
-                    submitSync('ssh_port');
+                    submitSync('ssh_dis');
                 }
                 else if(layer == "web_interface"){
                     submitSync('web_interface_disable');
                     submitSync('web_interface_localhost');
                     submitSync('web_interface_https');
                     submitSync('web_interface_authentication');
-                    submitSync('web_interface_port');
                     submitSync('web_interface_share');
                     submitSync('rover');
                     submitSync('downman');
@@ -1228,27 +974,12 @@
                 else if(layer == "lcd"){
                     submitSync('lcd');
                 }
-                else if(layer == "swap"){
-                    submitSync('swap_disable');
-                }
-                else if(layer == "root"){
-                    submitSync('root_on');
-                }
                 else if(layer == "overclock"){
                     submitSync('overclock');
                 }
                 else if(layer == "keyboard"){
                     submitSync('keyboard_get');
                     submitSync('keyboard_list');
-                }
-                else if(layer == "mouse"){
-                    submitSync('mouse_get');
-                }
-                else if(layer == "font"){
-                    submitSync('font_get');
-                }
-                else if(layer == "autologin"){
-                    submitSync('autologin');
                 }
                 else if(layer == "mail"){
                     submitSync('mail_get');
@@ -1267,10 +998,6 @@
                 else if(layer == "camera"){
                     submitSync('camera');
                     submitSync('stream');
-                }
-                else if(layer == "encrypt"){
-                    submitNoPW('encrypt_info');
-                    checkAsync('encrypt');
                 }
                 else if(layer == "clean"){
                     checkAsync('clean');
@@ -1481,30 +1208,6 @@
                                 Keyboard
                             </td>
                         </tr>
-                        <tr id="mouse_menu" class="hide" onclick="javascript:showLayer('mouse');">
-                            <td>
-                                <img alt="logo" src="img/mouse.png"></img>
-                            </td>
-                            <td>
-                                Mouse
-                            </td>
-                        </tr>
-                        <tr id="font_menu" class="hide" onclick="javascript:showLayer('font');">
-                            <td>
-                                <img alt="logo" src="img/fonts.png"></img>
-                            </td>
-                            <td>
-                                Font size
-                            </td>
-                        </tr>
-                        <tr onclick="javascript:showLayer('autologin');">
-                            <td>
-                                <img alt="logo" src="img/autologin.png"></img>
-                            </td>
-                            <td>
-                                Autologin
-                            </td>
-                        </tr>
                         <tr onclick="javascript:showLayer('mail');">
                             <td>
                                 <img alt="logo" src="img/mail.png"></img>
@@ -1557,14 +1260,6 @@
                                 Clean temporary and privat data
                             </td>
                         </tr>
-                        <tr onclick="javascript:showLayer('encrypt');">
-                            <td>
-                                <img alt="logo" src="img/encrypted.png"></img>
-                            </td>
-                            <td>
-                                Encrypt Filesystem
-                            </td>
-                        </tr>
                         <tr onclick="javascript:showLayer('ssh_layer');">
                             <td>
                                 <img alt="logo" src="img/terminal.png"></img>
@@ -1607,22 +1302,6 @@
                             </td>
                             <td>
                                 Expand Filesystem
-                            </td>
-                        </tr>
-                        <tr onclick="javascript:showLayer('swap');">
-                            <td>
-                                <img alt="logo" src="img/swap.png"></img>
-                            </td>
-                            <td>
-                                SWAP
-                            </td>
-                        </tr>
-                        <tr onclick="javascript:showLayer('root');">
-                            <td>
-                                <img alt="logo" src="img/root.png"></img>
-                            </td>
-                            <td>
-                                ROOT mode
                             </td>
                         </tr>
                         <tr onclick="javascript:showLayer('overclock');">
@@ -1743,30 +1422,6 @@
                                             Keyboard
                                         </td>
                                     </tr>
-                                    <tr id="mouse_menu2" class="hide" onclick="javascript:showLayer('mouse');">
-                                        <td>
-                                            <img alt="logo" src="img/mouse.png"></img>
-                                        </td>
-                                        <td>
-                                            Mouse
-                                        </td>
-                                    </tr>
-                                    <tr id="font_menu2" class="hide" onclick="javascript:showLayer('font');">
-                                        <td>
-                                            <img alt="logo" src="img/fonts.png"></img>
-                                        </td>
-                                        <td>
-                                            Font size
-                                        </td>
-                                    </tr>
-                                    <tr onclick="javascript:showLayer('autologin');">
-                                        <td>
-                                            <img alt="logo" src="img/autologin.png"></img>
-                                        </td>
-                                        <td>
-                                            Autologin
-                                        </td>
-                                    </tr>
                                     <tr onclick="javascript:showLayer('mail');">
                                         <td>
                                             <img alt="logo" src="img/mail.png"></img>
@@ -1820,14 +1475,6 @@
                                             Change password
                                         </td>
                                     </tr>
-                                    <tr onclick="javascript:showLayer('encrypt');">
-                                        <td>
-                                            <img alt="logo" src="img/encrypted.png"></img>
-                                        </td>
-                                        <td>
-                                            Encrypt Filesystem
-                                        </td>
-                                    </tr>
                                     <tr onclick="javascript:showLayer('ssh_layer');">
                                         <td>
                                             <img alt="logo" src="img/terminal.png"></img>
@@ -1872,22 +1519,6 @@
                                             Expand Filesystem
                                         </td>
                                     </tr>
-                                    <tr onclick="javascript:showLayer('swap');">
-                                        <td>
-                                            <img alt="logo" src="img/swap.png"></img>
-                                        </td>
-                                        <td>
-                                            SWAP
-                                        </td>
-                                    </tr>
-                                    <tr onclick="javascript:showLayer('root');">
-                                        <td>
-                                            <img alt="logo" src="img/root.png"></img>
-                                        </td>
-                                        <td>
-                                            ROOT mode
-                                        </td>
-                                    </tr>
                                     <tr onclick="javascript:showLayer('overclock');">
                                         <td>
                                             <img alt="logo" src="img/electronics.png"></img>
@@ -1927,7 +1558,7 @@
                                 <img alt="logo" src="img/status.png"></img>
                             </th>
                             <th>
-                                Status (<span id="date">---</span>)
+                                Status (<span id="p_date">---</span>)
                             </th>
                         </tr>
                     </thead>
@@ -1943,91 +1574,76 @@
                 <div id="info_1">
                     <table class="keyvalue">
                         <tr>
-                            <td>Hostname:</td><td id="status_hostname">---</td>
+                            <td>Hostname:</td><td id="p_hostname">---</td>
                         </tr>
                         <tr>
-                            <td>ROOT mode:</td><td id="status_root">---</td>
+                            <td>Development:</td><td id="p_development">---</td>
                         </tr>
                         <tr>
-                            <td>Booted:</td><td id="boot">---</td>
+                            <td>Booted:</td><td id="p_boot">---</td>
                         </tr>
                         <tr>
-                            <td>Uptime:</td><td id="up">---</td>
+                            <td>Uptime:</td><td id="p_up">---</td>
                         </tr>
                         <tr>
-                            <td>Users:</td><td id="users">---</td>
-                        </tr>
-                    </table>
-                    <br />
-                    <table class="keyvalue">
-                        <tr>
-                            <td>Connected to network: </td><td id="connected_info">---</td>
-                        </tr>
-                        <tr>
-                            <td>Network Wired IP: </td><td id="ip_wired">---</td>
-                        </tr>
-                        <tr>
-                            <td>Network Wifi IP: </td><td id="ip_wifi">---</td>
-                        </tr>
-                        <tr>
-                            <td>Internet IP: </td><td id="wan_ip">---</td>
+                            <td>Users:</td><td id="p_users">---</td>
                         </tr>
                     </table>
                     <br />
                     <table class="keyvalue">
                         <tr>
-                            <td>CPU usage:</td><td id="cpu">---</td>
+                            <td>Connected to network: </td><td id="p_access_point">---</td>
                         </tr>
                         <tr>
-                            <td>CPU load:</td><td id="load">---</td>
+                            <td>Network Wired IP: </td><td id="p_ip_wired">---</td>
                         </tr>
                         <tr>
-                            <td>CPU freq:</td><td id="info_cpu_freq">---</td>
+                            <td>Network Wifi IP: </td><td id="p_ip_wifi">---</td>
                         </tr>
                         <tr>
-                            <td>Processes:</td><td id="count">---</td>
-                        </tr>
-                        <tr>
-                            <td>Temperatur:</td><td id="temp">---</td>
+                            <td>Internet IP: </td><td id="p_ip_wan">---</td>
                         </tr>
                     </table>
                     <br />
                     <table class="keyvalue">
                         <tr>
-                            <td>Total RAM:</td><td id="ram_total">---</td>
+                            <td>CPU usage:</td><td id="p_cpu">---</td>
                         </tr>
                         <tr>
-                            <td>Used RAM:</td><td id="ram_used">---</td>
+                            <td>CPU load:</td><td id="p_load">---</td>
                         </tr>
                         <tr>
-                            <td>Free RAM:</td><td id="ram_free">---</td>
-                        </tr>
-                    </table>
-                    <br />
-                    <table class="keyvalue">
-                        <tr>
-                            <td>SWAP:</td><td id="swap_enabled">---</td>
+                            <td>CPU freq:</td><td id="p_cpu_f">---</td>
                         </tr>
                         <tr>
-                            <td>Total swap:</td><td id="swap_total">---</td>
+                            <td>Processes:</td><td id="p_count">---</td>
                         </tr>
                         <tr>
-                            <td>Used swap:</td><td id="swap_used">---</td>
-                        </tr>
-                        <tr>
-                            <td>Free swap:</td><td id="swap_free">---</td>
+                            <td>Temperatur:</td><td id="p_temp">---</td>
                         </tr>
                     </table>
                     <br />
                     <table class="keyvalue">
                         <tr>
-                            <td>Total sdcard:</td><td id="sdcard_total">---</td>
+                            <td>Total RAM:</td><td id="p_ram_total">---</td>
                         </tr>
                         <tr>
-                            <td>Used sdcard:</td><td id="sdcard_used">---</td>
+                            <td>Used RAM:</td><td id="p_ram_used">---</td>
                         </tr>
                         <tr>
-                            <td>Free sdcard:</td><td id="sdcard_free">---</td>
+                            <td>Free RAM:</td><td id="p_ram_free">---</td>
+                        </tr>
+                    </table>
+                    <br />
+                    <table class="keyvalue">
+                        <tr>
+                            <td>Total sdcard:</td><td id="p_disk_size">---</td>
+                        </tr>
+                        <tr>
+                            <td>Used sdcard:</td><td id="p_disk_used">---</td>
+                        </tr>
+                        <tr>
+                            <td>Free sdcard:</td><td id="p_disk_aval">---</td>
                         </tr>
                     </table>
                 </div>
@@ -2035,58 +1651,73 @@
                 <div id="info_2">
                     <table class="keyvalue">
                         <tr>
-                            <td>Administrator interface:</td><td id="web_enabled">---</td>
+                            <td>Overclock:</td><td id="p_overclock">---</td>
                         </tr>
                         <tr>
-                            <td>Authentication:</td><td id="web_authentication">---</td>
+                            <td>GPU Mem:</td><td id="p_gpu_mem">---</td>
                         </tr>
                         <tr>
-                            <td>Listening on:</td><td id="local_web">---</td>
-                        </tr>
-                    </table>
-                    <br />
-                    <table class="keyvalue">
-                        <tr>
-                            <td>SSH-server:</td><td id="ssh">---</td>
-                        </tr>
-                        <tr>
-                            <td>SSH-port:</td><td id="info_ssh_port">---</td>
+                            <td>Logging:</td><td id="p_log">---</td>
                         </tr>
                     </table>
                     <br />
                     <table class="keyvalue">
                         <tr>
-                            <td>Display:</td><td id="info_display">---</td>
+                            <td>Display:</td><td id="p_disable_monitor">---</td>
                         </tr>
                         <tr>
-                            <td>Overclock:</td><td id="overclocking_enabled">---</td>
-                        </tr>
-                        <tr>
-                            <td>LCD:</td><td id="lcd_enabled">---</td>
+                            <td>PI camera:</td><td id="p_camera">---</td>
                         </tr>
                     </table>
                     <br />
                     <table class="keyvalue">
                         <tr>
-                            <td>Timezone:</td><td id="info_timezone">---</td>
+                            <td>Timezone:</td><td id="p_timezone">---</td>
                         </tr>
                         <tr>
-                            <td>Keyboard:</td><td id="info_keyboard">---</td>
+                            <td>Keyboard:</td><td id="p_keyb">---</td>
+                        </tr>
+                    </table>
+                    <br />
+                    <table class="keyvalue">
+                        <tr>
+                            <td>Administrator interface:</td><td id="p_web">---</td>
                         </tr>
                         <tr>
-                            <td>Desktop:</td><td id="info_nano">---</td>
+                            <td>Type:</td><td id="p_web_https">---</td>
                         </tr>
                         <tr>
-                            <td>Autologin:</td><td id="info_autologin">---</td>
+                            <td>Authentication:</td><td id="p_web_aut">---</td>
                         </tr>
                         <tr>
-                            <td>Mouse speed:</td><td id="info_mouse_speed">---</td>
+                            <td>Listening on:</td><td id="p_web_local">---</td>
+                        </tr>
+                    </table>
+                    <br />
+                    <table class="keyvalue">
+                        <tr>
+                            <td>SSH-server:</td><td id="p_ssh">---</td>
                         </tr>
                         <tr>
-                            <td>Mouse acceleration:</td><td id="info_mouse_acceleration">---</td>
+                            <td>Socket server:</td><td id="p_socket">---</td>
+                        </tr>
+                    </table>
+                    <br />
+                    <table class="keyvalue">
+                        <tr>
+                            <td>LCD:</td><td id="p_has_lcd">---</td>
                         </tr>
                         <tr>
-                            <td>Font size:</td><td id="info_font_size">---</td>
+                            <td>Stream USB camera:</td><td id="p_stream">---</td>
+                        </tr>
+                        <tr>
+                            <td>Rover:</td><td id="p_rover">---</td>
+                        </tr>
+                        <tr>
+                            <td>Download manager:</td><td id="p_download">---</td>
+                        </tr>
+                        <tr>
+                            <td>Download dir:</td><td id="p_download_dir">---</td>
                         </tr>
                     </table>
                 </div>
@@ -2654,173 +2285,6 @@
                 </table>
             </div>
             <!--####################################################################################################-->
-            <div class="layer" id="mouse">
-                <table class="header">
-                    <thead>
-                        <tr onclick="javascript:onBack();">
-                            <th>
-                                <img alt="logo" src="img/mouse.png"></img>
-                            </th>
-                            <th>
-                                Mouse
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td colspan="2">
-                                Select mouse speed and acceleration.<br />
-                                Speed will increase the mouse sensitivity.<br />
-                                Acceleration is the number of pixels before acceleration to be used.
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                
-                <table class="input">
-                    <tbody>
-                        <tr>
-                            <td>
-                                Mouse speed (1 to 10)
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input type="text" id="mouse_speed" name="mouse_speed" />
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                Mouse acceleration 1 to 20  (1 = Disable acceleration)
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input type="text" id="mouse_acc" name="mouse_acc" />
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                <br />
-                <button onclick="javascript:submitSyncFromInput('mouse_set', 'mouse_speed', 'mouse_acc')">Change mouse speed</button>
-                <br /><br />
-                <table class="footer">
-                    <tr onclick="javascript:onBack();">
-                        <td>
-                            <img alt="logo" src="img/back.png"></img>
-                        </td>
-                        <td>
-                            Back to main menu
-                        </td>
-                    </tr>
-                </table>
-            </div>
-            <!--####################################################################################################-->
-            <div class="layer" id="font">
-                <table class="header">
-                    <thead>
-                        <tr onclick="javascript:onBack();">
-                            <th>
-                                <img alt="logo" src="img/fonts.png"></img>
-                            </th>
-                            <th>
-                                Font size
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td colspan="2">
-                                Set font size for the desktop.<br />
-                                You must logout and login again for the changes to take effect.
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <table class="input">
-                    <tbody>
-                        <tr>
-                            <td>
-                                Font size (1 to 99)
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <input type="text" id="font_size" name="font_size" />
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                <br />
-                <button onclick="javascript:submitSyncFromInput('font_set', 'font_size')">Save font size</button>
-                <br /><br />
-                <table class="footer">
-                    <tr onclick="javascript:onBack();">
-                        <td>
-                            <img alt="logo" src="img/back.png"></img>
-                        </td>
-                        <td>
-                            Back to main menu
-                        </td>
-                    </tr>
-                </table>
-            </div>    
-            <!--####################################################################################################-->
-            <div class="layer" id="autologin">
-                <table class="header">
-                    <thead>
-                        <tr onclick="javascript:onBack();">
-                            <th>
-                                <img alt="logo" src="img/autologin.png"></img>
-                            </th>
-                            <th>
-                                Autologin
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td colspan="2">
-                                If you do not want to enter password at startup.<br />
-                                Auto login to the desktop and the terminal.<br />
-                                Will take effect on next reboot...
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                <table class="keyvalue">
-                    <tr>
-                        <td>
-                            Current status:
-                        </td>
-                        <td id="autologin_info">
-                        </td>
-                    </tr>
-                </table>
-                <table>
-                    <tr>
-                        <td>
-                            <button id="autologin_enable" onclick="javascript:submitSyncFromPrompt('autologin_on', 'Please enter password for the user steelsquid?', '');">Enable</button>
-                        </td>
-                        <td>
-                            <button id="autologin_disable" onclick="javascript:submitSyncConfirm('Are you sure you want to disable autologin', 'autologin_off');">Disable</button>
-                        </td>
-                    </tr>
-                </table>
-                <br />
-                <table class="footer">
-                    <tr onclick="javascript:onBack();">
-                        <td>
-                            <img alt="logo" src="img/back.png"></img>
-                        </td>
-                        <td>
-                            Back to main menu
-                        </td>
-                    </tr>
-                </table>
-            </div>
-            <!--####################################################################################################-->
             <div class="layer" id="mail">
                 <table class="header">
                     <thead>
@@ -2938,28 +2402,14 @@
                     <li>Delete downloaded and unused packages</li>
                     <li>Clean browser (History, Cookies, Saved password, Autofill)</li>
                     <li>Clear Memory Cache</li>
-                </ul>
-                If you choose <span class="highlight">deep</span> cleen the following will also be implemented. <br/>
-                Depending on the size of your hard drive, it may take <span class="highlight">several hours</span>.
-                <ul>
                     <li>Disconnect all usb and network drives.</li>
-                    <li>Delete thumbs.db, Desktop.ini and .DS_Store.</li>
-                    <li>
-                        Write data to all free space on the hard drive, and then delete it.<br/>
-                        This make it much harder to recover deleted files.
-                    </li>
                 </ul>
-                The only way to be reasonably sure that it is not possible to recover files is to use deep clean.<br/>
-                If you have a <span class="highlight">encrypted</span> file system, you must log in (SSH, Terminal or Desktop) with the user "steelsquid" to decrypt the home directory before you can continue.<br/>
                 I recommend that you <span class="highlight">close all programs</span> before continuing and <span class="highlight">reboot</span> system when complete.
                 <br/><br/>
                 <table>
                     <tr>
                         <td>
                             <button id="clean_button" disabled="disabled" onclick="javascript:submitAsyncConfirm('Are you sure you want to clean private data?', 'clean', 'False')">Clean</button>
-                        </td>
-                        <td>
-                            <button id="clean_button_deep" disabled="disabled" onclick="javascript:submitAsyncConfirm('Are you sure you want to deep clean private data (may take several hours)?', 'clean', 'True')">Deep clean</button>
                         </td>
                     </tr>
                 </table>
@@ -3020,7 +2470,7 @@
                     <tbody>
                         <tr>
                             <td>
-                                Current password for user steelsquid
+                                Current password for user root
                             </td>
                         </tr>
                         <tr>
@@ -3030,7 +2480,7 @@
                         </tr>
                         <tr>
                             <td>
-                                New password for user steelsquid
+                                New password for user root
                             </td>
                         </tr>
                         <tr>
@@ -3040,7 +2490,7 @@
                         </tr>
                         <tr>
                             <td>
-                                Confirm new password for user steelsquid
+                                Confirm new password for user root
                             </td>
                         </tr>
                         <tr>
@@ -3080,11 +2530,7 @@
                     <tbody>
                         <tr>
                             <td colspan="2">
-                                Here you can enable or disable the SSH server and change port number.<br/>
-                                You can also choose whether to use Dropbear or OpenSSH as server.<br/>
-                                OpenSSH use more RAM but has more features.<br/>
-                                Dropbear use less RAM but has fewer features.<br/>
-                                The changes will be implemented after you <span class="highlight">reboot</span> your device.<br/>
+                                Here you can enable or disable the SSH server.<br/>
                                 If you do not intend to use SSH i recommend <span class="highlight">disabling</span> it.
                             </td>
                         </tr>
@@ -3103,51 +2549,6 @@
                 <table>
                     <tr>
                         <td id="ssh_disable_button">
-                        </td>
-                    </tr>
-                </table>
-                <br />
-                <table class="keyvalue">
-                    <tr>
-                        <td>
-                            Current status:
-                        </td>
-                        <td id="ssh_openssh_info">
-                        </td>
-                    </tr>
-                </table>
-                <table>
-                    <tr>
-                        <td id="ssh_openssh_button">
-                        </td>
-                    </tr>
-                </table>
-                <br />
-                <table class="input">
-                    <tr>
-                        <td>
-                            Port number (Default port for SSH is 22)<br/>
-                            A good safety practice is to change the port to a <span class="highlight">random</span> number.
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <table>
-                                <tr>
-                                    <td><input type="input" id="ssh_input_port"></input></td>
-                                    <td><button onclick="javascript:submitSyncFromInput('ssh_port', 'ssh_input_port')">Change port number</button></td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            You need to <span class="highlight">reboot</span> the device for any changes to take effect.
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <button onclick="javascript:submitSyncConfirm('Are you sure you want to reboot?', 'reboot');">Reboot</button>
                         </td>
                     </tr>
                 </table>
@@ -3289,35 +2690,12 @@
                         </td>
                     </tr>
                 </table>
-                <br /><br/>
-                <table class="input">
-                    <tbody>
-                        <tr>
-                            <td>
-                                Change port number (Default HTTP: 80, Default HTTPS: 443)<br />
-                                If you make changes here you can get a temporary "Connection error", this is because the web server needs to reboot.<br/>
-                                I recommend to change this to a <span class="highlight">random number</span> between 1025 and 65535 if you selected "listen on all interfaces" above.<br/>
-                                However, if you selected "listen on localhost" i recommend <span class="highlight">not</span> making any changes.
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <table>
-                                    <tr>
-                                        <td><input type="input" id="web_interface_port"></input></td>
-                                        <td><button onclick="javascript:submitSyncFromInput('web_interface_port', 'web_interface_port')">Change port number</button></td>
-                                    </tr>
-                                </table>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
                 <br/>
                 <br />
                 <table>
                     <tr>
                         <td>
-                            Make <span class="highlight">/home/steelsquid</span> accessible from this web interface? <br />
+                            Make <span class="highlight">/root</span> accessible from this web interface? <br />
                             Default only /opt/steelsquid/web can be accessed from this web interface.<br/>
                             If you using the web <span class="highlight">File Manager</span> or <span class="highlight">Media Player</span> you must enable acces to these directorys.<br />
                         </td>
@@ -3390,82 +2768,6 @@
                     </tr>
                 </table>
                 <br />
-                <table class="footer">
-                    <tr onclick="javascript:onBack();">
-                        <td>
-                            <img alt="logo" src="img/back.png"></img>
-                        </td>
-                        <td>
-                            Back to main menu
-                        </td>
-                    </tr>
-                </table>
-            </div>
-            <!--####################################################################################################-->
-            <div class="layer" id="encrypt">
-                <table class="header">
-                    <thead>
-                        <tr onclick="javascript:onBack();">
-                            <th>
-                                <img alt="logo" src="img/encrypted.png"></img>
-                            </th>
-                            <th>
-                                Encrypt filesystem
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td colspan="2">
-                                Here, you can encrypt your home directory and any SWAP file.<br/>
-                                If your home directory is large, it may take <span class="highlight">several hours</span>.<br />
-                                And I recommend that you make a <span class="highlight">backup</span> first.<br/>
-                                You can not be logged in with the user 'steelsquid', not via SSH, Terminal or Desktop.<br/>
-                                Nor is it possible to use the automatic login to desktop.<br/>
-                                <br/>
-                                <span id="encrypt_mode_text" class="hide">
-                                    You must first enter root mode. After pressing "Enter root mode" button the administrator interface will restart, it will take a few seconds (May get connection error).<br/>
-                                    Wait for the button to change from <span class="highlight">"Enter root mode"</span> to <span class="highlight">"Encrypt filesystem"</span>.
-                                    <br />
-                                </span>
-                                <span id="encrypt_text" class="hide">
-                                    Now you can encrypt the system by pressing "Encrypt filesystem".<br/>
-                                    When complete, you must restart the device.<br/>
-                                    <span class="highlight">NOTE!</span> Do not turn off the device while the encryption is in progress.
-                                    <br />
-                                </span>
-                                <span id="encrypt_text_encrypted" class="hide">
-                                    <span class="highlight">The file system is already encrypted.</span>
-                                    <br />
-                                </span>
-                                <span id="encrypt_text_done" class="hide">
-                                    The encryption is completed, please <span class="highlight">restart</span> the device.
-                                    <br />
-                                </span>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                <div id="encrypt_mode_button" class="hide" >
-                    <button onclick="javascript:submitSyncFromPrompt('encrypt_mode', 'Please enter password for the user steelsquid?', '');">Enter root mode</button>
-                    <br/><br/>
-                </div>
-                <div id="encrypt_button" class="hide">
-                    <button onclick="javascript:submitAsyncFromPrompt('encrypt', 'Please enter password for the user steelsquid?', '');">Encrypt filesystem</button>
-                    <br/><br/>
-                </div>
-                <span id="encrypt_status"></span>
-                <div class="log" id="encrypt_log">
-                </div>
-                <br/>
-                <div id="encrypt_reboot" class="hide">
-                    <button onclick="javascript:submitSyncConfirm('Are you sure you want to reboot?', 'reboot');">Reboot</button>
-                    <br/><br/>
-                </div>
-                <div id="encrypt_undo" class="hide">
-                    <button onclick="javascript:submitSyncConfirm('Are you sure you want to exit root mode?', 'encrypt_mode_exit');">Exit root mode</button>
-                    <br/><br/>
-                </div>
                 <table class="footer">
                     <tr onclick="javascript:onBack();">
                         <td>
@@ -3577,112 +2879,6 @@
                     <button onclick="javascript:submitSyncConfirm('Are you sure you want to reboot?', 'reboot');">Reboot</button> 
                     <br /><br />
                 </div>
-                <table class="footer">
-                    <tr onclick="javascript:onBack();">
-                        <td>
-                            <img alt="logo" src="img/back.png"></img>
-                        </td>
-                        <td>
-                            Back to main menu
-                        </td>
-                    </tr>
-                </table>
-            </div>
-            <!--####################################################################################################-->
-            <div class="layer" id="swap">
-                <table class="header">
-                    <thead>
-                        <tr onclick="javascript:onBack();">
-                            <th>
-                                <img alt="logo" src="img/swap.png"></img>
-                            </th>
-                            <th>
-                                SWAP
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td colspan="2">
-                                By default Steelsquid-kiss-os has no swap but below you can enable/disable it.<br />
-                                This may take a few minutes to complete.<br />
-                                <span class="highlight">NOTE!</span> Do not turn off the device while in progress and the device must have internet connection.
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                <table class="keyvalue">
-                    <tr>
-                        <td>
-                            Current status:
-                        </td>
-                        <td id="swap_info">
-                        </td>
-                    </tr>
-                </table>
-                <table>
-                    <tr>
-                        <td id="swap_disable_button">
-                        </td>
-                    </tr>
-                </table>
-                <br />
-                <table class="footer">
-                    <tr onclick="javascript:onBack();">
-                        <td>
-                            <img alt="logo" src="img/back.png"></img>
-                        </td>
-                        <td>
-                            Back to main menu
-                        </td>
-                    </tr>
-                </table>
-            </div>
-            <!--####################################################################################################-->
-            <div class="layer" id="root">
-                <table class="header">
-                    <thead>
-                        <tr onclick="javascript:onBack();">
-                            <th>
-                                <img alt="logo" src="img/root.png"></img>
-                            </th>
-                            <th>
-                                ROOT mode
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td colspan="2">
-                                By default this web interface and the main steelsquid program execute as the user 'steelsquid'.<br />
-                                Here you can change so that the ROOT user is used instead.<br />
-                                This can be useful if you about to expand Kiss OS with functionality that requires ROOT privileges. <br />
-                                An example could be if you want to use Raspberry PI GPIO's.<br />
-                                You must <span class="highlight">reboot</span> for the changes to take effect<br />
-                                I don <span class="highlight">not</span> recommend to enable ROOT mode.
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                <table class="keyvalue">
-                    <tr>
-                        <td>
-                            Current status:
-                        </td>
-                        <td id="root_info">
-                        </td>
-                    </tr>
-                </table>
-                <table>
-                    <tr>
-                        <td id="root_button">
-                        </td>
-                    </tr>
-                </table>
-                <br />
-                You must reboot for the changes to take effect<br />
-                <button onclick="javascript:submitSyncConfirm('Are you sure you want to reboot?', 'reboot');">Reboot</button>
-                <br /><br />
                 <table class="footer">
                     <tr onclick="javascript:onBack();">
                         <td>
@@ -3979,10 +3175,8 @@
                         <tr>
                             <td>
                                 You can print text on a <span class="highlight">HDD44780</span> compatible LCD (see <a href="http://www.steelsquid.org/pi-io-example">http://www.steelsquid.org/pi-io-example</a>)<br />
-                                Depending on how your LCD is connected, you can select either <span class="highlight">direct</span> or via <span class="highlight">I2C</span>.<br/>
-                                You can also choose to <span class="highlight">disable</span> the LCD.
-                                <br/><br/>
-                                <span class="highlight">NOTE!</span> If you enable the LCD the system will change to ROOT mode (this interface will run as ROOT instead of steelsquid user)
+                                Use via <span class="highlight">I2C</span>.<br/>
+                                If you change this you will get "Connection error" while service restart...
                             </td>
                         </tr>
                     </tbody>
@@ -4000,10 +3194,7 @@
                 <table>
                     <tr>
                         <td>
-                            <button id="lcd_button_direct" onclick="javascript:submitSyncFromPrompt('lcd_direct', 'Please enter password for the user steelsquid?', '')">Direct</button>
-                        </td>
-                        <td>
-                            <button id="lcd_button_i2c"  onclick="javascript:submitSyncFromPrompt('lcd_i2c', 'Please enter password for the user steelsquid?', '')">I2C</button>
+                            <button id="lcd_button_enable"  onclick="javascript:submitSync('lcd_enable');">Enable</button>
                         </td>
                         <td>
                             <button id="lcd_button_disable"  onclick="javascript:submitSync('lcd_disable');">Disable</button>
