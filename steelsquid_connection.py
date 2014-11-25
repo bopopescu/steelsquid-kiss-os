@@ -37,6 +37,7 @@ Communication takes place in the following way (may also be the other way (clien
 @organization: Steelsquid
 @author: Andreas Nilsson
 @contact: steelsquid@gmail.com
+@license: GNU Lesser General Public License v2.1
 @change: 2013-10-25 Created
 '''
 

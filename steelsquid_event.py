@@ -108,7 +108,7 @@ This will exucute: /opt/steelsquid/events/kalle "arg1" "arg2"
 @organization: Steelsquid
 @author: Andreas Nilsson
 @contact: steelsquid@gmail.com
-@license: GNU General Public License
+@license: GNU Lesser General Public License v2.1
 @change: 2013-10-25 Created
 '''
 
@@ -327,7 +327,6 @@ def event_work():
                 if counter_86400 >= 86400:
                     counter_86400 = 0
                     steelsquid_utils.clear_tmp()
-                    steelsquid_http_server.clear()
                     event_executer("daily", subscribers, [])
                 else:
                     counter_86400 = counter_86400 + 1

@@ -7,6 +7,7 @@ Control/Configure steelsquid-kiss-os from web browser
 @organization: Steelsquid
 @author: Andreas Nilsson
 @contact: steelsquid@gmail.com
+@license: GNU Lesser General Public License v2.1
 @change: 2013-10-25 Created
 '''
 
@@ -1739,6 +1740,35 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
                 steelsquid_utils.moveFileOrFolder(t_file, the_dir)
         self.del_session_data(session_id, "file_paste")
         self.del_session_data(session_id, "file_copy_or_cut")
+             
+    def io(self, session_id, parameters):
+        '''
+        
+        '''
+        return steelsquid_utils.get_flag("io")
+        
+
+
+    def io_enable(self, session_id, parameters):
+        '''
+        
+        '''
+        if not steelsquid_utils.authenticate("root", parameters[0]):
+            raise Exception("Incorrect password for user root!")
+        else:
+            steelsquid_utils.execute_system_command(['steelsquid', 'io-on']) 
+        return steelsquid_utils.get_flag("io")
+
+
+    def io_disable(self, session_id, parameters):
+        '''
+        
+        '''
+        if not steelsquid_utils.authenticate("root", parameters[0]):
+            raise Exception("Incorrect password for user root!")
+        else:
+            steelsquid_utils.execute_system_command(['steelsquid', 'io-off']) 
+        return steelsquid_utils.get_flag("io")
              
              
     def rover(self, session_id, parameters):

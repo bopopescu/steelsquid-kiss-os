@@ -74,6 +74,7 @@
                 $("#p_rover").html(paramaters[36]);
                 $("#p_download").html(paramaters[37]);
                 $("#p_download_dir").html(paramaters[38]);
+                $("#p_io").html(paramaters[39]);
             }
 
             /**
@@ -119,6 +120,7 @@
                 $("#p_rover").html("---");
                 $("#p_download").html("---");
                 $("#p_download_dir").html("---");
+                $("#p_io").html("---");
             }
 
             /**
@@ -705,6 +707,7 @@
             function on_rover_disable(paramaters){
                 on_rover(paramaters);
             }
+            
 
             /**
              * Download
@@ -1718,6 +1721,9 @@
                         </tr>
                         <tr>
                             <td>Download dir:</td><td id="p_download_dir">---</td>
+                        </tr>
+                        <tr>
+                            <td>Steelsquid IO Board:</td><td id="p_io">---</td>
                         </tr>
                     </table>
                 </div>

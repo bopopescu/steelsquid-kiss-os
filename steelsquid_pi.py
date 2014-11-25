@@ -14,7 +14,7 @@ Some useful stuff for Raspberry Pi
 @organization: Steelsquid
 @author: Andreas Nilsson
 @contact: steelsquid@gmail.com
-@license: GNU General Public License
+@license: GNU Lesser General Public License v2.1
 @change: 2013-10-25 Created
 '''
 
@@ -32,6 +32,7 @@ import thread
 import signal
 from Adafruit_ADS1x15 import ADS1x15
 from Adafruit_MCP4725 import MCP4725
+import steelsquid_trex
 
 SETUP_NONE = 0
 SETUP_OUT = 1
@@ -81,6 +82,7 @@ toggle_mcp = []
 flash_mcp = []
 sabertooth = None
 dac = None
+
 
 def gpio_event_remove(gpio):
     '''
@@ -1010,9 +1012,46 @@ def mcp4725(address, value):
         dac.setVoltage(value)
 
 
-def aaa(bb):
-    print bb
+def trex_reset():
+    '''
+    Reset the trex controller to default
+    Stop dc motors...
+    '''
+    steelsquid_trex.trex_reset()
     
+    
+def trex_motor(left, right):
+    '''
+    Set speed of the dc motors
+    left and right can have the folowing values: -255 to 255
+    -255 = Full speed astern
+    0 = stop
+    255 = Full speed ahead
+    '''
+    steelsquid_trex.trex_motor(left, right)
+
+
+def trex_servo(servo, position):
+    '''
+    Set servo position
+    Servo = 1 to 6
+    Position = Typically the servo position should be a value between 1000 and 2000 although it will vary depending on the servos used
+    '''
+    steelsquid_trex.trex_servo(servo, position)
+
+
+def trex_status():
+    '''
+    Get status from trex
+     - Battery voltage:   An integer that is 100x the actual voltage
+     - Motor current:  Current drawn by the motor in mA
+     - Accelerometer
+     - Impact
+    Return tuple: battery_voltage, left_motor_current, right_motor_current, accelerometer_x, accelerometer_y, accelerometer_z, impact_x, impact_y, impact_z
+    '''
+    return steelsquid_trex.trex_status()
+
+
 if __name__ == '__main__':
+    pass
     
-    raw_input("Press Enter to continue...")

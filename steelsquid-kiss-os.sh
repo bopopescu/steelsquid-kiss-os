@@ -3,12 +3,11 @@
 #
 # Organization: Steelsquid
 # Project: Steelsquid-kiss-os
-# Licensing: LGPL (GNU Lesser General Public License)
+# Licensing: GNU Lesser General Public License v2.1
 # Author: Andreas Nilsson
 # Contact: steelsquid@gmail.com
 # Homepage: http://steelsquid.org/steelsquid-kiss-os
 # 
-# Revision history:
 # Revision history:
 #  - 2013-10-20  Created
 #  - 2014-04-09  New version for raspbian-ua-netinst
@@ -51,64 +50,66 @@ download=$base/$project_name.sh
 img_iso=https://googledrive.com/host/0B2XmU-Cgji4bcDFmV25xM3Vic3c
 
 # Python downloads (install this pyton scripts)
-python_downloads[1]="$base/steelsquid_pi.py"
-python_downloads[2]="$base/steelsquid_gpio_set.py"
-python_downloads[3]="$base/steelsquid_gpio_get.py"
-python_downloads[4]="$base/steelsquid_gpio_event.py"
-python_downloads[5]="$base/steelsquid_lcd.py"
-python_downloads[6]="$base/steelsquid_lcd_message.py"
-python_downloads[7]="$base/steelsquid_utils.py"
-python_downloads[8]="$base/steelsquid_distance.py"
-python_downloads[9]="$base/steelsquid_nm.py"
-python_downloads[10]="$base/steelsquid_http_server.py"
-python_downloads[11]="$base/steelsquid_kiss_http_server.py"
-python_downloads[12]="$base/steelsquid_server.py"
-python_downloads[13]="$base/steelsquid_kiss_http_expand.py"
-python_downloads[14]="$base/steelsquid_omx.py"
-python_downloads[15]="$base/steelsquid_boot.py"
-python_downloads[16]="$base/steelsquid_event.py"
-python_downloads[17]="$base/steelsquid_connection.py"
-python_downloads[18]="$base/steelsquid_socket_connection.py"
-python_downloads[19]="$base/steelsquid_sabertooth.py"
-python_downloads[20]="$base/steelsquid_kiss_socket_connection.py"
-python_downloads[21]="$base/steelsquid_kiss_socket_expand.py"
-python_downloads[22]="$base/steelsquid_kiss_global.py"
-python_downloads[23]="$base/steelsquid_servo.py"
-python_downloads[24]="$base/steelsquid_mcp_get.py"
-python_downloads[25]="$base/steelsquid_mcp_set.py"
-python_downloads[26]="$base/steelsquid_io.py"
-python_downloads[27]="$base/steelsquid_adc.py"
-python_downloads[28]="$base/steelsquid_dac.py"
+python_downloads[1]="$base/steelsquid_boot.py"
+python_downloads[2]="$base/steelsquid_utils.py"
+python_downloads[3]="$base/steelsquid_nm.py"
+python_downloads[4]="$base/steelsquid_event.py"
+python_downloads[5]="$base/steelsquid_connection.py"
+python_downloads[6]="$base/steelsquid_socket_connection.py"
+python_downloads[7]="$base/steelsquid_server.py"
+python_downloads[8]="$base/steelsquid_http_server.py"
+python_downloads[9]="$base/steelsquid_kiss_global.py"
+python_downloads[10]="$base/steelsquid_kiss_http_server.py"
+python_downloads[11]="$base/steelsquid_kiss_http_expand.py"
+python_downloads[12]="$base/steelsquid_kiss_socket_connection.py"
+python_downloads[13]="$base/steelsquid_kiss_socket_expand.py"
+python_downloads[14]="$base/steelsquid_pi.py"
+python_downloads[15]="$base/steelsquid_io.py"
+python_downloads[16]="$base/steelsquid_gpio_set.py"
+python_downloads[17]="$base/steelsquid_gpio_get.py"
+python_downloads[18]="$base/steelsquid_gpio_event.py"
+python_downloads[19]="$base/steelsquid_lcd.py"
+python_downloads[20]="$base/steelsquid_lcd_message.py"
+python_downloads[21]="$base/steelsquid_distance.py"
+python_downloads[22]="$base/steelsquid_omx.py"
+python_downloads[23]="$base/steelsquid_sabertooth.py"
+python_downloads[24]="$base/steelsquid_trex.py"
+python_downloads[25]="$base/steelsquid_adafruit_servo.py"
+python_downloads[26]="$base/steelsquid_mcp_get.py"
+python_downloads[27]="$base/steelsquid_mcp_set.py"
+python_downloads[28]="$base/steelsquid_adc.py"
+python_downloads[29]="$base/steelsquid_dac.py"
 
 # Links to python_downloads
-python_links[1]="/usr/bin/dummy"
-python_links[2]="/usr/bin/gpio-set"
-python_links[3]="/usr/bin/gpio-get"
-python_links[4]="/usr/bin/gpio-event"
+python_links[1]="/usr/bin/steelsquid-boot"
+python_links[2]="/usr/bin/dummy"
+python_links[3]="/usr/bin/steelsquid-nm"
+python_links[4]="/usr/bin/steelsquid-event"
 python_links[5]="/usr/bin/dummy"
-python_links[6]="/usr/bin/lcd-message"
+python_links[6]="/usr/bin/dummy"
 python_links[7]="/usr/bin/dummy"
-python_links[8]="/usr/bin/distance"
-python_links[9]="/usr/bin/steelsquid-nm"
+python_links[8]="/usr/bin/dummy"
+python_links[9]="/usr/bin/dummy"
 python_links[10]="/usr/bin/dummy"
 python_links[11]="/usr/bin/dummy"
 python_links[12]="/usr/bin/dummy"
-python_links[13]="/usr/bin/steelsquid-kiss-http-expand"
+python_links[13]="/usr/bin/dummy"
 python_links[14]="/usr/bin/dummy"
-python_links[15]="/usr/bin/steelsquid-boot"
-python_links[16]="/usr/bin/steelsquid-event"
-python_links[17]="/usr/bin/dummy"
-python_links[18]="/usr/bin/dummy"
-python_links[19]="/usr/bin/steelsquid-sabertooth"
-python_links[20]="/usr/bin/dummy"
-python_links[21]="/usr/bin/dummy"
+python_links[15]="/usr/bin/io"
+python_links[16]="/usr/bin/gpio-set"
+python_links[17]="/usr/bin/gpio-get"
+python_links[18]="/usr/bin/gpio-event"
+python_links[19]="/usr/bin/dummy"
+python_links[20]="/usr/bin/lcd-message"
+python_links[21]="/usr/bin/distance"
 python_links[22]="/usr/bin/dummy"
-python_links[23]="/usr/bin/servo"
-python_links[24]="/usr/bin/mcp-get"
-python_links[25]="/usr/bin/mcp-set"
-python_links[26]="/usr/bin/io"
-python_links[27]="/usr/bin/adc"
-python_links[28]="/usr/bin/dac"
+python_links[23]="/usr/bin/sabertooth"
+python_links[24]="/usr/bin/trex"
+python_links[25]="/usr/bin/ada-servo"
+python_links[26]="/usr/bin/mcp-get"
+python_links[27]="/usr/bin/mcp-set"
+python_links[28]="/usr/bin/adc"
+python_links[29]="/usr/bin/dac"
 
 # Download to web root folder
 web_root_downloads[1]="$base/index.html"
@@ -580,23 +581,25 @@ fi
 ##################################
 function help_system()
 {
-    echo 
-    echb "steelsquid expand"
-    echo "Expand Filesystem."
-    echo "Ensures that all of the SD card storage is available to the OS."
-    echo "This is only for raspberry-pi"
-    echo "Will take effect on next reboot...."
-    echo 
-    echb "steelsquid display"
-    echo "Is the display enabled"
-    echo 
-    echb "steelsquid display-on"
-    echo "Enable the display (hdmi and composite)."
-    echo 
-    echb "steelsquid display-off"
-    echo "Disable the monitor (hdmi and composite)."
-    echo "This will make any Desktop environment useless."
-    echo "On a reboot the display will turned on, but power off after a few seconds."
+    if [ $(is-raspberry-pi) == "true" ]; then
+        echo 
+        echb "steelsquid expand"
+        echo "Expand Filesystem."
+        echo "Ensures that all of the SD card storage is available to the OS."
+        echo "This is only for raspberry-pi"
+        echo "Will take effect on next reboot...."
+        echo 
+        echb "steelsquid display"
+        echo "Is the display enabled"
+        echo 
+        echb "steelsquid display-on"
+        echo "Enable the display (hdmi and composite)."
+        echo 
+        echb "steelsquid display-off"
+        echo "Disable the monitor (hdmi and composite)."
+        echo "This will make any Desktop environment useless."
+        echo "On a reboot the display will turned on, but power off after a few seconds."
+    fi
     echo 
     echb "steelsquid log"
     echo "Is logging enabled"
@@ -619,29 +622,31 @@ function help_system()
     echb "steelsquid camera-off"
     echo "Disable the raspberry pi camera."
     echo "Will take effect on next reboot...."
-    echo 
-    echb "steelsquid clocking"
-    echo "Is the device underclock, defaultclock or overclock"
-    echo 
-    echb "steelsquid underclock"
-    echo "Underclocking will decrease the cpu speed to 140MHz (will reduce power consumption slightly, but will make the system very slow)."
-    echo "Will take effect on next reboot...."
-    echo 
-    echb "steelsquid defaultclock"
-    echo "Set default clocking."
-    echo "Will take effect on next reboot...."
-    echo 
-    echb "steelsquid overclock"
-    echo "Overclock will increase the cpu speed to 1000MHz (May set the warranty bit and shorten the life of the device)."
-    echo "Will take effect on next reboot...."
-    echo 
-    echb "steelsquid gpu-mem"
-    echo "Get the GPU memory (16 to 448) default 64"
-    echo 
-    echb "steelsquid gpu-mem <mem>"
-    echo "Set the GPU memory (16 to 448) default 64"
-    echo "ARM (CPU) gets the remaining memory"
-    echo "Will take effect on next reboot...."
+    if [ $(is-raspberry-pi) == "true" ]; then
+        echo 
+        echb "steelsquid clocking"
+        echo "Is the device underclock, defaultclock or overclock"
+        echo 
+        echb "steelsquid underclock"
+        echo "Underclocking will decrease the cpu speed to 140MHz (will reduce power consumption slightly, but will make the system very slow)."
+        echo "Will take effect on next reboot...."
+        echo 
+        echb "steelsquid defaultclock"
+        echo "Set default clocking."
+        echo "Will take effect on next reboot...."
+        echo 
+        echb "steelsquid overclock"
+        echo "Overclock will increase the cpu speed to 1000MHz (May set the warranty bit and shorten the life of the device)."
+        echo "Will take effect on next reboot...."
+        echo 
+        echb "steelsquid gpu-mem"
+        echo "Get the GPU memory (16 to 448) default 64"
+        echo 
+        echb "steelsquid gpu-mem <mem>"
+        echo "Set the GPU memory (16 to 448) default 64"
+        echo "ARM (CPU) gets the remaining memory"
+        echo "Will take effect on next reboot...."
+    fi
     echo 
     echb "set-flag <flagName>"
     echo "Set flag"
@@ -806,11 +811,11 @@ function help_io()
     echb "gpio-event <gpio number>"
     echo "Listen for signal on gpio pin and 3.3v"
     echo 
-    echb "lcd-missage direct <message>"
+    echb "lcd-message direct <message>"
     echo "Print message to HDD44780 compatible LCD connected directly to GPIO."
     echo "See http://www.steelsquid.org/pi-io-example"
     echo 
-    echb "lcd-missage i2c <message>"
+    echb "lcd-message i2c <message>"
     echo "Print message to HDD44780 compatible LCD connected via."
     echo "See http://www.steelsquid.org/pi-io-example"
     echo 
@@ -839,8 +844,11 @@ function help_io()
     echb "mcp-set"
     echo "Get gpio pin status on MCP230xx"
     echo 
-    echb "servo"
+    echb "ada-servo"
     echo "Move Adafruit 16-channel I2c servo to position (pwm value)"
+    echo 
+    echb "sabertooth"
+    echo "A simple serial interface for Sabertooth motor controller."
 }
 if [ "$in_parameter_1" == "help-io" ]; then
     echo 
@@ -873,7 +881,7 @@ function help_files()
     echb "$steelsquid_folder/events/"
     echo "If you create a executable file with the same name as the event under $steelsquid_folder/events that will also be excuted"
     echo "The parametars will be arg to the file"
-    echo "See /usr/local/lib/python2.7/dist-packages/steelsquid_event.py"
+    echo "See /opt/steelsquid/python/steelsquid_event.py"
     echo 
     echb "/root/Media"
     echo "Link to /media"
@@ -893,89 +901,93 @@ function help_files()
     echb "/usr/bin/steelsquid -> $steelsquid_folder/steelsquid-kiss-os.sh"
     echo "The steelsquid script"
     echo 
-    echb "/usr/bin/adc -> /usr/local/lib/python2.7/dist-packages/steelsquid_adc.py"
+    echb "/usr/bin/adc -> /opt/steelsquid/python/steelsquid_adc.py"
     echo "Read analog in from ADS1015 (0 to 5v)"
     echo 
-    echb "/usr/bin/steelsquid-boot -> /usr/local/lib/python2.7/dist-packages/steelsquid_boot.py"
+    echb "/usr/bin/steelsquid-boot -> /opt/steelsquid/python/steelsquid_boot.py"
     echo "Python script that execute on boot and shutdown"
     echo 
-    echb "/usr/local/lib/python2.7/dist-packages/steelsquid_connection.py"
+    echb "/opt/steelsquid/python/steelsquid_connection.py"
     echo "A simple module that i use to sen async command to and from client/server."
     echo 
-    echb "/usr/bin/dac -> /usr/local/lib/python2.7/dist-packages/steelsquid_dac.py"
+    echb "/usr/bin/dac -> /opt/steelsquid/python/steelsquid_dac.py"
     echo "Write analog out from MCP4725 (0 to 5v)"
     echo 
-    echb "/usr/bin/distance -> /usr/local/lib/python2.7/dist-packages/steelsquid_distance.py"
+    echb "/usr/bin/distance -> /opt/steelsquid/python/steelsquid_distance.py"
     echo "Measure_distance with a with HC-SR04"
     echo 
-    echb "/usr/bin/steelsquid-events -> /usr/local/lib/python2.7/dist-packages/steelsquid_event.py"
+    echb "/usr/bin/steelsquid-events -> /opt/steelsquid/python/steelsquid_event.py"
     echo "Broadcast and subscribe to events"
     echo 
-    echb "/usr/bin/gpio-event -> /usr/local/lib/python2.7/dist-packages/steelsquid_gpio_event.py"
+    echb "/usr/bin/gpio-event -> /opt/steelsquid/python/steelsquid_gpio_event.py"
     echo "Listen for signal on gpio pin"
     echo 
-    echb "/usr/bin/gpio-get -> /usr/local/lib/python2.7/dist-packages/steelsquid_gpio_get.py"
+    echb "/usr/bin/gpio-get -> /opt/steelsquid/python/steelsquid_gpio_get.py"
     echo "Get gpio pin status hight (on) or low (off)"
     echo 
-    echb "/usr/bin/gpio-set -> /usr/local/lib/python2.7/dist-packages/steelsquid_gpio_set.py"
+    echb "/usr/bin/gpio-set -> /opt/steelsquid/python/steelsquid_gpio_set.py"
     echo "Set gpio pin to hight (on) or low (off)"
     echo 
-    echb "/usr/local/lib/python2.7/dist-packages/steelsquid_http_server.py"
+    echb "/opt/steelsquid/python/steelsquid_http_server.py"
     echo "Python http server"
     echo 
-    echb "/usr/local/lib/python2.7/dist-packages/steelsquid_io.py"
+    echb "/opt/steelsquid/python/steelsquid_io.py"
     echo "Mostly wrapper functions for my steelsquid IO board"
     echo 
-    echb "/usr/local/lib/python2.7/dist-packages/steelsquid_kiss_global.py"
+    echb "/opt/steelsquid/python/steelsquid_kiss_global.py"
     echo "Global stuff for steelsquid kiss os"
     echo 
-    echb "/usr/local/lib/python2.7/dist-packages/steelsquid_kiss_http_expand.py"
+    echb "/opt/steelsquid/python/steelsquid_kiss_http_expand.py"
     echo "Use this to implement HTTP stuff, will execute on boot"
     echo 
-    echb "/usr/local/lib/python2.7/dist-packages/steelsquid_kiss_http_server.py"
+    echb "/opt/steelsquid/python/steelsquid_kiss_http_server.py"
     echo "Control/Configure steelsquid-kiss-os from web browser"
     echo 
-    echb "/usr/local/lib/python2.7/dist-packages/steelsquid_kiss_socket_connection.py"
+    echb "/opt/steelsquid/python/steelsquid_kiss_socket_connection.py"
     echo "Controll steelsquid kiss os with simle socket commands"
     echo 
-    echb "/usr/local/lib/python2.7/dist-packages/steelsquid_kiss_socket_expand.py"
+    echb "/opt/steelsquid/python/steelsquid_kiss_socket_expand.py"
     echo "Use this to expand socket functionality"
     echo 
-    echb "/usr/local/lib/python2.7/dist-packages/steelsquid_lcd.py"
+    echb "/opt/steelsquid/python/steelsquid_lcd.py"
     echo "Print message to HDD44780 compatible LCD"
     echo 
-    echb "/usr/bin/lcd-message -> /usr/local/lib/python2.7/dist-packages/steelsquid_lcd_message.py"
+    echb "/usr/bin/lcd-message -> /opt/steelsquid/python/steelsquid_lcd_message.py"
     echo "Exampel how to print message to HDD44780 compatible LCD"
     echo 
-    echb "/usr/bin/mcp-get -> /usr/local/lib/python2.7/dist-packages/steelsquid_mcp_get"
+    echb "/usr/bin/mcp-get -> /opt/steelsquid/python/steelsquid_mcp_get"
     echo "Contoll gpio on a  MCP230xx"
     echo 
-    echb "/usr/bin/mcp-set -> /usr/local/lib/python2.7/dist-packages/steelsquid_mcp_set"
+    echb "/usr/bin/mcp-set -> /opt/steelsquid/python/steelsquid_mcp_set"
     echo "Contoll gpio on a  MCP230xx"
     echo 
-    echb "/usr/bin/steelsquid-nm -> /usr/local/lib/python2.7/dist-packages/steelsquid_nm.py"
+    echb "/usr/bin/steelsquid-nm -> /opt/steelsquid/python/steelsquid_nm.py"
     echo "Python script that list and connect to wifi network"
     echo 
-    echb "/usr/local/lib/python2.7/dist-packages/steelsquid_omx.py"
+    echb "/opt/steelsquid/python/steelsquid_omx.py"
     echo "Play movies on the raspberry pi usting the GPU"
     echo 
-    echb "/usr/local/lib/python2.7/dist-packages/steelsquid_pi.py"
+    echb "/opt/steelsquid/python/steelsquid_pi.py"
     echo "Some useful stuff for Raspberry Pi"
     echo 
-    echb "/usr/bin/steelsquid-sabertooth -> /usr/local/lib/python2.7/dist-packages/steelsquid_sabertooth.py"
+    echb "/usr/bin/steelsquid-sabertooth -> /opt/steelsquid/python/steelsquid_sabertooth.py"
     echo "A simple serial interface for Sabertooth motor controller."
     echo 
-    echb "/usr/local/lib/python2.7/dist-packages/steelsquid_server.py"
+    echb "/opt/steelsquid/python/steelsquid_server.py"
     echo "A python server (handle execute commands)"
     echo 
-    echb "/usr/bin/servo -> /usr/local/lib/python2.7/dist-packages/steelsquid_servo.py"
+    echb "/usr/bin/servo -> /opt/steelsquid/python/steelsquid_servo.py"
     echo "Controll Adafruit 16-Channel servo driver."
     echo 
-    echb "/usr/local/lib/python2.7/dist-packages/steelsquid_socket_connection.py"
+    echb "/opt/steelsquid/python/steelsquid_socket_connection.py"
     echo "Socket inplementation of steelsquid_connection"
     echo 
-    echb "/usr/local/lib/python2.7/dist-packages/steelsquid_utils.py"
+    echb "/opt/steelsquid/python/steelsquid_utils.py"
     echo "Python utils"
+    echo 
+    echb "/opt/steelsquid/python/run"
+    echo "All python scrips in this folder will be imported (executed) on boot."
+    echo "Use this to inmplement your own stuff."
 }
 if [ "$in_parameter_1" == "help-files" ]; then
     echo 
@@ -990,7 +1002,7 @@ function help_develop()
 {
     echo 
     echb "steelsquid restart"
-    echo "Restart he steelsquid daemon"
+    echo "Restart the steelsquid daemon"
     echo 
     echb "steelsquid dev"
     echo "Is the system in development mode"
@@ -1027,6 +1039,18 @@ function help_develop()
     echb "steelsquid extract"
     echo "Extract a steelsquid-kiss-os.gz file in the folder this script is in."
     echo 
+    echb "steelsquid remote-restart"
+    echo "Restart steelsquid service on remote system."
+    echo "Set paramaters in this script:"
+    echo "  base_remote_server=192.168.0.199"
+    echo "  base_remote_port=22"
+    echo "  base_remote_user=steelsquid"
+    echo "Or add 4 rows to config.txt"    
+    echo "  ip"
+    echo "  port"
+    echo "  user"
+    echo "  password"
+    echo 
     echb "steelsquid commit-git"
     echo "Commit changes to the GIT and push to google code"
     echo 
@@ -1041,15 +1065,25 @@ function help_develop()
     echo " base_remote_server=192.168.0.199"
     echo " base_remote_port=22"
     echo " base_remote_user=steelsquid"
+    echo "Or add 4 rows to config.txt"    
+    echo "  ip"
+    echo "  port"
+    echo "  user"
+    echo "  password"
     echo 
-    echb "steelsquid commit-restart"
+    echb "steelsquid commit-remote-restart"
     echo "Commit changes to a nother system via ssh (install on remote system)"
     echo "Will commit (install) the steelsquid script, python files and web files"
     echo "After installation is done the steelsquid service will restart."
     echo "Set paramaters in this script:"
-    echo " base_remote_server=192.168.0.199"
-    echo " base_remote_port=22"
-    echo " base_remote_user=steelsquid"
+    echo "  base_remote_server=192.168.0.199"
+    echo "  base_remote_port=22"
+    echo "  base_remote_user=steelsquid"
+    echo "Or add 4 rows to config.txt"    
+    echo "  ip"
+    echo "  port"
+    echo "  user"
+    echo "  password"
 }
 if [ "$in_parameter_1" == "help-dev" ]; then
     echo 
@@ -1073,22 +1107,35 @@ function help_utils()
     echb "steelsquid stream-off"
     echo "Disable streaming of camera."
     echo "Will take effect on next reboot...."
-    echo 
-    echb "steelsquid rover"
-    echo "Is rover functionality enabled."
-    echo 
-    echb "steelsquid rover-on"
-    echo "Enable rover functionality."
-    echo "Will take effect on next reboot...."
-    echo 
-    echb "steelsquid rover-off"
-    echo "Disable rover functionality."
-    echo "Will take effect on next reboot...."
+    if [ $(is-raspberry-pi) == "true" ]; then
+        echo 
+        echb "steelsquid io"
+        echo "Is this a Steelsquid IO Boar."
+        echo 
+        echb "steelsquid io-on"
+        echo "Enable Steelsquid IO Boar."
+        echo "Will take effect on next reboot...."
+        echo 
+        echb "steelsquid io-off"
+        echo "Disable Steelsquid IO Boar."
+        echo "Will take effect on next reboot...."
+        echo 
+        echb "steelsquid rover"
+        echo "Is rover functionality enabled."
+        echo 
+        echb "steelsquid rover-on"
+        echo "Enable rover functionality."
+        echo "Will take effect on next reboot...."
+        echo 
+        echb "steelsquid rover-off"
+        echo "Disable rover functionality."
+        echo "Will take effect on next reboot...."
+    fi
 }
 if [ "$in_parameter_1" == "help-utils" ]; then
     echo 
     echb "DESCRIPTION"
-    echo "Extra utils: stream USB camera, rover..."
+    echo "Extra utils: stream USB camera..."
     help_utils
     echo
 	exit 0
@@ -1248,9 +1295,11 @@ function help_top()
     echo 
     echb "steelsquid help-other"
     echo "Show some other useful commands"
-    echo 
-    echb "steelsquid help-io"
-    echo "IO Command (GPIO)"
+    if [ $(is-raspberry-pi) == "true" ]; then
+        echo 
+        echb "steelsquid help-io"
+        echo "IO Command (GPIO)"
+    fi
     echo 
     echb "steelsquid help-files"
     echo "Description of some files and folders."
@@ -1270,7 +1319,9 @@ if [ "$in_parameter_1" == "help" ]; then
     help_upgrade
     help_utils
     help_other
-    help_pi
+    if [ $(is-raspberry-pi) == "true" ]; then
+        help_io
+    fi
     help_files
     help_develop
     help_build
@@ -1588,6 +1639,60 @@ function rover_off()
 }
 if [ "$in_parameter_1" == "rover-off" ]; then
 	rover_off
+	exit 0
+fi
+
+
+##################################################################################
+# Is Steelsquid IO Board enabled or disabled
+##################################################################################
+function io_info()
+{
+    if [ $(get-flag "io") == "true" ]; then
+        echo
+        echo "Steelsquid IO Board: Enabled"
+        echo
+    else
+        echo
+        echo "Steelsquid IO Board: Disabled"
+        echo
+    fi
+}
+if [ "$in_parameter_1" == "io" ]; then
+	io_info
+	exit 0
+fi
+
+
+##################################################################################
+# Steelsquid IO Board on
+##################################################################################
+function io_on()
+{
+	log "Enable Steelsquid IO Board"
+    set-flag "io"
+    set-flag "lcd"
+	systemctl restart steelsquid
+    log-ok
+}
+if [ "$in_parameter_1" == "io-on" ]; then
+	io_on
+	exit 0
+fi
+
+
+##################################################################################
+# Steelsquid IO Board off
+##################################################################################
+function io_off()
+{
+	log "Disable Steelsquid IO Board"
+    del-flag "io"
+	systemctl restart steelsquid
+    log-ok
+}
+if [ "$in_parameter_1" == "io-off" ]; then
+	io_off
 	exit 0
 fi
 
@@ -2063,33 +2168,33 @@ fi
 function install_steelsquid_python()
 {
 	log "Download and install python scripts"
-    mkdir -p /usr/local/lib/python2.7/dist-packages/
+    mkdir -p /opt/steelsquid/python/
 	index=1
 	for var in "${python_downloads[@]}"
 	do
         if [ $(get-flag "expanded") == "true" ]; then
             if [[ $var != *_expand* ]]; then
                 if [[ $var != *_global* ]]; then
-                    sudo wget --progress=dot:giga --no-check-certificate -O /usr/local/lib/python2.7/dist-packages/$(basename $var) $var
+                    sudo wget --progress=dot:giga --no-check-certificate -O /opt/steelsquid/python/$(basename $var) $var
                     if [ $? -ne 0 ]; then
                         do-err-exit "Unable to download from $var"
                     else
-                        sudo chmod 755 /usr/local/lib/python2.7/dist-packages/$(basename $var)
+                        sudo chmod 755 /opt/steelsquid/python/$(basename $var)
                         rm ${python_links[$index]} > /dev/null 2>&1
-                        sudo ln -s /usr/local/lib/python2.7/dist-packages/$(basename $var) ${python_links[$index]}
+                        sudo ln -s /opt/steelsquid/python/$(basename $var) ${python_links[$index]}
                         index=$[$index +1]
                         log "$var downloaded and installed"
                     fi
                 fi        
             fi        
         else
-            sudo wget --progress=dot:giga --no-check-certificate -O /usr/local/lib/python2.7/dist-packages/$(basename $var) $var
+            sudo wget --progress=dot:giga --no-check-certificate -O /opt/steelsquid/python/$(basename $var) $var
             if [ $? -ne 0 ]; then
                 do-err-exit "Unable to download from $var"
             else
-                sudo chmod 755 /usr/local/lib/python2.7/dist-packages/$(basename $var)
+                sudo chmod 755 /opt/steelsquid/python/$(basename $var)
                 rm ${python_links[$index]} > /dev/null 2>&1
-                sudo ln -s /usr/local/lib/python2.7/dist-packages/$(basename $var) ${python_links[$index]}
+                sudo ln -s /opt/steelsquid/python/$(basename $var) ${python_links[$index]}
                 index=$[$index +1]
                 log "$var downloaded and installed"
             fi
@@ -2101,13 +2206,13 @@ function install_steelsquid_python_one()
 {
 	log "Download and install python script"
     var=${python_downloads[$in_parameter_2]}
-    sudo wget --progress=dot:giga --no-check-certificate -O /usr/local/lib/python2.7/dist-packages/$(basename $var) $var
+    sudo wget --progress=dot:giga --no-check-certificate -O /opt/steelsquid/python/$(basename $var) $var
     if [ $? -ne 0 ]; then
         do-err-exit "Unable to download from $var"
     else
-        sudo chmod 755 /usr/local/lib/python2.7/dist-packages/$(basename $var)
+        sudo chmod 755 /opt/steelsquid/python/$(basename $var)
         rm ${python_links[$in_parameter_2]} > /dev/null 2>&1
-        sudo ln -s /usr/local/lib/python2.7/dist-packages/$(basename $var) ${python_links[$in_parameter_2]}
+        sudo ln -s /opt/steelsquid/python/$(basename $var) ${python_links[$in_parameter_2]}
         log "$var downloaded and installed"
     fi
 	log "Python script installed"
@@ -2402,7 +2507,6 @@ if [ "$in_parameter_1" == "timezone-set" ]; then
 fi
 
 
-
 ##################################################################################
 # Set host name
 ##################################################################################
@@ -2412,7 +2516,6 @@ if [ "$in_parameter_1" == "hostname" ]; then
     echo "127.0.0.1       $in_parameter_2" >> /etc/hosts
     exit 0
 fi
-
 
 
 ##################################################################################
@@ -2951,10 +3054,10 @@ function local_commit()
 	index=1
 	for var in "${python_downloads[@]}"
 	do
-        cp $(basename $var) /usr/local/lib/python2.7/dist-packages/$(basename $var)
-        chmod 755 /usr/local/lib/python2.7/dist-packages/$(basename $var)
+        cp $(basename $var) /opt/steelsquid/python/$(basename $var)
+        chmod 755 /opt/steelsquid/python/$(basename $var)
         rm ${python_links[$index]} > /dev/null 2>&1
-        ln -s /usr/local/lib/python2.7/dist-packages/$(basename $var) ${python_links[$index]}
+        ln -s /opt/steelsquid/python/$(basename $var) ${python_links[$index]}
         index=$[$index +1]
 	done
 }
@@ -3030,16 +3133,15 @@ if [ "$in_parameter_1" == "commit-remote" ]; then
     remote_commit
 	exit 0
 fi
-if [ "$in_parameter_1" == "commit-restart" ]; then
+if [ "$in_parameter_1" == "commit-remote-restart" ]; then
     remote_commit
 	log "Restarting service"
-    sshpass -p $base_remote_password ssh -o StrictHostKeyChecking=no -p $base_remote_port $base_remote_user@$base_remote_server 'sudo steelsquid commit-remote-restart'
+    sshpass -p $base_remote_password ssh -o StrictHostKeyChecking=no -p $base_remote_port $base_remote_user@$base_remote_server 'sudo steelsquid restart'
 	exit 0
 fi
-
-
-if [ "$in_parameter_1" == "commit-remote-restart" ]; then
-    systemctl restart steelsquid &
+if [ "$in_parameter_1" == "remote-restart" ]; then
+	log "Restarting service"
+    sshpass -p $base_remote_password ssh -o StrictHostKeyChecking=no -p $base_remote_port $base_remote_user@$base_remote_server 'sudo steelsquid restart'
 	exit 0
 fi
 
@@ -3060,10 +3162,10 @@ function remote_commit_install()
 	index=1
 	for var in "${python_downloads[@]}"
 	do
-        cp /var/tmp/$(basename $var) /usr/local/lib/python2.7/dist-packages/$(basename $var)
-        chmod 755 /usr/local/lib/python2.7/dist-packages/$(basename $var)
+        cp /var/tmp/$(basename $var) /opt/steelsquid/python/$(basename $var)
+        chmod 755 /opt/steelsquid/python/$(basename $var)
         rm ${python_links[$index]} > /dev/null 2>&1
-        ln -s /usr/local/lib/python2.7/dist-packages/$(basename $var) ${python_links[$index]}
+        ln -s /opt/steelsquid/python/$(basename $var) ${python_links[$index]}
         index=$[$index +1]
 	done
 }
@@ -3181,7 +3283,6 @@ else
     set-flag "web"
     set-flag "web_authentication"
     set-flag "ssh"
-    set-flag "lcd"
 fi
 
 
@@ -3211,16 +3312,29 @@ log "Repository updated"
 ##################################################################################
 if [ $(get_installed) == "false" ]; then
 	log "Remove and install packages"
-	aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv linux-image-rpi-rpfv raspberrypi-bootloader-nokernel i2c-tools alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-ti-connectivity libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer zd1211-firmware libraspberrypi-bin fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw
-    exit-check 
-	aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install build-essential python-dbus python-pexpect python-dev python-setuptools python-pip python-pam python-smbus psmisc git libudev-dev libmount-dev
-    exit-check 
-	aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install deborphan network-manager dash nano sudo aptitude udev ntfs-3g console-setup beep ecryptfs-utils alsa-utils alsa-base va-driver-all vdpau-va-driver
-    exit-check 
-	aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install telnet secure-delete beep sysstat dropbear openssh-client  cifs-utils smbclient keyutils sshfs curl samba-common lsof mc fgetty ftp htop elinks screenie nload mtr-tiny lzma zip unzip unrar-free p7zip-full bzip2 whiptail parted lua5.1 aria2 python-serial 
-    exit-check 
-    aptitude -y purge cron ifupdown rsyslog vim-common vim-tiny hdparm openssh-server
-    exit-check 
+    if [ $(is-raspberry-pi) == "true" ]; then
+        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv linux-image-rpi-rpfv raspberrypi-bootloader-nokernel i2c-tools alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-ti-connectivity libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer zd1211-firmware libraspberrypi-bin fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw
+        exit-check 
+        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install build-essential python-dbus python-pexpect python-dev python-setuptools python-pip python-pam python-smbus psmisc git libudev-dev libmount-dev
+        exit-check 
+        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install deborphan network-manager dash nano sudo aptitude udev ntfs-3g console-setup beep ecryptfs-utils alsa-utils alsa-base va-driver-all vdpau-va-driver
+        exit-check 
+        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install telnet secure-delete beep sysstat dropbear openssh-client cifs-utils smbclient keyutils sshfs curl samba-common lsof mc fgetty ftp htop elinks screenie nload mtr-tiny lzma zip unzip unrar-free p7zip-full bzip2 whiptail parted lua5.1 aria2 python-serial numpy
+        exit-check 
+        aptitude -y purge cron ifupdown rsyslog vim-common vim-tiny hdparm openssh-server
+        exit-check 
+    else
+        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv linux-image-rpi-rpfv raspberrypi-bootloader-nokernel i2c-tools alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-ti-connectivity libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer zd1211-firmware libraspberrypi-bin fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw
+        exit-check 
+        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install build-essential python-dbus python-pexpect python-dev python-setuptools python-pip python-pam python-smbus psmisc git libudev-dev libmount-dev
+        exit-check 
+        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install deborphan network-manager dash nano sudo aptitude udev ntfs-3g console-setup beep ecryptfs-utils alsa-utils alsa-base va-driver-all vdpau-va-driver
+        exit-check 
+        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install telnet secure-delete beep sysstat dropbear openssh-client cifs-utils smbclient keyutils sshfs curl samba-common lsof mc fgetty ftp htop elinks screenie nload mtr-tiny lzma zip unzip unrar-free p7zip-full bzip2 whiptail parted lua5.1 aria2 python-serial numpy
+        exit-check 
+        aptitude -y purge cron ifupdown rsyslog vim-common vim-tiny hdparm openssh-server
+        exit-check 
+    fi
 	log "Packages removed and installed"
 fi
 
@@ -3234,7 +3348,9 @@ aptitude -y -o Dpkg::Options::="--force-confnew" full-upgrade
 exit-check
 dpkg --configure -a
 exit-check
-cp /vmlinuz /boot/kernel.img
+if [ $(is-raspberry-pi) == "true" ]; then
+    cp /vmlinuz /boot/kernel.img
+fi
 log "System upgraded"
 
 
@@ -3242,67 +3358,112 @@ log "System upgraded"
 ##################################################################################
 # Install rpi GPIO
 ##################################################################################
-log "Install rpi GPIO"
-easy_install -U distribute
-pip install rpi.gpio
-pip install --upgrade rpi.gpio
-log "Rpi GPIO installed"
+if [ $(is-raspberry-pi) == "true" ]; then
+    log "Install rpi GPIO"
+    easy_install -U distribute
+    pip install rpi.gpio
+    pip install --upgrade rpi.gpio
+    log "Rpi GPIO installed"
+fi
 
 
 ##################################################################################
 # Install Adafruit-Raspberry-Pi-Python-Code
 ##################################################################################
-log "Install Adafruit-Raspberry-Pi-Python-Code"
-cd /usr/local/lib/python2.7/dist-packages/
-rm Adafruit_I2C.py
-wget https://raw.githubusercontent.com/adafruit/Adafruit-Raspberry-Pi-Python-Code/master/Adafruit_I2C/Adafruit_I2C.py
-rm Adafruit_PWM_Servo_Driver.py
-wget https://raw.githubusercontent.com/adafruit/Adafruit-Raspberry-Pi-Python-Code/master/Adafruit_PWM_Servo_Driver/Adafruit_PWM_Servo_Driver.py
-rm Adafruit_MCP230xx.py
-wget https://raw.githubusercontent.com/adafruit/Adafruit-Raspberry-Pi-Python-Code/master/Adafruit_MCP230xx/Adafruit_MCP230xx.py
-rm Adafruit_ADS1x15.py
-wget https://raw.githubusercontent.com/adafruit/Adafruit-Raspberry-Pi-Python-Code/master/Adafruit_ADS1x15/Adafruit_ADS1x15.py
-rm Adafruit_MCP4725.py
-wget https://raw.githubusercontent.com/adafruit/Adafruit-Raspberry-Pi-Python-Code/master/Adafruit_MCP4725/Adafruit_MCP4725.py
-log "Adafruit-Raspberry-Pi-Python-Code installed"
+if [ $(is-raspberry-pi) == "true" ]; then
+    log "Install Adafruit-Raspberry-Pi-Python-Code"
+    cd /usr/local/lib/python2.7/dist-packages
+    rm Adafruit_I2C.py
+    wget https://raw.githubusercontent.com/adafruit/Adafruit-Raspberry-Pi-Python-Code/master/Adafruit_I2C/Adafruit_I2C.py
+    rm Adafruit_PWM_Servo_Driver.py
+    wget https://raw.githubusercontent.com/adafruit/Adafruit-Raspberry-Pi-Python-Code/master/Adafruit_PWM_Servo_Driver/Adafruit_PWM_Servo_Driver.py
+    rm Adafruit_MCP230xx.py
+    wget https://raw.githubusercontent.com/adafruit/Adafruit-Raspberry-Pi-Python-Code/master/Adafruit_MCP230xx/Adafruit_MCP230xx.py
+    rm Adafruit_ADS1x15.py
+    wget https://raw.githubusercontent.com/adafruit/Adafruit-Raspberry-Pi-Python-Code/master/Adafruit_ADS1x15/Adafruit_ADS1x15.py
+    rm Adafruit_MCP4725.py
+    wget https://raw.githubusercontent.com/adafruit/Adafruit-Raspberry-Pi-Python-Code/master/Adafruit_MCP4725/Adafruit_MCP4725.py
+    log "Adafruit-Raspberry-Pi-Python-Code installed"
+fi
+
+
+
+##################################################################################
+# Change i2c baud rate to 9600
+##################################################################################
+if [ $(is-raspberry-pi) == "true" ]; then
+    log "# Change i2c baud rate to 9600"
+    echo "options i2c_bcm2708 baudrate=9600" > /etc/modprobe.d/i2c.conf
+fi
+
 
 
 ##################################################################################
 # Install picamera
 ##################################################################################
-log "Install picamera"
-easy_install -U distribute
-pip install picamera
-pip install --upgrade picamera
+if [ $(is-raspberry-pi) == "true" ]; then
+    log "Install picamera"
+    easy_install -U distribute
+    pip install picamera
+    pip install --upgrade picamera
+fi
 
 
 ##################################################################################
 # Install RPIO
 ##################################################################################
-log "Install RPIO"
-easy_install -U RPIO
-pip install RPIO
-pip install --upgrade RPIO
+if [ $(is-raspberry-pi) == "true" ]; then
+    log "Install RPIO"
+    easy_install -U RPIO
+    pip install RPIO
+    pip install --upgrade RPIO
+fi
+
+
+##################################################################################
+# Set pythonpath
+##################################################################################
+log "Set pythonpath"
+mkdir /opt/steelsquid/python
+echo "export PYTHONPATH=/opt/steelsquid/python:/usr/lib/python3/dist-packages" > /etc/profile.d/pythonpath.sh
+mkdir /opt/steelsquid/python/run
+echo "" >> /opt/steelsquid/python/run/__init__.py
+
 
 
 ##################################################################################
 # Update firmware
 ##################################################################################
-log "Update firmware"
-sudo curl -L --output /usr/bin/rpi-update https://raw.github.com/Hexxeh/rpi-update/master/rpi-update && sudo chmod +x /usr/bin/rpi-update
-rpi-update
+if [ $(is-raspberry-pi) == "true" ]; then
+    log "Update firmware"
+    sudo curl -L --output /usr/bin/rpi-update https://raw.github.com/Hexxeh/rpi-update/master/rpi-update && sudo chmod +x /usr/bin/rpi-update
+    rpi-update
+fi
+
+
+##################################################################################
+# Download and install Quick2Wire
+##################################################################################
+if [ $(is-raspberry-pi) == "true" ]; then
+    log "Download and install Quick2Wire"
+    response=$(grep -lir "pi" /etc/apt/sources.list)
+    if [ "$response" != "/etc/apt/sources.list" ]; then
+        echo "deb http://dist.quick2wire.com/raspbian wheezy main" >> /etc/apt/sources.list
+        echo "deb-src http://dist.quick2wire.com/raspbian wheezy main" >> /etc/apt/sources.list
+        aptitude update
+        aptitude -o Aptitude::Cmdline::ignore-trust-violations=true -y install quick2wire-gpio-admin quick2wire-python3-api
+        sed -i '/^assert sys.version_info.major/d' /usr/lib/python3/dist-packages/quick2wire/i2c.py
+    fi
+fi
 
 
 ##################################################################################
 # Download and install WiringPi
 ##################################################################################
-log "Download and install WiringPi"
-cd /tmp
-git clone git://git.drogon.net/wiringPi
-cd wiringPi
-git pull origin
-./build
-
+if [ $(is-raspberry-pi) == "true" ]; then
+    log "Download and install WiringPi"
+    pip install wiringpi2
+fi
 
 
 ##################################################################################
@@ -3320,7 +3481,7 @@ mkdir $steelsquid_folder/web/css
 mkdir $steelsquid_folder/web/js
 mkdir $steelsquid_folder/web/font
 mkdir $steelsquid_folder/vpn
-chmod -R 755 /usr/local/lib/python2.7/dist-packages/
+chmod -R 755 /opt/steelsquid/python/
 chmod 755 $steelsquid_folder/steelsquid-kiss-os.sh
 mkdir /mnt/network
 mkdir /mnt/network/Documents
@@ -3340,13 +3501,15 @@ ln -s /media /root/Media
 ##################################################################################
 # Download the expand filesystem command
 ##################################################################################
-log "Create the expand filesystem command"
-wget --progress=dot:giga --no-check-certificate -O /usr/bin/raspi-expand-rootfs.sh $base/raspi-expand-rootfs.sh
-if [ $? -ne 0 ]; then
-    do-err-exit "Unable to download raspi-expand-rootfs.sh"
+if [ $(is-raspberry-pi) == "true" ]; then
+    log "Create the expand filesystem command"
+    wget --progress=dot:giga --no-check-certificate -O /usr/bin/raspi-expand-rootfs.sh $base/raspi-expand-rootfs.sh
+    if [ $? -ne 0 ]; then
+        do-err-exit "Unable to download raspi-expand-rootfs.sh"
+    fi
+    chmod +x /usr/bin/raspi-expand-rootfs.sh
+    log "Expand filesystem command installed"
 fi
-chmod +x /usr/bin/raspi-expand-rootfs.sh
-log "Expand filesystem command installed"
 
 
 
@@ -3376,12 +3539,14 @@ chmod +x /usr/bin/ldm-shout
 ##################################################################################
 # Download and install omxplayer
 ##################################################################################
-log "Download and install omxplayer"
-wget --progress=dot:giga --no-check-certificate -O /tmp/omxplayer.deb http://omxplayer.sconde.net/builds/omxplayer_0.3.5~git20140409~46616c5_armhf.deb
-if [ $? -ne 0 ]; then
-    do-err-exit "Unable to download omxplayer"
+if [ $(is-raspberry-pi) == "true" ]; then
+    log "Download and install omxplayer"
+    wget --progress=dot:giga --no-check-certificate -O /tmp/omxplayer.deb http://omxplayer.sconde.net/builds/omxplayer_0.3.5~git20140409~46616c5_armhf.deb
+    if [ $? -ne 0 ]; then
+        do-err-exit "Unable to download omxplayer"
+    fi
+    dpkg -i /tmp/omxplayer.deb
 fi
-dpkg -i /tmp/omxplayer.deb
 
 
 
@@ -3594,7 +3759,6 @@ fi
 log "I2c enabled"
 
 
-
 ##################################################################################
 # disable ipv6
 ##################################################################################
@@ -3716,7 +3880,9 @@ echo "[Unit]" > /etc/systemd/system/steelsquid.service
 echo "Description=Steelsquid" >> /etc/systemd/system/steelsquid.service
 echo "" >> /etc/systemd/system/steelsquid.service
 echo "[Service]" >> /etc/systemd/system/steelsquid.service
+echo "KillMode=none" >> /etc/systemd/system/steelsquid.service
 echo "ExecStart=/usr/bin/steelsquid-boot start" >> /etc/systemd/system/steelsquid.service
+echo "ExecStop=/usr/bin/steelsquid-boot stop" >> /etc/systemd/system/steelsquid.service
 echo "" >> /etc/systemd/system/steelsquid.service
 echo "[Install]" >> /etc/systemd/system/steelsquid.service
 echo "WantedBy=multi-user.target" >> /etc/systemd/system/steelsquid.service

@@ -9,6 +9,7 @@ motor2 = right
 @organization: Steelsquid
 @author: Andreas Nilsson
 @contact: steelsquid@gmail.com
+@license: GNU Lesser General Public License v2.1
 @change: 2013-10-25 Created
 '''
 
@@ -18,6 +19,7 @@ import time
 import steelsquid_utils
 import serial
 import math
+import sys
 
 
 class SteelsquidSabertooth(threading.Thread):
@@ -85,11 +87,18 @@ class SteelsquidSabertooth(threading.Thread):
             
             
 if __name__ == "__main__":
-    steelsquid_utils.set_development()
-    sab = SteelsquidSabertooth()
-    while True:
-        left = raw_input()
-        right = raw_input()
-        sab.set_dc_speed(left, right)
+    if len(sys.argv)==1:
+        from steelsquid_utils import printb
+        print("")
+        printb("sabertooth <left> <right>")
+        print("Set speed of Sabertooth motor controller")
+        print("left: Left speed from -100 to +100")
+        print("right: Right speed from -100 to +100")
+    else:
+        try:
+            sab = SteelsquidSabertooth()
+            sab.set_dc_speed(sys.argv[1], sys.argv[2])
+        except KeyboardInterrupt:
+            pass
 
 

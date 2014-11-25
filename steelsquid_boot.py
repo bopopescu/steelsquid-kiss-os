@@ -8,11 +8,10 @@ Execute until system shutdown.
  - Monitor ssh
  - Start web-server
  - Start event handler
-
 @organization: Steelsquid
 @author: Andreas Nilsson
 @contact: steelsquid@gmail.com
-@license: GNU General Public License
+@license: GNU Lesser General Public License v2.1
 @change: 2013-10-25 Created
 '''
 import sys
@@ -24,14 +23,23 @@ import thread
 import getpass
 from subprocess import Popen, PIPE, STDOUT
 import subprocess
-import steelsquid_kiss_global
 import steelsquid_kiss_socket_expand
 import steelsquid_kiss_http_expand
+import os.path, pkgutil
+import importlib
+import run
 
+
+try:
+    import steelsquid_kiss_global
+except:
+    steelsquid_utils.shout("Fatal error when import steelsquid_kiss_global", is_error=True)
 
 if steelsquid_utils.is_raspberry_pi:
-    import steelsquid_io
+    import steelsquid_pi
 
+if steelsquid_utils.get_flag("io"):
+    import steelsquid_io
 
 def print_help():
     '''
@@ -110,9 +118,15 @@ def on_shutdown(args, para):
     '''
     steelsquid_utils.shout("Goodbye :-(")
     if steelsquid_utils.get_flag("socket_connection"):
-        steelsquid_kiss_global.socket_connection.stop()
+        try:
+            steelsquid_kiss_global.socket_connection.stop()
+        except:
+            pass
     if steelsquid_utils.get_flag("web"):
-        steelsquid_kiss_global.http_server.stop_server()
+        try:
+            steelsquid_kiss_global.http_server.stop_server()
+        except:
+            pass
     steelsquid_utils.execute_system_command_blind(['killall', 'aria2c'])
     steelsquid_event.deactivate_event_handler()
     if steelsquid_utils.is_raspberry_pi() and  steelsquid_utils.get_flag("lcd"):
@@ -275,6 +289,14 @@ def dev_dip(args, para):
     steelsquid_utils.shout_time("DIP " + str(para[0]) +": "+ str(para[1]))
 
 
+def import_file_dyn(name):
+    try:
+        steelsquid_utils.shout("Load run module: " + 'run.'+name, debug=True)
+        importlib.import_module('run.'+name)
+    except:
+        steelsquid_utils.shout("Fatal error when load run module: " + 'run.'+name, is_error=True)
+
+
 def main():
     '''
     The main function
@@ -295,26 +317,36 @@ def main():
                     pass
             steelsquid_utils.shout("Welcome :-)")
             if steelsquid_utils.get_flag("web"):
-                steelsquid_kiss_global.http_server = steelsquid_kiss_http_expand.SteelsquidKissExpandHttpServer(None, steelsquid_utils.STEELSQUID_FOLDER+"/web/", steelsquid_utils.get_flag("web_authentication"), steelsquid_utils.get_flag("web_local"), steelsquid_utils.get_flag("web_authentication"), steelsquid_utils.get_flag("web_https"))
-                steelsquid_kiss_global.http_server.start_server()
+                try:
+                    steelsquid_utils.shout("Start steelsquid_kiss_http_expand", debug=True)
+                    steelsquid_kiss_global.http_server = steelsquid_kiss_http_expand.SteelsquidKissExpandHttpServer(None, steelsquid_utils.STEELSQUID_FOLDER+"/web/", steelsquid_utils.get_flag("web_authentication"), steelsquid_utils.get_flag("web_local"), steelsquid_utils.get_flag("web_authentication"), steelsquid_utils.get_flag("web_https"))
+                    steelsquid_kiss_global.http_server.start_server()
+                except:
+                    steelsquid_utils.shout("Fatal error when start steelsquid_kiss_http_expand", is_error=True)
             if steelsquid_utils.get_flag("socket_connection"):
-                steelsquid_kiss_global.socket_connection = steelsquid_kiss_socket_expand.SteelsquidKissSocketExpand(True)
-                steelsquid_kiss_global.socket_connection.start()
+                try:
+                    steelsquid_utils.shout("Start steelsquid_kiss_socket_expand", debug=True)
+                    steelsquid_kiss_global.socket_connection = steelsquid_kiss_socket_expand.SteelsquidKissSocketExpand(True)
+                    steelsquid_kiss_global.socket_connection.start()
+                except:
+                    steelsquid_utils.shout("Fatal error when start steelsquid_kiss_socket_expand", is_error=True)
             if steelsquid_utils.is_raspberry_pi():
                 if steelsquid_utils.get_flag("disable_monitor"):
                     steelsquid_utils.execute_system_command_blind(["/opt/vc/bin/tvservice", "-o"])
-                steelsquid_io.button_click(1, on_button_1)
-                steelsquid_io.button_click(2, on_button_2)
-                steelsquid_io.button_click(3, on_button_3)
-                steelsquid_io.button_click(4, on_button_4)
-                steelsquid_io.dip_event(1, on_dip_1)
-                steelsquid_io.dip_event(2, on_dip_2)
-                steelsquid_io.dip_event(3, on_dip_3)
-                steelsquid_io.dip_event(4, on_dip_4)
+                if steelsquid_utils.get_flag("io"):
+                    steelsquid_io.button_click(1, on_button_1)
+                    steelsquid_io.button_click(2, on_button_2)
+                    steelsquid_io.button_click(3, on_button_3)
+                    steelsquid_io.button_click(4, on_button_4)
+                    steelsquid_io.dip_event(1, on_dip_1)
+                    steelsquid_io.dip_event(2, on_dip_2)
+                    steelsquid_io.dip_event(3, on_dip_3)
+                    steelsquid_io.dip_event(4, on_dip_4)
             if steelsquid_utils.get_flag("download"):
                 if steelsquid_utils.get_parameter("download_dir") == "":
                     steelsquid_utils.set_parameter("download_dir", "/home/steelsquid")
                 steelsquid_utils.execute_system_command_blind(['steelsquid', 'download-on'], wait_for_finish=False)
+            steelsquid_utils.shout("Subscribe to events", debug=True)
             steelsquid_event.subscribe_to_event("shutdown", on_shutdown, ())
             steelsquid_event.subscribe_to_event("daily", on_daily, ())
             steelsquid_event.subscribe_to_event("network", on_network, ())
@@ -322,9 +354,13 @@ def main():
             steelsquid_event.subscribe_to_event("mount", on_mount, ())
             steelsquid_event.subscribe_to_event("umount", on_umount, ())
             steelsquid_event.subscribe_to_event("shout", on_shout, ())
-            if steelsquid_utils.get_flag("development"):
+            if steelsquid_utils.get_flag("io") and steelsquid_utils.get_flag("development"):
                 steelsquid_event.subscribe_to_event("button", dev_button, ())
                 steelsquid_event.subscribe_to_event("dip", dev_dip, ())
+            pkgpath = os.path.dirname(run.__file__)
+            for name in pkgutil.iter_modules([pkgpath]):
+                thread.start_new_thread(import_file_dyn, (name[1],)) 
+            steelsquid_utils.shout("Listen for events (all is OK)", debug=True)
             steelsquid_event.activate_event_handler(create_ner_thread=False)
         elif sys.argv[1] == "stop":
             steelsquid_utils.shout("Goodbye :-(")

@@ -7,7 +7,7 @@ Some useful functions.
 @organization: Steelsquid
 @author: Andreas Nilsson
 @contact: steelsquid@gmail.com
-@license: GNU General Public License
+@license: GNU Lesser General Public License v2.1
 @change: 2013-07-31 Created
 '''
 
@@ -47,6 +47,7 @@ last_shout_time = -1
 in_dev = None
 VALID_CHARS = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','0','1','2','3','4','5','6','7','8','9','_','/','.','-']
 
+
 def is_raspberry_pi():
     '''
     Is this a raspberry pi
@@ -57,8 +58,9 @@ def is_raspberry_pi():
     else:
         return False
 
+
 if is_raspberry_pi:
-    import steelsquid_io
+    import steelsquid_pi
 
 
 def log(message):
@@ -352,7 +354,8 @@ def shout(string=None, to_lcd=True, debug=False, is_error=False, always_show=Fal
                 execute_system_command(['shout', string])
             except:
                 pass
-            if to_lcd and is_raspberry_pi():
+            if get_flag("io"):
+                import steelsquid_io
                 if is_error:
                     try:
                         steelsquid_io.ledr_flash_timer(2)
@@ -365,19 +368,19 @@ def shout(string=None, to_lcd=True, debug=False, is_error=False, always_show=Fal
                     except:
                         pass
             if to_lcd and is_raspberry_pi() and get_flag("lcd"):
-                    try:
-                        sli = string.split("\n")
-                        new_mes = []
-                        for line in sli:
-                            if len(line)>16:
-                                line = line[:16]
-                            new_mes.append(line)
-                        if len(sli)==1:
-                            steelsquid_io.lcd_write(sli[0], LCD_MESSAGE_TIME, force_setup = False)
-                        elif len(sli)>1:
-                            steelsquid_io.lcd_write(sli[0]+'\n'+sli[1], LCD_MESSAGE_TIME, force_setup = False)
-                    except:
-                        pass
+                try:
+                    sli = string.split("\n")
+                    new_mes = []
+                    for line in sli:
+                        if len(line)>16:
+                            line = line[:16]
+                        new_mes.append(line)
+                    if len(sli)==1:
+                        steelsquid_pi.hdd44780_write(sli[0], LCD_MESSAGE_TIME, force_setup = False)
+                    elif len(sli)>1:
+                        steelsquid_pi.hdd44780_write(sli[0]+'\n'+sli[1], LCD_MESSAGE_TIME, force_setup = False)
+                except:
+                    pass
 
 
 def notify(string):
@@ -775,23 +778,30 @@ def system_info():
         p_download = "Enabled"
     else:
         p_download = "Disabled"
+
+
+    # IO Board
+    if get_flag("io"):
+        p_io = "Enabled"
+    else:
+        p_io = "Disabled"
         
-    return (p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_disk_size, p_disk_used, p_disk_aval, overclock, p_gpu_mem, p_log, p_disable_monitor, p_camera, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir)
+    return (p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_disk_size, p_disk_used, p_disk_aval, overclock, p_gpu_mem, p_log, p_disable_monitor, p_camera, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir, p_io)
 
 
 def system_info_array():
     '''
     Return system info array
     '''
-    p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_disk_size, p_disk_used, p_disk_aval, overclock, p_gpu_mem, p_log, p_disable_monitor, p_camera, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir = system_info()
-    return [p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_disk_size, p_disk_used, p_disk_aval, overclock, p_gpu_mem, p_log, p_disable_monitor, p_camera, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir]
+    p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_disk_size, p_disk_used, p_disk_aval, overclock, p_gpu_mem, p_log, p_disable_monitor, p_camera, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir, p_io = system_info()
+    return [p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_disk_size, p_disk_used, p_disk_aval, overclock, p_gpu_mem, p_log, p_disable_monitor, p_camera, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir, p_io]
 
 
 def print_system_info():
     '''
     Print system info to screen
     '''
-    p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_disk_size, p_disk_used, p_disk_aval, overclock, p_gpu_mem, p_log, p_disable_monitor, p_camera, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir = system_info()
+    p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_disk_size, p_disk_used, p_disk_aval, overclock, p_gpu_mem, p_log, p_disable_monitor, p_camera, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir, p_io = system_info()
     print
     printb("Device information (%s)" % p_date)
     print
@@ -844,6 +854,7 @@ def print_system_info():
     print("Rover: %s" % p_rover)
     print("Download manager: %s" % p_download)
     print("Download dir: %s" % p_download_dir)
+    print("Steelsquid IO Board: %s" % p_io)
 
 
 def is_video_file(name):
@@ -1643,3 +1654,7 @@ def console_white():
     '''
     sys.stdout.write("\x1b[37m")
     
+
+
+
+
