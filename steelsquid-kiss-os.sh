@@ -1772,7 +1772,6 @@ function ssh_keys()
     rm /etc/dropbear/dropbear_dss_host_key
     dropbearkey -t rsa -s 2048 -f /etc/dropbear/dropbear_rsa_host_key
     dropbearkey -t dss -s 1024 -f /etc/dropbear/dropbear_dss_host_key
-    systemctl restart dropbear
     log-ok
 }
 if [ "$in_parameter_1" == "ssh-keys" ]; then
