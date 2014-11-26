@@ -10,6 +10,8 @@ Some useful stuff for Raspberry Pi
  - Controll Adafruit 16-Channel servo driver
  - Use a MCP230xx
  - Analog input ADS1015
+ - Controll Trex robot controller
+ - Sabertooth motor controller
 
 @organization: Steelsquid
 @author: Andreas Nilsson

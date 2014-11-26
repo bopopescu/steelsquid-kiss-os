@@ -340,9 +340,9 @@ function is-raspberry-pi()
 {
     response=$(cat /proc/cpuinfo | grep BCM2708)
     if [ "$response" != "" ]; then
-		echo "true"
-	else
 		echo "false"
+	else
+		echo "true"
 	fi
 }
 
@@ -497,19 +497,8 @@ if [ "$in_parameter_1" == "help-settings" ]; then
 	exit 0
 fi
 ##################################
-function help_security()
+function help_servers()
 {
-    echo 
-    echb "steelsquid clean"
-    echo "Clean temporary files and private data (This takes a few minutes)"
-    echo " - Clean command line history"
-    echo " - Empty trash can"
-    echo " - Clean recent used files"
-    echo " - Delete temporary files"
-    echo " - Delete log files"
-    echo " - Delete downloaded and unused packages"
-    echo " - Clean browser (History, Cookies, Saved password, Autofill)"
-    echo " - Umount all external drivs (ssh, samba, usb)"
     echo 
     echb "steelsquid ssh"
     echo "Status on the SSH-server"
@@ -552,15 +541,6 @@ function help_security()
     echb "steelsquid web-https"
     echo "Use encrypted https in the administrator interface"
     echo 
-    echb "passwd"
-    echo "Change password"
-    echo 
-    echb "encrypt <file_or_folder>"
-    echo "Encrypt a file or folder with aes-256-cbc"
-    echo 
-    echb "decrypt <encrypted_file>"
-    echo "Decrypt a file using aes-256-cbc"
-    echo 
     echb "steelsquid socket"
     echo "Id socket connection protocol enabled"
     echo 
@@ -570,11 +550,11 @@ function help_security()
     echb "steelsquid socket-off"
     echo "Disable socket connection protocol"
 }
-if [ "$in_parameter_1" == "help-security" ]; then
+if [ "$in_parameter_1" == "help-servers" ]; then
     echo 
     echb "DESCRIPTION"
-    echo "Security and privacy."
-    help_security
+    echo "Servers on this system."
+    help_servers
     echo
 	exit 0
 fi
@@ -1277,8 +1257,8 @@ function help_top()
     echb "steelsquid help-settings"
     echo "Show help about settings and configurations"
     echo 
-    echb "steelsquid help-security"
-    echo "Show help about security and privacy"
+    echb "steelsquid help-servers"
+    echo "Status of servers on this system"
     echo 
     echb "steelsquid help-system"
     echo "Show help about system and hardware"
@@ -1310,7 +1290,7 @@ if [ "$in_parameter_1" == "help" ]; then
     help_top
     help_network
     help_settings
-    help_security
+    help_servers
     help_system
     help_upgrade
     help_utils
@@ -2907,93 +2887,6 @@ fi
 
 
 
-##################################################################################
-# Clear temporary files and private data
-##################################################################################
-function clean()
-{
-	log "Clean temporary and privat data"
-	log "Clean trash"
-    srm -r /root/.local/share/Trash/*
-    for i in $(mount -l | awk '{ print $3; }'); do srm -r ${i}/.Trash*; done
-	log "Clean recent used files"
-    srm -r /root/.local/share/user-places.*
-    srm -r /root/.local/share/recently-used.xbel
-    srm -r /root/.kde/share/apps/RecentDocuments/*
-    srm -r /root/.kde/share/apps/kfileplaces/*
-    log "Clean cash and temporary files"
-    srm -r /var/tmp/*
-    srm -r /tmp/*
-    srm -r /root/.kde/cache-*
-    srm -r /root/.kde/socket-*
-    srm -r /root/.kde/tmp-*
-    srm -r /root/.kde/data/stalefiles
-	log "Clean logs"
-    srm -r /var/log/*
-    srm -r /root/.kde/share/apps/kconf_update/log/*
-	log "Clean other stuff"
-    srm -r /root/.config/libreoffice
-    srm -r /root/.local/share/webkit
-    srm -r /root/.local/share/mc
-    srm -r /root/.thumbnails
-    srm -r /root/.thumbs
-    srm -r /root/.aptitude
-    srm -r /root/.gimp-2.8
-    srm -r /root/.searchmonkey
-    srm -r /root/.kde
-    srm -r /root/.config/inkscape
-	log "Clean downloaded and unused packages"
-    dpkg --purge $(dpkg --get-selections | grep deinstall$ | cut -f 1)
-    dpkg --purge $(dpkg --get-selections | awk '$2 ~ /de/ { print $1 } ' )
-    aptitude autoclean
-    aptitude clean
-    apt-get clean
-    apt-get -y autoremove
-    apt-get -y remove --purge $(deborphan)
-    apt-get -y autoremove
-    apt-get -y remove --purge $(deborphan)
-    apt-get -y autoremove
-    apt-get -y remove --purge $(deborphan)
-    apt-get -y autoremove
-	log "Drop cache"
-    sh -c "sync; echo 3 > /proc/sys/vm/drop_caches"
-	log "Trim filesystem"
-    for i in $(mount -l | awk '{ print $3; }'); do fstrim -v  ${i}; done
-	log "Clean bash"
-    srm -r /root/.bash_history
-    rm -rf /root/.nano_history
-	log "Umount everything under /root"
-    for d in /root/*/ ; do
-        umount $d
-        umount -f $d
-        umount -f -l $d
-    done    
-	log "Umount everything unser /mnt"
-    for d in /mnt/*/ ; do
-        umount $d
-        umount -f $d
-        umount -f -l $d
-    done    
-	log "Umount everything unser /mnt/network"
-    for d in /mnt/network/*/ ; do
-        umount $d
-        umount -f $d
-        umount -f -l $d
-    done    
-	log "Umount everything unser /media"
-    for d in /media/*/ ; do
-        umount $d
-        umount -f $d
-        umount -f -l $d
-    done    
-}
-if [ "$in_parameter_1" == "clean" ]; then
-	clean
-	do-ok-exit "Temporary files and private data is clean"
-fi
-
-
-
 
 ##################################################################################
 # Trim the filesystem (SSD)
@@ -3442,7 +3335,7 @@ fi
 ##################################################################################
 if [ $(is-raspberry-pi) == "true" ]; then
     log "Download and install Quick2Wire"
-    response=$(grep -lir "pi" /etc/apt/sources.list)
+    response=$(grep -lir "quick2wire" /etc/apt/sources.list)
     if [ "$response" != "/etc/apt/sources.list" ]; then
         echo "deb http://dist.quick2wire.com/raspbian wheezy main" >> /etc/apt/sources.list
         echo "deb-src http://dist.quick2wire.com/raspbian wheezy main" >> /etc/apt/sources.list
@@ -3946,9 +3839,6 @@ log "Fix config.txt"
 echo "disable_overscan=1" > /boot/config.txt
 echo "disable_splash=1" >> /boot/config.txt
 echo "boot_delay=0" >> /boot/config.txt
-echo "sdtv_mode=0" >> /boot/config.txt
-echo "sdtv_aspect=3" >> /boot/config.txt
-echo "hdmi_drive=2" >> /boot/config.txt
 if [ $(get-flag "camera") == "true" ]; then
     enable_camera
 else
@@ -4470,11 +4360,12 @@ fi
 # Clean
 ##################################################################################
 log "Clean files and history"
-clean
-apt-get -y remove --purge $(deborphan)
-apt-get -y remove --purge $(deborphan)
-apt-get -y remove --purge $(deborphan)
+aptitude -y autoclean
+aptitude -y clean
 apt-get -y autoremove
+apt-get -y remove --purge $(deborphan)
+apt-get -y remove --purge $(deborphan)
+apt-get -y remove --purge $(deborphan)
 log "History and files clean"
 
 

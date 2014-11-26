@@ -546,43 +546,8 @@
                 showAlertMedium("A test mail is sent, check you mailbox", false);
             }
                         
-            /**
-             * Sync check on clean command
-             * status: idle, busy, err, ok
-             *   idle=No work has executed
-             *   busy=Working
-             *   err=Work finish with error
-             *   ok=Work finish OK
-             * error: only if status=='err'
-             */
-            function on_clean(status, error, paramaters){
-                setContent("clean_log", paramaters, false);
-                if(status == "idle"){
-                    enable("clean_button");
-                    enable("clean_button_reset");
-                    status_idle("clean_status");
-                }
-                else if(status == "busy"){
-                    disable("clean_button");
-                    disable("clean_button_reset");
-                    status_busy("clean_status");
-                }
-                else if(status == "err"){
-                    enable("clean_button");
-                    enable("clean_button_reset");
-                    status_err("clean_status");
-                    appendContent("clean_log", error, true);
-                    showAlertMedium(error, true, true);
-                }
-                else if(status == "ok"){
-                    enable("clean_button");
-                    enable("clean_button_reset");
-                    status_ok("clean_status");
-                }
-                scrollToBottomIfChanged("clean_log");
-            }
-
-            /**
+ 
+             /**
              * On disable ssh server
              */
             function on_ssh_dis(paramaters){
@@ -913,10 +878,7 @@
              * This will execute every 10 second
              */
             function onEvery05s(){
-                if (isLayerShowing('clean')){
-                    checkAsync('clean');
-                }
-                else if(isLayerShowing("lcd")){
+                if(isLayerShowing("lcd")){
                     submitNoPW('lcd');
                 }
             }
@@ -1001,9 +963,6 @@
                 else if(layer == "camera"){
                     submitSync('camera');
                     submitSync('stream');
-                }
-                else if(layer == "clean"){
-                    checkAsync('clean');
                 }
                 else if(layer == "hostname"){
                     submitSync('hostname_get');
@@ -1195,6 +1154,14 @@
                                 Status
                             </td>
                         </tr>
+                        <tr onclick="javascript:showLayer('password');">
+                            <td>
+                                <img alt="logo" src="img/password.png"></img>
+                            </td>
+                            <td>
+                                Change password
+                            </td>
+                        </tr>
                         <tr onclick="javascript:showLayer('tz');">
                             <td>
                                 <img alt="logo" src="img/time.png"></img>
@@ -1242,27 +1209,11 @@
                     <thead>
                         <tr>
                             <th colspan="2">
-                                Security / Privacy
+                                Servers
                             </th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr onclick="javascript:showLayer('password');">
-                            <td>
-                                <img alt="logo" src="img/password.png"></img>
-                            </td>
-                            <td>
-                                Change password
-                            </td>
-                        </tr>
-                        <tr onclick="javascript:showLayer('clean');">
-                            <td>
-                                <img alt="logo" src="img/clear.png"></img>
-                            </td>
-                            <td>
-                                Clean temporary and privat data
-                            </td>
-                        </tr>
                         <tr onclick="javascript:showLayer('ssh_layer');">
                             <td>
                                 <img alt="logo" src="img/terminal.png"></img>
@@ -1409,6 +1360,14 @@
                                             Status
                                         </td>
                                     </tr>
+                                    <tr onclick="javascript:showLayer('password');">
+                                        <td>
+                                            <img alt="logo" src="img/password.png"></img>
+                                        </td>
+                                        <td>
+                                            Change password
+                                        </td>
+                                    </tr>
                                     <tr onclick="javascript:showLayer('tz');">
                                         <td>
                                             <img alt="logo" src="img/time.png"></img>
@@ -1457,27 +1416,11 @@
                                 <thead>
                                     <tr>
                                         <th colspan="2">
-                                            Security / Privacy
+                                            Servers
                                         </th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr onclick="javascript:showLayer('clean');">
-                                        <td>
-                                            <img alt="logo" src="img/clear.png"></img>
-                                        </td>
-                                        <td>
-                                            Clean temporary and privat data
-                                        </td>
-                                    </tr>
-                                    <tr onclick="javascript:showLayer('password');">
-                                        <td>
-                                            <img alt="logo" src="img/password.png"></img>
-                                        </td>
-                                        <td>
-                                            Change password
-                                        </td>
-                                    </tr>
                                     <tr onclick="javascript:showLayer('ssh_layer');">
                                         <td>
                                             <img alt="logo" src="img/terminal.png"></img>
@@ -2372,71 +2315,6 @@
                     </tr>
                 </table>
                 <br/>
-                <table class="footer">
-                    <tr onclick="javascript:onBack();">
-                        <td>
-                            <img alt="logo" src="img/back.png"></img>
-                        </td>
-                        <td>
-                            Back to main menu
-                        </td>
-                    </tr>
-                </table>
-            </div>
-            <!--####################################################################################################-->
-            <div class="layer" id="clean">
-                <table class="header">
-                    <thead>
-                        <tr onclick="javascript:onBack();">
-                            <th>
-                                <img alt="logo" src="img/clear.png"></img>
-                            </th>
-                            <th>
-                                Clean temporary and privat data
-                            </th>
-                        </tr>
-                    </thead>
-                </table>
-                The following steps will be implemented on <span class="highlight">clean</span>.<br/>
-                This takes a <span class="highlight">few minutes</span>...
-                <ul>
-                    <li>Clean command line history</li>
-                    <li>Empty trash can</li>
-                    <li>Clean recent used files</li>
-                    <li>Delete temporary files</li>
-                    <li>Delete log files</li>
-                    <li>Delete downloaded and unused packages</li>
-                    <li>Clean browser (History, Cookies, Saved password, Autofill)</li>
-                    <li>Clear Memory Cache</li>
-                    <li>Disconnect all usb and network drives.</li>
-                </ul>
-                I recommend that you <span class="highlight">close all programs</span> before continuing and <span class="highlight">reboot</span> system when complete.
-                <br/><br/>
-                <table>
-                    <tr>
-                        <td>
-                            <button id="clean_button" disabled="disabled" onclick="javascript:submitAsyncConfirm('Are you sure you want to clean private data?', 'clean', 'False')">Clean</button>
-                        </td>
-                    </tr>
-                </table>
-                <br/>
-                <span class="status" id="clean_status"></span>
-                <div class="log" id="clean_log">
-                </div>
-                <button id="clean_button_reset" disabled="disabled" onclick="javascript:checkAsyncConfirm('Are you sure you want to clear the execution log?', 'clean', 'pre')">Clear execution status</button>
-                <br/><br />
-                Some recommended manual steps to do.
-                <ul>
-                    <li>
-                        <a href="https://history.google.com/history/settings?hl=en" target="_blank">Google history</a><br/>
-                        Delete all post  and turn of web history.
-                    </li>
-                    <li>
-                        <a href="http://www.youtube.com/feed/history" target="_blank">Youtube history</a><br/>
-                        Clear all watch history and pause watch history.
-                    </li>
-                </ul>
-                
                 <table class="footer">
                     <tr onclick="javascript:onBack();">
                         <td>

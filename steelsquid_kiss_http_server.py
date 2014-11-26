@@ -772,13 +772,6 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         return answer
 
 
-    def clean(self, session_id, parameters):
-        '''
-        Clear private data
-        '''
-        self.lock_command('clean')
-        self.execute_system_command(['steelsquid', 'clean'], 'clean')
-
     def password(self, session_id, parameters):
         '''
         Change password
