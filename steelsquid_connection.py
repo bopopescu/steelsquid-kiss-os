@@ -17,7 +17,7 @@ aclient.start()
 The client will try to connect to the server every 1 second.
 
 The server or the client can send a request:
-But if the server and client sends a request while a problem may occur, so for this use two connections.
+But if the server and client sends a request at the sam etime a problem may occur, so for this use two connections.
 aserver.send_request("thecommand", ["A", "test"])
 or
 aclient.send_request("thecommand", ["A", "test"])
@@ -33,6 +33,24 @@ Communication takes place in the following way (may also be the other way (clien
 3. If exception in thecommand_error will execute on the server with [error message] as paramters
    def thecommand_error(self, parameters):
         ...
+
+
+This is what is send on the socket when a client send a request to the server:
+
+1. Server listen forconnections.
+2. Client connect to server.
+3. Both server and client is listening on there input stream.
+4. Client send the request 'acommand' with the paramaters 'aparamater1' and 'aparamater2' on the output stream.
+   request|acommand|aparamater1|aparamater2
+5. The server reads the string and try to execute a function named acommand_request with one paramater ['aparamater1', 'aparamater2']
+6. The function  acommand_request return ['answer1', 'answer2']
+7. The server send the answer to the client
+   response|acommand|answer1|answer2
+8. The client read the answer and execute the method acommand_response with one paramater ['answer1', 'answer2']
+9. If the execution on the server has error the response would have looked like this:
+   error|acommand|error string
+10. The client read the answer (error) and execute the method acommand_error with one paramater ['error string']
+
 
 @organization: Steelsquid
 @author: Andreas Nilsson

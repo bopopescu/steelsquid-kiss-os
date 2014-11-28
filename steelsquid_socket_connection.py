@@ -2,7 +2,7 @@
 
 
 '''
-Socket inplementation of steelsquid_connection...
+Socket implementation of steelsquid_connection...
 
 @organization: Steelsquid
 @author: Andreas Nilsson
