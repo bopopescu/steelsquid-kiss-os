@@ -881,6 +881,9 @@ function help_files()
     echb "/usr/bin/steelsquid -> $steelsquid_folder/steelsquid-kiss-os.sh"
     echo "The steelsquid script"
     echo 
+    echb "/opt/steelsquid/python"
+    echo "Home for all python files"
+    echo 
     echb "/usr/bin/adc -> /opt/steelsquid/python/steelsquid_adc.py"
     echo "Read analog in from ADS1015 (0 to 5v)"
     echo 
@@ -968,6 +971,18 @@ function help_files()
     echb "/opt/steelsquid/python/run"
     echo "All python scrips in this folder will be imported (executed) on boot."
     echo "Use this to inmplement your own stuff."
+    echo 
+    echb "/usr/local/lib/python2.7/dist-packages"
+    echo "External python 2 libraries (Adafruit, RPi, picamera, wiringpi2)"
+    echo 
+    echb "/usr/lib/python3/dist-packages"
+    echo "External python 3 libraries (quick2wire)"
+    echo 
+    echb "/opt/steelsquid/events"
+    echo "If you create a executable file with the same name as the event under this folder that will be executed."
+    echo "The parametars will be arg to the file"
+    echo "If: broadcast_event(\"kalle\", (\"arg1\", \"arg2\"))"
+    echo "This will exucute: /opt/steelsquid/events/kalle \"arg1\" \"arg2\""
 }
 if [ "$in_parameter_1" == "help-files" ]; then
     echo 
@@ -998,7 +1013,8 @@ function help_develop()
     echo " - steelsquid_kiss_http_expand.py"
     echo " - steelsquid_kiss_socket_expand.py"
     echo " - steelsquid_kiss_global.py"
-    echb "This is useful if you have expanded functionality. otherwise, the changes will be overwritten when you execute upgrade."
+    echo " - utils.html"
+    echo "This is useful if you have expanded functionality. otherwise, the changes will be overwritten when you execute upgrade."
     echo 
     echb "steelsquid download"
     echo "Download a steelsquid-kiss-os.img file."
@@ -2220,12 +2236,14 @@ function install_web_files()
 	for var in "${web_root_downloads[@]}"
 	do
         if [ $(get-flag "expanded") == "true" ]; then
-            sudo wget --progress=dot:giga --no-check-certificate -O $steelsquid_folder/web/$(basename $var) $var
-            index=$[$index +1]
-            if [ $? -ne 0 ]; then
-                do-err-exit "Unable to download from $var"
-            else
-                log "$var downloaded and installed"
+            if [[ $var != *utils.html* ]]; then
+                sudo wget --progress=dot:giga --no-check-certificate -O $steelsquid_folder/web/$(basename $var) $var
+                index=$[$index +1]
+                if [ $? -ne 0 ]; then
+                    do-err-exit "Unable to download from $var"
+                else
+                    log "$var downloaded and installed"
+                fi
             fi
         else
             sudo wget --progress=dot:giga --no-check-certificate -O $steelsquid_folder/web/$(basename $var) $var
@@ -3769,9 +3787,7 @@ echo "[Unit]" > /etc/systemd/system/steelsquid.service
 echo "Description=Steelsquid" >> /etc/systemd/system/steelsquid.service
 echo "" >> /etc/systemd/system/steelsquid.service
 echo "[Service]" >> /etc/systemd/system/steelsquid.service
-echo "KillMode=none" >> /etc/systemd/system/steelsquid.service
 echo "ExecStart=/usr/bin/steelsquid-boot start" >> /etc/systemd/system/steelsquid.service
-echo "ExecStop=/usr/bin/steelsquid-boot stop" >> /etc/systemd/system/steelsquid.service
 echo "" >> /etc/systemd/system/steelsquid.service
 echo "[Install]" >> /etc/systemd/system/steelsquid.service
 echo "WantedBy=multi-user.target" >> /etc/systemd/system/steelsquid.service

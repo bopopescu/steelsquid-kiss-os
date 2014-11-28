@@ -83,10 +83,10 @@ def function_to_execute(args_from_subscription..., parameters_from_trigger):
     return True
 
 Then subscribe the event:
-subscribe_to_event("loop", function_to_execute, args_from_subscription)
+subscribe_to_event("start", function_to_execute, args_from_subscription)
 
 To start the event:
-broadcast_event("loop", ["function_to_execute"])
+broadcast_event("start", ["function_to_execute"])
 
 To stop the looping event:
 broadcast_event("stop", ["function_to_execute"])
@@ -155,7 +155,7 @@ def subscribe_to_event(event, function, args, long_running=False):
             subscribers_second.append((event, function, args, long_running))
         elif event == "seconds":
             subscribers_seconds.append((event, function, args, long_running))
-        elif event == "loop":
+        elif event == "start":
             subscribers_loop.append([function, args, False])
         else:
             subscribers.append((event, function, args, long_running))
@@ -224,7 +224,7 @@ def broadcast_event(event, parameters):
     @param parameters: List of parameters that accompany the event (None or 0 length list if no paramaters)
     '''
     if running:
-        if event == "loop":
+        if event == "start":
             if len(parameters[0])==1:
                 broadcast_loop(parameters[0])
             else:

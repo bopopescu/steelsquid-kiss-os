@@ -4,6 +4,7 @@
 '''
 Controll steelsquid kiss os with simle socket commands
 Use this to expand functionality...
+See steelsquid_kiss_socket_connection.py for example.
 
 @organization: Steelsquid
 @author: Andreas Nilsson
