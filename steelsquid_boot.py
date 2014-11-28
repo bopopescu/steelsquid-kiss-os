@@ -131,7 +131,7 @@ def on_shutdown(args, para):
     steelsquid_event.deactivate_event_handler()
     if steelsquid_utils.is_raspberry_pi() and  steelsquid_utils.get_flag("lcd"):
         try:
-            steelsquid_io.lcd_status(False)
+            steelsquid_pi.hdd44780_status(False)
         except:
             pass
 
@@ -158,9 +158,9 @@ def on_vpn(args, para):
     if steelsquid_utils.is_raspberry_pi() and steelsquid_utils.get_flag("lcd"):
         try:
             if stat == "up":
-                steelsquid_io.lcd_write("VPN: "+name + "\n" + ip, steelsquid_utils.LCD_MESSAGE_TIME)
+                steelsquid_pi.hdd44780_write("VPN: "+name + "\n" + ip, steelsquid_utils.LCD_MESSAGE_TIME)
             else:
-                steelsquid_io.lcd_write("Disconnected VPN\n"+name, steelsquid_utils.LCD_MESSAGE_TIME)
+                steelsquid_pi.hdd44780_write("Disconnected VPN\n"+name, steelsquid_utils.LCD_MESSAGE_TIME)
         except:
             steelsquid_utils.shout()
 
@@ -196,9 +196,9 @@ def on_network(args, para):
         if steelsquid_utils.is_raspberry_pi() and steelsquid_utils.get_flag("lcd"):
             try:
                 if wifi != "---":
-                    steelsquid_io.lcd_write("Wifi network IP\n"+wifi)
+                    steelsquid_pi.hdd44780_write("Wifi network IP\n"+wifi)
                 elif wired != "---":
-                    steelsquid_io.lcd_write("Wired network IP \n"+wired)
+                    steelsquid_pi.hdd44780_write("Wired network IP \n"+wired)
             except:
                 steelsquid_utils.shout()
         do_mount()
@@ -206,7 +206,7 @@ def on_network(args, para):
         steelsquid_utils.shout("No network!", to_lcd=False)
         if steelsquid_utils.is_raspberry_pi() and steelsquid_utils.get_flag("lcd"):
             try:
-                steelsquid_io.lcd_write("No network!")
+                steelsquid_pi.hdd44780_write("No network!")
             except:
                 steelsquid_utils.shout()
         do_umount()
@@ -223,7 +223,7 @@ def on_mount(args, para):
     steelsquid_utils.shout("Mount %s %s on %s" %(service, remote, local), False)      
     if steelsquid_utils.is_raspberry_pi() and steelsquid_utils.get_flag("lcd"):
         try:
-            steelsquid_io.lcd_write("Mount %s \n%s" %(remote, local), steelsquid_utils.LCD_MESSAGE_TIME)
+            steelsquid_pi.hdd44780_write("Mount %s \n%s" %(remote, local), steelsquid_utils.LCD_MESSAGE_TIME)
         except:
             steelsquid_utils.shout()
 
@@ -238,7 +238,7 @@ def on_umount(args, para):
     steelsquid_utils.shout("Umount %s %s from %s" %(service, remote, local), False)      
     if steelsquid_utils.is_raspberry_pi() and steelsquid_utils.get_flag("lcd"):
         try:
-            steelsquid_io.lcd_write("Umount %s \n%s" %(remote, local), steelsquid_utils.LCD_MESSAGE_TIME)
+            steelsquid_pi.hdd44780_write("Umount %s \n%s" %(remote, local), steelsquid_utils.LCD_MESSAGE_TIME)
         except:
             steelsquid_utils.shout()
 
@@ -310,9 +310,9 @@ def main():
             if steelsquid_utils.is_raspberry_pi():
                 try:
                     if steelsquid_utils.get_flag("lcd"):
-                        steelsquid_io.lcd_status(True)
+                        steelsquid_pi.hdd44780_status(True)
                     else:
-                        steelsquid_io.lcd_status(False)
+                        steelsquid_pi.hdd44780_status(False)
                 except:
                     pass
             steelsquid_utils.shout("Welcome :-)")
@@ -365,7 +365,7 @@ def main():
         elif sys.argv[1] == "stop":
             steelsquid_utils.shout("Goodbye :-(")
             try:
-                steelsquid_io.lcd_status(False)
+                steelsquid_pi.hdd44780_status(False)
             except:
                 pass
             steelsquid_utils.execute_system_command_blind(["steelsquid-event", "shutdown"])
