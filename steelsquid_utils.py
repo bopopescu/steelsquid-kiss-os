@@ -337,6 +337,7 @@ def shout(string=None, to_lcd=True, debug=False, is_error=False, always_show=Fal
             else:
                 string = string + "\n" + str(exc_type) + ": " + str(exc_value) +"\n"+str(ex)
             del exc_tb
+        string = str(string)
         do_it = True
         now = time.time()
         if last_shout_message != None and last_shout_time != -1:

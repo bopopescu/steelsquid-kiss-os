@@ -289,6 +289,10 @@ def dev_dip(args, para):
     steelsquid_utils.shout_time("DIP " + str(para[0]) +": "+ str(para[1]))
 
 
+def on_shutdown(gpio):
+    steelsquid_utils.execute_system_command_blind(['shutdown', '-h', 'now'], wait_for_finish=False)
+
+
 def import_file_dyn(name):
     try:
         steelsquid_utils.shout("Load run module: " + 'run.'+name, debug=True)
@@ -334,6 +338,7 @@ def main():
                 if steelsquid_utils.get_flag("disable_monitor"):
                     steelsquid_utils.execute_system_command_blind(["/opt/vc/bin/tvservice", "-o"])
                 if steelsquid_utils.get_flag("io"):
+                    steelsquid_utils.shout("Steelsquid IO board enabled", debug=True)
                     steelsquid_io.button_click(1, on_button_1)
                     steelsquid_io.button_click(2, on_button_2)
                     steelsquid_io.button_click(3, on_button_3)
@@ -342,6 +347,9 @@ def main():
                     steelsquid_io.dip_event(2, on_dip_2)
                     steelsquid_io.dip_event(3, on_dip_3)
                     steelsquid_io.dip_event(4, on_dip_4)
+                if steelsquid_utils.get_flag("power"):
+                    steelsquid_utils.shout("Listen for clean shutdown", debug=True)
+                    steelsquid_pi.gpio_click_gnd(23, on_shutdown)
             if steelsquid_utils.get_flag("download"):
                 if steelsquid_utils.get_parameter("download_dir") == "":
                     steelsquid_utils.set_parameter("download_dir", "/home/steelsquid")

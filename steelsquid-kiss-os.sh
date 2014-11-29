@@ -663,6 +663,16 @@ function help_system()
     echo 
     echb "steelsquid-event stop <name>"
     echo "Stop execute (loop) a function with name <name>"
+    echo 
+    echb "steelsquid-event power"
+    echo "Is the power off functionality enabled"
+    echo "Connect a button to the raspberry to shut down cleanly"
+    echo 
+    echb "steelsquid-event power-on"
+    echo "Enable power off functionality"
+    echo 
+    echb "steelsquid-event power-off"
+    echo "Disable power off functionality"
 }
 if [ "$in_parameter_1" == "help-system" ]; then
     echo 
@@ -1359,6 +1369,57 @@ if [ $(get_uppdated) == "false" ]; then
         done
         log "All necessary packages installed"
     fi
+fi
+
+
+##################################################################################
+# Is the clean power off enabled
+##################################################################################
+function power_info()
+{
+    if [ $(get-flag "power") == "true" ]; then
+        echo
+        echo "Clean power off: Eabled"
+        echo
+    else
+        echo
+        echo "Clean power off: Disabled"
+        echo
+    fi
+}
+if [ "$in_parameter_1" == "power" ]; then
+	power_info
+	exit 0
+fi
+
+
+##################################################################################
+# Enable clean power off enabled
+##################################################################################
+function power_on()
+{
+	log "Enable clean power off enabled"
+    set-flag "power"
+	log-reboot
+}
+if [ "$in_parameter_1" == "power-on" ]; then
+	power_on
+	exit 0
+fi
+
+
+##################################################################################
+# Disable clean power off enabled
+##################################################################################
+function power_off()
+{
+	log "Disable clean power off enabled"
+    del-flag "power"
+	log-reboot
+}
+if [ "$in_parameter_1" == "power-off" ]; then
+	power_off
+	exit 0
 fi
 
 

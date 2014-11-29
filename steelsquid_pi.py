@@ -240,10 +240,13 @@ def gpio_event_3v3(gpio, high_method, low_method):
         gpio_setup_in_3v3(gpio)
     def call_met(para):
         status = gpio_get_3v3(para)
-        if status == True:
-            high_method(para)          
-        else:
-            low_method(para)          
+        try:
+            if status == True:
+                high_method(para)          
+            else:
+                low_method(para)          
+        except:
+            steelsquid_utils.shout()
     GPIO.add_event_detect(int(gpio), GPIO.BOTH, callback=call_met, bouncetime=100)
 
 
@@ -259,10 +262,13 @@ def gpio_event_gnd(gpio, high_method, low_method):
         gpio_setup_in_gnd(gpio)
     def call_met(para):
         status = gpio_get_gnd(para)
-        if status == True:
-            high_method(para)          
-        else:
-            low_method(para)          
+        try:
+            if status == True:            
+                high_method(para)          
+            else:
+                low_method(para)          
+        except:
+            steelsquid_utils.shout()
     GPIO.add_event_detect(int(gpio), GPIO.BOTH, callback=call_met, bouncetime=100)
 
 
@@ -291,7 +297,10 @@ def gpio_click_3v3(gpio, callback_method):
                 up = -1
                 delta =  int(delta * 1000)
                 if delta > 100 and delta < 1000:
-                    callback_method(para)
+                    try:
+                        callback_method(para)
+                    except:
+                        steelsquid_utils.shout()
             else:
                 up = -1
     global down
@@ -326,7 +335,10 @@ def gpio_click_gnd(gpio, callback_method):
                 up = -1
                 delta =  int(delta * 1000)
                 if delta > 100 and delta < 1000:
-                    callback_method(para)
+                    try:
+                        callback_method(para)
+                    except:
+                        steelsquid_utils.shout()                        
             else:
                 up = -1
     global down
