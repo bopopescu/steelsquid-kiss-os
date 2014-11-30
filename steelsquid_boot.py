@@ -291,7 +291,7 @@ def dev_dip(args, para):
 
 def on_shutdown_button(gpio):
     on_shutdown(None, None)
-    #steelsquid_utils.execute_system_command_blind(['shutdown', '-h', 'now'], wait_for_finish=False)
+    steelsquid_utils.execute_system_command_blind(['shutdown', '-h', 'now'], wait_for_finish=False)
 
 
 def import_file_dyn(name):
