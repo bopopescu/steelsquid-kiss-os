@@ -25,12 +25,12 @@ if len(sys.argv)==1:
 else:
 	try:
 		if sys.argv[1] == "gnd":
-			if sys.argv[2] == "on":
+			if sys.argv[3] == "on":
 				steelsquid_pi.gpio_set_gnd(sys.argv[2], True)
 			else:
 				steelsquid_pi.gpio_set_gnd(sys.argv[2], False)
 		elif sys.argv[1] == "3v3":
-			if sys.argv[2] == "on":
+			if sys.argv[3] == "on":
 				steelsquid_pi.gpio_set_3v3(sys.argv[2], True)
 			else:
 				steelsquid_pi.gpio_set_3v3(sys.argv[2], False)
