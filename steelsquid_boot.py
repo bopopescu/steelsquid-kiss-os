@@ -289,7 +289,8 @@ def dev_dip(args, para):
     steelsquid_utils.shout_time("DIP " + str(para[0]) +": "+ str(para[1]))
 
 
-def on_shutdown(gpio):
+def on_shutdown_button(gpio):
+    on_shutdown(None, None)
     steelsquid_utils.execute_system_command_blind(['shutdown', '-h', 'now'], wait_for_finish=False)
 
 
@@ -350,7 +351,7 @@ def main():
                 if steelsquid_utils.get_flag("power"):
                     steelsquid_utils.shout("Listen for clean shutdown", debug=True)
                     steelsquid_pi.gpio_set_gnd(24, True)
-                    steelsquid_pi.gpio_click_gnd(23, on_shutdown)
+                    steelsquid_pi.gpio_click_gnd(23, on_shutdown_button)
             if steelsquid_utils.get_flag("download"):
                 if steelsquid_utils.get_parameter("download_dir") == "":
                     steelsquid_utils.set_parameter("download_dir", "/home/steelsquid")
