@@ -349,6 +349,7 @@ def main():
                     steelsquid_io.dip_event(4, on_dip_4)
                 if steelsquid_utils.get_flag("power"):
                     steelsquid_utils.shout("Listen for clean shutdown", debug=True)
+                    steelsquid_pi.gpio_set_3v3(24, True)
                     steelsquid_pi.gpio_click_gnd(23, on_shutdown)
             if steelsquid_utils.get_flag("download"):
                 if steelsquid_utils.get_parameter("download_dir") == "":
