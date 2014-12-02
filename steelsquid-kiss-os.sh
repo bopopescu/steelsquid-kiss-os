@@ -77,8 +77,9 @@ python_downloads[24]="$base/steelsquid_trex.py"
 python_downloads[25]="$base/steelsquid_adafruit_servo.py"
 python_downloads[26]="$base/steelsquid_mcp_get.py"
 python_downloads[27]="$base/steelsquid_mcp_set.py"
-python_downloads[28]="$base/steelsquid_adc.py"
-python_downloads[29]="$base/steelsquid_dac.py"
+python_downloads[28]="$base/steelsquid_mcp_event.py"
+python_downloads[29]="$base/steelsquid_adc.py"
+python_downloads[30]="$base/steelsquid_dac.py"
 
 # Links to python_downloads
 python_links[1]="/usr/bin/steelsquid-boot"
@@ -108,8 +109,9 @@ python_links[24]="/usr/bin/trex"
 python_links[25]="/usr/bin/ada-servo"
 python_links[26]="/usr/bin/mcp-get"
 python_links[27]="/usr/bin/mcp-set"
-python_links[28]="/usr/bin/adc"
-python_links[29]="/usr/bin/dac"
+python_links[28]="/usr/bin/mcp-event"
+python_links[29]="/usr/bin/adc"
+python_links[30]="/usr/bin/dac"
 
 # Download to web root folder
 web_root_downloads[1]="$base/index.html"
