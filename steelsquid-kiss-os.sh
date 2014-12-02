@@ -956,6 +956,9 @@ function help_files()
     echb "/usr/bin/mcp-set -> /opt/steelsquid/python/steelsquid_mcp_set"
     echo "Contoll gpio on a  MCP230xx"
     echo 
+    echb "/usr/bin/mcp-event -> /opt/steelsquid/python/steelsquid_mcp_event"
+    echo "Contoll gpio on a  MCP230xx, Listen for button click"
+    echo 
     echb "/usr/bin/steelsquid-nm -> /opt/steelsquid/python/steelsquid_nm.py"
     echo "Python script that list and connect to wifi network"
     echo 

@@ -90,14 +90,15 @@ if __name__ == "__main__":
     if len(sys.argv)==1:
         from steelsquid_utils import printb
         print("")
-        printb("sabertooth <left> <right>")
+        printb("sabertooth <port> <left> <right>")
         print("Set speed of Sabertooth motor controller")
+        print("port: /dev/ttyUSB0, /dev/ttyUSB0, /dev/ttyAMA0")
         print("left: Left speed from -100 to +100")
         print("right: Right speed from -100 to +100")
     else:
         try:
-            sab = SteelsquidSabertooth()
-            sab.set_dc_speed(sys.argv[1], sys.argv[2])
+            sab = SteelsquidSabertooth(sys.argv[1])
+            sab.set_dc_speed(sys.argv[2], sys.argv[3])
         except KeyboardInterrupt:
             pass
 
