@@ -14,6 +14,7 @@ Listen for button click
 
 
 import sys
+import time
 import steelsquid_pi
 
 def exec_this():
@@ -29,5 +30,6 @@ if len(sys.argv)==1:
 else:
     try:
         steelsquid_pi.mcp23017_click(sys.argv[1], sys.argv[2], exec_this)
+        raw_input("Waiting for event...\n")
     except KeyboardInterrupt:
         pass
