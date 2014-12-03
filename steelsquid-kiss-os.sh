@@ -2866,12 +2866,14 @@ function overclock()
     sed -i '/^over_voltage/ d' /boot/config.txt
     sed -i '/^over_voltage_sdram/ d' /boot/config.txt
     sed -i '/^force_turbo/ d' /boot/config.txt
+    sed -i '/^initial_turbo/ d' /boot/config.txt
     echo "arm_freq=1000" >> /boot/config.txt
     echo "core_freq=500" >> /boot/config.txt
     echo "sdram_freq=500" >> /boot/config.txt
     echo "over_voltage=6" >> /boot/config.txt
     echo "over_voltage_sdram=6" >> /boot/config.txt
     echo "force_turbo=1" >> /boot/config.txt
+    echo "initial_turbo=30" >> /boot/config.txt
 	log "Overclocking enabled (Changes will be implemented at the next reboot)"
 }
 if [ "$in_parameter_1" == "overclock" ]; then
