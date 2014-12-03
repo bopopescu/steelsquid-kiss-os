@@ -517,9 +517,7 @@
                 tbody.empty();
                 for(var i = 0; i<paramaters.length; i++){
                     var name = paramaters[i];
-                    i++;
-                    var text = paramaters[i];
-                    tbody.append("<tr><td><a href=\"javascript:submitSyncConfirm('Are you sure you want to change keyboard?', 'keyboard_set', '" + name + "');\">" + name + "</a></td><td class='expand'>" + text + "</td></tr>");
+                    tbody.append("<tr><td><a href=\"javascript:submitSyncConfirm('Are you sure you want to change keyboard?', 'keyboard_set', '" + name + "');\">" + name + "</a></td></tr>");
                 }
             }
 

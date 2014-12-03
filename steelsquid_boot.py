@@ -311,6 +311,7 @@ def main():
         if len(sys.argv) < 2:
             print_help()
         elif sys.argv[1] == "start":
+            steelsquid_utils.execute_system_command_blind(["steelsquid", "keyboard", steelsquid_utils.get_parameter("keyboard")])
             steelsquid_event.broadcast_event("network", ())
             if steelsquid_utils.is_raspberry_pi():
                 try:

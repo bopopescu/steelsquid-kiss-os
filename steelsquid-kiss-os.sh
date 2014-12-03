@@ -469,7 +469,7 @@ function help_settings()
     echo 
     echb "steelsquid keyboard <layout>"
     echo "Set keyboard layouts."
-    echo "Example: keyboard se"
+    echo "Example: keyboard se-latin1"
     echo 
     echb "steelsquid mail"
     echo "Show email notification settings"
@@ -1798,17 +1798,14 @@ fi
 function ssh_on()
 {
 	log "Enable SSH"
-    #systemctl unmask ssh
-    #systemctl enable ssh
-    #systemctl stop ssh
-    #systemctl start ssh
-    sed -i "/DROPBEAR_PORT=/c\DROPBEAR_PORT=22" /etc/default/dropbear
-    sed -i 's/NO_START=1/NO_START=0/g' /etc/default/dropbear
-    sed -i 's#^\(DROPBEAR_EXTRA_ARGS\s*=\s*\).*$#\1"-m"#' /etc/default/dropbear
-    systemctl unmask dropbear
-    systemctl enable dropbear
-    systemctl stop dropbear
-    systemctl start dropbear
+    sed -i "/PermitRootLogin /c\PermitRootLogin yes" /etc/ssh/sshd_config
+    sed -i "/PrintLastLog /c\PrintLastLog no" /etc/ssh/sshd_config
+    sed -i "/Protocol /c\Protocol 2" /etc/ssh/sshd_config
+    sed -i "/IgnoreRhosts /c\IgnoreRhosts yes" /etc/ssh/sshd_config
+    systemctl unmask ssh
+    systemctl enable ssh
+    systemctl stop ssh
+    systemctl start ssh
 	set-flag "ssh"
     log-ok
 }
@@ -1825,12 +1822,9 @@ fi
 function ssh_off()
 {
 	log "Disable SSH server"
-    #systemctl stop ssh
-    #systemctl disable ssh
-    #systemctl mask ssh
-    systemctl stop dropbear
-    systemctl disable dropbear
-    systemctl mask dropbear
+    systemctl stop ssh
+    systemctl disable ssh
+    systemctl mask ssh
 	del-flag "ssh"
     log-ok
 }
@@ -1847,14 +1841,9 @@ fi
 function ssh_keys()
 {
     echo "Generating keys for ssh"
-    #rm /etc/ssh/ssh_host_*
-    #dpkg-reconfigure openssh-server
-    #systemctl restart ssh
-    rm /etc/dropbear/dropbear_rsa_host_key
-    rm /etc/dropbear/dropbear_dss_host_key
-    dropbearkey -t rsa -s 2048 -f /etc/dropbear/dropbear_rsa_host_key
-    dropbearkey -t dss -s 1024 -f /etc/dropbear/dropbear_dss_host_key
-    systemctl restart dropbear
+    rm /etc/ssh/ssh_host_*
+    dpkg-reconfigure openssh-server
+    systemctl restart ssh
     log-ok
 }
 if [ "$in_parameter_1" == "ssh-keys" ]; then
@@ -2426,99 +2415,107 @@ fi
 ##################################################################################
 if [ "$in_parameter_1" == "keyboards" ]; then
     echo
-    echo "us              English (US)"
-    echo "ad              Catalan"
-    echo "af              Afghani"
-    echo "ara             Arabic"
-    echo "al              Albanian"
-    echo "am              Armenian"
-    echo "at              German (Austria)"
-    echo "az              Azerbaijani"
-    echo "by              Belarusian"
-    echo "be              Belgian"
-    echo "bd              Bengali"
-    echo "in              Indian"
-    echo "ba              Bosnian"
-    echo "br              Portuguese (Brazil)"
-    echo "bg              Bulgarian"
-    echo "ma              Arabic (Morocco)"
-    echo "cm              English (Cameroon)"
-    echo "mm              Burmese"
-    echo "ca              French (Canada)"
-    echo "cd              French (Democratic Republic of the Congo)"
-    echo "cn              Chinese"
-    echo "hr              Croatian"
-    echo "cz              Czech"
-    echo "dk              Danish"
-    echo "nl              Dutch"
-    echo "bt              Dzongkha"
-    echo "ee              Estonian"
-    echo "ir              Persian"
-    echo "iq              Iraqi"
-    echo "fo              Faroese"
-    echo "fi              Finnish"
-    echo "fr              French"
-    echo "gh              English (Ghana)"
-    echo "gn              French (Guinea)"
-    echo "ge              Georgian"
-    echo "de              German"
-    echo "gr              Greek"
-    echo "hu              Hungarian"
-    echo "is              Icelandic"
-    echo "il              Hebrew"
-    echo "it              Italian"
-    echo "jp              Japanese"
-    echo "kg              Kyrgyz"
-    echo "kh              Khmer (Cambodia)"
-    echo "kz              Kazakh"
-    echo "la              Lao"
-    echo "latam           Spanish (Latin American)"
-    echo "lt              Lithuanian"
-    echo "lv              Latvian"
-    echo "mao             Maori"
-    echo "me              Montenegrin"
-    echo "mk              Macedonian"
-    echo "mt              Maltese"
-    echo "mn              Mongolian"
-    echo "no              Norwegian"
-    echo "pl              Polish"
-    echo "pt              Portuguese"
-    echo "ro              Romanian"
-    echo "ru              Russian"
-    echo "rs              Serbian (Cyrillic)"
-    echo "si              Slovenian"
-    echo "sk              Slovak"
-    echo "es              Spanish"
-    echo "se              Swedish"
-    echo "ch              German (Switzerland)"
-    echo "sy              Arabic (Syria)"
-    echo "tj              Tajik"
-    echo "lk              Sinhala (phonetic)"
-    echo "th              Thai"
-    echo "tr              Turkish"
-    echo "tw              Taiwanese"
-    echo "ua              Ukrainian"
-    echo "gb              English (UK)"
-    echo "uz              Uzbek"
-    echo "vn              Vietnamese"
-    echo "kr              Korean"
-    echo "nec_vndr/jp     Japanese (PC-98xx Series)"
-    echo "ie              Irish"
-    echo "pk              Urdu (Pakistan)"
-    echo "mv              Dhivehi"
-    echo "za              English (South Africa)"
-    echo "epo             Esperanto"
-    echo "np              Nepali"
-    echo "ng              English (Nigeria)"
-    echo "et              Amharic"
-    echo "sn              Wolof"
-    echo "brai            Braille"
-    echo "tm              Turkmen"
-    echo "ml              Bambara"
-    echo "tz              Swahili (Tanzania)"
-    echo "ke              Swahili (Kenya)"
-    echo "bw              Tswana"
-    echo "ph              Filipino"
+    echo "ar"
+    echo "bg-cp1251"
+    echo "bg"
+    echo "br-abnt2"
+    echo "br-latin1"
+    echo "by"
+    echo "ca-multi"
+    echo "cf"
+    echo "cz-lat2-prog"
+    echo "cz-lat2"
+    echo "cz-us-qwerty"
+    echo "defkeymap"
+    echo "defkeymap_V1.0"
+    echo "dk-latin1"
+    echo "dk"
+    echo "emacs"
+    echo "emacs2"
+    echo "es-cp850"
+    echo "es"
+    echo "et-nodeadkeys"
+    echo "et"
+    echo "fa"
+    echo "fi-latin1"
+    echo "fi"
+    echo "gr-pc"
+    echo "gr-utf8"
+    echo "gr"
+    echo "hebrew"
+    echo "hu101"
+    echo "il-heb"
+    echo "il-phonetic"
+    echo "il"
+    echo "is-latin1-us"
+    echo "is-latin1"
+    echo "it-ibm"
+    echo "it"
+    echo "it2"
+    echo "jp106"
+    echo "kg"
+    echo "kk"
+    echo "la-latin1"
+    echo "lisp-us"
+    echo "lk201-us"
+    echo "lt"
+    echo "lt.l4"
+    echo "lv-latin4"
+    echo "lv-latin7"
+    echo "mac-usb-dk-latin1"
+    echo "mac-usb-es"
+    echo "mac-usb-euro"
+    echo "mac-usb-fi-latin1"
+    echo "mac-usb-se"
+    echo "mac-usb-uk"
+    echo "mac-usb-us"
+    echo "mk"
+    echo "nl"
+    echo "no-latin1"
+    echo "no-standard"
+    echo "no"
+    echo "pc110"
+    echo "pl"
+    echo "pl1"
+    echo "pt-latin1"
+    echo "pt-old"
+    echo "ro-academic"
+    echo "ro-comma"
+    echo "ro"
+    echo "ru-cp1251"
+    echo "ru-ms"
+    echo "ru-yawerty"
+    echo "ru"
+    echo "ru1"
+    echo "ru2"
+    echo "ru3"
+    echo "ru4"
+    echo "ru_win"
+    echo "se-fi-ir209"
+    echo "se-fi-lat6"
+    echo "se-ir209"
+    echo "se-lat6"
+    echo "se-latin1"
+    echo "sk-prog-qwerty"
+    echo "sk-prog"
+    echo "sk-qwerty"
+    echo "sr-cy"
+    echo "th-tis"
+    echo "tr_q-latin5"
+    echo "tralt"
+    echo "trq"
+    echo "trqu"
+    echo "ua-utf-ws"
+    echo "ua-utf"
+    echo "ua-ws"
+    echo "ua"
+    echo "uaw"
+    echo "uaw_uni"
+    echo "uk"
+    echo "us-intl.iso01"
+    echo "us-intl.iso15"
+    echo "us-latin1"
+    echo "us"
     echo
     exit 0
 fi
@@ -2536,11 +2533,7 @@ if [ "$in_parameter_1" == "keyboard" ]; then
         exit 0
     else
         $(set-parameter "keyboard" $in_parameter_2)
-        echo "XKBMODEL=\"pc105\"" > /etc/default/keyboard
-        echo "XKBLAYOUT=\"$in_parameter_2\"" >> /etc/default/keyboard
-        echo "XKBVARIANT=\"\"" >> /etc/default/keyboard
-        echo "XKBOPTIONS=\"\"" >> /etc/default/keyboard
-        echo "BACKSPACE=\"guess\"" >> /etc/default/keyboard
+        loadkeys $in_parameter_2
         do-ok-exit "Keybor layout changed."
     fi
 fi
@@ -3288,26 +3281,26 @@ log "Repository updated"
 if [ $(get_installed) == "false" ]; then
 	log "Remove and install packages"
     if [ $(is-raspberry-pi) == "true" ]; then
-        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv linux-image-rpi-rpfv raspberrypi-bootloader-nokernel i2c-tools alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-ti-connectivity libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer zd1211-firmware libraspberrypi-bin fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw
+        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv linux-image-rpi-rpfv raspberrypi-bootloader-nokernel i2c-tools alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-ti-connectivity libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer zd1211-firmware libraspberrypi-bin fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw console-data
         exit-check 
         aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install build-essential python-dbus python-pexpect python-dev python-setuptools python-pip python-pam python-smbus psmisc git libudev-dev libmount-dev
         exit-check 
         aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install deborphan network-manager dash nano sudo aptitude udev ntfs-3g console-setup beep ecryptfs-utils alsa-utils alsa-base va-driver-all vdpau-va-driver
         exit-check 
-        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install telnet secure-delete beep sysstat dropbear openssh-client cifs-utils smbclient keyutils sshfs curl samba-common lsof mc fgetty ftp htop elinks screenie nload mtr-tiny lzma zip unzip unrar-free p7zip-full bzip2 whiptail parted lua5.1 aria2 python-serial numpy
+        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install telnet secure-delete beep sysstat openssh-client cifs-utils smbclient keyutils sshfs curl samba-common lsof mc fgetty ftp htop elinks screenie nload mtr-tiny lzma zip unzip unrar-free p7zip-full bzip2 whiptail parted lua5.1 aria2 python-serial numpy
         exit-check 
-        aptitude -y purge cron ifupdown rsyslog vim-common vim-tiny hdparm openssh-server
+        aptitude -y purge cron ifupdown rsyslog vim-common vim-tiny hdparm keyboard-configuration console-setup console-setup-linux
         exit-check 
     else
-        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv linux-image-rpi-rpfv raspberrypi-bootloader-nokernel i2c-tools alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-ti-connectivity libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer zd1211-firmware libraspberrypi-bin fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw
+        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv linux-image-rpi-rpfv raspberrypi-bootloader-nokernel i2c-tools alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-ti-connectivity libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer zd1211-firmware libraspberrypi-bin fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw console-data
         exit-check 
         aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install build-essential python-dbus python-pexpect python-dev python-setuptools python-pip python-pam python-smbus psmisc git libudev-dev libmount-dev
         exit-check 
         aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install deborphan network-manager dash nano sudo aptitude udev ntfs-3g console-setup beep ecryptfs-utils alsa-utils alsa-base va-driver-all vdpau-va-driver
         exit-check 
-        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install telnet secure-delete beep sysstat dropbear openssh-client cifs-utils smbclient keyutils sshfs curl samba-common lsof mc fgetty ftp htop elinks screenie nload mtr-tiny lzma zip unzip unrar-free p7zip-full bzip2 whiptail parted lua5.1 aria2 python-serial numpy
+        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install telnet secure-delete beep sysstat openssh-client cifs-utils smbclient keyutils sshfs curl samba-common lsof mc fgetty ftp htop elinks screenie nload mtr-tiny lzma zip unzip unrar-free p7zip-full bzip2 whiptail parted lua5.1 aria2 python-serial numpy
         exit-check 
-        aptitude -y purge cron ifupdown rsyslog vim-common vim-tiny hdparm openssh-server
+        aptitude -y purge cron ifupdown rsyslog vim-common vim-tiny hdparm keyboard-configuration console-setup console-setup-linux
         exit-check 
     fi
 	log "Packages removed and installed"
@@ -3526,28 +3519,6 @@ fi
 
 
 ##################################################################################
-# Generate keyboard file
-##################################################################################
-log "Generate keyboard file"
-if [[ $(get-parameter "keyboard") == "" ]]; then
-	$(set-parameter "keyboard" "se")
-    echo "XKBMODEL=\"pc105\"" > /etc/default/keyboard
-    echo "XKBLAYOUT=\"se\"" >> /etc/default/keyboard
-    echo "XKBVARIANT=\"\"" >> /etc/default/keyboard
-    echo "XKBOPTIONS=\"\"" >> /etc/default/keyboard
-    echo "BACKSPACE=\"guess\"" >> /etc/default/keyboard
-else
-    key=$(get-parameter "keyboard")
-    echo "XKBMODEL=\"pc105\"" > /etc/default/keyboard
-    echo "XKBLAYOUT=\"$key\"" >> /etc/default/keyboard
-    echo "XKBVARIANT=\"\"" >> /etc/default/keyboard
-    echo "XKBOPTIONS=\"\"" >> /etc/default/keyboard
-    echo "BACKSPACE=\"guess\"" >> /etc/default/keyboard
-fi
-
-
-
-##################################################################################
 # Optimize fstab (noatime,nodiratime)
 ##################################################################################
 log "Optimize fstab (noatime,nodiratime)"
@@ -3671,6 +3642,18 @@ echo "options 8192cu rtw_power_mgnt=0" > /etc/modprobe.d/8192cu.conf
 
 
 ##################################################################################
+# Create /etc/environment
+##################################################################################
+log "Create /etc/environment"
+echo "LANGUAGE=en_US.UTF-8" > /etc/environment
+echo "LC_ALL=en_US.UTF-8" >> /etc/environment
+echo "LANG=en_US.UTF-8" >> /etc/environment
+echo "LC_TYPE=en_US.UTF-8" >> /etc/environment
+
+
+
+
+##################################################################################
 # Optimize boot
 ##################################################################################
 log "Optimize boot"
@@ -3699,6 +3682,15 @@ echo "en_GB.UTF-8 UTF-8" > /etc/locale.gen
 locale-gen
 log "Generate locale"
 
+
+##################################################################################
+# Generate locale
+##################################################################################
+log "Set keymap"
+if [ $(has-parameter "keyboard") == "false" ]; then
+    $(set-parameter "keyboard" "se-latin1")
+    loadkeys se-latin1
+fi
 
 
 ##################################################################################
