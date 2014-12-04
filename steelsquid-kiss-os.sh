@@ -75,11 +75,11 @@ python_downloads[22]="$base/steelsquid_omx.py"
 python_downloads[23]="$base/steelsquid_sabertooth.py"
 python_downloads[24]="$base/steelsquid_trex.py"
 python_downloads[25]="$base/steelsquid_adafruit_servo.py"
-python_downloads[26]="$base/steelsquid_mcp_get.py"
-python_downloads[27]="$base/steelsquid_mcp_set.py"
-python_downloads[28]="$base/steelsquid_mcp_event.py"
-python_downloads[29]="$base/steelsquid_adc.py"
-python_downloads[30]="$base/steelsquid_dac.py"
+python_downloads[26]="$base/steelsquid_mcp23017_get.py"
+python_downloads[27]="$base/steelsquid_mcp23017_set.py"
+python_downloads[28]="$base/steelsquid_mcp23017_event.py"
+python_downloads[29]="$base/steelsquid_ads1015.py"
+python_downloads[30]="$base/steelsquid_mcp4725.py"
 
 # Links to python_downloads
 python_links[1]="/usr/bin/steelsquid-boot"
@@ -107,11 +107,11 @@ python_links[22]="/usr/bin/dummy"
 python_links[23]="/usr/bin/sabertooth"
 python_links[24]="/usr/bin/trex"
 python_links[25]="/usr/bin/ada-servo"
-python_links[26]="/usr/bin/mcp-get"
-python_links[27]="/usr/bin/mcp-set"
-python_links[28]="/usr/bin/mcp-event"
-python_links[29]="/usr/bin/adc"
-python_links[30]="/usr/bin/dac"
+python_links[26]="/usr/bin/mcp23017-get"
+python_links[27]="/usr/bin/mcp23017-set"
+python_links[28]="/usr/bin/mcp23017-event"
+python_links[29]="/usr/bin/ads1015"
+python_links[30]="/usr/bin/mcp4725"
 
 # Download to web root folder
 web_root_downloads[1]="$base/index.html"
@@ -827,14 +827,20 @@ function help_io()
     echb "lcd-off"
     echo "Disable the LCD"
     echo 
-    echb "adc"
+    echb "ads1015"
     echo "Read analog out from ADS1015 (0 to 5v)"
     echo 
-    echb "dac"
+    echb "mcp4725"
     echo "Write analog out from MCP4725 (0 to 5v)"
     echo 
-    echb "mcp-set"
+    echb "mcp23017-get"
     echo "Get gpio pin status on MCP230xx"
+    echo 
+    echb "mcp23017-set"
+    echo "Set gpio pin status on MCP230xx"
+    echo 
+    echb "mcp23017-event"
+    echo "Listen for click on MCP230xx"
     echo 
     echb "ada-servo"
     echo "Move Adafruit 16-channel I2c servo to position (pwm value)"
@@ -896,7 +902,7 @@ function help_files()
     echb "/opt/steelsquid/python"
     echo "Home for all python files"
     echo 
-    echb "/usr/bin/adc -> /opt/steelsquid/python/steelsquid_adc.py"
+    echb "/usr/bin/ads1015 -> /opt/steelsquid/python/steelsquid_ads1015.py"
     echo "Read analog in from ADS1015 (0 to 5v)"
     echo 
     echb "/usr/bin/steelsquid-boot -> /opt/steelsquid/python/steelsquid_boot.py"
@@ -905,7 +911,7 @@ function help_files()
     echb "/opt/steelsquid/python/steelsquid_connection.py"
     echo "A simple module that i use to sen async command to and from client/server."
     echo 
-    echb "/usr/bin/dac -> /opt/steelsquid/python/steelsquid_dac.py"
+    echb "/usr/bin/mcp4725 -> /opt/steelsquid/python/steelsquid_mcp4725.py"
     echo "Write analog out from MCP4725 (0 to 5v)"
     echo 
     echb "/usr/bin/distance -> /opt/steelsquid/python/steelsquid_distance.py"
@@ -950,13 +956,13 @@ function help_files()
     echb "/usr/bin/lcd-message -> /opt/steelsquid/python/steelsquid_lcd_message.py"
     echo "Exampel how to print message to HDD44780 compatible LCD"
     echo 
-    echb "/usr/bin/mcp-get -> /opt/steelsquid/python/steelsquid_mcp_get"
+    echb "/usr/bin/mcp23017-get -> /opt/steelsquid/python/steelsquid_mcp23017_get"
     echo "Contoll gpio on a  MCP230xx"
     echo 
-    echb "/usr/bin/mcp-set -> /opt/steelsquid/python/steelsquid_mcp_set"
+    echb "/usr/bin/mcp23017-set -> /opt/steelsquid/python/steelsquid_mcp23017_set"
     echo "Contoll gpio on a  MCP230xx"
     echo 
-    echb "/usr/bin/mcp-event -> /opt/steelsquid/python/steelsquid_mcp_event"
+    echb "/usr/bin/mcp23017-event -> /opt/steelsquid/python/steelsquid_mcp23017_event"
     echo "Contoll gpio on a  MCP230xx, Listen for button click"
     echo 
     echb "/usr/bin/steelsquid-nm -> /opt/steelsquid/python/steelsquid_nm.py"
