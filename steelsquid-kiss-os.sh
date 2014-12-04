@@ -3504,6 +3504,20 @@ echo "fi" >> /usr/bin/ldm-shout
 chmod +x /usr/bin/ldm-shout
 
 
+
+##################################################################################
+# Fix KBD
+##################################################################################
+log "Fix KBD"
+sed -i '/^BLANK_TIME/ d' /etc/kbd/config
+sed -i '/^BLANK_DPMS/ d' /etc/kbd/config
+sed -i '/^POWERDOWN_TIME/ d' /etc/kbd/config
+echo "BLANK_TIME=0" >> /etc/kbd/config
+echo "BLANK_DPMS=off" >> /etc/kbd/config
+echo "POWERDOWN_TIME=0" >> /etc/kbd/config
+
+
+
 ##################################################################################
 # Download and install omxplayer
 ##################################################################################
@@ -3658,9 +3672,8 @@ echo "LC_TYPE=en_US.UTF-8" >> /etc/environment
 ##################################################################################
 log "Optimize boot"
 rm /boot/cmdline.txt > /dev/null 2>&1
-echo "dwc_otg.lpm_enable=0 root=/dev/mmcblk0p2 rootfstype=ext4 rootflags=commit=120,data=writeback elevator=noop noatime nodiratime data=writeback rootwait quiet loglevel=2" >> /boot/cmdline.txt
+echo "dwc_otg.fiq_fix_enable dwc_otg.lpm_enable=0 root=/dev/mmcblk0p2 rootfstype=ext4 rootflags=commit=120,data=writeback elevator=noop noatime nodiratime data=writeback rootwait quiet loglevel=0 logo.nologo" >> /boot/cmdline.txt
 log "Boot optimized"
-
 
 
 
@@ -3825,6 +3838,8 @@ systemctl mask cryptsetup.target
 systemctl mask graphical.target
 systemctl mask remote-fs-pre.target
 systemctl mask remote-fs.target
+systemctl mask alsa-restore.service
+systemctl mask sysstat.service
 log "Services disabled"
 
 
