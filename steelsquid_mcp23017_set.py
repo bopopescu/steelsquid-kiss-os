@@ -20,7 +20,7 @@ import steelsquid_pi
 if len(sys.argv)==1:
     from steelsquid_utils import printb
     print("")
-    printb("mcp-set <address> <gpio number> <on or off>")
+    printb("mcp23017-set <address> <gpio number> <on or off>")
     print("Set gpio pin status on MCP230xx")
     print("Address: 20, 21, 22, 23, 24, 25, 26, 27")
     print("Set gpio pin status hight (on) or low (off)")

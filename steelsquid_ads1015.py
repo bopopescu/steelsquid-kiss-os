@@ -18,7 +18,7 @@ import steelsquid_pi
 if len(sys.argv)==1:
     from steelsquid_utils import printb
     print("")
-    printb("adc <address> <gpio number>")
+    printb("ads1015 <address> <gpio number>")
     print("Read analog from ADS1015 (0 to 5v)")
     print("address= 48, 49, 4A, 4B ")
     print("gpio = 0 to 3")

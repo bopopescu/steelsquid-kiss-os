@@ -80,6 +80,7 @@ python_downloads[27]="$base/steelsquid_mcp23017_set.py"
 python_downloads[28]="$base/steelsquid_mcp23017_event.py"
 python_downloads[29]="$base/steelsquid_ads1015.py"
 python_downloads[30]="$base/steelsquid_mcp4725.py"
+python_downloads[31]="$base/steelsquid_mcp4728.py"
 
 # Links to python_downloads
 python_links[1]="/usr/bin/steelsquid-boot"
@@ -112,6 +113,7 @@ python_links[27]="/usr/bin/mcp23017-set"
 python_links[28]="/usr/bin/mcp23017-event"
 python_links[29]="/usr/bin/ads1015"
 python_links[30]="/usr/bin/mcp4725"
+python_links[31]="/usr/bin/mcp4728"
 
 # Download to web root folder
 web_root_downloads[1]="$base/index.html"
@@ -833,6 +835,9 @@ function help_io()
     echb "mcp4725"
     echo "Write analog out from MCP4725 (0 to 5v)"
     echo 
+    echb "mcp4728"
+    echo "Write analog out from MCP4728 (0 to 5v)"
+    echo 
     echb "mcp23017-get"
     echo "Get gpio pin status on MCP230xx"
     echo 
@@ -913,6 +918,9 @@ function help_files()
     echo 
     echb "/usr/bin/mcp4725 -> /opt/steelsquid/python/steelsquid_mcp4725.py"
     echo "Write analog out from MCP4725 (0 to 5v)"
+    echo 
+    echb "/usr/bin/mcp4728 -> /opt/steelsquid/python/steelsquid_mcp4728.py"
+    echo "Write analog out from MCP4728 (0 to 5v)"
     echo 
     echb "/usr/bin/distance -> /opt/steelsquid/python/steelsquid_distance.py"
     echo "Measure_distance with a with HC-SR04"

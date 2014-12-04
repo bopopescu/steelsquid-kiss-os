@@ -18,7 +18,7 @@ import steelsquid_pi
 if len(sys.argv)==1:
     from steelsquid_utils import printb
     print("")
-    printb("mcp-get <address> <gpio number>")
+    printb("mcp23017-get <address> <gpio number>")
     print("Get gpio pin status on MCP230xx")
     print("Address: 20, 21, 22, 23, 24, 25, 26, 27")
     print("On: Connected to earth")

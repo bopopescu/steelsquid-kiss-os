@@ -23,7 +23,7 @@ def exec_this():
 if len(sys.argv)==1:
     from steelsquid_utils import printb
     print("")
-    printb("mcp-event <address> <gpio number>")
+    printb("mcp23017-event <address> <gpio number>")
     print("Listen for click event on gpio pin on MCP230xx")
     print("Address: 20, 21, 22, 23, 24, 25, 26, 27")
     print("")
