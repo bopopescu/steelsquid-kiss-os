@@ -1206,7 +1206,7 @@ function help_build()
     echo 
     echb "8.  Shutdown and mount on computer"
     echo 
-    echb "9.  Resize to 3.8G with gparted"
+    echb "9.  Resize to 3.6G with gparted"
     echo 
     echb "10. Boot the raspberry pi again."
     echo 
@@ -2202,7 +2202,7 @@ fi
 ##################################################################################
 if [ "$in_parameter_1" == "read" ]; then
 	log "Start to create a <project name>.img from drive"
-	dd if=$in_parameter_2 of=./$project_name.img bs=4M count=975
+	dd if=$in_parameter_2 of=./$project_name.img bs=4M count=925
 	exit-check
 	do-ok-exit "Img created: $project_name.img"
 fi
