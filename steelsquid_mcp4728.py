@@ -18,14 +18,13 @@ import steelsquid_pi
 if len(sys.argv)==1:
     from steelsquid_utils import printb
     print("")
-    printb("mcp4728 <address> <value>")
+    printb("mcp4728 <address> <volt0> <volt1> <volt2> <volt3>")
     print("Write analog out from MCP4728 (0 to 5v)")
-    print("address= 62")
-    print("pin = 1 to 4")
-    print("value = 0 and 4095")
+    print("address= 61")
+    print("volt0 to 3 = Voltage on pins (0 and 4095)")
     print("")
 else:
     try:
-        steelsquid_pi.mcp4728(sys.argv[1], sys.argv[2], sys.argv[3])
+        steelsquid_pi.mcp4728(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
     except KeyboardInterrupt:
         pass

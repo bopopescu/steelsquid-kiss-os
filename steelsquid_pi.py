@@ -34,6 +34,7 @@ import thread
 import signal
 from Adafruit_ADS1x15 import ADS1x15
 from Adafruit_MCP4725 import MCP4725
+from Adafruit_I2C import Adafruit_I2C
 import steelsquid_trex
 
 SETUP_NONE = 0
@@ -84,7 +85,7 @@ toggle_mcp = []
 flash_mcp = []
 sabertooth = None
 dac = None
-
+mcp4728_i2c = None
 
 def gpio_event_remove(gpio):
     '''
@@ -1025,6 +1026,27 @@ def mcp4725(address, value):
             dac = MCP4725(0x60)
         dac.setVoltage(value)
 
+
+def mcp4728(address, volt0, volt1, volt2, volt3):
+    '''
+    Write analog out from MCP4728 (0 to 5v)
+    address = 61
+    volt1 to 3 = Voltage on pins (0 and 4095)
+    '''
+    global mcp4728_i2c
+    address = int(address)
+    if address == 61:
+        address = 0x61
+    volt0 = int(volt0)
+    volt1 = int(volt1)
+    volt2 = int(volt2)
+    volt3 = int(volt3)
+    if mcp4728_i2c == None:
+        mcp4728_i2c = Adafruit_I2C(address)
+    the_bytes = [(volt0 >> 8) & 0xFF, (volt0) & 0xFF, (volt1 >> 8) & 0xFF, (volt1) & 0xFF,
+             (volt2 >> 8) & 0xFF, (volt2) & 0xFF, (volt3 >> 8) & 0xFF, (volt3) & 0xFF]    
+    mcp4728_i2c.writeList(0x50, the_bytes)
+    
 
 def trex_reset():
     '''
