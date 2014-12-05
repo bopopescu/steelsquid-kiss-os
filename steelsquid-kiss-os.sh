@@ -343,7 +343,7 @@ function del-parameter()
 function is-raspberry-pi()
 {
     response=$(cat /proc/cpuinfo | grep BCM2708)
-    if [ "$response" != "" ]; then
+    if [ "$response" == "" ]; then
 		echo "false"
 	else
 		echo "true"
@@ -4467,7 +4467,6 @@ fi
 log "Clean files and history"
 aptitude -y autoclean
 aptitude -y clean
-apt-get -y autoremove
 apt-get -y remove --purge $(deborphan)
 apt-get -y remove --purge $(deborphan)
 apt-get -y remove --purge $(deborphan)
