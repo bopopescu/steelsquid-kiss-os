@@ -64,7 +64,6 @@ GAIN_2_048_V = 2048
 GAIN_1_024_V = 1024
 GAIN_0_512_V = 512
 GAIN_0_256_V = 256
-
 mcp_setup_20 = [SETUP_NONE] * 16
 mcp_setup_21 = [SETUP_NONE] * 16
 mcp_setup_22 = [SETUP_NONE] * 16
@@ -86,6 +85,16 @@ flash_mcp = []
 sabertooth = None
 dac = None
 mcp4728_i2c = None
+lock_rbada = threading.Lock()
+lock_sabertooth = threading.Lock()
+lock_hcsr04 = threading.Lock()
+lock_ads1015_48 = threading.Lock()
+lock_ads1015_49 = threading.Lock()
+lock_ads1015_4A = threading.Lock()
+lock_ads1015_4B = threading.Lock()
+lock_mcp4725 = threading.Lock()
+lock_mcp4728 = threading.Lock()
+
 
 def gpio_event_remove(gpio):
     '''
@@ -509,14 +518,15 @@ def hdd44780_status(status):
     '''
     Turn on/off a HDD44780 compatible LCD
     '''
-    global lcd
-    if lcd == None:
-        from steelsquid_lcd import CharLCDIcc
-        lcd = CharLCDIcc()
-    if status == True:
-        lcd.display_on()
-    else:
-        lcd.display_off()
+    with lock:
+        global lcd
+        if lcd == None:
+            from steelsquid_lcd import CharLCDIcc
+            lcd = CharLCDIcc()
+        if status == True:
+            lcd.display_on()
+        else:
+            lcd.display_off()
 
 
 def hcsr04_distance(trig_gpio, echo_gpio, force_setup = False):
@@ -527,34 +537,35 @@ def hcsr04_distance(trig_gpio, echo_gpio, force_setup = False):
     @param force_setup: Force setup of pins
     @return: The distance in cm (-1 = unable to mesure)
     '''
-    global distance_created
-    if not distance_created or force_setup:
-        gpio_setup_out(trig_gpio)
-        gpio_setup_in_gnd(echo_gpio)
+    with lock_hcsr04:
+        global distance_created
+        if not distance_created or force_setup:
+            gpio_setup_out(trig_gpio)
+            gpio_setup_in_gnd(echo_gpio)
+            gpio_set(trig_gpio, False)
+            distance_created = True
         gpio_set(trig_gpio, False)
-        distance_created = True
-    gpio_set(trig_gpio, False)
-    time.sleep(0.00001)
-    gpio_set(trig_gpio, True)
-    time.sleep(0.00001)
-    gpio_set(trig_gpio, False)
-    countdown = TIMEOUT
-    while (gpio_get(echo_gpio) == False and countdown > 0):
-        countdown = countdown - 1
-    if countdown > 0:
-        echostart = time.time()
+        time.sleep(0.00001)
+        gpio_set(trig_gpio, True)
+        time.sleep(0.00001)
+        gpio_set(trig_gpio, False)
         countdown = TIMEOUT
-        while (gpio_get(echo_gpio) == True and countdown > 0):
+        while (gpio_get(echo_gpio) == False and countdown > 0):
             countdown = countdown - 1
         if countdown > 0:
-            echoend = time.time()
-            echoduration = echoend - echostart
-            distance = echoduration * 17000
-            return int(round(distance, 0))
+            echostart = time.time()
+            countdown = TIMEOUT
+            while (gpio_get(echo_gpio) == True and countdown > 0):
+                countdown = countdown - 1
+            if countdown > 0:
+                echoend = time.time()
+                echoduration = echoend - echostart
+                distance = echoduration * 17000
+                return int(round(distance, 0))
+            else:
+                return -1
         else:
             return -1
-    else:
-        return -1
 
 
 def rbada70_move(servo, value):
@@ -563,11 +574,12 @@ def rbada70_move(servo, value):
     @param servo: 0 to 15
     @param value: min=150, max=600 (may differ between servos)
     '''
-    global pwm
-    if pwm == None:
-        pwm = PWM(0x40, debug=False)
-        pwm.setPWMFreq(60) 
-    pwm.setPWM(int(servo), 0, int(value))
+    with lock_rbada:
+        global pwm
+        if pwm == None:
+            pwm = PWM(0x40, debug=False)
+            pwm.setPWMFreq(60) 
+        pwm.setPWM(int(servo), 0, int(value))
 
 
 def sabertooth_motor_speed(left, right, the_port=None):
@@ -578,13 +590,14 @@ def sabertooth_motor_speed(left, right, the_port=None):
     0 = no speed
     100 = 100% forward speed
     '''
-    global sabertooth
-    if sabertooth==None:
-        import steelsquid_sabertooth
-        if the_port == None:
-            the_port = steelsquid_utils.get_parameter("sabertooth_port", "")
-        sabertooth = steelsquid_sabertooth.SteelsquidSabertooth(serial_port=the_port)
-    sabertooth.set_dc_speed(left, right)
+    with lock_sabertooth:
+        global sabertooth
+        if sabertooth==None:
+            import steelsquid_sabertooth
+            if the_port == None:
+                the_port = steelsquid_utils.get_parameter("sabertooth_port", "")
+            sabertooth = steelsquid_sabertooth.SteelsquidSabertooth(serial_port=the_port)
+        sabertooth.set_dc_speed(left, right)
 
 
 def mcp23017_setup_out(address, gpio):
@@ -965,25 +978,29 @@ def ads1015(address, gpio, gain=GAIN_6_144_V):
     address = str(address)
     gpio = int(gpio)
     if address == "48":
-        global ads_48
-        if ads_48==None:
-            ads_48 = ADS1x15(address = 0x48, ic=0x00)
-        return ads_48.readADCSingleEnded(gpio, gain, 250) / 1000
+        with lock_ads1015_48:
+            global ads_48
+            if ads_48==None:
+                ads_48 = ADS1x15(address = 0x48, ic=0x00)
+            return ads_48.readADCSingleEnded(gpio, gain, 250) / 1000
     elif address == "49":
-        global ads_49
-        if ads_49==None:
-            ads_49 = ADS1x15(address = 0x49, ic=0x00)
-        return ads_49.readADCSingleEnded(gpio, gain, 250) / 1000
+        with lock_ads1015_49:
+            global ads_49
+            if ads_49==None:
+                ads_49 = ADS1x15(address = 0x49, ic=0x00)
+            return ads_49.readADCSingleEnded(gpio, gain, 250) / 1000
     elif address == "4A":
-        global ads_4A
-        if ads_4A==None:
-            ads_4A = ADS1x15(address = 0x4A, ic=0x00)
-        return ads_4A.readADCSingleEnded(gpio, gain, 250) / 1000
+        with lock_ads1015_4A:
+            global ads_4A
+            if ads_4A==None:
+                ads_4A = ADS1x15(address = 0x4A, ic=0x00)
+            return ads_4A.readADCSingleEnded(gpio, gain, 250) / 1000
     elif address == "4B":
-        global ads_4B
-        if ads_4B==None:
-            ads_4B = ADS1x15(address = 0x4B, ic=0x00)
-        return ads_4B.readADCSingleEnded(gpio, gain, 250) / 1000
+        with lock_ads1015_4B:
+            global ads_4B
+            if ads_4B==None:
+                ads_4B = ADS1x15(address = 0x4B, ic=0x00)
+            return ads_4B.readADCSingleEnded(gpio, gain, 250) / 1000
         
 
 def ads1015_event(address, gpio, callback_method, gain=GAIN_6_144_V):
@@ -1022,9 +1039,10 @@ def mcp4725(address, value):
     address = str(address)
     value = int(value)
     if address == "60":
-        if dac==None:
-            dac = MCP4725(0x60)
-        dac.setVoltage(value)
+        with lock_mcp4725:
+            if dac==None:
+                dac = MCP4725(0x60)
+            dac.setVoltage(value)
 
 
 def mcp4728(address, volt0, volt1, volt2, volt3):
@@ -1041,11 +1059,12 @@ def mcp4728(address, volt0, volt1, volt2, volt3):
     volt1 = int(volt1)
     volt2 = int(volt2)
     volt3 = int(volt3)
-    if mcp4728_i2c == None:
-        mcp4728_i2c = Adafruit_I2C(address)
-    the_bytes = [(volt0 >> 8) & 0xFF, (volt0) & 0xFF, (volt1 >> 8) & 0xFF, (volt1) & 0xFF,
-             (volt2 >> 8) & 0xFF, (volt2) & 0xFF, (volt3 >> 8) & 0xFF, (volt3) & 0xFF]    
-    mcp4728_i2c.writeList(0x50, the_bytes)
+    with lock_mcp4728:
+        if mcp4728_i2c == None:
+            mcp4728_i2c = Adafruit_I2C(address)
+        the_bytes = [(volt0 >> 8) & 0xFF, (volt0) & 0xFF, (volt1 >> 8) & 0xFF, (volt1) & 0xFF,
+                 (volt2 >> 8) & 0xFF, (volt2) & 0xFF, (volt3 >> 8) & 0xFF, (volt3) & 0xFF]    
+        mcp4728_i2c.writeList(0x50, the_bytes)
     
 
 def trex_reset():

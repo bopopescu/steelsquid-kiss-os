@@ -639,6 +639,13 @@ def adc_event(pin, callback_method, gain=GAIN_6_144_V):
         return steelsquid_pi.ads1015_event(49, 3, callback_method, gain)
 
 
+def dac(address, volt0, volt1, volt2, volt3):
+    '''
+    Write analog out from MCP4728 (0 to 5v)
+    '''
+    steelsquid_pi.ads1015_event(61, volt0, volt1, volt2, volt3)
+
+
 def lcd_write(text, number_of_seconds = 0, force_setup = True, is_i2c=True):
     '''
     Print text to HDD44780 compatible LCD
