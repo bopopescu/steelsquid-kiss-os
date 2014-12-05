@@ -3700,7 +3700,7 @@ log "Change from bash to dash done"
 
 
 
-##################################################################################
+#################################################################################
 # Generate locale
 ##################################################################################
 log "Generate locale"
@@ -3708,6 +3708,7 @@ echo "LANG=en_US.UTF-8" > /etc/default/locale
 echo "en_US.UTF-8 UTF-8" > /etc/locale.gen
 locale-gen
 log "Generate locale"
+
 
 
 ##################################################################################
@@ -4461,6 +4462,20 @@ fi
 
 
 
+#################################################################################
+# No apt cache
+##################################################################################
+log "No apt cache"
+echo "Dir::Cache {" > /etc/apt/apt.conf.d/02_nocache
+echo "   srcpkgcache \"\";" >> /etc/apt/apt.conf.d/02_nocache
+echo "   pkgcache \"\";" >> /etc/apt/apt.conf.d/02_nocache
+echo "}" >> /etc/apt/apt.conf.d/02_nocache
+rm -f /var/cache/apt/*cache.bin
+apt-get --yes autoclean
+apt-get --yes clean
+
+
+
 ##################################################################################
 # Clean
 ##################################################################################
@@ -4470,6 +4485,11 @@ aptitude -y clean
 apt-get -y remove --purge $(deborphan)
 apt-get -y remove --purge $(deborphan)
 apt-get -y remove --purge $(deborphan)
+rm /root/steelsquid-kiss-os.sh
+find / -type f -name "*-old" |xargs sudo rm -rf
+rm -rf /var/backups/* /var/lib/apt/lists/* ~/.bash_history
+find /var/log/ -type f |xargs sudo rm -rf
+cp /dev/null /etc/resolv.conf
 log "History and files clean"
 
 
