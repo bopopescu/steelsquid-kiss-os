@@ -81,6 +81,7 @@ python_downloads[28]="$base/steelsquid_mcp23017_event.py"
 python_downloads[29]="$base/steelsquid_ads1015.py"
 python_downloads[30]="$base/steelsquid_mcp4725.py"
 python_downloads[31]="$base/steelsquid_mcp4728.py"
+python_downloads[32]="$base/steelsquid_synchronise.py"
 
 # Links to python_downloads
 python_links[1]="/usr/bin/steelsquid-boot"
@@ -114,6 +115,7 @@ python_links[28]="/usr/bin/mcp23017-event"
 python_links[29]="/usr/bin/ads1015"
 python_links[30]="/usr/bin/mcp4725"
 python_links[31]="/usr/bin/mcp4728"
+python_links[32]="/usr/bin/synchronise"
 
 # Download to web root folder
 web_root_downloads[1]="$base/index.html"
@@ -443,6 +445,15 @@ function help_network()
     echo 
     echb "steelsquid download-dir <directory>"
     echo "Set download directory for download manager"
+    echo 
+    echb "steelsquid modem"
+    echo "Is USB 3g/4g modem enabled"
+    echo 
+    echb "steelsquid modem-on"
+    echo "Enable USB 3g/4g modem"
+    echo 
+    echb "steelsquid modem-off"
+    echo "Disable USB 3g/4g modem"
     echo 
 }
 if [ "$in_parameter_1" == "help-network" ]; then
@@ -985,6 +996,9 @@ function help_files()
     echb "/usr/bin/steelsquid-sabertooth -> /opt/steelsquid/python/steelsquid_sabertooth.py"
     echo "A simple serial interface for Sabertooth motor controller."
     echo 
+    echb "/usr/bin/steelsquid -> /opt/steelsquid/python/ssteelsquid_synchronise.py"
+    echo "Automatic listen for changes abd commit changes to a nother system via ssh (install on remote system)"
+    echo 
     echb "/opt/steelsquid/python/steelsquid_server.py"
     echo "A python server (handle execute commands)"
     echo 
@@ -1109,6 +1123,9 @@ function help_develop()
     echo "  port"
     echo "  user"
     echo "  password"
+    echo 
+    echb "synchronise"
+    echo "Automatic listen for changes abd commit changes to a nother system via ssh (install on remote system)"
 }
 if [ "$in_parameter_1" == "help-dev" ]; then
     echo 
@@ -1417,7 +1434,7 @@ fi
 ##################################################################################
 function power_on()
 {
-	log "Enable clean power off enabled"
+	log "Enable clean power off"
     set-flag "power"
 	log-reboot
 }
@@ -1432,7 +1449,7 @@ fi
 ##################################################################################
 function power_off()
 {
-	log "Disable clean power off enabled"
+	log "Disable clean power off"
     del-flag "power"
 	log-reboot
 }
@@ -1441,6 +1458,59 @@ if [ "$in_parameter_1" == "power-off" ]; then
 	exit 0
 fi
 
+
+##################################################################################
+# Is USB 3g/4g modem enabled
+##################################################################################
+function modem_info()
+{
+    if [ $(get-flag "modem") == "true" ]; then
+        echo
+        echo "USB 3g/4g modem: Eabled"
+        echo
+    else
+        echo
+        echo "USB 3g/4g modem: Disabled"
+        echo
+    fi
+}
+if [ "$in_parameter_1" == "modem" ]; then
+	modem_info
+	exit 0
+fi
+
+
+##################################################################################
+# Enable USB 3g/4g modem 
+##################################################################################
+function modem_on()
+{
+	log "Enable USB 3g/4g modem"
+    aptitude update
+    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install usb-modeswitch modemmanager
+    set-flag "modem"
+	log-reboot
+}
+if [ "$in_parameter_1" == "modem-on" ]; then
+	modem_on
+	exit 0
+fi
+
+
+##################################################################################
+# Disable USB 3g/4g modem enabled
+##################################################################################
+function modem_off()
+{
+	log "Disable USB 3g/4g modem"
+    aptitude -y purge usb-modeswitch modemmanager
+    del-flag "modem"
+	log-reboot
+}
+if [ "$in_parameter_1" == "modem-off" ]; then
+	modem_off
+	exit 0
+fi
 
 
 ##################################################################################
@@ -3301,7 +3371,7 @@ if [ $(get_installed) == "false" ]; then
         exit-check 
         aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install deborphan network-manager dash nano sudo aptitude udev ntfs-3g console-setup beep ecryptfs-utils alsa-utils alsa-base va-driver-all vdpau-va-driver
         exit-check 
-        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install telnet secure-delete beep sysstat openssh-client cifs-utils smbclient keyutils sshfs curl samba-common lsof mc fgetty ftp htop elinks screenie nload mtr-tiny lzma zip unzip unrar-free p7zip-full bzip2 whiptail parted lua5.1 aria2 python-serial numpy
+        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install telnet secure-delete beep sysstat openssh-client cifs-utils smbclient keyutils sshfs curl samba-common lsof mc fgetty ftp htop elinks screenie nload mtr-tiny lzma zip unzip unrar-free p7zip-full bzip2 whiptail parted lua5.1 aria2 python-serial numpy python-paramiko
         exit-check 
         aptitude -y purge cron ifupdown rsyslog vim-common vim-tiny hdparm keyboard-configuration console-setup console-setup-linux
         exit-check 
@@ -3312,7 +3382,7 @@ if [ $(get_installed) == "false" ]; then
         exit-check 
         aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install deborphan network-manager dash nano sudo aptitude udev ntfs-3g console-setup beep ecryptfs-utils alsa-utils alsa-base va-driver-all vdpau-va-driver
         exit-check 
-        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install telnet secure-delete beep sysstat openssh-client cifs-utils smbclient keyutils sshfs curl samba-common lsof mc fgetty ftp htop elinks screenie nload mtr-tiny lzma zip unzip unrar-free p7zip-full bzip2 whiptail parted lua5.1 aria2 python-serial numpy
+        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install telnet secure-delete beep sysstat openssh-client cifs-utils smbclient keyutils sshfs curl samba-common lsof mc fgetty ftp htop elinks screenie nload mtr-tiny lzma zip unzip unrar-free p7zip-full bzip2 whiptail parted lua5.1 aria2 python-serial numpy python-paramiko
         exit-check 
         aptitude -y purge cron ifupdown rsyslog vim-common vim-tiny hdparm keyboard-configuration console-setup console-setup-linux
         exit-check 

@@ -786,23 +786,35 @@ def system_info():
         p_io = "Enabled"
     else:
         p_io = "Disabled"
+
+    # clean power off
+    if get_flag("power"):
+        p_power = "Enabled"
+    else:
+        p_power = "Disabled"
+
+    # Is USB 3g/4g modem enabled"
+    if get_flag("modem"):
+        p_modem = "Enabled"
+    else:
+        p_modem = "Disabled"
         
-    return (p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_disk_size, p_disk_used, p_disk_aval, overclock, p_gpu_mem, p_log, p_disable_monitor, p_camera, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir, p_io)
+    return (p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_disk_size, p_disk_used, p_disk_aval, overclock, p_gpu_mem, p_log, p_disable_monitor, p_camera, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir, p_io, p_power, p_modem)
 
 
 def system_info_array():
     '''
     Return system info array
     '''
-    p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_disk_size, p_disk_used, p_disk_aval, overclock, p_gpu_mem, p_log, p_disable_monitor, p_camera, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir, p_io = system_info()
-    return [p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_disk_size, p_disk_used, p_disk_aval, overclock, p_gpu_mem, p_log, p_disable_monitor, p_camera, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir, p_io]
+    p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_disk_size, p_disk_used, p_disk_aval, overclock, p_gpu_mem, p_log, p_disable_monitor, p_camera, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir, p_io, p_power, p_modem = system_info()
+    return [p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_disk_size, p_disk_used, p_disk_aval, overclock, p_gpu_mem, p_log, p_disable_monitor, p_camera, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir, p_io, p_power, p_modem]
 
 
 def print_system_info():
     '''
     Print system info to screen
     '''
-    p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_disk_size, p_disk_used, p_disk_aval, overclock, p_gpu_mem, p_log, p_disable_monitor, p_camera, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir, p_io = system_info()
+    p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_disk_size, p_disk_used, p_disk_aval, overclock, p_gpu_mem, p_log, p_disable_monitor, p_camera, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir, p_io, p_power, p_modem = system_info()
     print
     printb("Device information (%s)" % p_date)
     print
@@ -816,6 +828,7 @@ def print_system_info():
     print("Network Wired IP: %s" % p_ip_wired)
     print("Network Wifi IP: %s" % p_ip_wifi)
     print("Internet IP: %s" % p_ip_wan)
+    print("USB 3g/4g modem: %s" % p_modem)
     print
     print("CPU usage: %s" % p_cpu)
     print("CPU load %s" % p_load)
@@ -856,6 +869,7 @@ def print_system_info():
     print("Download manager: %s" % p_download)
     print("Download dir: %s" % p_download_dir)
     print("Steelsquid IO Board: %s" % p_io)
+    print("Clean power off: %s" % p_power)
 
 
 def is_video_file(name):
