@@ -1141,7 +1141,7 @@ function help_develop()
     echo "  user"
     echo "  password"
     echo 
-    echb "synchronize"
+    echb "steelsquid synchronize"
     echo "Automatic listen for changes abd commit changes to a nother system via ssh (install on remote system)"
 }
 if [ "$in_parameter_1" == "help-dev" ]; then
@@ -3243,6 +3243,17 @@ if [ "$in_parameter_1" == "commit-remote-install" ]; then
 	exit 0
 fi
 
+##################################################################################
+# commit-remote using this to install on the local system
+##################################################################################
+function remote_synchronize()
+{
+    ./steelsquid_synchronize.py
+}
+if [ "$in_parameter_1" == "synchronize" ]; then
+    remote_synchronize
+	exit 0
+fi
 
 
 
