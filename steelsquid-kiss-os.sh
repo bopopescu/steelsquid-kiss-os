@@ -175,7 +175,6 @@ packages=( wget iputils-ping aptitude tar gzip sed )
 
 # Load settings from config.txt
 if [ -f config.txt ]; then
-    log "Reading config.txt"
     echo ""
     COUNTER=1
     while read line           
