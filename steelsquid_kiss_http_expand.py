@@ -18,7 +18,11 @@ See steelsquid-kiss-http-server.py for example
 '''
 
 
-import steelsquid_kiss_http_server
+import sys
+if 'steelsquid_kiss_http_server' in sys.modules:
+    reload(steelsquid_kiss_http_server)
+else:
+    import steelsquid_kiss_http_server
 import steelsquid_utils
 import steelsquid_event
 import os

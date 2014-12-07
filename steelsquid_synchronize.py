@@ -178,33 +178,63 @@ def listener():
         time.sleep(0.5)
         
 
+def send_command(command):
+    '''
+    '''
+    try:
+        ssh.exec_command(command)
+    except:
+        try:
+            sftp.close()
+        except:
+            pass
+        try:
+            ssh.close()
+        except:
+            pass
+        ssh.connect(base_remote_server, port=int(base_remote_port), username=base_remote_user, password=base_remote_password)
+        sftp = ssh.open_sftp()
+        ssh.exec_command(command)
+    
+
 if __name__ == '__main__':
-    print ""
-    print "Listen for changes and commit to: " + base_remote_server
-    print " - Ttype q and press Enter this program will terminte."
-    print " - Only press Enter the target machine steelsquid service will be restarted"
-    print ""
     load_data()
+    print ""
+    print "Listen for changes and commit to " + base_remote_server
+    print " - 0, H: Show this help."
+    print " - 1, Q: This program will terminate."
+    print " - 2, C: Reload the custom modules."
+    print " - 3, E: Reload the HTTP and Socket expand server."
+    print " - 4, S: Restart steelsquid service."
+    print " - 5, R: Reboot the remote machine."
+    print ""
     thread.start_new_thread(listener, ()) 
     answer = ""
-    while answer != "q":
+    cont = True
+    while cont:
         answer = raw_input()
-        if answer == "":
-            steelsquid_utils.log("Request restart")
-            try:
-                ssh.exec_command("steelsquid restart &")
-            except:
-                try:
-                    sftp.close()
-                except:
-                    pass
-                try:
-                    ssh.close()
-                except:
-                    pass
-                ssh.connect(base_remote_server, port=int(base_remote_port), username=base_remote_user, password=base_remote_password)
-                sftp = ssh.open_sftp()
-                ssh.exec_command("steelsquid restart &")
+        if answer == "0" or answer == "H" or answer == "h":
+            print "Listen for changes and commit to " + base_remote_server
+            print " - 0, H: Show this help."
+            print " - 1, Q: This program will terminate."
+            print " - 2, C: Reload the custom modules."
+            print " - 3, E: Reload the HTTP and Socket expand server."
+            print " - 4, S: Restart steelsquid service."
+            print " - 5, R: Reboot the remote machine."
+        elif answer == "1" or answer == "Q" or answer == "q":
+            cont = False
+        elif answer == "2" or answer == "C" or answer == "c":
+            steelsquid_utils.log("Request reload of custom modules")
+            send_command("steelsquid-event reload custom")
+        elif answer == "3" or answer == "E" or answer == "e":
+            steelsquid_utils.log("Request reload of servers")
+            send_command("steelsquid-event reload server")
+        elif answer == "4" or answer == "S" or answer == "s":
+            steelsquid_utils.log("Request service restart")
+            send_command("steelsquid restart ")
+        elif answer == "5" or answer == "R" or answer == "r":
+            steelsquid_utils.log("Request roboot")
+            send_command("reboot &")
     try:
         sftp.close()
     except:

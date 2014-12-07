@@ -14,10 +14,13 @@ See steelsquid_kiss_socket_connection.py for example.
 '''
 
 
-import steelsquid_kiss_socket_connection
+import sys
+if 'steelsquid_kiss_socket_connection' in sys.modules:
+    reload(steelsquid_kiss_socket_connection)
+else:
+    import steelsquid_kiss_socket_connection
 import steelsquid_utils
 import socket
-import sys
 import select
 import thread
 import os

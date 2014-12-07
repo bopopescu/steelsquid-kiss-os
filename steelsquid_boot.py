@@ -296,11 +296,45 @@ def on_shutdown_button(gpio):
 
 def import_file_dyn(name):
     try:
-        steelsquid_utils.shout("Load run module: " + 'run.'+name, debug=True)
+        steelsquid_utils.shout("Load custom module: " + 'run.'+name, debug=True)
         importlib.import_module('run.'+name)
     except:
-        steelsquid_utils.shout("Fatal error when load run module: " + 'run.'+name, is_error=True)
+        steelsquid_utils.shout("Fatal error when load custom module: " + 'run.'+name, is_error=True)
 
+def reload_file_dyn(name):
+    try:
+        steelsquid_utils.shout("Reload custom module: " + 'run.'+name)
+        the_lib = importlib.import_module('run.'+name)
+        reload(the_lib)
+    except:
+        steelsquid_utils.shout("Fatal error when reload custom module: " + 'run.'+name, is_error=True)
+
+
+def on_reload(args, para):
+    if para[0] == "server":
+        if steelsquid_utils.get_flag("web"):
+            try:
+                steelsquid_kiss_global.http_server.stop_server()
+                steelsquid_utils.shout("Restart steelsquid_kiss_http_expand", debug=True)
+                reload(steelsquid_kiss_http_expand)
+                steelsquid_kiss_global.http_server = steelsquid_kiss_http_expand.SteelsquidKissExpandHttpServer(None, steelsquid_utils.STEELSQUID_FOLDER+"/web/", steelsquid_utils.get_flag("web_authentication"), steelsquid_utils.get_flag("web_local"), steelsquid_utils.get_flag("web_authentication"), steelsquid_utils.get_flag("web_https"))
+                steelsquid_kiss_global.http_server.start_server()
+            except:
+                steelsquid_utils.shout("Fatal error when restart steelsquid_kiss_http_expand", is_error=True)
+        if steelsquid_utils.get_flag("socket_connection"):
+            try:
+                steelsquid_kiss_global.socket_connection.stop()
+                steelsquid_utils.shout("Restart steelsquid_kiss_socket_expand", debug=True)
+                reload(steelsquid_kiss_socket_expand)
+                steelsquid_kiss_global.socket_connection = steelsquid_kiss_socket_expand.SteelsquidKissSocketExpand(True)
+                steelsquid_kiss_global.socket_connection.start()
+            except:
+                steelsquid_utils.shout("Fatal error when sestart steelsquid_kiss_socket_expand", is_error=True)
+    elif para[0] == "custom":
+        pkgpath = os.path.dirname(run.__file__)
+        for name in pkgutil.iter_modules([pkgpath]):
+            thread.start_new_thread(reload_file_dyn, (name[1],)) 
+    
 
 def main():
     '''
@@ -365,6 +399,7 @@ def main():
             steelsquid_event.subscribe_to_event("mount", on_mount, ())
             steelsquid_event.subscribe_to_event("umount", on_umount, ())
             steelsquid_event.subscribe_to_event("shout", on_shout, ())
+            steelsquid_event.subscribe_to_event("reload", on_reload, ())
             if steelsquid_utils.get_flag("io") and steelsquid_utils.get_flag("development"):
                 steelsquid_event.subscribe_to_event("button", dev_button, ())
                 steelsquid_event.subscribe_to_event("dip", dev_dip, ())

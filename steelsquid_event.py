@@ -285,6 +285,7 @@ def event_work():
     global running
     running = True
     event_executer("startup", subscribers, [])
+    counter_1 = 0
     counter_10 = 0
     counter_60 = 0
     counter_600 = 0
@@ -301,36 +302,40 @@ def event_work():
                     else:
                         broadcast_event(f, [])
             if len(subscribers_second)>0:
-                event_executer("second", subscribers_second, [])
+                if counter_1 >= 2:
+                    counter_1 = 0
+                    event_executer("second", subscribers_second, [])
+                else:
+                    counter_1 = counter_1 + 1
             if len(subscribers_seconds)>0:
-                if counter_10 >= 10:
+                if counter_10 >= 20:
                     counter_10 = 0
                     event_executer("seconds", subscribers_seconds, [])
                 else:
                     counter_10 = counter_10 + 1
             if len(subscribers)>0:
-                if counter_60 >= 60:
+                if counter_60 >= 120:
                     counter_60 = 0
                     event_executer("minute", subscribers, [])
                 else:
                     counter_60 = counter_60 + 1
-                if counter_600 >= 600:
+                if counter_600 >= 1200:
                     counter_600 = 0
                     event_executer("minutes", subscribers, [])
                 else:
                     counter_600 = counter_600 + 1
-                if counter_3600 >= 3600:
+                if counter_3600 >= 7200:
                     counter_3600 = 0
                     event_executer("hourly", subscribers, [])
                 else:
                     counter_3600 = counter_3600 + 1
-                if counter_86400 >= 86400:
+                if counter_86400 >= 172800:
                     counter_86400 = 0
                     steelsquid_utils.clear_tmp()
                     event_executer("daily", subscribers, [])
                 else:
                     counter_86400 = counter_86400 + 1
-            event, parameters = queue.get(timeout=1)
+            event, parameters = queue.get(timeout=0.5)
             if event == "shutdown" or len(subscribers)>0:
                 event_executer(event, subscribers, parameters)
         except Queue.Empty:
