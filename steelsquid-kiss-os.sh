@@ -81,7 +81,7 @@ python_downloads[28]="$base/steelsquid_mcp23017_event.py"
 python_downloads[29]="$base/steelsquid_ads1015.py"
 python_downloads[30]="$base/steelsquid_mcp4725.py"
 python_downloads[31]="$base/steelsquid_mcp4728.py"
-python_downloads[32]="$base/steelsquid_synchronise.py"
+python_downloads[32]="$base/steelsquid_synchronize.py"
 
 # Links to python_downloads
 python_links[1]="/usr/bin/steelsquid-boot"
@@ -115,7 +115,7 @@ python_links[28]="/usr/bin/mcp23017-event"
 python_links[29]="/usr/bin/ads1015"
 python_links[30]="/usr/bin/mcp4725"
 python_links[31]="/usr/bin/mcp4728"
-python_links[32]="/usr/bin/synchronise"
+python_links[32]="/usr/bin/synchronize"
 
 # Download to web root folder
 web_root_downloads[1]="$base/index.html"
@@ -996,7 +996,7 @@ function help_files()
     echb "/usr/bin/steelsquid-sabertooth -> /opt/steelsquid/python/steelsquid_sabertooth.py"
     echo "A simple serial interface for Sabertooth motor controller."
     echo 
-    echb "/usr/bin/steelsquid -> /opt/steelsquid/python/ssteelsquid_synchronise.py"
+    echb "/usr/bin/steelsquid -> /opt/steelsquid/python/ssteelsquid_synchronize.py"
     echo "Automatic listen for changes abd commit changes to a nother system via ssh (install on remote system)"
     echo 
     echb "/opt/steelsquid/python/steelsquid_server.py"
@@ -1124,7 +1124,7 @@ function help_develop()
     echo "  user"
     echo "  password"
     echo 
-    echb "synchronise"
+    echb "synchronize"
     echo "Automatic listen for changes abd commit changes to a nother system via ssh (install on remote system)"
 }
 if [ "$in_parameter_1" == "help-dev" ]; then
@@ -3155,7 +3155,7 @@ function remote_commit()
         base_remote_password=tmp_pass
     fi
     
-    cstring="steelsquid-kiss-os.sh"
+    cstring="steelsquid-kiss-os.sh" 
     for var in "${web_root_downloads[@]}"
 	do
         cstring="$cstring $(basename $var)"

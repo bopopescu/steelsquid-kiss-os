@@ -1663,8 +1663,15 @@ def console_white():
     
     '''
     sys.stdout.write("\x1b[37m")
-    
 
+
+def console_read(text):
+    '''
+    
+    '''
+    return raw_input(make_log_string(text)+"$ ")
+        
+    
 if is_raspberry_pi():
     import steelsquid_pi
 
