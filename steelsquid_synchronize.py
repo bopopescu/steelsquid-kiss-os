@@ -55,7 +55,6 @@ base_remote_user=""
 base_remote_password=""
 python_files = []
 web_files = []
-img_files = []
 extra_files = []
 ssh = None
 sftp = None
@@ -70,7 +69,6 @@ def load_data():
     global base_remote_password
     global python_files
     global web_files
-    global img_files
     global extra_files
     steelsquid_utils.log("Load settings from steelsquid-kiss-os.sh")
     with open("steelsquid-kiss-os.sh") as f:
@@ -94,11 +92,6 @@ def load_data():
                 line = line.replace("$base/","")
                 line = line.replace("\"","")
                 web_files.append([line, 0])
-            elif line.startswith("web_img_downloads["):
-                line = line.split("=")[1]
-                line = line.replace("$base/","")
-                line = line.replace("\"","")
-                img_files.append([line, 0])
     if os.path.isfile("config.txt"):
         steelsquid_utils.log("Load settings from config.txt")
         i = 0
@@ -146,7 +139,7 @@ def transmit(local, remote):
             sftp.put(local, remote)            
         steelsquid_utils.log("SYNC: " + local)
     except Exception, e:
-        steelsquid_utils.log("Connection ERROR: " + str(e))
+        steelsquid_utils.log("ERROR ("+local+" > "+remote+"): " + str(e))
         
                     
 
@@ -160,17 +153,30 @@ def listener():
         if steel_change != steel_last:
             steel_last = steel_change
             transmit(steel_file, "/opt/steelsquid/"+steel_file)
-        #for o in python_files:
-        #    file_name = o[0]
-        #    file_last = o[1]
-        #    file_change = os.path.getmtime(file_name)
-        #    if file_change != file_last:
-        #        o[1] = file_change
-                
+        for o in python_files:
+            file_name = o[0]
+            file_last = o[1]
+            file_change = os.path.getmtime(file_name)
+            if file_change != file_last:
+                o[1] = file_change
+                transmit(file_name, "/opt/steelsquid/python/"+file_name)
+        for o in web_files:
+            file_name = o[0]
+            file_last = o[1]
+            file_change = os.path.getmtime(file_name)
+            if file_change != file_last:
+                o[1] = file_change
+                transmit(file_name, "/opt/steelsquid/web/"+file_name)
+        for o in extra_files:
+            file_local = o[0]
+            file_remote = o[1]
+            file_last = o[2]
+            file_change = os.path.getmtime(file_local)
+            if file_change != file_last:
+                o[2] = file_change
+                transmit(file_local, file_remote)
         time.sleep(0.5)
         
-    
-
 
 if __name__ == '__main__':
     print ""
@@ -183,6 +189,22 @@ if __name__ == '__main__':
     answer = ""
     while answer != "q":
         answer = raw_input()
+        if answer == "":
+            steelsquid_utils.log("Request restart")
+            try:
+                ssh.exec_command("steelsquid restart &")
+            except:
+                try:
+                    sftp.close()
+                except:
+                    pass
+                try:
+                    ssh.close()
+                except:
+                    pass
+                ssh.connect(base_remote_server, port=int(base_remote_port), username=base_remote_user, password=base_remote_password)
+                sftp = ssh.open_sftp()
+                ssh.exec_command("steelsquid restart &")
     try:
         sftp.close()
     except:

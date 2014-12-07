@@ -3,7 +3,7 @@
 
 '''
 Mostly wrapper functions for my steelsquid IO board
-Use PIN number from the board
+Use PIN number from the board.
 
 @organization: Steelsquid
 @author: Andreas Nilsson

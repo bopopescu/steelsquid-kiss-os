@@ -173,7 +173,25 @@ web_img_downloads[43]="$base/img/rover.png"
 # Must have packages will install if necessary
 packages=( wget iputils-ping aptitude tar gzip sed )
 
-
+# Load settings from config.txt
+if [ -f config.txt ]; then
+    log "Reading config.txt"
+    echo ""
+    COUNTER=1
+    while read line           
+    do           
+        if [ "$COUNTER" = "1" ]; then
+            base_remote_server=$line
+        elif [ "$COUNTER" = "2" ]; then
+            base_remote_port=$line
+        elif [ "$COUNTER" = "3" ]; then
+            base_remote_user=$line
+        elif [ "$COUNTER" = "4" ]; then
+            base_remote_password=$line
+        fi
+        COUNTER=$((COUNTER + 1))
+    done <config.txt   
+fi
 
 ##################################################################################
 # Functions (Utils)
