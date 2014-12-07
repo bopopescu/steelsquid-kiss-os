@@ -58,11 +58,6 @@ def is_raspberry_pi():
     else:
         return False
 
-
-if is_raspberry_pi:
-    import steelsquid_pi
-
-
 def log(message):
     '''
     Log a message.
@@ -1670,6 +1665,7 @@ def console_white():
     sys.stdout.write("\x1b[37m")
     
 
-
+if is_raspberry_pi():
+    import steelsquid_pi
 
 
