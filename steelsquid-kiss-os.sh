@@ -4560,20 +4560,6 @@ fi
 
 
 
-#################################################################################
-# No apt cache
-##################################################################################
-log "No apt cache"
-echo "Dir::Cache {" > /etc/apt/apt.conf.d/02_nocache
-echo "   srcpkgcache \"\";" >> /etc/apt/apt.conf.d/02_nocache
-echo "   pkgcache \"\";" >> /etc/apt/apt.conf.d/02_nocache
-echo "}" >> /etc/apt/apt.conf.d/02_nocache
-rm -f /var/cache/apt/*cache.bin
-apt-get --yes autoclean
-apt-get --yes clean
-
-
-
 ##################################################################################
 # Clean
 ##################################################################################
