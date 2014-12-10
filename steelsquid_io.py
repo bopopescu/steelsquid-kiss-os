@@ -646,34 +646,26 @@ def dac(address, volt0, volt1, volt2, volt3):
     steelsquid_pi.ads1015_event(61, volt0, volt1, volt2, volt3)
 
 
-def lcd_write(text, number_of_seconds = 0, force_setup = True, is_i2c=True):
+def lcd_write(text, number_of_seconds = 0, force_setup = True):
     '''
-    Print text to HDD44780 compatible LCD
+    Print text to nokia5110  LCD
     @param text: Text to write (\n or \\ = new line)
     @param number_of_seconds: How long to show this message, then show the last message again (if there was one)
                               < 1 Show for ever
     EX1: Message in the screen: A message
-         lcd_write_text("A new message", number_of_seconds = 10)
+         lcd_write("A new message", number_of_seconds = 10)
          Message in the screen: A new message
          After ten seconds:
          Message in the screen: A message
     EX2: Message in the screen: 
-         lcd_write_text("A new message", number_of_seconds = 10)
+         lcd_write("A new message", number_of_seconds = 10)
          Message in the screen: A new message
          After ten seconds:
          Message in the screen: A new message
     @param force_setup: Force setup of pins
-    @param is_icc: Is the LCD connected by i2c
     The text can also be a list, will join the list with spaces between.
     '''
-    steelsquid_pi.hdd44780_write(text, number_of_seconds, force_setup, is_i2c)
-    
-    
-def lcd_status(status):
-    '''
-    Turn on/off a HDD44780 compatible LCD
-    '''
-    steelsquid_pi.hdd44780_status(status)
+    steelsquid_pi.nokia5110_write(text, number_of_seconds, force_setup)
             
 
 def measure_distance(trig_gpio, echo_gpio, force_setup = False):

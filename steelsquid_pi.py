@@ -36,6 +36,11 @@ from Adafruit_ADS1x15 import ADS1x15
 from Adafruit_MCP4725 import MCP4725
 from Adafruit_I2C import Adafruit_I2C
 import steelsquid_trex
+import Adafruit_Nokia_LCD as LCD
+import Adafruit_GPIO.SPI as SPI
+from PIL import Image
+from PIL import ImageDraw
+from PIL import ImageFont
 
 SETUP_NONE = 0
 SETUP_OUT = 1
@@ -94,6 +99,15 @@ lock_ads1015_4A = threading.Lock()
 lock_ads1015_4B = threading.Lock()
 lock_mcp4725 = threading.Lock()
 lock_mcp4728 = threading.Lock()
+
+DC = 23
+RST = 24
+SPI_PORT = 0
+SPI_DEVICE = 0
+nokia_lcd = None
+font = ImageFont.truetype("/usr/share/fonts/truetype/anonymous-pro/Anonymous Pro.ttf", 10)
+image = Image.new('1', (LCD.LCDWIDTH, LCD.LCDHEIGHT))
+draw = ImageDraw.Draw(image)
 
 
 def gpio_event_remove(gpio):
@@ -491,13 +505,13 @@ def hdd44780_write(text, number_of_seconds = 0, force_setup = True, is_i2c=True)
                 lcd_last_text = text
             if is_i2c:
                 if lcd == None or force_setup:
-                    from steelsquid_lcd import CharLCDIcc
+                    from steelsquid_lcd_hdd44780 import CharLCDIcc
                     lcd = CharLCDIcc()
                 else:
                     lcd.clear()
             else:
                 if lcd == None or force_setup:
-                    from steelsquid_lcd import CharLCD
+                    from steelsquid_lcd_hdd44780 import CharLCD
                     lcd = CharLCD()
                 else:
                     lcd.clear()
@@ -508,10 +522,18 @@ def hdd44780_write(text, number_of_seconds = 0, force_setup = True, is_i2c=True)
                     l.append(" ")
                 if len(l) > 0:
                     l = l[:-1]
-                st = ''.join(l)
-                lcd.message(st.replace("\\", "\n"))
-            else:
-                lcd.message(text.replace("\\", "\n"))
+                text = ''.join(l)
+            text = text.replace("\\", "\n")
+            sli = text.split("\n")
+            new_mes = []
+            for line in sli:
+                if len(line)>16:
+                    line = line[:16]
+                new_mes.append(line)
+            if len(sli)==1:
+                lcd.message(sli[0])
+            elif len(sli)>1:
+                lcd.message(sli[0]+'\n'+sli[1])
 
 
 def hdd44780_status(status):
@@ -521,12 +543,69 @@ def hdd44780_status(status):
     with lock:
         global lcd
         if lcd == None:
-            from steelsquid_lcd import CharLCDIcc
+            from steelsquid_lcd_hdd44780 import CharLCDIcc
             lcd = CharLCDIcc()
         if status == True:
             lcd.display_on()
         else:
             lcd.display_off()
+
+def nokia5110_write(text, number_of_seconds = 0, force_setup = False):
+    '''
+    Print text to nokia5110  LCD
+    @param text: Text to write (\n or \\ = new line)
+    @param number_of_seconds: How long to show this message, then show the last message again (if there was one)
+                              < 1 Show for ever
+    EX1: Message in the screen: A message
+         lcd_write("A new message", number_of_seconds = 10)
+         Message in the screen: A new message
+         After ten seconds:
+         Message in the screen: A message
+    EX2: Message in the screen: 
+         lcd_write("A new message", number_of_seconds = 10)
+         Message in the screen: A new message
+         After ten seconds:
+         Message in the screen: A new message
+    @param force_setup: Force setup of pins
+    The text can also be a list, will join the list with spaces between.
+    '''
+    global nokia_lcd
+    global lcd_last_text
+    if number_of_seconds > 0 and len(lcd_last_text) > 0:
+        steelsquid_utils.execute_delay(number_of_seconds, nokia5110_write, (None))
+        nokia5110_write(text, -111, force_setup)
+    else:
+        with lock:
+            if text == None:
+                text = lcd_last_text
+            elif number_of_seconds != -111:
+                lcd_last_text = text
+            if isinstance(text, list):
+                l = []
+                for arg in text:
+                    l.append(arg)
+                    l.append(" ")
+                if len(l) > 0:
+                    l = l[:-1]
+                text = ''.join(l)
+            text = text.replace("\\", "\n")
+            if len(text)>17 and "\n" not in text:
+                text = "".join(text[i:i+17] + "\n" for i in xrange(0,len(text),17))
+            draw.rectangle((0,0,LCD.LCDWIDTH,LCD.LCDHEIGHT), outline=255, fill=255)
+            sli = text.split("\n")
+            i = 0
+            for line in sli:
+                if len(line)>17:
+                    line = line[:17]
+                draw.text((0, i), line, font=font)
+                i = i + 9
+                if i > 36:
+                    break
+            if nokia_lcd == None or force_setup:
+                nokia_lcd = LCD.PCD8544(DC, RST, spi=SPI.SpiDev(SPI_PORT, SPI_DEVICE, max_speed_hz=4000000))
+                nokia_lcd.begin(contrast=60)
+            nokia_lcd.image(image)
+            nokia_lcd.display()
 
 
 def hcsr04_distance(trig_gpio, echo_gpio, force_setup = False):

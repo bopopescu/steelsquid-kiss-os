@@ -129,11 +129,6 @@ def on_shutdown(args, para):
             pass
     steelsquid_utils.execute_system_command_blind(['killall', 'aria2c'])
     steelsquid_event.deactivate_event_handler()
-    if steelsquid_utils.is_raspberry_pi() and  steelsquid_utils.get_flag("lcd"):
-        try:
-            steelsquid_pi.hdd44780_status(False)
-        except:
-            pass
 
 
 def on_daily(args, para):
@@ -155,12 +150,18 @@ def on_vpn(args, para):
         steelsquid_utils.shout("Connected to VPN: " + name + "\nIP: " + ip, False)
     else:
         steelsquid_utils.shout("Disconnected from VPN: " + name, False)
-    if steelsquid_utils.is_raspberry_pi() and steelsquid_utils.get_flag("lcd"):
+    if steelsquid_utils.is_raspberry_pi():
         try:
-            if stat == "up":
-                steelsquid_pi.hdd44780_write("VPN: "+name + "\n" + ip, steelsquid_utils.LCD_MESSAGE_TIME)
-            else:
-                steelsquid_pi.hdd44780_write("Disconnected VPN\n"+name, steelsquid_utils.LCD_MESSAGE_TIME)
+            if steelsquid_utils.get_flag("nokia"):
+                if stat == "up":
+                    steelsquid_pi.nokia5110_write("VPN ENABLED\n"+name + "\nIP\n" + ip, steelsquid_utils.LCD_MESSAGE_TIME)
+                else:
+                    steelsquid_pi.nokia5110_write("VPN DISABLED\n"+name, steelsquid_utils.LCD_MESSAGE_TIME)
+            elif steelsquid_utils.get_flag("hdd"):
+                if stat == "up":
+                    steelsquid_pi.hdd44780_write("VPN ENABLED\n"+name, steelsquid_utils.LCD_MESSAGE_TIME)
+                else:
+                    steelsquid_pi.hdd44780_write("VPN DISABLED\n"+name, steelsquid_utils.LCD_MESSAGE_TIME)
         except:
             steelsquid_utils.shout()
 
@@ -193,20 +194,39 @@ def on_network(args, para):
             shout_string.append(wan)
         mes = "".join(shout_string)
         steelsquid_utils.shout(mes, to_lcd=False)
-        if steelsquid_utils.is_raspberry_pi() and steelsquid_utils.get_flag("lcd"):
+        if steelsquid_utils.is_raspberry_pi():
             try:
-                if wifi != "---":
-                    steelsquid_pi.hdd44780_write("Wifi network IP\n"+wifi)
-                elif wired != "---":
-                    steelsquid_pi.hdd44780_write("Wired network IP \n"+wired)
+                shout_string = []
+                if access_point != "---":
+                    shout_string.append("WIFI\n")
+                    shout_string.append(access_point)
+                    shout_string.append("\n")
+                    shout_string.append(wifi)
+                    if wan != "---":
+                        shout_string.append("\nWAN IP\n")
+                        shout_string.append(wan)
+                else:
+                    shout_string.append("WIRED\n")
+                    shout_string.append(wired)
+                    if wan != "---":
+                        shout_string.append("\nWAN IP\n")
+                        shout_string.append(wan)
+                mes = "".join(shout_string)
+                if steelsquid_utils.get_flag("nokia"):
+                    steelsquid_pi.nokia5110_write(mes)
+                elif steelsquid_utils.get_flag("hdd"):
+                    steelsquid_pi.hdd44780_write(mes)
             except:
                 steelsquid_utils.shout()
         do_mount()
     else:
         steelsquid_utils.shout("No network!", to_lcd=False)
-        if steelsquid_utils.is_raspberry_pi() and steelsquid_utils.get_flag("lcd"):
+        if steelsquid_utils.is_raspberry_pi():
             try:
-                steelsquid_pi.hdd44780_write("No network!")
+                if steelsquid_utils.get_flag("nokia"):
+                    steelsquid_pi.nokia5110_write("No network!")
+                elif steelsquid_utils.get_flag("hdd"):
+                    steelsquid_pi.hdd44780_write("No network!")
             except:
                 steelsquid_utils.shout()
         do_umount()
@@ -221,11 +241,17 @@ def on_mount(args, para):
     remote = para[1]
     local = para[2]
     steelsquid_utils.shout("Mount %s %s on %s" %(service, remote, local), False)      
-    if steelsquid_utils.is_raspberry_pi() and steelsquid_utils.get_flag("lcd"):
-        try:
-            steelsquid_pi.hdd44780_write("Mount %s \n%s" %(remote, local), steelsquid_utils.LCD_MESSAGE_TIME)
-        except:
-            steelsquid_utils.shout()
+    if steelsquid_utils.is_raspberry_pi():
+        if steelsquid_utils.get_flag("nokia"):
+            try:
+                steelsquid_pi.nokia5110_write("MOUNT\n%s\nTO\n%s" %(remote, local), steelsquid_utils.LCD_MESSAGE_TIME)
+            except:
+                steelsquid_utils.shout()
+        elif steelsquid_utils.get_flag("hdd"):
+            try:
+                steelsquid_pi.hdd44780_write("MOUNT\n%s" %(remote), steelsquid_utils.LCD_MESSAGE_TIME)
+            except:
+                steelsquid_utils.shout()
 
 
 def on_umount(args, para):
@@ -236,11 +262,17 @@ def on_umount(args, para):
     remote = para[1]
     local = para[2]
     steelsquid_utils.shout("Umount %s %s from %s" %(service, remote, local), False)      
-    if steelsquid_utils.is_raspberry_pi() and steelsquid_utils.get_flag("lcd"):
-        try:
-            steelsquid_pi.hdd44780_write("Umount %s \n%s" %(remote, local), steelsquid_utils.LCD_MESSAGE_TIME)
-        except:
-            steelsquid_utils.shout()
+    if steelsquid_utils.is_raspberry_pi():
+        if steelsquid_utils.get_flag("nokia"):
+            try:
+                steelsquid_pi.nokia5110_write("UMOUNT\n%s\nFROM\n%s" %(remote, local), steelsquid_utils.LCD_MESSAGE_TIME)
+            except:
+                steelsquid_utils.shout()
+        elif steelsquid_utils.get_flag("hdd"):
+            try:
+                steelsquid_pi.hdd44780_write("UMOUNT\n%s" %(remote), steelsquid_utils.LCD_MESSAGE_TIME)
+            except:
+                steelsquid_utils.shout()
 
 def on_shout(args, para):
     '''
@@ -346,16 +378,12 @@ def main():
             print_help()
         elif sys.argv[1] == "start":
             steelsquid_utils.execute_system_command_blind(["steelsquid", "keyboard", steelsquid_utils.get_parameter("keyboard")])
-            steelsquid_event.broadcast_event("network", ())
+            steelsquid_utils.shout("Steelsquid Kiss OS "+steelsquid_utils.steelsquid_kiss_os_version()[1], False)
             if steelsquid_utils.is_raspberry_pi():
-                try:
-                    if steelsquid_utils.get_flag("lcd"):
-                        steelsquid_pi.hdd44780_status(True)
-                    else:
-                        steelsquid_pi.hdd44780_status(False)
-                except:
-                    pass
-            steelsquid_utils.shout("Welcome :-)")
+                if steelsquid_utils.get_flag("nokia"):
+                    steelsquid_pi.nokia5110_write("\n   Steelsquid\n     KissOS\n      "+steelsquid_utils.steelsquid_kiss_os_version()[1], steelsquid_utils.LCD_MESSAGE_TIME)
+                elif steelsquid_utils.get_flag("hdd"):
+                    steelsquid_pi.hdd44780_write("Steelsquid\nKissOS "+steelsquid_utils.steelsquid_kiss_os_version()[1], steelsquid_utils.LCD_MESSAGE_TIME)
             if steelsquid_utils.get_flag("web"):
                 try:
                     steelsquid_utils.shout("Start steelsquid_kiss_http_expand", debug=True)
@@ -407,6 +435,7 @@ def main():
             for name in pkgutil.iter_modules([pkgpath]):
                 thread.start_new_thread(import_file_dyn, (name[1],)) 
             steelsquid_utils.shout("Listen for events (all is OK)", debug=True)
+            steelsquid_event.broadcast_event("network", ())
             steelsquid_event.activate_event_handler(create_ner_thread=False)
         elif sys.argv[1] == "stop":
             steelsquid_utils.shout("Goodbye :-(")

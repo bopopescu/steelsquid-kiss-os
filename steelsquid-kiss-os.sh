@@ -68,7 +68,7 @@ python_downloads[15]="$base/steelsquid_io.py"
 python_downloads[16]="$base/steelsquid_gpio_set.py"
 python_downloads[17]="$base/steelsquid_gpio_get.py"
 python_downloads[18]="$base/steelsquid_gpio_event.py"
-python_downloads[19]="$base/steelsquid_lcd.py"
+python_downloads[19]="$base/steelsquid_lcd_hdd44780.py"
 python_downloads[20]="$base/steelsquid_lcd_message.py"
 python_downloads[21]="$base/steelsquid_distance.py"
 python_downloads[22]="$base/steelsquid_omx.py"
@@ -833,12 +833,16 @@ function help_io()
     echb "gpio-event <gpio number>"
     echo "Listen for signal on gpio pin and 3.3v"
     echo 
-    echb "lcd-message direct <message>"
+    echb "lcd-message hddd <message>"
     echo "Print message to HDD44780 compatible LCD connected directly to GPIO."
     echo "See http://www.steelsquid.org/pi-io-example"
     echo 
-    echb "lcd-message i2c <message>"
-    echo "Print message to HDD44780 compatible LCD connected via."
+    echb "lcd-message hdd <message>"
+    echo "Print message to HDD44780 compatible LCD connected via i2c."
+    echo "See http://www.steelsquid.org/pi-io-example"
+    echo 
+    echb "lcd-message nokia <message>"
+    echo "Print message to nokia5110 LCD connected via spi."
     echo "See http://www.steelsquid.org/pi-io-example"
     echo 
     echb "distance <GPIO for Trig> <GPIO for Echo>"
@@ -849,10 +853,13 @@ function help_io()
     echo "Is this device a raspberry pi"
     echo 
     echb "lcd"
-    echo "Is LCD enabled/disabled"
+    echo "Is LCD disabled/nokia5110/HDD44780"
     echo 
-    echb "lcd-on"
-    echo "Enable the LCD"
+    echb "lcd-hdd"
+    echo "Enable the LCD via HDD44780 (i2c)"
+    echo 
+    echb "lcd-nokia"
+    echo "Enable the LCD via nokia5110 (spi)"
     echo 
     echb "lcd-off"
     echo "Disable the LCD"
@@ -986,11 +993,14 @@ function help_files()
     echb "/opt/steelsquid/python/steelsquid_kiss_socket_expand.py"
     echo "Use this to expand socket functionality"
     echo 
-    echb "/opt/steelsquid/python/steelsquid_lcd.py"
+    echb "/opt/steelsquid/python/steelsquid_lcd_hdd44780.py"
     echo "Print message to HDD44780 compatible LCD"
     echo 
+    echb "/opt/steelsquid/python/steelsquid_lcd_nokia5110.py"
+    echo "Print message to nokia511 LCD"
+    echo 
     echb "/usr/bin/lcd-message -> /opt/steelsquid/python/steelsquid_lcd_message.py"
-    echo "Exampel how to print message to HDD44780 compatible LCD"
+    echo "Exampel how to print message to HDD44780 compatible LCD or nokia5110"
     echo 
     echb "/usr/bin/mcp23017-get -> /opt/steelsquid/python/steelsquid_mcp23017_get"
     echo "Contoll gpio on a  MCP230xx"
@@ -1776,7 +1786,7 @@ function rover_on()
     set-flag "rover"
     stream_on
     connection_on
-    set-flag "lcd"
+    set-flag "nokia"
 	systemctl restart steelsquid
     log-ok
 }
@@ -1830,7 +1840,7 @@ function io_on()
 {
 	log "Enable Steelsquid IO Board"
     set-flag "io"
-    set-flag "lcd"
+    set-flag "nokia"
 	systemctl restart steelsquid
     log-ok
 }
@@ -2688,9 +2698,13 @@ fi
 ##################################################################################
 function lcd_info()
 {
-    if [ $(get-flag "lcd") == "true" ]; then
+    if [ $(get-flag "nokia") == "true" ]; then
         echo
-        echo "LCD is enabled"
+        echo "LCD is enabled (nokia5101)"
+        echo
+    elif [ $(get-flag "hdd") == "true" ]; then
+        echo
+        echo "LCD is enabled (HDD44780)"
         echo
     else
         echo
@@ -2708,18 +2722,35 @@ fi
 ##################################################################################
 # Enable print IP to lcd
 ##################################################################################
-function enable_lcd()
+function enable_lcd_nokia()
 {
-	log "Enable print IP and messges to LCD"
-	set-flag "lcd"
+	log "Enable print IP and messges to nokia5110 LCD"
+	set-flag "nokia"
+	del-flag "hdd"
     systemctl restart steelsquid
 	log-ok
 }
-if [ "$in_parameter_1" == "lcd-on" ]; then
-	enable_lcd
+if [ "$in_parameter_1" == "lcd-nokia" ]; then
+	enable_lcd_nokia
 	exit 0
 fi
 
+
+##################################################################################
+# Enable print IP to lcd
+##################################################################################
+function enable_lcd_hdd()
+{
+	log "Enable print IP and messges to HDD44780 LCD"
+	set-flag "hdd"
+	del-flag "nokia"
+    systemctl restart steelsquid
+	log-ok
+}
+if [ "$in_parameter_1" == "lcd-hdd" ]; then
+	enable_lcd_hdd
+	exit 0
+fi
 
 
 ##################################################################################
@@ -2728,7 +2759,8 @@ fi
 function disable_lcd()
 {
 	log "Disable print IP and messges to LCD"
-	del-flag "lcd"
+	del-flag "nokia"
+	del-flag "hdd"
     systemctl restart steelsquid
 	log-ok
 }
@@ -3193,8 +3225,12 @@ function remote_commit()
     do        
         local=${var%|*}
         remote=${var##*|}
+        local="${local#"${local%%[![:space:]]*}"}"
+        local="${local%"${local##*[![:space:]]}"}"
+        remote="${remote#"${remote%%[![:space:]]*}"}"
+        remote="${remote%"${remote##*[![:space:]]}"}"
         log "Installing extra file: $remote"
-        sshpass -p $base_remote_password scp -o StrictHostKeyChecking=no -P $base_remote_port $local $base_remote_user@$base_remote_server:$remote
+        sshpass -p $base_remote_password scp -o StrictHostKeyChecking=no -P $base_remote_port ./$local $base_remote_user@$base_remote_server:$remote
     done 
 
 }
@@ -3399,7 +3435,7 @@ if [ $(get_installed) == "false" ]; then
         exit-check 
         aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install deborphan network-manager dash nano sudo aptitude udev ntfs-3g console-setup beep ecryptfs-utils alsa-utils alsa-base va-driver-all vdpau-va-driver
         exit-check 
-        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install telnet secure-delete beep sysstat openssh-client cifs-utils smbclient keyutils sshfs curl samba-common lsof mc fgetty ftp htop elinks screenie nload mtr-tiny lzma zip unzip unrar-free p7zip-full bzip2 whiptail parted lua5.1 aria2 python-serial numpy python-paramiko
+        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install telnet secure-delete beep sysstat openssh-client cifs-utils smbclient keyutils sshfs curl samba-common lsof mc fgetty ftp htop elinks screenie nload mtr-tiny lzma zip unzip unrar-free p7zip-full bzip2 whiptail parted lua5.1 aria2 python-serial numpy python-paramiko zlib1g zlib1g-dev libfreetype6-dev ttf-anonymous-pro
         exit-check 
         aptitude -y purge cron ifupdown rsyslog vim-common vim-tiny hdparm keyboard-configuration console-setup console-setup-linux
         exit-check 
@@ -3410,7 +3446,7 @@ if [ $(get_installed) == "false" ]; then
         exit-check 
         aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install deborphan network-manager dash nano sudo aptitude udev ntfs-3g console-setup beep ecryptfs-utils alsa-utils alsa-base va-driver-all vdpau-va-driver
         exit-check 
-        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install telnet secure-delete beep sysstat openssh-client cifs-utils smbclient keyutils sshfs curl samba-common lsof mc fgetty ftp htop elinks screenie nload mtr-tiny lzma zip unzip unrar-free p7zip-full bzip2 whiptail parted lua5.1 aria2 python-serial numpy python-paramiko
+        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install telnet secure-delete beep sysstat openssh-client cifs-utils smbclient keyutils sshfs curl samba-common lsof mc fgetty ftp htop elinks screenie nload mtr-tiny lzma zip unzip unrar-free p7zip-full bzip2 whiptail parted lua5.1 aria2 python-serial numpy python-paramiko zlib1g zlib1g-dev libfreetype6-dev ttf-anonymous-pro
         exit-check 
         aptitude -y purge cron ifupdown rsyslog vim-common vim-tiny hdparm keyboard-configuration console-setup console-setup-linux
         exit-check 
@@ -3447,6 +3483,17 @@ if [ $(is-raspberry-pi) == "true" ]; then
 fi
 
 
+
+##################################################################################
+# Install PIL
+##################################################################################
+log "Install PIL"
+easy_install -U distribute
+pip install pillow 
+pip install --upgrade pillow 
+
+
+
 ##################################################################################
 # Install Adafruit-Raspberry-Pi-Python-Code
 ##################################################################################
@@ -3463,6 +3510,10 @@ if [ $(is-raspberry-pi) == "true" ]; then
     wget https://raw.githubusercontent.com/adafruit/Adafruit-Raspberry-Pi-Python-Code/master/Adafruit_ADS1x15/Adafruit_ADS1x15.py
     rm Adafruit_MCP4725.py
     wget https://raw.githubusercontent.com/adafruit/Adafruit-Raspberry-Pi-Python-Code/master/Adafruit_MCP4725/Adafruit_MCP4725.py
+    cd /tmp
+    git clone https://github.com/adafruit/Adafruit_Nokia_LCD.git
+    cd Adafruit_Nokia_LCD
+    python setup.py install
     log "Adafruit-Raspberry-Pi-Python-Code installed"
 fi
 
@@ -4536,16 +4587,6 @@ if [ $(get-flag "ssh") == "true" ]; then
 	ssh_on
 else
 	ssh_off
-fi
-
-
-##################################################################################
-# Enable disable lcd
-##################################################################################
-if [ $(get-flag "lcd") == "true" ]; then
-	enable_lcd
-else
-	disable_lcd
 fi
 
 

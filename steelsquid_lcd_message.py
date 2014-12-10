@@ -3,6 +3,7 @@
 
 '''
 Print message to HDD44780 compatible LCD from Raspberry Pi
+And also to a Nokia51010 LCD
 
 @organization: Steelsquid
 @author: Andreas Nilsson
@@ -14,19 +15,26 @@ Print message to HDD44780 compatible LCD from Raspberry Pi
 
 import sys
 import steelsquid_pi
+import time
 
 if len(sys.argv)<3:
     from steelsquid_utils import printb
     print("")
-    printb("lcd-missage direct <message>")
+    printb("lcd-missage hddd <message>")
     print("Print message to HDD44780 compatible LCD connected directly to the Raspberry Pi.")
     print("See http://www.steelsquid.org/pi-io-example")
     print("")
-    printb("lcd-missage i2c <message>")
+    printb("lcd-missage hdd <message>")
     print("Print message to HDD44780 compatible LCD connected bia i2c to the Raspberry Pi.")
     print("See http://www.steelsquid.org/pi-io-example")
     print("")
-elif sys.argv[1] == 'direct':
+    printb("lcd-missage nokia <message>")
+    print("Print message to Nokia5110 LCD connected bia spi to the Raspberry Pi.")
+    print("See http://www.steelsquid.org/pi-io-example")
+    print("")
+elif sys.argv[1] == 'hddd':
 	steelsquid_pi.hdd44780_write(sys.argv[2:], is_i2c=False)
-elif sys.argv[1] == 'i2c':
+elif sys.argv[1] == 'hdd':
 	steelsquid_pi.hdd44780_write(sys.argv[2:], is_i2c=True)
+elif sys.argv[1] == 'nokia':
+	steelsquid_pi.nokia5110_write(sys.argv[2:])

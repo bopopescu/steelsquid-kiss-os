@@ -48,6 +48,12 @@ in_dev = None
 VALID_CHARS = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','0','1','2','3','4','5','6','7','8','9','_','/','.','-']
 
 
+def steelsquid_kiss_os_version():
+    '''
+    '''
+    return 1.0, "v1.0"
+    
+
 def is_raspberry_pi():
     '''
     Is this a raspberry pi
@@ -363,18 +369,12 @@ def shout(string=None, to_lcd=True, debug=False, is_error=False, always_show=Fal
                         steelsquid_io.ledg_timer(1)
                     except:
                         pass
-            if to_lcd and is_raspberry_pi() and get_flag("lcd"):
+            if to_lcd and is_raspberry_pi():
                 try:
-                    sli = string.split("\n")
-                    new_mes = []
-                    for line in sli:
-                        if len(line)>16:
-                            line = line[:16]
-                        new_mes.append(line)
-                    if len(sli)==1:
-                        steelsquid_pi.hdd44780_write(sli[0], LCD_MESSAGE_TIME, force_setup = False)
-                    elif len(sli)>1:
-                        steelsquid_pi.hdd44780_write(sli[0]+'\n'+sli[1], LCD_MESSAGE_TIME, force_setup = False)
+                    if get_flag("hdd"):
+                        steelsquid_pi.hdd44780_write(string, LCD_MESSAGE_TIME, force_setup = False)
+                    elif get_flag("nokia"):
+                        steelsquid_pi.nokia5110_write(string, LCD_MESSAGE_TIME, force_setup = False)
                 except:
                     pass
 
@@ -745,10 +745,10 @@ def system_info():
     # LCD
     p_has_lcd = "Disabled"
     if is_raspberry_pi():
-        if get_flag("lcd"):
-            p_has_lcd = "Enabled"
-        else:
-            p_has_lcd = "Disabled"
+        if get_flag("hdd"):
+            p_has_lcd = "Enabled (HDD44780)"
+        elif get_flag("nokia"):
+            p_has_lcd = "Enabled (Nokia5110)"
 
     # Stream
     if get_flag("stream"):

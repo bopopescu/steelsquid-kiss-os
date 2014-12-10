@@ -3,4 +3,3 @@
 root
 raspberry
 
-tester.py | /opt/steelsquid/python/run/tester.py
