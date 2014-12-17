@@ -281,20 +281,24 @@ def on_shout(args, para):
     steelsquid_utils.shout(" ".join(para))
 
 
-def on_button_1():
-    steelsquid_event.broadcast_event("button", [1])
+def on_button_up():
+    steelsquid_event.broadcast_event("button", [steelsquid_io.BUTTON_UP])
 
 
-def on_button_2():
-    steelsquid_event.broadcast_event("button", [2])
+def on_button_down():
+    steelsquid_event.broadcast_event("button", [steelsquid_io.BUTTON_DOWN])
 
 
-def on_button_3():
-    steelsquid_event.broadcast_event("button", [3])
+def on_button_left():
+    steelsquid_event.broadcast_event("button", [steelsquid_io.BUTTON_LEFT])
 
 
-def on_button_4():
-    steelsquid_event.broadcast_event("button", [4])
+def on_button_right():
+    steelsquid_event.broadcast_event("button", [steelsquid_io.BUTTON_RIGHT])
+
+
+def on_button_select():
+    steelsquid_event.broadcast_event("button", [steelsquid_io.BUTTON_SELECT])
 
 
 def on_dip_1(status):
@@ -314,7 +318,17 @@ def on_dip_4(status):
 
 
 def dev_button(args, para):
-    steelsquid_utils.shout_time("Button " + str(para[0]) + " pressed!")
+    bu = int(para[0])
+    if bu == steelsquid_io.BUTTON_UP:
+        steelsquid_utils.shout_time("Button UP pressed!")
+    elif bu == steelsquid_io.BUTTON_DOWN:
+        steelsquid_utils.shout_time("Button DOWN pressed!")
+    elif bu == steelsquid_io.BUTTON_LEFT:
+        steelsquid_utils.shout_time("Button LEFT pressed!")
+    elif bu == steelsquid_io.BUTTON_RIGHT:
+        steelsquid_utils.shout_time("Button RIGHT pressed!")
+    elif bu == steelsquid_io.BUTTON_SELECT:
+        steelsquid_utils.shout_time("Button SELECT pressed!")
     
 
 def dev_dip(args, para):
@@ -403,10 +417,11 @@ def main():
                     steelsquid_utils.execute_system_command_blind(["/opt/vc/bin/tvservice", "-o"])
                 if steelsquid_utils.get_flag("io"):
                     steelsquid_utils.shout("Steelsquid IO board enabled", debug=True)
-                    steelsquid_io.button_click(1, on_button_1)
-                    steelsquid_io.button_click(2, on_button_2)
-                    steelsquid_io.button_click(3, on_button_3)
-                    steelsquid_io.button_click(4, on_button_4)
+                    steelsquid_io.button_click(steelsquid_io.BUTTON_UP, on_button_up)
+                    steelsquid_io.button_click(steelsquid_io.BUTTON_DOWN, on_button_down)
+                    steelsquid_io.button_click(steelsquid_io.BUTTON_LEFT, on_button_left)
+                    steelsquid_io.button_click(steelsquid_io.BUTTON_RIGHT, on_button_right)
+                    steelsquid_io.button_click(steelsquid_io.BUTTON_SELECT, on_button_select)
                     steelsquid_io.dip_event(1, on_dip_1)
                     steelsquid_io.dip_event(2, on_dip_2)
                     steelsquid_io.dip_event(3, on_dip_3)

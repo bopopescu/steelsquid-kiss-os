@@ -4,6 +4,7 @@
 '''
 Some useful stuff for Raspberry Pi
  - Print text to HDD44780 compatible LCD
+ - Print text to a nokia511 LCD
  - Read GPIO input.
  - Set GPIO output.
  - Measure_distance with a with HC-SR04.
@@ -100,8 +101,8 @@ lock_ads1015_4B = threading.Lock()
 lock_mcp4725 = threading.Lock()
 lock_mcp4728 = threading.Lock()
 
-DC = 23
-RST = 24
+DC = 9
+RST = 7
 SPI_PORT = 0
 SPI_DEVICE = 0
 nokia_lcd = None
@@ -603,7 +604,8 @@ def nokia5110_write(text, number_of_seconds = 0, force_setup = False):
                     break
             if nokia_lcd == None or force_setup:
                 nokia_lcd = LCD.PCD8544(DC, RST, spi=SPI.SpiDev(SPI_PORT, SPI_DEVICE, max_speed_hz=4000000))
-                nokia_lcd.begin(contrast=60)
+                contrast = int(steelsquid_utils.get_parameter("nokia_contrast", 60))
+                nokia_lcd.begin(contrast=contrast)
             nokia_lcd.image(image)
             nokia_lcd.display()
 

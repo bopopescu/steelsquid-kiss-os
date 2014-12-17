@@ -864,6 +864,12 @@ function help_io()
     echb "lcd-off"
     echo "Disable the LCD"
     echo 
+    echb "lcd-contrast"
+    echo "Get contrast on nokia5110 LCD (0 to 100)."
+    echo 
+    echb "lcd-contrast <value>"
+    echo "Set contrast on nokia5110 LCD (0 to 100)."
+    echo 
     echb "ads1015"
     echo "Read analog out from ADS1015 (0 to 5v)"
     echo 
@@ -2768,6 +2774,25 @@ if [ "$in_parameter_1" == "lcd-off" ]; then
 	disable_lcd
 	exit 0
 fi
+
+
+##################################################################################
+# Set get contrast for nokia lcd
+##################################################################################
+function contrast_lcd()
+{
+    if [ "$in_parameter_2" == "" ]; then
+        echo "Contrast: "$(get-parameter "nokia_contrast")
+    else
+        set-parameter "nokia_contrast" $in_parameter_2
+        log-ok
+    fi
+}
+if [ "$in_parameter_1" == "lcd-contrast" ]; then
+	contrast_lcd
+	exit 0
+fi
+
 
 
 ##################################################################################
