@@ -2785,6 +2785,7 @@ function contrast_lcd()
         echo "Contrast: "$(get-parameter "nokia_contrast")
     else
         set-parameter "nokia_contrast" $in_parameter_2
+        systemctl restart steelsquid
         log-ok
     fi
 }
