@@ -38,8 +38,8 @@ except:
 if steelsquid_utils.is_raspberry_pi:
     import steelsquid_pi
 
-if steelsquid_utils.get_flag("io"):
-    import steelsquid_io
+if steelsquid_utils.get_flag("piio"):
+    import steelsquid_piio
 
 def print_help():
     '''
@@ -282,23 +282,23 @@ def on_shout(args, para):
 
 
 def on_button_up():
-    steelsquid_event.broadcast_event("button", [steelsquid_io.BUTTON_UP])
+    steelsquid_event.broadcast_event("button", [steelsquid_piio.BUTTON_UP])
 
 
 def on_button_down():
-    steelsquid_event.broadcast_event("button", [steelsquid_io.BUTTON_DOWN])
+    steelsquid_event.broadcast_event("button", [steelsquid_piio.BUTTON_DOWN])
 
 
 def on_button_left():
-    steelsquid_event.broadcast_event("button", [steelsquid_io.BUTTON_LEFT])
+    steelsquid_event.broadcast_event("button", [steelsquid_piio.BUTTON_LEFT])
 
 
 def on_button_right():
-    steelsquid_event.broadcast_event("button", [steelsquid_io.BUTTON_RIGHT])
+    steelsquid_event.broadcast_event("button", [steelsquid_piio.BUTTON_RIGHT])
 
 
 def on_button_select():
-    steelsquid_event.broadcast_event("button", [steelsquid_io.BUTTON_SELECT])
+    steelsquid_event.broadcast_event("button", [steelsquid_piio.BUTTON_SELECT])
 
 
 def on_dip_1(status):
@@ -319,15 +319,15 @@ def on_dip_4(status):
 
 def dev_button(args, para):
     bu = int(para[0])
-    if bu == steelsquid_io.BUTTON_UP:
+    if bu == steelsquid_piio.BUTTON_UP:
         steelsquid_utils.shout_time("Button UP pressed!")
-    elif bu == steelsquid_io.BUTTON_DOWN:
+    elif bu == steelsquid_piio.BUTTON_DOWN:
         steelsquid_utils.shout_time("Button DOWN pressed!")
-    elif bu == steelsquid_io.BUTTON_LEFT:
+    elif bu == steelsquid_piio.BUTTON_LEFT:
         steelsquid_utils.shout_time("Button LEFT pressed!")
-    elif bu == steelsquid_io.BUTTON_RIGHT:
+    elif bu == steelsquid_piio.BUTTON_RIGHT:
         steelsquid_utils.shout_time("Button RIGHT pressed!")
-    elif bu == steelsquid_io.BUTTON_SELECT:
+    elif bu == steelsquid_piio.BUTTON_SELECT:
         steelsquid_utils.shout_time("Button SELECT pressed!")
     
 
@@ -417,15 +417,15 @@ def main():
                     steelsquid_utils.execute_system_command_blind(["/opt/vc/bin/tvservice", "-o"])
                 if steelsquid_utils.get_flag("io"):
                     steelsquid_utils.shout("Steelsquid IO board enabled", debug=True)
-                    steelsquid_io.button_click(steelsquid_io.BUTTON_UP, on_button_up)
-                    steelsquid_io.button_click(steelsquid_io.BUTTON_DOWN, on_button_down)
-                    steelsquid_io.button_click(steelsquid_io.BUTTON_LEFT, on_button_left)
-                    steelsquid_io.button_click(steelsquid_io.BUTTON_RIGHT, on_button_right)
-                    steelsquid_io.button_click(steelsquid_io.BUTTON_SELECT, on_button_select)
-                    steelsquid_io.dip_event(1, on_dip_1)
-                    steelsquid_io.dip_event(2, on_dip_2)
-                    steelsquid_io.dip_event(3, on_dip_3)
-                    steelsquid_io.dip_event(4, on_dip_4)
+                    steelsquid_piio.button_click(steelsquid_piio.BUTTON_UP, on_button_up)
+                    steelsquid_piio.button_click(steelsquid_piio.BUTTON_DOWN, on_button_down)
+                    steelsquid_piio.button_click(steelsquid_piio.BUTTON_LEFT, on_button_left)
+                    steelsquid_piio.button_click(steelsquid_piio.BUTTON_RIGHT, on_button_right)
+                    steelsquid_piio.button_click(steelsquid_piio.BUTTON_SELECT, on_button_select)
+                    steelsquid_piio.dip_event(1, on_dip_1)
+                    steelsquid_piio.dip_event(2, on_dip_2)
+                    steelsquid_piio.dip_event(3, on_dip_3)
+                    steelsquid_piio.dip_event(4, on_dip_4)
                 if steelsquid_utils.get_flag("power"):
                     steelsquid_utils.shout("Listen for clean shutdown", debug=True)
                     steelsquid_pi.gpio_set_gnd(24, True)

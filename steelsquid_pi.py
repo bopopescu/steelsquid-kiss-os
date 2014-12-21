@@ -604,7 +604,7 @@ def nokia5110_write(text, number_of_seconds = 0, force_setup = False):
                     break
             if nokia_lcd == None or force_setup:
                 nokia_lcd = LCD.PCD8544(DC, RST, spi=SPI.SpiDev(SPI_PORT, SPI_DEVICE, max_speed_hz=4000000))
-                contrast = int(steelsquid_utils.get_parameter("nokia_contrast", 60))
+                contrast = int(steelsquid_utils.get_parameter("nokia_contrast", 50))
                 nokia_lcd.begin(contrast=contrast)
             nokia_lcd.image(image)
             nokia_lcd.display()

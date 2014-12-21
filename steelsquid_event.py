@@ -51,9 +51,9 @@ vpn         Will fire on vpn up/down
             Parameter 1: up/down
             Parameter 2: name of vpn
             Parameter 3: VPN ip
-button      When button clicked on steelsquid_io
+button      When button clicked on steelsquid_piio
             Parameter 1: BUTTON_UP = 3, BUTTON_DOWN = 4, BUTTON_LEFT = 5, BUTTON_RIGHT = 1, BUTTON_SELECT = 2
-dip         When dip 1 to 4 i changed on steelsquid_io
+dip         When dip 1 to 4 i changed on steelsquid_piio
             Parameter 1: DIP 1 to 4
             Parameter 2: On/Off
 

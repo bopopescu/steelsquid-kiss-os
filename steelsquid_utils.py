@@ -357,16 +357,16 @@ def shout(string=None, to_lcd=True, debug=False, is_error=False, always_show=Fal
             except:
                 pass
             if get_flag("io"):
-                import steelsquid_io
+                import steelsquid_piio
                 if is_error:
                     try:
-                        steelsquid_io.ledr_flash_timer(2)
-                        steelsquid_io.sum_flash_timer(1)
+                        steelsquid_piio.ledr_flash_timer(2)
+                        steelsquid_piio.sum_flash_timer(1)
                     except:
                         pass
                 else:
                     try:
-                        steelsquid_io.ledg_timer(1)
+                        steelsquid_piio.ledg_timer(1)
                     except:
                         pass
             if to_lcd and is_raspberry_pi():

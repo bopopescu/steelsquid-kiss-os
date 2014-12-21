@@ -64,7 +64,7 @@ python_downloads[11]="$base/steelsquid_kiss_http_expand.py"
 python_downloads[12]="$base/steelsquid_kiss_socket_connection.py"
 python_downloads[13]="$base/steelsquid_kiss_socket_expand.py"
 python_downloads[14]="$base/steelsquid_pi.py"
-python_downloads[15]="$base/steelsquid_io.py"
+python_downloads[15]="$base/steelsquid_piio.py"
 python_downloads[16]="$base/steelsquid_gpio_set.py"
 python_downloads[17]="$base/steelsquid_gpio_get.py"
 python_downloads[18]="$base/steelsquid_gpio_event.py"
@@ -1184,16 +1184,14 @@ function help_utils()
     echo "Will take effect on next reboot...."
     if [ $(is-raspberry-pi) == "true" ]; then
         echo 
-        echb "steelsquid io"
-        echo "Is this a Steelsquid IO Boar."
+        echb "steelsquid piio"
+        echo "Is this a Steelsquid PIIO Board."
         echo 
-        echb "steelsquid io-on"
-        echo "Enable Steelsquid IO Boar."
-        echo "Will take effect on next reboot...."
+        echb "steelsquid piio-on"
+        echo "Enable Steelsquid IO Board."
         echo 
-        echb "steelsquid io-off"
-        echo "Disable Steelsquid IO Boar."
-        echo "Will take effect on next reboot...."
+        echb "steelsquid piio-off"
+        echo "Disable Steelsquid IO Board."
         echo 
         echb "steelsquid rover"
         echo "Is rover functionality enabled."
@@ -1823,17 +1821,17 @@ fi
 ##################################################################################
 function io_info()
 {
-    if [ $(get-flag "io") == "true" ]; then
+    if [ $(get-flag "piio") == "true" ]; then
         echo
-        echo "Steelsquid IO Board: Enabled"
+        echo "Steelsquid PIIO Board: Enabled"
         echo
     else
         echo
-        echo "Steelsquid IO Board: Disabled"
+        echo "Steelsquid PIIO Board: Disabled"
         echo
     fi
 }
-if [ "$in_parameter_1" == "io" ]; then
+if [ "$in_parameter_1" == "piio" ]; then
 	io_info
 	exit 0
 fi
@@ -1844,13 +1842,13 @@ fi
 ##################################################################################
 function io_on()
 {
-	log "Enable Steelsquid IO Board"
-    set-flag "io"
+	log "Enable Steelsquid PIIO Board"
+    set-flag "piio"
     set-flag "nokia"
 	systemctl restart steelsquid
     log-ok
 }
-if [ "$in_parameter_1" == "io-on" ]; then
+if [ "$in_parameter_1" == "piio-on" ]; then
 	io_on
 	exit 0
 fi
@@ -1862,11 +1860,11 @@ fi
 function io_off()
 {
 	log "Disable Steelsquid IO Board"
-    del-flag "io"
+    del-flag "piio"
 	systemctl restart steelsquid
     log-ok
 }
-if [ "$in_parameter_1" == "io-off" ]; then
+if [ "$in_parameter_1" == "piio-off" ]; then
 	io_off
 	exit 0
 fi
