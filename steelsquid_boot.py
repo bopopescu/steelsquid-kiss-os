@@ -415,7 +415,7 @@ def main():
             if steelsquid_utils.is_raspberry_pi():
                 if steelsquid_utils.get_flag("disable_monitor"):
                     steelsquid_utils.execute_system_command_blind(["/opt/vc/bin/tvservice", "-o"])
-                if steelsquid_utils.get_flag("io"):
+                if steelsquid_utils.get_flag("piio"):
                     steelsquid_utils.shout("Steelsquid IO board enabled", debug=True)
                     steelsquid_piio.button_click(steelsquid_piio.BUTTON_UP, on_button_up)
                     steelsquid_piio.button_click(steelsquid_piio.BUTTON_DOWN, on_button_down)
@@ -443,7 +443,7 @@ def main():
             steelsquid_event.subscribe_to_event("umount", on_umount, ())
             steelsquid_event.subscribe_to_event("shout", on_shout, ())
             steelsquid_event.subscribe_to_event("reload", on_reload, ())
-            if steelsquid_utils.get_flag("io") and steelsquid_utils.get_flag("development"):
+            if steelsquid_utils.get_flag("piio") and steelsquid_utils.get_flag("development"):
                 steelsquid_event.subscribe_to_event("button", dev_button, ())
                 steelsquid_event.subscribe_to_event("dip", dev_dip, ())
             pkgpath = os.path.dirname(run.__file__)
