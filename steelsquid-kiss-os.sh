@@ -823,6 +823,7 @@ fi
 ##################################
 function help_io()
 {
+    echo "NOTE! When you execute this from the command line it execute outside of steelsquid daemon, and may interrupt for example the LCD, DAC, ADC or extra GPIO."
     echo 
     echb "gpio-get <gnd or 3v3> <gpio number>"
     echo "Get gpio pin status hight (on) or low (off)"
@@ -861,6 +862,9 @@ function help_io()
     echb "lcd-nokia"
     echo "Enable the LCD via nokia5110 (spi)"
     echo 
+    echb "lcd-auto"
+    echo "Try to use nokia5110 or HDD44780"
+    echo 
     echb "lcd-off"
     echo "Disable the LCD"
     echo 
@@ -893,6 +897,9 @@ function help_io()
     echo 
     echb "sabertooth"
     echo "A simple serial interface for Sabertooth motor controller."
+    echo 
+    echb "piio"
+    echo "Comands for my Steelsquid PIIO board."
 }
 if [ "$in_parameter_1" == "help-io" ]; then
     echo 
@@ -981,7 +988,7 @@ function help_files()
     echb "/opt/steelsquid/python/steelsquid_http_server.py"
     echo "Python http server"
     echo 
-    echb "/opt/steelsquid/python/steelsquid_io.py"
+    echb "/opt/steelsquid/python/steelsquid_piio.py"
     echo "Mostly wrapper functions for my steelsquid IO board"
     echo 
     echb "/opt/steelsquid/python/steelsquid_kiss_global.py"
@@ -2710,6 +2717,10 @@ function lcd_info()
         echo
         echo "LCD is enabled (HDD44780)"
         echo
+    elif [ $(get-flag "auto") == "true" ]; then
+        echo
+        echo "LCD in automatic mode"
+        echo
     else
         echo
         echo "LCD is disabled"
@@ -2731,6 +2742,7 @@ function enable_lcd_nokia()
 	log "Enable print IP and messges to nokia5110 LCD"
 	set-flag "nokia"
 	del-flag "hdd"
+	del-flag "auto"
     systemctl restart steelsquid
 	log-ok
 }
@@ -2743,11 +2755,30 @@ fi
 ##################################################################################
 # Enable print IP to lcd
 ##################################################################################
+function enable_lcd_auto()
+{
+	log "Enable print IP and messges to nokia5110 or HDD44780 LCD"
+	set-flag "auto"
+	del-flag "nokia"
+	del-flag "hdd"
+    systemctl restart steelsquid
+	log-ok
+}
+if [ "$in_parameter_1" == "lcd-auto" ]; then
+	enable_lcd_auto
+	exit 0
+fi
+
+
+##################################################################################
+# Enable print IP to lcd
+##################################################################################
 function enable_lcd_hdd()
 {
 	log "Enable print IP and messges to HDD44780 LCD"
 	set-flag "hdd"
 	del-flag "nokia"
+	del-flag "auto"
     systemctl restart steelsquid
 	log-ok
 }
@@ -2765,6 +2796,7 @@ function disable_lcd()
 	log "Disable print IP and messges to LCD"
 	del-flag "nokia"
 	del-flag "hdd"
+	del-flag "auto"
     systemctl restart steelsquid
 	log-ok
 }
@@ -3423,6 +3455,7 @@ else
     set-flag "web"
     set-flag "web_authentication"
     set-flag "ssh"
+    enable_lcd_auto
 fi
 
 

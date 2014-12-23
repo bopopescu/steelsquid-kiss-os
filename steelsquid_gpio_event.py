@@ -37,6 +37,7 @@ if len(sys.argv)==1:
     print("")
     printb("pi-event <gnd or 3v3> <gpio number>")
     print("Listen for signal on gpio pin and 3.3v on the raspberry pi")
+    print("NOTE! When you execute this from the command line it execute outside of steelsquid daemon, and may interrupt for example the LCD, DAC, ADC or extra GPIO.")
     print("")
 else:
     try:

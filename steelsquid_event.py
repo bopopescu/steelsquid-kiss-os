@@ -100,11 +100,6 @@ You can also trigger events by executing this python script (see __main__)
 
 =======================================================================
 
-If you create a executable file with the same name as the event under /opt/steelsquid/events that will also be excuted
-The parametars will be arg to the file
-If broadcast_event("kalle", ("arg1", "arg2"))
-This will exucute: /opt/steelsquid/events/kalle "arg1" "arg2"
-
 @organization: Steelsquid
 @author: Andreas Nilsson
 @contact: steelsquid@gmail.com
@@ -125,7 +120,6 @@ import steelsquid_http_server
 
 running = True
 system_event_dir = "/run/shm/steelsquid"
-system_event_execute_dir = "/opt/steelsquid/events/"
 queue = Queue.Queue(0)
 subscribers = []
 subscribers_second = []
@@ -386,13 +380,6 @@ def event_executer(event, subs, parameters):
                     thread.start_new_thread(function, (args, parameters))
                 else:
                     function(args, parameters)
-        if event!="second":
-            fi = system_event_execute_dir + event
-            if os.path.isfile(fi) and os.access(fi, os.X_OK):
-                exe = []
-                exe.append(fi)
-                exe.extend(parameters)
-                steelsquid_utils.execute_system_command_blind(exe)
         if event == "shutdown":
             deactivate_event_handler()
     except:
@@ -406,7 +393,6 @@ def activate_event_handler(create_ner_thread=True):
     @param create_ner_thread: Run this is new thread
     '''
     steelsquid_utils.make_dirs(system_event_dir)
-    steelsquid_utils.make_dirs(system_event_execute_dir)
     steelsquid_utils.deleteFileOrFolder(system_event_dir + "/shutdown")
     if create_ner_thread:
         thread.start_new_thread(event_work, ())

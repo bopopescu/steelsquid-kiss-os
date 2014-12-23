@@ -308,6 +308,95 @@ def led_ok_flash_timer(seconds):
     steelsquid_pi.mcp23017_flash_timer(23, 10, seconds)
 
 
+def summer(status):
+    '''
+    Turn on/off the summer
+    SUM
+    '''
+    steelsquid_pi.mcp23017_set(23, 15, status)
+
+
+def summer_flash(status):
+    '''
+    SUM
+    Flash on / off the summer
+    '''
+    steelsquid_pi.mcp23017_flash(23, 15, status)
+
+
+def summer_toggle():
+    '''
+    SUM
+    Toggle on / off the summer
+    '''
+    steelsquid_pi.mcp23017_toggle(23, 15)
+
+
+def summer_timer(seconds):
+    '''
+    SUM
+    Turn on summer for number of seconds
+    '''
+    steelsquid_pi.mcp23017_set_timer(23, 15, seconds)
+
+
+def summer_flash_timer(seconds):
+    '''
+    SUM
+    Flash on / off the summer for number fo seconds
+    '''
+    steelsquid_pi.mcp23017_flash_timer(23, 15, seconds)
+
+
+def button(which_button):
+    '''
+    Get status on button
+    which_button = BUTTON_UP, BUTTON_DOWN, BUTTON_LEFT, BUTTON_RIGHT, BUTTON_SELECT
+    '''
+    which_button = int(which_button)
+    return steelsquid_pi.mcp23017_get(23, which_button)
+
+
+def button_click(which_button, callback_method):
+    '''
+    Listen for button click
+    which_button = BUTTON_UP, BUTTON_DOWN, BUTTON_LEFT, BUTTON_RIGHT, BUTTON_SELECT
+    '''
+    steelsquid_pi.mcp23017_click(23, which_button, callback_method)
+
+
+def dip(dip_nr):
+    '''
+    Get status on DIP
+    dip_nr = 1 to 4
+    '''
+    dip_nr = int(dip_nr)
+    if dip_nr == 1:
+        return steelsquid_pi.mcp23017_get(23, 11)
+    elif dip_nr == 2:
+        return steelsquid_pi.mcp23017_get(23, 12)
+    elif dip_nr == 3:
+        return steelsquid_pi.mcp23017_get(23, 14)
+    elif dip_nr == 4:
+        return steelsquid_pi.mcp23017_get(23, 13)
+
+
+def dip_event(dip_nr, callback_method):
+    '''
+    Listen for DIP change
+    dip_nr = 1 to 4
+    '''
+    dip_nr = int(dip_nr)
+    if dip_nr == 1:
+        steelsquid_pi.mcp23017_event(23, 11, callback_method)
+    elif dip_nr == 2:
+        steelsquid_pi.mcp23017_event(23, 12, callback_method)
+    elif dip_nr == 3:
+        steelsquid_pi.mcp23017_event(23, 14, callback_method)
+    elif dip_nr == 4:
+        steelsquid_pi.mcp23017_event(23, 13, callback_method)
+
+
 def relay(relay_nr, status):
     '''
     relay_nr = 1 to 4
@@ -402,95 +491,6 @@ def gpio_22_xv_flash_timer(pin_nr, seconds):
     steelsquid_pi.mcp23017_flash_timer(22, pin_nr-1, seconds)
 
 
-def sum(status):
-    '''
-    Tirn on/off the summer
-    SUM
-    '''
-    steelsquid_pi.mcp23017_set(23, 15, status)
-
-
-def sum_flash(status):
-    '''
-    SUM
-    Flash on / off the summer
-    '''
-    steelsquid_pi.mcp23017_flash(23, 15, status)
-
-
-def sum_toggle():
-    '''
-    SUM
-    Toggle on / off the summer
-    '''
-    steelsquid_pi.mcp23017_toggle(23, 15)
-
-
-def sum_timer(seconds):
-    '''
-    SUM
-    Turn on summer for number of seconds
-    '''
-    steelsquid_pi.mcp23017_set_timer(23, 15, seconds)
-
-
-def sum_flash_timer(seconds):
-    '''
-    SUM
-    Flash on / off the summer for number fo seconds
-    '''
-    steelsquid_pi.mcp23017_flash_timer(23, 15, seconds)
-
-
-def button(which_button):
-    '''
-    Get status on button
-    which_button = BUTTON_UP, BUTTON_DOWN, BUTTON_LEFT, BUTTON_RIGHT, BUTTON_SELECT
-    '''
-    button_nr = int(button_nr)
-    return steelsquid_pi.mcp23017_get(23, which_button)
-
-
-def button_click(which_button, callback_method):
-    '''
-    Listen for button click
-    which_button = BUTTON_UP, BUTTON_DOWN, BUTTON_LEFT, BUTTON_RIGHT, BUTTON_SELECT
-    '''
-    steelsquid_pi.mcp23017_click(23, which_button, callback_method)
-
-
-def dip(dip_nr):
-    '''
-    Get status on DIP
-    dip_nr = 1 to 4
-    '''
-    dip_nr = int(dip_nr)
-    if dip_nr == 1:
-        return steelsquid_pi.mcp23017_get(23, 11)
-    elif dip_nr == 2:
-        return steelsquid_pi.mcp23017_get(23, 12)
-    elif dip_nr == 3:
-        return steelsquid_pi.mcp23017_get(23, 14)
-    elif dip_nr == 4:
-        return steelsquid_pi.mcp23017_get(23, 13)
-
-
-def dip_event(dip_nr, callback_method):
-    '''
-    Listen for DIP change
-    dip_nr = 1 to 4
-    '''
-    dip_nr = int(dip_nr)
-    if dip_nr == 1:
-        steelsquid_pi.mcp23017_event(23, 11, callback_method)
-    elif dip_nr == 2:
-        steelsquid_pi.mcp23017_event(23, 12, callback_method)
-    elif dip_nr == 3:
-        steelsquid_pi.mcp23017_event(23, 14, callback_method)
-    elif dip_nr == 4:
-        steelsquid_pi.mcp23017_event(23, 13, callback_method)
-
-
 def gpio_20_3v3_get(pin):
     '''
     Get status on extra gpio 3v3
@@ -568,9 +568,6 @@ def gpio_20_3v3_flash_timer(pin, seconds):
     '''
     pin = int(pin)
     steelsquid_pi.mcp23017_flash_timer(20, pin-1, seconds)
-
-
-
 
 
 def gpio_21_5v_get(pin):
@@ -658,7 +655,7 @@ def adc_48_5v(pin, gain=GAIN_6_144_V):
     pin = 1 to 8
     '''
     pin = int(pin) + 1
-    return steelsquid_pi.ads1015(48, 0, gain)
+    return steelsquid_pi.ads1015(48, pin, gain)
         
 
 def adc_48_5v_event(pin, callback_method, gain=GAIN_6_144_V):
@@ -667,7 +664,7 @@ def adc_48_5v_event(pin, callback_method, gain=GAIN_6_144_V):
     pin = 1 to 8
     '''
     pin = int(pin) + 1
-    return steelsquid_pi.ads1015_event(48, 0, callback_method, gain)
+    return steelsquid_pi.ads1015_event(48, pin, callback_method, gain)
 
 
 def adc_49_5v(pin, gain=GAIN_6_144_V):
@@ -676,7 +673,7 @@ def adc_49_5v(pin, gain=GAIN_6_144_V):
     pin = 1 to 8
     '''
     pin = int(pin) + 1
-    return steelsquid_pi.ads1015(49, 0, gain)
+    return steelsquid_pi.ads1015(49, pin, gain)
         
 
 def adc_49_5v_event(pin, callback_method, gain=GAIN_6_144_V):
@@ -685,15 +682,15 @@ def adc_49_5v_event(pin, callback_method, gain=GAIN_6_144_V):
     pin = 1 to 8
     '''
     pin = int(pin) + 1
-    return steelsquid_pi.ads1015_event(49, 0, callback_method, gain)
+    return steelsquid_pi.ads1015_event(49, pin, callback_method, gain)
 
 
-def dac_61_5v(volt0, volt1, volt2, volt3):
+def dac_61_5v(volt1, volt2, volt3, volt4):
     '''
     Write analog out from MCP4728 (0 to 5v)
-    volt1 to 3 = Voltage on pins (0 and 4095)
+    volt1 to 4 = Voltage on pins (0 and 4095)
     '''
-    steelsquid_pi.mcp4728(61, volt0, volt1, volt2, volt3)
+    steelsquid_pi.mcp4728(61, volt1, volt2, volt3, volt4)
 
 
 def lcd_write(text, number_of_seconds = 0, force_setup = True):
@@ -729,7 +726,7 @@ def measure_distance(trig_gpio, echo_gpio, force_setup = False):
     steelsquid_pi.hcsr04_distance(trig_gpio, echo_gpio, force_setup)
 
 
-def servo_move(servo, value):
+def servo(servo, value):
     '''
     Move Adafruit 16-channel I2c servo to position (pwm value)
     @param servo: 0 to 15
@@ -778,12 +775,300 @@ def trex_status():
     return steelsquid_trex.trex_status()
 
 
-def aaa(bb):
-    print bb
     
 if __name__ == '__main__':
-    analog_event(1, aaa, GAIN_4_096_V)
-    raw_input("Press Enter to continue...")
-
-
-
+    import sys
+    if len(sys.argv)==1:
+        from steelsquid_utils import printb
+        printb("How to use the Steelsquid OIIO board.")
+        print("NOTE! When you execute this from the command line it execute outside of steelsquid daemon, and may interrupt for example the LCD, DAC, ADC or extra GPIO.")
+        print("")
+        printb("piio gpio-pi-set-3v3 <pin> <status>")
+        print("set gpio pin to hight (on) or low (off) on a pin connecte to 3.3v")
+        print("pin = PIN 1 to 19")
+        print("status = on/off")
+        print("")
+        printb("piio gpio-pi-set-gnd <pin> <status>")
+        print("set gpio pin to hight (on) or low (off) on a pin connecte to GND")
+        print("pin = PIN 1 to 19")
+        print("status = on/off")
+        print("")
+        printb("piio gpio-pi-get-3v3 <pin>")
+        print("Get gpio pin state (connect gpio to 3.3v)")
+        print("pin = PIN 1 to 19")
+        print("")
+        printb("piio gpio-pi-get-gnd <pin>")
+        print("Get gpio pin state (connect gpio to GND)")
+        print("pin = PIN 1 to 19")
+        print("")
+        printb("piio led-ok <status>")
+        print("The green OK LED")
+        print("status = on/off")
+        print("")
+        printb("piio led-error <status>")
+        print("The red ERROR LED")
+        print("status = on/off")
+        print("")
+        printb("piio sum <status>")
+        print("Summer on and off")
+        print("status = on/off")
+        print("")
+        printb("piio relay <relay> <status>")
+        print("Set relay on and off")
+        print("relay = 1 to 4")
+        print("status = on/off")
+        print("")
+        printb("piio button-up")
+        print("Is up button pressed")
+        print("")
+        printb("piio button-down")
+        print("Is down button pressed")
+        print("")
+        printb("piio button-left")
+        print("Is left button pressed")
+        print("")
+        printb("piio button-right")
+        print("Is right button pressed")
+        print("")
+        printb("piio button-select")
+        print("Is select button pressed")
+        print("")
+        printb("piio dip <number>")
+        print("Get DIP status")
+        print("number = 1 to 4")
+        print("")
+        printb("piio gpio-22-xv <pin> <status>")
+        print("Turn on / off the power ouput (uln2801)")
+        print("pin = 1 to 16")
+        print("status = on/off")
+        print("")
+        printb("piio gpio-20-3v3-set <pin> <status>")
+        print("Set status on extra gpio 3v3")
+        print("pin = 1 to 16")
+        print("status = on/off")
+        print("")
+        printb("piio gpio-20-3v3-get <pin>")
+        print("Get status on extra gpio 3v3")
+        print("pin = 1 to 16")
+        print("")
+        printb("piio gpio-21-5v-set <pin> <status>")
+        print("Set status on extra gpio 5v")
+        print("pin = 1 to 16")
+        print("status = on/off")
+        print("")
+        printb("piio gpio-21-5v-get <pin>")
+        print("Get status on extra gpio 5v")
+        print("pin = 1 to 16")
+        print("")
+        printb("piio adc-48-5v <pin>")
+        print("Read analog in from ADS1015 (0 to 5 v)")
+        print("pin = 1 to 4")
+        print("")
+        printb("piio adc-49-5v <pin>")
+        print("Read analog in from ADS1015 (0 to 5 v)")
+        print("pin = 1 to 4")
+        print("")
+        printb("piio dac-61-5v <volt1> <volt2> <volt3> <volt4>")
+        print("Write analog out from MCP4728 (0 to 5v)")
+        print("volt1 to 4 = Voltage on pins (0 and 4095)")
+        print("")
+        printb("piio lcd-write <text>")
+        print("Print text to nokia5110 LCD")
+        print("Show text in 10 seconds.")
+        print("text = The text")
+        print("")
+        printb("piio servo <servo> <position>")
+        print("Move Adafruit 16-channel I2c servo to position (pwm value)")
+        print("Servo = 0 to 15")
+        print("position: min=150, max=600 (may differ between servos)")
+        print("")
+        printb("piio trex-reset")
+        print("Reset the trex controller to default")
+        print("")
+        printb("piio trex-motor <left> <right>")
+        print("Set speed of the dc motors")
+        print("left and right can have the folowing values: -255 to 255")
+        print("-255 = Full speed astern")
+        print("0 = stop")
+        print("255 = Full speed ahead")
+        print("left = Left motor")
+        print("right = Left motor")
+        print("")
+        printb("piio trex-servo <servo> <position>")
+        print("Move trex servo servo to position (pwm value)")
+        print("Servo = 1 to 16")
+        print("Position = Typically the servo position should be a value between 1000 and 2000 although it will vary depending on the servos used")
+        print("")
+        printb("piio trex-status")
+        print("Get status from trex")
+        print(" - Battery voltage:  An integer that is 100x the actual voltage")
+        print(" - Motor current: Current drawn by the motor in mA")
+        print(" - Accelerometer")
+        print(" - Impact")
+    else:
+        command = sys.argv[1]
+        if command == "gpio-pi-set-3v3":
+            pin = int(sys.argv[2])
+            status = sys.argv[3]
+            if status == "on":
+                status = True
+            else:
+                status = False
+            gpio_pi_set_3v3(pin, status)
+        elif command == "gpio-pi-set-gnd":
+            pin = int(sys.argv[2])
+            status = sys.argv[3]
+            if status == "on":
+                status = True
+            else:
+                status = False
+            gpio_pi_set_gnd(pin, status)
+        elif command == "gpio-pi-get-3v3":
+            pin = int(sys.argv[2])
+            if gpio_pi_get_3v3(pin) == True:
+                print "on"
+            else:
+                print "off"
+        elif command == "gpio-pi-get-gnd":
+            pin = int(sys.argv[2])
+            if gpio_pi_get_gnd(pin) == True:
+                print "on"
+            else:
+                print "off"
+        elif command == "led-ok":
+            status = sys.argv[2]
+            if status == "on":
+                status = True
+            else:
+                status = False
+            led_ok(status)
+        elif command == "led-error":
+            status = sys.argv[2]
+            if status == "on":
+                status = True
+            else:
+                status = False
+            led_error(status)
+        elif command == "sum":
+            status = sys.argv[2]
+            if status == "on":
+                status = True
+            else:
+                status = False
+            summer(status)
+        elif command == "relay":
+            pin = int(sys.argv[2])
+            status = sys.argv[3]
+            if status == "on":
+                status = True
+            else:
+                status = False
+            relay(pin, status)
+        elif command == "button-up":
+            if button(BUTTON_UP) == True:
+                print "on"
+            else:
+                print "off"
+        elif command == "button-down":
+            if button(BUTTON_DOWN) == True:
+                print "on"
+            else:
+                print "off"
+        elif command == "button-left":
+            if button(BUTTON_LEFT) == True:
+                print "on"
+            else:
+                print "off"
+        elif command == "button-right":
+            if button(BUTTON_RIGHT) == True:
+                print "on"
+            else:
+                print "off"
+        elif command == "button-select":
+            if button(BUTTON_SELECT) == True:
+                print "on"
+            else:
+                print "off"
+        elif command == "dip":
+            pin = int(sys.argv[2])
+            if dip(pin) == True:
+                print "on"
+            else:
+                print "off"
+        elif command == "gpio-22-xv":
+            pin = int(sys.argv[2])
+            status = sys.argv[3]
+            if status == "on":
+                status = True
+            else:
+                status = False
+            gpio_22_xv(pin, status)
+        elif command == "gpio-20-3v3-set":
+            pin = int(sys.argv[2])
+            status = sys.argv[3]
+            if status == "on":
+                status = True
+            else:
+                status = False
+            gpio_20_3v3_set(pin, status)
+        elif command == "gpio-20-3v3-get":
+            pin = int(sys.argv[2])
+            if gpio_20_3v3_get(pin) == True:
+                print "on"
+            else:
+                print "off"
+        elif command == "gpio-21-5v-set":
+            pin = int(sys.argv[2])
+            status = sys.argv[3]
+            if status == "on":
+                status = True
+            else:
+                status = False
+            gpio_21_5v_set(pin, status)
+        elif command == "gpio-21-5v-get":
+            pin = int(sys.argv[2])
+            if gpio_21_5v_get(pin) == True:
+                print "on"
+            else:
+                print "off"
+        elif command == "adc-48-5v":
+            pin = int(sys.argv[2])
+            print adc_48_5v(pin)
+        elif command == "adc-49-5v":
+            pin = int(sys.argv[2])
+            print adc_48_5v(pin)
+        elif command == "dac_61_5v":
+            v1 = int(sys.argv[2])
+            v2 = int(sys.argv[3])
+            v3 = int(sys.argv[4])
+            v4 = int(sys.argv[5])
+            dac_61_5v(v1, v2, v3, v4)
+        elif command == "lcd-write":
+            lcd_write(sys.argv[2:])
+        elif command == "servo":
+            sservo = int(sys.argv[2])
+            pos = int(sys.argv[3])
+            servo(sservo, pos)
+        elif command == "trex-reset":
+            trex_reset()
+        elif command == "trex-motor":
+            left = int(sys.argv[2])
+            right = int(sys.argv[3])
+            trex_motor(left, right)
+        elif command == "trex-servo":
+            sservo = int(sys.argv[2])
+            pos = int(sys.argv[3])
+            trex_servo(sservo, pos)
+        elif command == "trex-status":
+            battery_voltage, left_motor_current, right_motor_current, accelerometer_x, accelerometer_y, accelerometer_z, impact_x, impact_y, impact_z = trex_status()
+            print "Battery voltage: " + str(battery_voltage)
+            print "Left motor current: " + str(left_motor_current)
+            print "Right motor current: " + str(right_motor_current)
+            print "Accelerometer X-axis: " + str(accelerometer_x)
+            print "Accelerometer Y-axis : " + str(accelerometer_y)
+            print "Accelerometer Z-axis : " + str(accelerometer_z)
+            print "Impact X-axis: " + str(impact_x)
+            print "Impact Y-axis: " + str(impact_y)
+            print "Impact Z-axis: " + str(impact_z)
+        else:
+            print "Unknown command!!!"

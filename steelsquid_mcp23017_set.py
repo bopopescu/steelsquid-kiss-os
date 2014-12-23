@@ -24,6 +24,7 @@ if len(sys.argv)==1:
     print("Set gpio pin status on MCP230xx")
     print("Address: 20, 21, 22, 23, 24, 25, 26, 27")
     print("Set gpio pin status hight (on) or low (off)")
+    print("NOTE! When you execute this from the command line it execute outside of steelsquid daemon, and may interrupt for example the LCD, DAC, ADC or extra GPIO.")
     print("")
 else:
     try:

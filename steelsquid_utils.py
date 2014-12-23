@@ -370,13 +370,24 @@ def shout(string=None, to_lcd=True, debug=False, is_error=False, always_show=Fal
                     except:
                         pass
             if to_lcd and is_raspberry_pi():
-                try:
-                    if get_flag("hdd"):
+                if get_flag("hdd"):
+                    try:
                         steelsquid_pi.hdd44780_write(string, LCD_MESSAGE_TIME, force_setup = False)
-                    elif get_flag("nokia"):
+                    except:
+                        pass
+                elif get_flag("nokia"):
+                    try:
                         steelsquid_pi.nokia5110_write(string, LCD_MESSAGE_TIME, force_setup = False)
-                except:
-                    pass
+                    except:
+                        pass
+                elif get_flag("auto"):
+                    try:
+                        steelsquid_pi.nokia5110_write(string, LCD_MESSAGE_TIME, force_setup = False)
+                    except:
+                        try:
+                            steelsquid_pi.hdd44780_write(string, LCD_MESSAGE_TIME, force_setup = False)
+                        except:
+                            pass
 
 
 def notify(string):
@@ -749,6 +760,8 @@ def system_info():
             p_has_lcd = "Enabled (HDD44780)"
         elif get_flag("nokia"):
             p_has_lcd = "Enabled (Nokia5110)"
+        elif get_flag("auto"):
+            p_has_lcd = "Automatic"
 
     # Stream
     if get_flag("stream"):

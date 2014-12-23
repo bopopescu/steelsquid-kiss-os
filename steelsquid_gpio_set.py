@@ -21,6 +21,7 @@ if len(sys.argv)==1:
     print("")
     printb("pi-set <gnd or 3v3> <gpio number> <on or off>")
     print("Set gpio pin status hight (on) or low (off)")
+    print("NOTE! When you execute this from the command line it execute outside of steelsquid daemon, and may interrupt for example the LCD, DAC, ADC or extra GPIO.")
     print("")
 else:
 	try:

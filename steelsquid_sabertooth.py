@@ -95,6 +95,7 @@ if __name__ == "__main__":
         print("port: /dev/ttyUSB0, /dev/ttyUSB0, /dev/ttyAMA0")
         print("left: Left speed from -100 to +100")
         print("right: Right speed from -100 to +100")
+        print("NOTE! When you execute this from the command line it execute outside of steelsquid daemon, and may interrupt for example the LCD, DAC, ADC or extra GPIO.")
     else:
         try:
             sab = SteelsquidSabertooth(sys.argv[1])

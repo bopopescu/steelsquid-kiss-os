@@ -22,6 +22,7 @@ if len(sys.argv)==1:
     print("Write analog out from MCP4725 (0 to 5v)")
     print("address= 60 ")
     print("value = 0 and 4095")
+    print("NOTE! When you execute this from the command line it execute outside of steelsquid daemon, and may interrupt for example the LCD, DAC, ADC or extra GPIO.")
     print("")
 else:
     try:

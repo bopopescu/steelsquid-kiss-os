@@ -23,6 +23,7 @@ if len(sys.argv)==1:
     print("Address: 20, 21, 22, 23, 24, 25, 26, 27")
     print("On: Connected to earth")
     print("Off: Not connected to earth")
+    print("NOTE! When you execute this from the command line it execute outside of steelsquid daemon, and may interrupt for example the LCD, DAC, ADC or extra GPIO.")
     print("")
 else:
     try:

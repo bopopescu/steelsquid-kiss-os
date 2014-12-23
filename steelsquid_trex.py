@@ -217,6 +217,8 @@ def trex_status():
 
 def help():
     print("")
+    print("NOTE! When you execute this from the command line it execute outside of steelsquid daemon, and may interrupt for example the LCD, DAC, ADC or extra GPIO.")
+    print("")
     printb("trex status")
     print("Battery voltage")
     print("Motor current")

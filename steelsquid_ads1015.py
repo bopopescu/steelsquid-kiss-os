@@ -22,6 +22,7 @@ if len(sys.argv)==1:
     print("Read analog from ADS1015 (0 to 5v)")
     print("address= 48, 49, 4A, 4B ")
     print("gpio = 0 to 3")
+    print("NOTE! When you execute this from the command line it execute outside of steelsquid daemon, and may interrupt for example the LCD, DAC, ADC or extra GPIO.")
     print("")
 else:
     try:

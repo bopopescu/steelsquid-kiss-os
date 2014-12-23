@@ -24,6 +24,7 @@ if len(sys.argv)==1:
     print("Move Adafruit 16-channel I2c servo to position (pwm value)")
     print("servo: 0 to 15")
     print("value: min=150, max=600 (may differ between servos)")
+    print("NOTE! When you execute this from the command line it execute outside of steelsquid daemon, and may interrupt for example the LCD, DAC, ADC or extra GPIO.")
 else:
     try:
         steelsquid_pi.rbada70_move(sys.argv[1], sys.argv[2])

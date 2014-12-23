@@ -20,6 +20,8 @@ import time
 if len(sys.argv)<3:
     from steelsquid_utils import printb
     print("")
+    print("NOTE! When you execute this from the command line it execute outside of steelsquid daemon, and may interrupt for example the LCD, DAC, ADC or extra GPIO.")
+    print("")
     printb("lcd-missage hddd <message>")
     print("Print message to HDD44780 compatible LCD connected directly to the Raspberry Pi.")
     print("See http://www.steelsquid.org/pi-io-example")
