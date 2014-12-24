@@ -25,7 +25,6 @@ import grp
 import xmlrpclib
 import steelsquid_boot
 import steelsquid_kiss_global
-import steelsquid_io
 from pprint import pprint
 
 
