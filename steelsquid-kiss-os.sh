@@ -1581,7 +1581,7 @@ function log_on()
     set-flag "log"
     sed -i '/VERBOSE=/c\VERBOSE=yes' /etc/default/rcS
     rm /boot/cmdline.txt > /dev/null 2>&1
-    echo "dwc_otg.lpm_enable=0 root=/dev/mmcblk0p2 rootfstype=ext4 rootflags=commit=120,data=writeback elevator=noop noatime nodiratime data=writeback rootwait" >> /boot/cmdline.txt
+    echo "dwc_otg.fiq_fix_enable dwc_otg.lpm_enable=0 root=/dev/mmcblk0p2 rootfstype=ext4 rootflags=commit=120,data=writeback elevator=noop noatime nodiratime data=writeback rootwait quiet logo.nologo" >> /boot/cmdline.txt
     sed -i 's/^Storage.*/#Storage=auto/' /etc/systemd/journald.conf
     sed -i 's/^LogLevel.*/#LogLevel=/' /etc/systemd/system.conf
     sed -i 's/^LogTarget.*/#LogTarget=/' /etc/systemd/system.conf
@@ -1607,7 +1607,7 @@ function log_off()
     del-flag "log"
     sed -i '/VERBOSE=/c\VERBOSE=no' /etc/default/rcS
     rm /boot/cmdline.txt > /dev/null 2>&1
-    echo "dwc_otg.lpm_enable=0 root=/dev/mmcblk0p2 rootfstype=ext4 rootflags=commit=120,data=writeback elevator=noop noatime nodiratime data=writeback rootwait quiet loglevel=2" >> /boot/cmdline.txt
+    echo "dwc_otg.fiq_fix_enable dwc_otg.lpm_enable=0 root=/dev/mmcblk0p2 rootfstype=ext4 rootflags=commit=120,data=writeback elevator=noop noatime nodiratime data=writeback rootwait quiet loglevel=0 logo.nologo" >> /boot/cmdline.txt
     sed -i 's/^#Storage.*/Storage=none/' /etc/systemd/journald.conf
     sed -i 's/^#LogLevel.*/LogLevel=emerg/' /etc/systemd/system.conf
     sed -i 's/^#LogTarget.*/LogTarget=null/' /etc/systemd/system.conf
