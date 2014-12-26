@@ -1099,7 +1099,7 @@ function help_develop()
     echo " - utils.html"
     echo "This is useful if you have expanded functionality. otherwise, the changes will be overwritten when you execute upgrade."
     echo 
-    echb "steelsquid download"
+    echb "steelsquid download-imp"
     echo "Download a steelsquid-kiss-os.img file."
     echo 
     echb "steelsquid read </dev/sdX>"
@@ -2287,7 +2287,7 @@ fi
 ##################################################################################
 # Download and extract a *.gz file from $img_iso. 
 ##################################################################################
-if [ "$in_parameter_1" == "download" ]; then
+if [ "$in_parameter_1" == "download-img" ]; then
 	log "Start to download"
 	wget --progress=dot:giga --no-check-certificate -O ${project_name}_download.gz $img_iso
 	if [ $? -ne 0 ]; then
