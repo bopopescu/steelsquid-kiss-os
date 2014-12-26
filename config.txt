@@ -3,4 +3,4 @@
 root
 raspberry
 
-tester.py | /opt/steelsquid/python/run/tester.py
+expand.py | /opt/steelsquid/python/run/expand.py
