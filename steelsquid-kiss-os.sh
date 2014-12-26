@@ -82,6 +82,7 @@ python_downloads[29]="$base/steelsquid_ads1015.py"
 python_downloads[30]="$base/steelsquid_mcp4725.py"
 python_downloads[31]="$base/steelsquid_mcp4728.py"
 python_downloads[32]="$base/steelsquid_synchronize.py"
+python_downloads[33]="$base/tester.py"
 
 # Links to python_downloads
 python_links[1]="/usr/bin/steelsquid-boot"
@@ -116,6 +117,7 @@ python_links[29]="/usr/bin/ads1015"
 python_links[30]="/usr/bin/mcp4725"
 python_links[31]="/usr/bin/mcp4728"
 python_links[32]="/usr/bin/synchronize"
+python_links[33]="/usr/bin/dummy"
 
 # Download to web root folder
 web_root_downloads[1]="$base/index.html"
