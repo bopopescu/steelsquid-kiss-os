@@ -287,14 +287,13 @@ def event_work():
     counter_86400 = 0
     while running:
         try:
-            if os.path.isdir(system_event_dir):
-                for f in os.listdir(system_event_dir):
-                    prop =  steelsquid_utils.read_from_file_and_delete(os.path.join(system_event_dir, f))
-                    if len(prop)>0:
-                        propSp = shlex.split(prop)
-                        broadcast_event(f, propSp)
-                    else:
-                        broadcast_event(f, [])
+            for f in os.listdir(system_event_dir):
+                prop =  steelsquid_utils.read_from_file_and_delete(os.path.join(system_event_dir, f))
+                if len(prop)>0:
+                    propSp = shlex.split(prop)
+                    broadcast_event(f, propSp)
+                else:
+                    broadcast_event(f, [])
             if len(subscribers_second)>0:
                 if counter_1 >= 2:
                     counter_1 = 0

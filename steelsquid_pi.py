@@ -42,6 +42,7 @@ import Adafruit_GPIO.SPI as SPI
 from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
+from sets import Set
 
 SETUP_NONE = 0
 SETUP_OUT = 1
@@ -52,10 +53,8 @@ TIMEOUT = 2100
 setup = [SETUP_NONE] * 32
 lcd = None
 toggle = [False] * 32
-flash = [-1] * 32
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
-running = False
 lcd_last_text = ""
 lock = threading.Lock()
 distance_created = False
@@ -87,7 +86,6 @@ mcp_25 = None
 mcp_26 = None
 mcp_27 = None
 toggle_mcp = []
-flash_mcp = []
 sabertooth = None
 dac = None
 mcp4728_i2c = None
@@ -100,7 +98,6 @@ lock_ads1015_4A = threading.Lock()
 lock_ads1015_4B = threading.Lock()
 lock_mcp4725 = threading.Lock()
 lock_mcp4728 = threading.Lock()
-
 DC = 9
 RST = 7
 SPI_PORT = 0
@@ -109,7 +106,110 @@ nokia_lcd = None
 font = ImageFont.truetype("/usr/share/fonts/truetype/anonymous-pro/Anonymous Pro.ttf", 10)
 image = Image.new('1', (LCD.LCDWIDTH, LCD.LCDHEIGHT))
 draw = ImageDraw.Draw(image)
+lcd_auto = 0
 
+
+def worker_thread():
+    while True:
+        for work_key in worker_commands.keys():
+            try:
+                work = worker_commands[work_key]
+                command = work[0]
+                if command == "gpio_flash_3v3":
+                    only_one = work[1]
+                    gpio = work[2]
+                    if only_one == None:
+                        gpio_toggle_3v3(gpio)
+                    elif only_one:
+                        gpio_set_3v3(gpio, True)
+                        work[1] = False
+                    else:
+                        gpio_set_3v3(gpio, False)
+                        worker_commands.pop(work_key, None)
+                elif command == "gpio_flash_gnd":
+                    only_one = work[1]
+                    gpio = work[2]
+                    if only_one == None:
+                        gpio_toggle_gnd(gpio)
+                    elif only_one:
+                        gpio_set_gnd(gpio, True)
+                        work[1] = False
+                    else:
+                        gpio_set_gnd(gpio, False)
+                        worker_commands.pop(work_key, None)
+                elif command == "mcp23017_flash":
+                    only_one = work[1]
+                    address = work[2]
+                    gpio = work[3]
+                    if only_one == None:
+                        mcp23017_toggle(address, gpio)
+                    elif only_one:
+                        mcp23017_set(address, gpio, True)
+                        work[1] = False
+                    else:
+                        mcp23017_set(address, gpio, False)
+                        worker_commands.pop(work_key, None)
+                elif command == "mcp23017_click":
+                    address = work[1]
+                    gpio = work[2]
+                    mcp = work[3]
+                    cal_m = work[4]
+                    #last = work[5]
+                    if(mcp.input(gpio) >> gpio)==0:
+                        work[5] = True
+                    else:
+                        if work[5] == True:
+                            try:
+                                cal_m(address, gpio)
+                            except:
+                                steelsquid_utils.shout("Error: mcp23017_click", is_error=True, always_show=True)
+                            work[5] = False
+                elif command == "mcp23017_event":
+                    address = work[1]
+                    gpio = work[2]
+                    mcp = work[3]
+                    cal_m = work[4]
+                    #last = work[5]
+                    if(mcp.input(gpio) >> gpio)==0:
+                        if work[5] == False:
+                            try:
+                                cal_m(address, gpio, True)
+                            except:
+                                steelsquid_utils.shout("Error: mcp23017_event", is_error=True, always_show=True)
+                        work[5] = True
+                    else:
+                        if work[5] == True:
+                            try:
+                                cal_m(address, gpio, False)
+                            except:
+                                steelsquid_utils.shout("Error: mcp23017_event", is_error=True, always_show=True)
+                        work[5] = False
+                elif command == "ads1015_event":
+                    address = work[1]
+                    gpio = work[2]
+                    ads = work[3]
+                    cal_m = work[4]
+                    #last = work[5]
+                    gain = work[6]
+                    newv = ads.readADCSingleEnded(gpio, gain, 250) / 1000
+                    if newv != work[5]:
+                        try:
+                            cal_m(address, gpio, newv)
+                        except:
+                            steelsquid_utils.shout("Error: ads1015_event", is_error=True, always_show=True)
+                        work[5] = newv
+            except:
+                worker_commands.pop(work_key, None)
+                steelsquid_utils.shout("Fatal error in steelsquid_pi worker thread: " +work_key, is_error=True)
+        time.sleep(0.3)
+            
+
+worker_commands = {}
+worker_thread_started = False
+if worker_thread_started == False:
+    worker_thread_started = True
+    thread.start_new_thread(worker_thread, ())
+    
 
 def gpio_event_remove(gpio):
     '''
@@ -253,12 +353,12 @@ def gpio_toggle_gnd(gpio):
         gpio_set_gnd(gpio, True)
 
 
-def gpio_event_3v3(gpio, high_method, low_method):
+def gpio_event_3v3(gpio, callback_method):
     '''
     Listen for events on gpio pin and 3.3v
     @param gpio: GPIO number
-    @param high_method: On high
-    @param low_method: On low
+    @param callback_method: execute this method on event (paramater is the gpio and status (True/False))
+                            callback_method(pin, status)
     '''
     global setup
     if not setup[int(gpio)] == SETUP_IN_3V3:
@@ -266,21 +366,18 @@ def gpio_event_3v3(gpio, high_method, low_method):
     def call_met(para):
         status = gpio_get_3v3(para)
         try:
-            if status == True:
-                high_method(para)          
-            else:
-                low_method(para)          
+            callback_method(para, status)          
         except:
             steelsquid_utils.shout()
     GPIO.add_event_detect(int(gpio), GPIO.BOTH, callback=call_met, bouncetime=100)
 
 
-def gpio_event_gnd(gpio, high_method, low_method):
+def gpio_event_gnd(gpio, callback_method):
     '''
     Listen for events on gpio pin and ground
     @param gpio: GPIO number
-    @param high_method: On high
-    @param low_method: On low
+    @param callback_method: execute this method on event (paramater is the gpio and status (True/False))
+                            callback_method(pin, status)
     '''
     global setup
     if not setup[int(gpio)] == SETUP_IN_GND:
@@ -288,10 +385,7 @@ def gpio_event_gnd(gpio, high_method, low_method):
     def call_met(para):
         status = gpio_get_gnd(para)
         try:
-            if status == True:            
-                high_method(para)          
-            else:
-                low_method(para)          
+            callback_method(para, status)          
         except:
             steelsquid_utils.shout()
     GPIO.add_event_detect(int(gpio), GPIO.BOTH, callback=call_met, bouncetime=100)
@@ -302,7 +396,8 @@ def gpio_click_3v3(gpio, callback_method):
     Connect a button to gpio pin and 3.3v
     Will fire when button is released. If press more than 1s it will be ignore
     @param gpio: GPIO number
-    @param callback_method: execute this method on event
+    @param callback_method: execute this method on event (paramater is the gpio)
+                            callback_method(pin)
     '''
     global setup
     if not setup[int(gpio)] == SETUP_IN_3V3:
@@ -340,7 +435,8 @@ def gpio_click_gnd(gpio, callback_method):
     Connect a button to gpio pin and ground
     Will fire when button is released. If press more than 1s it will be ignore
     @param gpio: GPIO number
-    @param callback_method: execute this method on event
+    @param callback_method: execute this method on event (paramater is the gpio)
+                            callback_method(pin)
     '''
     global setup
     if not setup[int(gpio)] == SETUP_IN_GND:
@@ -375,310 +471,52 @@ def gpio_click_gnd(gpio, callback_method):
 
 def gpio_flash_3v3(gpio, enable):
     '''
-    Flash a gpio on and off (1 second) connected to 3.3v
+    Flash a gpio on and off connected to 3.3v
 
     @param gpio: The gpio to flash
     @param enable: Strart or stop the flashing (True/False)
+                   None = only flash once
     '''
-    global flash
-    global running
-    if enable:
-        flash[gpio] = 1
+    command = "gpio_flash_3v3"
+    key = command + str(gpio)
+    if enable == None or enable:
+        post = [None] * 3
+        post[0] = command
+        if enable:
+            post[1] = False
+        else:
+            post[1] = True
+        post[2] = gpio
+        worker_commands[key] = post
     else:
-        flash[gpio] = 0
-    if not running:
-        running = True
-        thread.start_new_thread(do_flash, ())
+        worker_commands.pop(key, None)
+        toggle[gpio] = False
+        gpio_set_3v3(gpio, False)
     
     
 def gpio_flash_gnd(gpio, enable):
     '''
-    Flash a gpio on and off (1 second) connected to ground
+    Flash a gpio on and off connected to ground
 
     @param gpio: The gpio to flash
     @param enable: Strart or stop the flashing (True/False)
+                   None = only flash once
     '''
-    global flash
-    global running
-    if enable:
-        flash[gpio] = 3
-    else:
-        flash[gpio] = 2
-    if not running:
-        running = True
-        thread.start_new_thread(do_flash, ())
-
-
-def gpio_flash_3v3_timer(gpio, seconds):
-    '''
-    Flash a gpio on and off for sertant time
-    '''
-    thread.start_new_thread(do_flash_3v3_timer, (gpio, seconds))
-   
-   
-def gpio_flash_gnd_timer(gpio, seconds):
-    '''
-    Flash a gpio on and off for sertant time
-    '''
-    thread.start_new_thread(do_flash_gnd_timer, (gpio, seconds))
- 
- 
-def gpio_set_3v3_timer(gpio, seconds):
-    '''
-    On for sertant time
-    '''
-    thread.start_new_thread(do_set_3v3_timer, (gpio, seconds))
-   
-   
-def gpio_set_gnd_timer(gpio, seconds):
-    '''
-    On for sertant time
-    '''
-    thread.start_new_thread(do_set_gnd_timer, (gpio, seconds))
-
-        
-def do_set_3v3_timer(gpio, seconds):
-    '''
-    On for number of seconds
-    '''
-    gpio_set_3v3(gpio, True)
-    time.sleep(seconds)
-    gpio_set_3v3(gpio, False)
-
-
-def do_set_gnd_timer(gpio, seconds):
-    '''
-    On for number of seconds
-    '''
-    gpio_set_gnd(gpio, True)
-    time.sleep(seconds)
-    gpio_set_gnd(gpio, False)
-
-
-def do_flash_3v3_timer(gpio, seconds):
-    '''
-    Flash for number of seconds
-    '''
-    gpio_flash_3v3(gpio, True)
-    time.sleep(seconds)
-    gpio_flash_3v3(gpio, False)
-
-
-def do_flash_gnd_timer(gpio, seconds):
-    '''
-    Flash for number of seconds
-    '''
-    gpio_flash_gnd(gpio, True)
-    time.sleep(seconds)
-    gpio_flash_gnd(gpio, False)
-            
-
-def hdd44780_write(text, number_of_seconds = 0, force_setup = True, is_i2c=True):
-    '''
-    Print text to HDD44780 compatible LCD
-    @param text: Text to write (\n or \\ = new line)
-    @param number_of_seconds: How long to show this message, then show the last message again (if there was one)
-                              < 1 Show for ever
-    EX1: Message in the screen: A message
-         hdd44780_write("A new message", number_of_seconds = 10)
-         Message in the screen: A new message
-         After ten seconds:
-         Message in the screen: A message
-    EX2: Message in the screen: 
-         hdd44780_write("A new message", number_of_seconds = 10)
-         Message in the screen: A new message
-         After ten seconds:
-         Message in the screen: A new message
-    @param force_setup: Force setup of pins
-    @param is_icc: Is the LCD connected by i2c
-    The text can also be a list, will join the list with spaces between.
-    '''
-    global lcd
-    global lcd_last_text
-    if number_of_seconds > 0 and len(lcd_last_text) > 0:
-        steelsquid_utils.execute_delay(number_of_seconds, hdd44780_write, (None))
-        hdd44780_write(text, -111, force_setup)
-    else:
-        with lock:
-            if text == None:
-                text = lcd_last_text
-            elif number_of_seconds != -111:
-                lcd_last_text = text
-            if is_i2c:
-                if lcd == None or force_setup:
-                    from steelsquid_lcd_hdd44780 import CharLCDIcc
-                    lcd = CharLCDIcc()
-                else:
-                    lcd.clear()
-            else:
-                if lcd == None or force_setup:
-                    from steelsquid_lcd_hdd44780 import CharLCD
-                    lcd = CharLCD()
-                else:
-                    lcd.clear()
-            if isinstance(text, list):
-                l = []
-                for arg in text:
-                    l.append(arg)
-                    l.append(" ")
-                if len(l) > 0:
-                    l = l[:-1]
-                text = ''.join(l)
-            text = text.replace("\\", "\n")
-            sli = text.split("\n")
-            new_mes = []
-            for line in sli:
-                if len(line)>16:
-                    line = line[:16]
-                new_mes.append(line)
-            if len(sli)==1:
-                lcd.message(sli[0])
-            elif len(sli)>1:
-                lcd.message(sli[0]+'\n'+sli[1])
-
-
-def hdd44780_status(status):
-    '''
-    Turn on/off a HDD44780 compatible LCD
-    '''
-    with lock:
-        global lcd
-        if lcd == None:
-            from steelsquid_lcd_hdd44780 import CharLCDIcc
-            lcd = CharLCDIcc()
-        if status == True:
-            lcd.display_on()
+    command = "gpio_flash_gnd"
+    key = command + str(gpio)
+    if enable == None or enable:
+        post = [None] * 3
+        post[0] = command
+        if enable:
+            post[1] = False
         else:
-            lcd.display_off()
-
-def nokia5110_write(text, number_of_seconds = 0, force_setup = False):
-    '''
-    Print text to nokia5110  LCD
-    @param text: Text to write (\n or \\ = new line)
-    @param number_of_seconds: How long to show this message, then show the last message again (if there was one)
-                              < 1 Show for ever
-    EX1: Message in the screen: A message
-         lcd_write("A new message", number_of_seconds = 10)
-         Message in the screen: A new message
-         After ten seconds:
-         Message in the screen: A message
-    EX2: Message in the screen: 
-         lcd_write("A new message", number_of_seconds = 10)
-         Message in the screen: A new message
-         After ten seconds:
-         Message in the screen: A new message
-    @param force_setup: Force setup of pins
-    The text can also be a list, will join the list with spaces between.
-    '''
-    global nokia_lcd
-    global lcd_last_text
-    if number_of_seconds > 0 and len(lcd_last_text) > 0:
-        steelsquid_utils.execute_delay(number_of_seconds, nokia5110_write, (None))
-        nokia5110_write(text, -111, force_setup)
+            post[1] = True
+        post[2] = gpio
+        worker_commands[key] = post
     else:
-        with lock:
-            if text == None:
-                text = lcd_last_text
-            elif number_of_seconds != -111:
-                lcd_last_text = text
-            if isinstance(text, list):
-                l = []
-                for arg in text:
-                    l.append(arg)
-                    l.append(" ")
-                if len(l) > 0:
-                    l = l[:-1]
-                text = ''.join(l)
-            text = text.replace("\\", "\n")
-            if len(text)>17 and "\n" not in text:
-                text = "".join(text[i:i+17] + "\n" for i in xrange(0,len(text),17))
-            draw.rectangle((0,0,LCD.LCDWIDTH,LCD.LCDHEIGHT), outline=255, fill=255)
-            sli = text.split("\n")
-            i = 0
-            for line in sli:
-                if len(line)>17:
-                    line = line[:17]
-                draw.text((0, i), line, font=font)
-                i = i + 9
-                if i > 36:
-                    break
-            if nokia_lcd == None or force_setup:
-                nokia_lcd = LCD.PCD8544(DC, RST, spi=SPI.SpiDev(SPI_PORT, SPI_DEVICE, max_speed_hz=4000000))
-                contrast = int(steelsquid_utils.get_parameter("nokia_contrast", 60))
-                nokia_lcd.begin(contrast=contrast)
-            nokia_lcd.image(image)
-            nokia_lcd.display()
-
-
-def hcsr04_distance(trig_gpio, echo_gpio, force_setup = False):
-    '''
-    Measure_distance with a with HC-SR04.
-    @param trig_gpio: The trig gpio
-    @param echo_gpio: The echo gpio
-    @param force_setup: Force setup of pins
-    @return: The distance in cm (-1 = unable to mesure)
-    '''
-    with lock_hcsr04:
-        global distance_created
-        if not distance_created or force_setup:
-            gpio_setup_out(trig_gpio)
-            gpio_setup_in_gnd(echo_gpio)
-            gpio_set(trig_gpio, False)
-            distance_created = True
-        gpio_set(trig_gpio, False)
-        time.sleep(0.00001)
-        gpio_set(trig_gpio, True)
-        time.sleep(0.00001)
-        gpio_set(trig_gpio, False)
-        countdown = TIMEOUT
-        while (gpio_get(echo_gpio) == False and countdown > 0):
-            countdown = countdown - 1
-        if countdown > 0:
-            echostart = time.time()
-            countdown = TIMEOUT
-            while (gpio_get(echo_gpio) == True and countdown > 0):
-                countdown = countdown - 1
-            if countdown > 0:
-                echoend = time.time()
-                echoduration = echoend - echostart
-                distance = echoduration * 17000
-                return int(round(distance, 0))
-            else:
-                return -1
-        else:
-            return -1
-
-
-def rbada70_move(servo, value):
-    '''
-    Move Adafruit 16-channel I2c servo to position (pwm value)
-    @param servo: 0 to 15
-    @param value: min=150, max=600 (may differ between servos)
-    '''
-    with lock_rbada:
-        global pwm
-        if pwm == None:
-            pwm = PWM(0x40, debug=False)
-            pwm.setPWMFreq(60) 
-        pwm.setPWM(int(servo), 0, int(value))
-
-
-def sabertooth_motor_speed(left, right, the_port=None):
-    '''
-    Set the speed on a sabertooth dc motor controller.
-    from -100 to +100
-    -100 = 100% back speed
-    0 = no speed
-    100 = 100% forward speed
-    '''
-    with lock_sabertooth:
-        global sabertooth
-        if sabertooth==None:
-            import steelsquid_sabertooth
-            if the_port == None:
-                the_port = steelsquid_utils.get_parameter("sabertooth_port", "")
-            sabertooth = steelsquid_sabertooth.SteelsquidSabertooth(serial_port=the_port)
-        sabertooth.set_dc_speed(left, right)
+        worker_commands.pop(key, None)
+        toggle[gpio] = False
+        gpio_set_gnd(gpio, False)
 
 
 def mcp23017_setup_out(address, gpio):
@@ -883,73 +721,7 @@ def mcp23017_get(address, gpio):
     else:
         return False
 
-
-def mcp23017_click(address, gpio, callback_method):
-    '''
-    Listen for click
-    Address: 20, 21, 22, 23, 24, 25, 26, 27
-    @param gpio: 0 to 15
-    The MCP23017 has 16 pins - A0 thru A7 + B0 thru B7. A0 is called 0 in the library, and A7 is called 7, then B0 continues from there as is called 8 and finally B7 is pin 15
-    '''
-    gpio = int(gpio)
-    address = int(address)
-    thread.start_new_thread(__mcp_click, (address, gpio, callback_method))
-
-
-def __mcp_click(address, gpio, callback_method):
-    '''
-    '''
-    mcp = mcp23017_setup_in(address, gpio)
-    last = False
-    while True:
-        if(mcp.input(gpio) >> gpio)==0:
-            last = True
-        else:
-            if last == True:
-                try:
-                    callback_method()
-                except:
-                    steelsquid_utils.shout()
-            last = False
-        time.sleep(0.15)
         
-        
-def mcp23017_event(address, gpio, callback_method):
-    '''
-    Listen for event
-    Address: 20, 21, 22, 23, 24, 25, 26, 27
-    @param gpio: 0 to 15
-    The MCP23017 has 16 pins - A0 thru A7 + B0 thru B7. A0 is called 0 in the library, and A7 is called 7, then B0 continues from there as is called 8 and finally B7 is pin 15
-    '''
-    gpio = int(gpio)
-    address = int(address)
-    thread.start_new_thread(__mcp_event, (address, gpio, callback_method))
-
-
-def __mcp_event(address, gpio, callback_method):
-    '''
-    '''
-    mcp = mcp23017_setup_in(address, gpio)
-    last = False
-    while True:
-        if(mcp.input(gpio) >> gpio)==0:
-            if last == False:
-                try:
-                    callback_method(True)
-                except:
-                    steelsquid_utils.shout()
-            last = True
-        else:
-            if last == True:
-                try:
-                    callback_method(False)
-                except:
-                    steelsquid_utils.shout()
-            last = False
-        time.sleep(0.15)
-
-    
-
 def mcp23017_toggle(address, gpio):
     '''
     Toggle gpio pin to hight/low on a mcp
@@ -972,82 +744,78 @@ def mcp23017_toggle(address, gpio):
 def mcp23017_flash(address, gpio, status):
     '''
     Toggle gpio pin to hight/low on a mcp
+    @param status: Strart or stop the flashing (True/False)
+                   None = only flash once
     '''
     gpio = int(gpio)
     address = int(address)
-    mcp = mcp23017_setup_out(address, gpio)
-    global flash_mcp
-    if status:
-        try:
-            flash_mcp.remove([address, gpio])
-        except:
-            pass
-        flash_mcp.append([address, gpio])
+    command = "mcp23017_flash"
+    key = command + str(address) + str(gpio)
+    if status == None or status:
+        post = [None] * 4
+        post[0] = command
+        if status:
+            post[1] = False
+        else:
+            post[1] = True
+        post[2] = address
+        post[3] = gpio
+        worker_commands[key] = post
     else:
+        worker_commands.pop(key, None)
+        mcp.output(gpio, 0)
         try:
-            flash_mcp.remove([address, gpio])
+            toggle_mcp.remove([address, gpio])
         except:
             pass
-        mcp.output(gpio, 0) 
-    global running
-    if not running:
-        running = True
-        thread.start_new_thread(do_flash, ())
 
 
-def mcp23017_set_timer(address, gpio, seconds):
+def mcp23017_click(address, gpio, callback_method):
     '''
+    Listen for click
+    Address: 20, 21, 22, 23, 24, 25, 26, 27
+    @param gpio: 0 to 15
+    @param callback_method: execute this method on event (paramater is the address and gpio)
+                            callback_method(address, pin)
+    The MCP23017 has 16 pins - A0 thru A7 + B0 thru B7. A0 is called 0 in the library, and A7 is called 7, then B0 continues from there as is called 8 and finally B7 is pin 15
     '''
-    thread.start_new_thread(do_mcp_set_time, (address, gpio, seconds))
-
-
-def mcp23017_flash_timer(address, gpio, seconds):
-    '''
-    '''
-    thread.start_new_thread(do_mcp_flash_time, (address, gpio, seconds))
-
+    gpio = int(gpio)
+    address = int(address)
+    mcp = mcp23017_setup_in(address, gpio)
+    command = "mcp23017_click"
+    key = command + str(address) + str(gpio)
+    post = [None] * 6
+    post[0] = command
+    post[1] = address
+    post[2] = gpio
+    post[3] = mcp
+    post[4] = callback_method
+    post[5] = False
+    worker_commands[key] = post
         
-def do_mcp_set_time(address, gpio, seconds):
+        
+def mcp23017_event(address, gpio, callback_method):
     '''
-    On for number of seconds
+    Listen for event
+    @address: 20, 21, 22, 23, 24, 25, 26, 27
+    @param gpio: 0 to 15
+    @param callback_method: execute this method on event (paramater is the address, gpio and status (True/False))
+                            callback_method(address, pin, status)
+    The MCP23017 has 16 pins - A0 thru A7 + B0 thru B7. A0 is called 0 in the library, and A7 is called 7, then B0 continues from there as is called 8 and finally B7 is pin 15
     '''
-    mcp23017_set(address, gpio, True)
-    time.sleep(seconds)
-    mcp23017_set(address, gpio, False)
-
-
-def do_mcp_flash_time(address, gpio, seconds):
-    '''
-    Flash for number of seconds
-    '''
-    mcp23017_flash(address, gpio, True)
-    time.sleep(seconds)
-    mcp23017_flash(address, gpio, False)
-
-
-def do_flash():
-    '''
-    Toggle gpio on and off (will loop)
-    '''
-    global running
-    running = True
-    global flash
-    global flash_mcp
-    while running:
-        for gpio in range(0, 32):
-            if flash[gpio] == 0:
-                gpio_set_3v3(gpio, False)
-                flash[gpio] = -1
-            elif flash[gpio] == 1:
-                gpio_toggle_3v3(gpio)
-            elif flash[gpio] == 2:
-                gpio_set_gnd(gpio, False)
-                flash[gpio] = -1
-            elif flash[gpio] == 3:
-                gpio_toggle_gnd(gpio)
-        for address, gpio in flash_mcp:
-            mcp23017_toggle(address, gpio)
-        time.sleep(1)
+    gpio = int(gpio)
+    address = int(address)
+    mcp = mcp23017_setup_in(address, gpio)
+    command = "mcp23017_event"
+    key = command + str(address) + str(gpio)
+    post = [None] * 6
+    post[0] = command
+    post[1] = address
+    post[2] = gpio
+    post[3] = mcp
+    post[4] = callback_method
+    post[5] = False
+    worker_commands[key] = post
 
 
 def ads1015(address, gpio, gain=GAIN_6_144_V):
@@ -1058,56 +826,64 @@ def ads1015(address, gpio, gain=GAIN_6_144_V):
     '''
     address = str(address)
     gpio = int(gpio)
+    return __ads1015(address).readADCSingleEnded(gpio, gain, 250) / 1000
+        
+
+def __ads1015(address):
+    '''
+    Read analog in from ADS1015 (0 to 5 v)
+    address= 48, 49, 4A, 4B 
+    gpio = 0 to 3
+    '''
+    address = str(address)
     if address == "48":
         with lock_ads1015_48:
             global ads_48
             if ads_48==None:
                 ads_48 = ADS1x15(address = 0x48, ic=0x00)
-            return ads_48.readADCSingleEnded(gpio, gain, 250) / 1000
+            return ads_48
     elif address == "49":
         with lock_ads1015_49:
             global ads_49
             if ads_49==None:
                 ads_49 = ADS1x15(address = 0x49, ic=0x00)
-            return ads_49.readADCSingleEnded(gpio, gain, 250) / 1000
+            return ads_49
     elif address == "4A":
         with lock_ads1015_4A:
             global ads_4A
             if ads_4A==None:
                 ads_4A = ADS1x15(address = 0x4A, ic=0x00)
-            return ads_4A.readADCSingleEnded(gpio, gain, 250) / 1000
+            return ads_4A
     elif address == "4B":
         with lock_ads1015_4B:
             global ads_4B
             if ads_4B==None:
                 ads_4B = ADS1x15(address = 0x4B, ic=0x00)
-            return ads_4B.readADCSingleEnded(gpio, gain, 250) / 1000
-        
+            return ads_4B
+
 
 def ads1015_event(address, gpio, callback_method, gain=GAIN_6_144_V):
     '''
     Listen for changes on analog in from ADS1015
     address= 48, 48, 4A, 4B 
     gpio = 0 to 3
+    @param callback_method: execute this method on event (paramater is the gpio and status (True/False))
+                            callback_method(address, pin, value)
     '''
     gpio = int(gpio)
-    address = str(address)
-    thread.start_new_thread(__ads_event, (address, gpio, callback_method, gain))
-
-
-def __ads_event(address, gpio, callback_method, gain):
-    '''
-    '''
-    last = 0
-    while True:
-        new = adc_get(address, gpio, gain)
-        if new != last:
-            try:
-                callback_method(new)
-            except:
-                steelsquid_utils.shout()
-            last = new
-        time.sleep(1)
+    address = int(address)
+    ads = __ads1015(address)
+    command = "ads1015_event"
+    key = command + str(address) + str(gpio)
+    post = [None] * 7
+    post[0] = command
+    post[1] = address
+    post[2] = gpio
+    post[3] = ads
+    post[4] = callback_method
+    post[5] = -1
+    post[6] = gain
+    worker_commands[key] = post
 
 
 def mcp4725(address, value):
@@ -1146,6 +922,239 @@ def mcp4728(address, volt0, volt1, volt2, volt3):
         the_bytes = [(volt0 >> 8) & 0xFF, (volt0) & 0xFF, (volt1 >> 8) & 0xFF, (volt1) & 0xFF,
                  (volt2 >> 8) & 0xFF, (volt2) & 0xFF, (volt3 >> 8) & 0xFF, (volt3) & 0xFF]    
         mcp4728_i2c.writeList(0x50, the_bytes)
+    
+    
+def hdd44780_write(text, number_of_seconds = 0, force_setup = True, is_i2c=True):
+    '''
+    Print text to HDD44780 compatible LCD
+    @param text: Text to write (\n or \\ = new line)
+    @param number_of_seconds: How long to show this message, then show the last message again (if there was one)
+                              < 1 Show for ever
+    EX1: Message in the screen: A message
+         hdd44780_write("A new message", number_of_seconds = 10)
+         Message in the screen: A new message
+         After ten seconds:
+         Message in the screen: A message
+    EX2: Message in the screen: 
+         hdd44780_write("A new message", number_of_seconds = 10)
+         Message in the screen: A new message
+         After ten seconds:
+         Message in the screen: A new message
+    @param force_setup: Force setup of pins
+    @param is_icc: Is the LCD connected by i2c
+    The text can also be a list, will join the list with spaces between.
+    '''
+    global lcd
+    global lcd_last_text
+    if number_of_seconds > 0 and len(lcd_last_text) > 0:
+        steelsquid_utils.execute_delay(number_of_seconds, hdd44780_write, (None))
+        hdd44780_write(text, -111, force_setup)
+    else:
+        with lock:
+            if text == None:
+                text = lcd_last_text
+            elif number_of_seconds != -111:
+                lcd_last_text = text
+            if is_i2c:
+                if lcd == None or force_setup:
+                    from steelsquid_lcd_hdd44780 import CharLCDIcc
+                    lcd = CharLCDIcc()
+                else:
+                    lcd.clear()
+            else:
+                if lcd == None or force_setup:
+                    from steelsquid_lcd_hdd44780 import CharLCD
+                    lcd = CharLCD()
+                else:
+                    lcd.clear()
+            if isinstance(text, list):
+                l = []
+                for arg in text:
+                    l.append(arg)
+                    l.append(" ")
+                if len(l) > 0:
+                    l = l[:-1]
+                text = ''.join(l)
+            text = text.replace("\\", "\n")
+            sli = text.split("\n")
+            new_mes = []
+            for line in sli:
+                if len(line)>16:
+                    line = line[:16]
+                new_mes.append(line)
+            if len(sli)==1:
+                lcd.message(sli[0])
+            elif len(sli)>1:
+                lcd.message(sli[0]+'\n'+sli[1])
+
+
+def hdd44780_status(status):
+    '''
+    Turn on/off a HDD44780 compatible LCD
+    '''
+    with lock:
+        global lcd
+        if lcd == None:
+            from steelsquid_lcd_hdd44780 import CharLCDIcc
+            lcd = CharLCDIcc()
+        if status == True:
+            lcd.display_on()
+        else:
+            lcd.display_off()
+
+
+def nokia5110_write(text, number_of_seconds = 0, force_setup = False):
+    '''
+    Print text to nokia5110  LCD
+    @param text: Text to write (\n or \\ = new line)
+    @param number_of_seconds: How long to show this message, then show the last message again (if there was one)
+                              < 1 Show for ever
+    EX1: Message in the screen: A message
+         lcd_write("A new message", number_of_seconds = 10)
+         Message in the screen: A new message
+         After ten seconds:
+         Message in the screen: A message
+    EX2: Message in the screen: 
+         lcd_write("A new message", number_of_seconds = 10)
+         Message in the screen: A new message
+         After ten seconds:
+         Message in the screen: A new message
+    @param force_setup: Force setup of pins
+    The text can also be a list, will join the list with spaces between.
+    '''
+    global nokia_lcd
+    global lcd_last_text
+    if number_of_seconds > 0 and len(lcd_last_text) > 0:
+        steelsquid_utils.execute_delay(number_of_seconds, nokia5110_write, (None))
+        nokia5110_write(text, -111, force_setup)
+    else:
+        with lock:
+            if text == None:
+                text = lcd_last_text
+            elif number_of_seconds != -111:
+                lcd_last_text = text
+            if isinstance(text, list):
+                l = []
+                for arg in text:
+                    l.append(arg)
+                    l.append(" ")
+                if len(l) > 0:
+                    l = l[:-1]
+                text = ''.join(l)
+            text = text.replace("\\", "\n")
+            if len(text)>17 and "\n" not in text:
+                text = "".join(text[i:i+17] + "\n" for i in xrange(0,len(text),17))
+            draw.rectangle((0,0,LCD.LCDWIDTH,LCD.LCDHEIGHT), outline=255, fill=255)
+            sli = text.split("\n")
+            i = 0
+            for line in sli:
+                if len(line)>17:
+                    line = line[:17]
+                draw.text((0, i), line, font=font)
+                i = i + 9
+                if i > 36:
+                    break
+            if nokia_lcd == None or force_setup:
+                nokia_lcd = LCD.PCD8544(DC, RST, spi=SPI.SpiDev(SPI_PORT, SPI_DEVICE, max_speed_hz=4000000))
+                contrast = int(steelsquid_utils.get_parameter("nokia_contrast", 60))
+                nokia_lcd.begin(contrast=contrast)
+            nokia_lcd.image(image)
+            nokia_lcd.display()
+
+
+def lcd_auto_write(text, number_of_seconds = 0, force_setup = False):
+    global lcd_auto
+    if lcd_auto == 0:
+        try:
+            nokia5110_write(text, number_of_seconds, force_setup)
+            lcd_auto = 1
+        except:
+            try:
+                hdd44780_write(text, number_of_seconds, force_setup, True)
+                lcd_auto = 2
+            except:
+                lcd_auto = 3
+    elif lcd_auto == 1:
+        try:
+            nokia5110_write(text, number_of_seconds, force_setup)
+        except:
+           lcd_auto = 0
+    elif lcd_auto == 2:
+        try:
+            hdd44780_write(text, number_of_seconds, force_setup, True)       
+        except:
+           lcd_auto = 0
+
+
+def hcsr04_distance(trig_gpio, echo_gpio, force_setup = False):
+    '''
+    Measure_distance with a with HC-SR04.
+    @param trig_gpio: The trig gpio
+    @param echo_gpio: The echo gpio
+    @param force_setup: Force setup of pins
+    @return: The distance in cm (-1 = unable to mesure)
+    '''
+    with lock_hcsr04:
+        global distance_created
+        if not distance_created or force_setup:
+            gpio_setup_out(trig_gpio)
+            gpio_setup_in_gnd(echo_gpio)
+            gpio_set(trig_gpio, False)
+            distance_created = True
+        gpio_set(trig_gpio, False)
+        time.sleep(0.00001)
+        gpio_set(trig_gpio, True)
+        time.sleep(0.00001)
+        gpio_set(trig_gpio, False)
+        countdown = TIMEOUT
+        while (gpio_get(echo_gpio) == False and countdown > 0):
+            countdown = countdown - 1
+        if countdown > 0:
+            echostart = time.time()
+            countdown = TIMEOUT
+            while (gpio_get(echo_gpio) == True and countdown > 0):
+                countdown = countdown - 1
+            if countdown > 0:
+                echoend = time.time()
+                echoduration = echoend - echostart
+                distance = echoduration * 17000
+                return int(round(distance, 0))
+            else:
+                return -1
+        else:
+            return -1
+
+
+def rbada70_move(servo, value):
+    '''
+    Move Adafruit 16-channel I2c servo to position (pwm value)
+    @param servo: 0 to 15
+    @param value: min=150, max=600 (may differ between servos)
+    '''
+    with lock_rbada:
+        global pwm
+        if pwm == None:
+            pwm = PWM(0x40, debug=False)
+            pwm.setPWMFreq(60) 
+        pwm.setPWM(int(servo), 0, int(value))
+
+
+def sabertooth_motor_speed(left, right, the_port=None):
+    '''
+    Set the speed on a sabertooth dc motor controller.
+    from -100 to +100
+    -100 = 100% back speed
+    0 = no speed
+    100 = 100% forward speed
+    '''
+    with lock_sabertooth:
+        global sabertooth
+        if sabertooth==None:
+            import steelsquid_sabertooth
+            if the_port == None:
+                the_port = steelsquid_utils.get_parameter("sabertooth_port", "")
+            sabertooth = steelsquid_sabertooth.SteelsquidSabertooth(serial_port=the_port)
+        sabertooth.set_dc_speed(left, right)
     
 
 def trex_reset():

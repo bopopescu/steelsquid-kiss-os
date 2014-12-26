@@ -206,7 +206,8 @@ if __name__ == '__main__':
     print " - 2, C: Reload the custom modules."
     print " - 3, E: Reload the HTTP and Socket expand server."
     print " - 4, S: Restart steelsquid service."
-    print " - 5, R: Reboot the remote machine."
+    print " - 5, K: Stop steelsquid service."
+    print " - 6, R: Reboot the remote machine."
     print ""
     thread.start_new_thread(listener, ()) 
     answer = ""
@@ -220,7 +221,8 @@ if __name__ == '__main__':
             print " - 2, C: Reload the custom modules."
             print " - 3, E: Reload the HTTP and Socket expand server."
             print " - 4, S: Restart steelsquid service."
-            print " - 5, R: Reboot the remote machine."
+            print " - 5, K: Stop steelsquid service."
+            print " - 6, R: Reboot the remote machine."
         elif answer == "1" or answer == "Q" or answer == "q":
             cont = False
         elif answer == "2" or answer == "C" or answer == "c":
@@ -231,8 +233,11 @@ if __name__ == '__main__':
             send_command("steelsquid-event reload server")
         elif answer == "4" or answer == "S" or answer == "s":
             steelsquid_utils.log("Request service restart")
-            send_command("steelsquid restart ")
-        elif answer == "5" or answer == "R" or answer == "r":
+            send_command("steelsquid restart")
+        elif answer == "5" or answer == "K" or answer == "k":
+            steelsquid_utils.log("Request roboot")
+            send_command("systemctl stop steelsquid")
+        elif answer == "6" or answer == "R" or answer == "r":
             steelsquid_utils.log("Request roboot")
             send_command("reboot &")
     try:

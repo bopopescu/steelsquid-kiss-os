@@ -18,18 +18,14 @@ import sys
 import steelsquid_pi
 
 
-def on_m(self):
+def callback_method(gpio, status):
     '''
     On event
     '''
-    print time.strftime("%Y-%m-%d") + " " + time.strftime("%H:%M:%S") + " On :-)"
-
-
-def off_m(self):
-    '''
-    On event
-    '''
-    print time.strftime("%Y-%m-%d") + " " + time.strftime("%H:%M:%S") + " Off :-)"
+    if status:
+        print time.strftime("%Y-%m-%d") + " " + time.strftime("%H:%M:%S") + " On :-)"
+    else:
+        print time.strftime("%Y-%m-%d") + " " + time.strftime("%H:%M:%S") + " Off :-)"
 
 
 if len(sys.argv)==1:
@@ -42,11 +38,11 @@ if len(sys.argv)==1:
 else:
     try:
         if sys.argv[1] == "gnd":
-            steelsquid_pi.gpio_event_gnd(sys.argv[2], on_m, off_m)
+            steelsquid_pi.gpio_event_gnd(sys.argv[2], callback_method)
         elif sys.argv[1] == "3v3":
-            steelsquid_pi.gpio_event_3v3(sys.argv[2], on_m, off_m)
+            steelsquid_pi.gpio_event_3v3(sys.argv[2], callback_method)
         else:
-            steelsquid_pi.gpio_event_3v3(sys.argv[1], on_m, off_m)
+            steelsquid_pi.gpio_event_3v3(sys.argv[1], callback_method)
         raw_input("Waiting for event...\n")
     except KeyboardInterrupt:
         pass

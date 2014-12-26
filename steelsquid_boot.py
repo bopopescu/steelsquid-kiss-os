@@ -23,8 +23,6 @@ import thread
 import getpass
 from subprocess import Popen, PIPE, STDOUT
 import subprocess
-import steelsquid_kiss_socket_expand
-import steelsquid_kiss_http_expand
 import os.path, pkgutil
 import importlib
 import run
@@ -35,11 +33,32 @@ try:
 except:
     steelsquid_utils.shout("Fatal error when import steelsquid_kiss_global", is_error=True)
 
+
+try:
+    import steelsquid_kiss_socket_expand
+except:
+    steelsquid_utils.shout("Fatal error when import steelsquid_kiss_socket_expand", is_error=True)
+
+
+try:
+    import steelsquid_kiss_http_expand
+except:
+    steelsquid_utils.shout("Fatal error when import steelsquid_kiss_http_expand", is_error=True)
+
+
 if steelsquid_utils.is_raspberry_pi:
-    import steelsquid_pi
+    try:
+        import steelsquid_pi
+    except:
+        steelsquid_utils.shout("Fatal error when import steelsquid_pi", is_error=True)
+
 
 if steelsquid_utils.get_flag("piio"):
-    import steelsquid_piio
+    try:
+        import steelsquid_piio
+    except:
+        steelsquid_utils.shout("Fatal error when import steelsquid_piio", is_error=True)
+
 
 def print_help():
     '''
@@ -111,6 +130,75 @@ def do_umount():
         steelsquid_utils.umount(local, "samba", ip, remote)
 
 
+def on_mount(args, para):
+    '''
+    On ssh, samba, usv or cd mount
+    '''
+    service = para[0]
+    remote = para[1]
+    local = para[2]
+    steelsquid_utils.shout("MOUNT %s\n%s\nTO\n%s" %(service, remote, local))
+
+
+def on_umount(args, para):
+    '''
+    On ssh, samba, usv or cd umount
+    '''
+    service = para[0]
+    remote = para[1]
+    local = para[2]
+    steelsquid_utils.shout("UMOUNT %s\n%s\nFROM\n%s" %(service, remote, local))
+                
+
+def on_vpn(args, para):
+    '''
+    On vpn up/down
+    '''
+    stat = para[0]
+    name = para[1]
+    ip = para[2]
+    shout_string = []
+    if stat == "up":
+        steelsquid_utils.shout("VPN ENABLED\n"+name + "\nIP\n" + ip)
+    else:
+        steelsquid_utils.shout("VPN DISABLED\n"+name)
+
+
+def on_network(args, para):
+    '''
+    On network update
+    '''
+    net = para[0]
+    wired = para[1]
+    wifi = para[2]
+    access_point = para[3]
+    wan = para[4]
+    if net == "up":
+        try:
+            shout_string = []
+            if access_point != "---":
+                shout_string.append("WIFI\n")
+                shout_string.append(access_point)
+                shout_string.append("\n")
+                shout_string.append(wifi)
+                if wan != "---":
+                    shout_string.append("\nWAN IP\n")
+                    shout_string.append(wan)
+            else:
+                shout_string.append("WIRED\n")
+                shout_string.append(wired)
+                if wan != "---":
+                    shout_string.append("\nWAN IP\n")
+                    shout_string.append(wan)
+            mes = "".join(shout_string)
+            steelsquid_utils.shout(mes, leave_on_lcd = True)
+        except:
+            steelsquid_utils.shout()
+        do_mount()
+    else:
+        steelsquid_utils.shout("No network!", leave_on_lcd = True)
+        do_umount()
+
 
 def on_shutdown(args, para):
     '''
@@ -131,149 +219,6 @@ def on_shutdown(args, para):
     steelsquid_event.deactivate_event_handler()
 
 
-def on_daily(args, para):
-    '''
-    Do daily work
-    '''
-    pass     
-
-
-def on_vpn(args, para):
-    '''
-    On vpn up/down
-    '''
-    stat = para[0]
-    name = para[1]
-    ip = para[2]
-    shout_string = []
-    if stat == "up":
-        steelsquid_utils.shout("Connected to VPN: " + name + "\nIP: " + ip, False)
-    else:
-        steelsquid_utils.shout("Disconnected from VPN: " + name, False)
-    if steelsquid_utils.is_raspberry_pi():
-        try:
-            if steelsquid_utils.get_flag("nokia"):
-                if stat == "up":
-                    steelsquid_pi.nokia5110_write("VPN ENABLED\n"+name + "\nIP\n" + ip, steelsquid_utils.LCD_MESSAGE_TIME)
-                else:
-                    steelsquid_pi.nokia5110_write("VPN DISABLED\n"+name, steelsquid_utils.LCD_MESSAGE_TIME)
-            elif steelsquid_utils.get_flag("hdd"):
-                if stat == "up":
-                    steelsquid_pi.hdd44780_write("VPN ENABLED\n"+name, steelsquid_utils.LCD_MESSAGE_TIME)
-                else:
-                    steelsquid_pi.hdd44780_write("VPN DISABLED\n"+name, steelsquid_utils.LCD_MESSAGE_TIME)
-        except:
-            steelsquid_utils.shout()
-
-
-def on_network(args, para):
-    '''
-    On network update
-    '''
-    net = para[0]
-    wired = para[1]
-    wifi = para[2]
-    access_point = para[3]
-    wan = para[4]
-    if net == "up":
-        shout_string = []
-        if access_point != "---":
-            shout_string.append("Connected to network: ")
-            shout_string.append(access_point)
-            shout_string.append("\n")
-        if wired != "---":
-            shout_string.append("Network Wired IP: ")
-            shout_string.append(wired)
-            shout_string.append("\n")
-        if wifi != "---":
-            shout_string.append("Network Wifi IP: ")
-            shout_string.append(wifi)
-            shout_string.append("\n")
-        if wan != "---":
-            shout_string.append("Internet IP: ")
-            shout_string.append(wan)
-        mes = "".join(shout_string)
-        steelsquid_utils.shout(mes, to_lcd=False)
-        if steelsquid_utils.is_raspberry_pi():
-            try:
-                shout_string = []
-                if access_point != "---":
-                    shout_string.append("WIFI\n")
-                    shout_string.append(access_point)
-                    shout_string.append("\n")
-                    shout_string.append(wifi)
-                    if wan != "---":
-                        shout_string.append("\nWAN IP\n")
-                        shout_string.append(wan)
-                else:
-                    shout_string.append("WIRED\n")
-                    shout_string.append(wired)
-                    if wan != "---":
-                        shout_string.append("\nWAN IP\n")
-                        shout_string.append(wan)
-                mes = "".join(shout_string)
-                if steelsquid_utils.get_flag("nokia"):
-                    steelsquid_pi.nokia5110_write(mes)
-                elif steelsquid_utils.get_flag("hdd"):
-                    steelsquid_pi.hdd44780_write(mes)
-            except:
-                steelsquid_utils.shout()
-        do_mount()
-    else:
-        steelsquid_utils.shout("No network!", to_lcd=False)
-        if steelsquid_utils.is_raspberry_pi():
-            try:
-                if steelsquid_utils.get_flag("nokia"):
-                    steelsquid_pi.nokia5110_write("No network!")
-                elif steelsquid_utils.get_flag("hdd"):
-                    steelsquid_pi.hdd44780_write("No network!")
-            except:
-                steelsquid_utils.shout()
-        do_umount()
-
-
-
-def on_mount(args, para):
-    '''
-    On ssh, samba, usv or cd mount
-    '''
-    service = para[0]
-    remote = para[1]
-    local = para[2]
-    steelsquid_utils.shout("Mount %s %s on %s" %(service, remote, local), False)      
-    if steelsquid_utils.is_raspberry_pi():
-        if steelsquid_utils.get_flag("nokia"):
-            try:
-                steelsquid_pi.nokia5110_write("MOUNT\n%s\nTO\n%s" %(remote, local), steelsquid_utils.LCD_MESSAGE_TIME)
-            except:
-                steelsquid_utils.shout()
-        elif steelsquid_utils.get_flag("hdd"):
-            try:
-                steelsquid_pi.hdd44780_write("MOUNT\n%s" %(remote), steelsquid_utils.LCD_MESSAGE_TIME)
-            except:
-                steelsquid_utils.shout()
-
-
-def on_umount(args, para):
-    '''
-    On ssh, samba, usv or cd umount
-    '''
-    service = para[0]
-    remote = para[1]
-    local = para[2]
-    steelsquid_utils.shout("Umount %s %s from %s" %(service, remote, local), False)      
-    if steelsquid_utils.is_raspberry_pi():
-        if steelsquid_utils.get_flag("nokia"):
-            try:
-                steelsquid_pi.nokia5110_write("UMOUNT\n%s\nFROM\n%s" %(remote, local), steelsquid_utils.LCD_MESSAGE_TIME)
-            except:
-                steelsquid_utils.shout()
-        elif steelsquid_utils.get_flag("hdd"):
-            try:
-                steelsquid_pi.hdd44780_write("UMOUNT\n%s" %(remote), steelsquid_utils.LCD_MESSAGE_TIME)
-            except:
-                steelsquid_utils.shout()
-
 def on_shout(args, para):
     '''
     Shout message
@@ -281,39 +226,39 @@ def on_shout(args, para):
     steelsquid_utils.shout(" ".join(para))
 
 
-def on_button_up():
+def on_button_up(address, pin):
     steelsquid_event.broadcast_event("button", [steelsquid_piio.BUTTON_UP])
 
 
-def on_button_down():
+def on_button_down(address, pin):
     steelsquid_event.broadcast_event("button", [steelsquid_piio.BUTTON_DOWN])
 
 
-def on_button_left():
+def on_button_left(address, pin):
     steelsquid_event.broadcast_event("button", [steelsquid_piio.BUTTON_LEFT])
 
 
-def on_button_right():
+def on_button_right(address, pin):
     steelsquid_event.broadcast_event("button", [steelsquid_piio.BUTTON_RIGHT])
 
 
-def on_button_select():
+def on_button_select(address, pin):
     steelsquid_event.broadcast_event("button", [steelsquid_piio.BUTTON_SELECT])
 
 
-def on_dip_1(status):
+def on_dip_1(address, pin, status):
     steelsquid_event.broadcast_event("dip", [1, status])
 
 
-def on_dip_2(status):
+def on_dip_2(address, pin, status):
     steelsquid_event.broadcast_event("dip", [2, status])
 
 
-def on_dip_3(status):
+def on_dip_3(address, pin, status):
     steelsquid_event.broadcast_event("dip", [3, status])
 
 
-def on_dip_4(status):
+def on_dip_4(address, pin, status):
     steelsquid_event.broadcast_event("dip", [4, status])
 
 
@@ -346,6 +291,7 @@ def import_file_dyn(name):
         importlib.import_module('run.'+name)
     except:
         steelsquid_utils.shout("Fatal error when load custom module: " + 'run.'+name, is_error=True)
+
 
 def reload_file_dyn(name):
     try:
@@ -386,18 +332,12 @@ def main():
     '''
     The main function
     '''    
-    global running
     try:
         if len(sys.argv) < 2: 
             print_help()
         elif sys.argv[1] == "start":
-            steelsquid_utils.execute_system_command_blind(["steelsquid", "keyboard", steelsquid_utils.get_parameter("keyboard")])
+            steelsquid_utils.execute_system_command_blind(["steelsquid", "keyboard", steelsquid_utils.get_parameter("keyboard")], wait_for_finish=False)
             steelsquid_utils.shout("Steelsquid Kiss OS "+steelsquid_utils.steelsquid_kiss_os_version()[1], False)
-            if steelsquid_utils.is_raspberry_pi():
-                if steelsquid_utils.get_flag("nokia"):
-                    steelsquid_pi.nokia5110_write("\n   Steelsquid\n     KissOS\n      "+steelsquid_utils.steelsquid_kiss_os_version()[1], steelsquid_utils.LCD_MESSAGE_TIME)
-                elif steelsquid_utils.get_flag("hdd"):
-                    steelsquid_pi.hdd44780_write("Steelsquid\nKissOS "+steelsquid_utils.steelsquid_kiss_os_version()[1], steelsquid_utils.LCD_MESSAGE_TIME)
             if steelsquid_utils.get_flag("web"):
                 try:
                     steelsquid_utils.shout("Start steelsquid_kiss_http_expand", debug=True)
@@ -436,7 +376,6 @@ def main():
                 steelsquid_utils.execute_system_command_blind(['steelsquid', 'download-on'], wait_for_finish=False)
             steelsquid_utils.shout("Subscribe to events", debug=True)
             steelsquid_event.subscribe_to_event("shutdown", on_shutdown, ())
-            steelsquid_event.subscribe_to_event("daily", on_daily, ())
             steelsquid_event.subscribe_to_event("network", on_network, ())
             steelsquid_event.subscribe_to_event("vpn", on_vpn, ())
             steelsquid_event.subscribe_to_event("mount", on_mount, ())

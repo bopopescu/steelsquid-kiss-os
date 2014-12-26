@@ -4061,6 +4061,7 @@ systemctl mask remote-fs-pre.target
 systemctl mask remote-fs.target
 systemctl mask alsa-restore.service
 systemctl mask sysstat.service
+systemctl mask kbd.service
 log "Services disabled"
 
 

@@ -32,6 +32,7 @@ import datetime
 import traceback
 import smtplib
 import re
+from sets import Set
 
 
 lock = threading.Lock()
@@ -46,6 +47,8 @@ last_shout_message = None
 last_shout_time = -1
 in_dev = None
 VALID_CHARS = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','0','1','2','3','4','5','6','7','8','9','_','/','.','-']
+cache_flag = {}
+cache_para = {}
 
 
 def steelsquid_kiss_os_version():
@@ -317,7 +320,7 @@ def shout_time(message):
     shout(datetime.datetime.now().strftime("%H:%M:%S") + "\n" + message)
 
 
-def shout(string=None, to_lcd=True, debug=False, is_error=False, always_show=False):
+def shout(string=None, to_lcd=True, debug=False, is_error=False, always_show=False, leave_on_lcd = False):
     '''
     Send message to tty1, wall notify-send
     If a raspberry-pi try to write to LCD
@@ -325,6 +328,10 @@ def shout(string=None, to_lcd=True, debug=False, is_error=False, always_show=Fal
     @param to_lcd: If raspberry pitry to print to lcd
     @param debug: True = Only print if in development mode
     @param is_error: Is this a error message
+    @param always_show: Always show this message
+                        If false the sam message within 1 minut will not be shown
+    @param leave_on_lcd: Leave the message on the LCD
+                         If False the message will disepare after 10 seconds (last permanent message shows) 
     '''
     if debug==False or development():
         global last_shout_message
@@ -360,34 +367,32 @@ def shout(string=None, to_lcd=True, debug=False, is_error=False, always_show=Fal
                 import steelsquid_piio
                 if is_error:
                     try:
-                        steelsquid_piio.led_error_flash_timer(2)
-                        steelsquid_piio.sum_flash_timer(1)
+                        steelsquid_piio.led_error_flash(None)
+                        steelsquid_piio.sum_flash(None)
                     except:
                         pass
                 else:
                     try:
-                        steelsquid_piio.led_ok_timer(1)
+                        steelsquid_piio.led_ok_flash(None)
                     except:
                         pass
             if to_lcd and is_raspberry_pi():
+                if leave_on_lcd:
+                    mestime = 0
+                else:
+                    mestime = LCD_MESSAGE_TIME
                 if get_flag("hdd"):
                     try:
-                        steelsquid_pi.hdd44780_write(string, LCD_MESSAGE_TIME, force_setup = False)
+                        steelsquid_pi.hdd44780_write(string, mestime, force_setup = False)
                     except:
                         pass
                 elif get_flag("nokia"):
                     try:
-                        steelsquid_pi.nokia5110_write(string, LCD_MESSAGE_TIME, force_setup = False)
+                        steelsquid_pi.nokia5110_write(string, mestime, force_setup = False)
                     except:
                         pass
                 elif get_flag("auto"):
-                    try:
-                        steelsquid_pi.nokia5110_write(string, LCD_MESSAGE_TIME, force_setup = False)
-                    except:
-                        try:
-                            steelsquid_pi.hdd44780_write(string, LCD_MESSAGE_TIME, force_setup = False)
-                        except:
-                            pass
+                    steelsquid_pi.lcd_auto_write(string, mestime, force_setup = False)
 
 
 def notify(string):
@@ -1141,6 +1146,7 @@ def set_flag(flag):
     Save flag to disk
     This value is stored on disk so it's persist between reboots
     '''
+    cache_flag[flag] = True
     write_to_file(STEELSQUID_FOLDER+"/flags/" + flag, "")
     
 
@@ -1150,7 +1156,13 @@ def get_flag(flag):
     This value is stored on disk so it's persist between reboots
     @return: True/False
     '''
-    return os.path.isfile(STEELSQUID_FOLDER+"/flags/" + flag)
+    is_set = cache_flag.get(flag, None)
+    if is_set == None:
+        is_set = os.path.isfile(STEELSQUID_FOLDER+"/flags/" + flag)
+        cache_flag[flag] = is_set
+        return is_set
+    else:
+        return is_set
     
 
 def del_flag(flag):
@@ -1158,6 +1170,7 @@ def del_flag(flag):
     Remove flag from disk
     This value is stored on disk so it's persist between reboots
     '''
+    cache_flag[flag] = False
     try:
         os.remove(STEELSQUID_FOLDER+"/flags/" + flag)
     except:
@@ -1169,6 +1182,7 @@ def set_parameter(name, value):
     Save parameter to disk
     This value is stored on disk so it's persist between reboots
     '''
+    cache_para[name] = value
     write_to_file(STEELSQUID_FOLDER+"/parameters/" + name, value)
     
 
@@ -1178,11 +1192,15 @@ def get_parameter(name, default_value=""):
     This value is stored on disk so it's persist between reboots
     @return: parameter
     '''
-    val = read_from_file(STEELSQUID_FOLDER+"/parameters/" + name).replace('\n', '').replace('\r', '')
-    if val == "":
-        return default_value
-    else:
+    is_set = cache_para.get(name, None)
+    if is_set == None:
+        val = read_from_file(STEELSQUID_FOLDER+"/parameters/" + name).replace('\n', '').replace('\r', '')
+        if val == "" and default_value != None:
+            val = default_value
+        cache_para[name] = val
         return val
+    else:
+        return is_set
 
 
 def has_parameter(name):
@@ -1191,14 +1209,26 @@ def has_parameter(name):
     This value is stored on disk so it's persist between reboots
     @return: True/False
     '''
-    return os.path.isfile(STEELSQUID_FOLDER+"/parameters/" + name)
-    
+    is_set = cache_para.get(name, None)
+    if is_set == None:
+        val = read_from_file(STEELSQUID_FOLDER+"/parameters/" + name).replace('\n', '').replace('\r', '')
+        cache_para[name] = val
+        if val == "":
+            return False
+        else:
+            return True
+    elif is_set == "":
+        return False
+    else:
+        return True
+
 
 def del_parameter(name):
     '''
     Remove parameter from disk
     This value is stored on disk so it's persist between reboots
     '''
+    cache_para[name] = ""
     try:
         os.remove(STEELSQUID_FOLDER+"/parameters/" + name)
     except:
