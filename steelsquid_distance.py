@@ -21,7 +21,8 @@ if len(sys.argv)==1:
     from steelsquid_utils import printb
     print("")
     printb("pi-distance <GPIO for Trig> <GPIO for Echo>")
-    print("Measure_distance with a with HC-SR04")
+    print("Measure_distance with a HC-SR04")
+    print("http://www.micropik.com/PDF/HCSR04.pdf")
     print("")
 else:
 	try:

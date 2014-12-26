@@ -3,6 +3,10 @@
 
 '''
 Write analog out from MCP4728 (0 to 5v)
+http://www.proto-advantage.com/store/p/MCP4728_Breakout_Board.php
+
+NOTE! When you execute this from the command line it execute outside of steelsquid daemon, and may interrupt for example the LCD, DAC, ADC or extra GPIO.
+It is meant to be used inside the steelsquid daemon (see http://www.steelsquid.org/steelsquid-kiss-os-development)
 
 @organization: Steelsquid
 @author: Andreas Nilsson
@@ -22,7 +26,10 @@ if len(sys.argv)==1:
     print("Write analog out from MCP4728 (0 to 5v)")
     print("address= 61")
     print("volt0 to 3 = Voltage on pins (0 and 4095)")
+    print("")
+    print("http://www.proto-advantage.com/store/p/MCP4728_Breakout_Board.php")
     print("NOTE! When you execute this from the command line it execute outside of steelsquid daemon, and may interrupt for example the LCD, DAC, ADC or extra GPIO.")
+    print("It is meant to be used inside the steelsquid daemon (see http://www.steelsquid.org/steelsquid-kiss-os-development)")
     print("")
 else:
     try:

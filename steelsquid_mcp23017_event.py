@@ -4,6 +4,10 @@
 '''
 Contoll gpio on a  MCP230xx
 Listen for button click
+http://www.raspberrypi-spy.co.uk/2013/07/how-to-use-a-mcp23017-i2c-port-expander-with-the-raspberry-pi-part-1/
+
+NOTE! When you execute this from the command line it execute outside of steelsquid daemon, and may interrupt for example the LCD, DAC, ADC or extra GPIO.
+It is meant to be used inside the steelsquid daemon (see http://www.steelsquid.org/steelsquid-kiss-os-development)
 
 @organization: Steelsquid
 @author: Andreas Nilsson
@@ -26,7 +30,10 @@ if len(sys.argv)==1:
     printb("mcp23017-event <address> <gpio number>")
     print("Listen for click event on gpio pin on MCP230xx")
     print("Address: 20, 21, 22, 23, 24, 25, 26, 27")
+    print("")
+    print("http://www.raspberrypi-spy.co.uk/2013/07/how-to-use-a-mcp23017-i2c-port-expander-with-the-raspberry-pi-part-1/")
     print("NOTE! When you execute this from the command line it execute outside of steelsquid daemon, and may interrupt for example the LCD, DAC, ADC or extra GPIO.")
+    print("It is meant to be used inside the steelsquid daemon (see http://www.steelsquid.org/steelsquid-kiss-os-development)")
     print("")
 else:
     try:

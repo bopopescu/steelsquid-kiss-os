@@ -44,6 +44,8 @@ sed -i '/^assert sys.version_info.major/d' /usr/lib/python3/dist-packages/quick2
 5. If you use python2 add the following to /etc/profile.d/pythonpath.sh
 export PYTHONPATH=/usr/lib/python3/dist-packages
 
+NOTE! When you execute this from the command line it execute outside of steelsquid daemon, and may interrupt for example the LCD, DAC, ADC or extra GPIO.
+It is meant to be used inside the steelsquid daemon (see http://www.steelsquid.org/steelsquid-kiss-os-development)
  
 @organization: Steelsquid
 @author: Andreas Nilsson
@@ -217,8 +219,6 @@ def trex_status():
 
 def help():
     print("")
-    print("NOTE! When you execute this from the command line it execute outside of steelsquid daemon, and may interrupt for example the LCD, DAC, ADC or extra GPIO.")
-    print("")
     printb("trex status")
     print("Battery voltage")
     print("Motor current")
@@ -232,6 +232,10 @@ def help():
     printb("trex servo <servo_number> <position>")
     print("Servo number: 1 to 6")
     print("Position: Typically the servo position should be a value between 1000 and 2000 although it will vary depending on the servos used")
+    print("")
+    print("http://www.dagurobot.com/goods.php?id=135")
+    print("NOTE! When you execute this from the command line it execute outside of steelsquid daemon, and may interrupt for example the LCD, DAC, ADC or extra GPIO.")
+    print("It is meant to be used inside the steelsquid daemon (see http://www.steelsquid.org/steelsquid-kiss-os-development)")
     print("")
 
     

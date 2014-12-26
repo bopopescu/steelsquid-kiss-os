@@ -67,13 +67,13 @@ def print_help():
     from steelsquid_utils import printb
     print("")
     printb("DESCRIPTION")
-    print("On start, stop")
+    print("Start and stop the Steelsquid daemon")
     print("")
     printb("steelsquid-boot start")
-    print("On system start")
+    print("Start the deamon")
     print("")
     printb("steelsquid-boot stop")
-    print("On system shutdown")
+    print("Stop the daemon")
     print("\n")
     
 
