@@ -4085,6 +4085,7 @@ echo "Description=Steelsquid" >> /etc/systemd/system/steelsquid.service
 echo "" >> /etc/systemd/system/steelsquid.service
 echo "[Service]" >> /etc/systemd/system/steelsquid.service
 echo "ExecStart=/usr/bin/steelsquid-boot start" >> /etc/systemd/system/steelsquid.service
+echo "ExecStop=/usr/bin/shout \"Steelsquid daemon exit.\nIf you restarted the service this is OK.\nIf this is a error it is probably in steelsquid-boot.sh\nYou can enable logging for more info: steelsquid log-on\"" >> /etc/systemd/system/steelsquid.service
 echo "" >> /etc/systemd/system/steelsquid.service
 echo "[Install]" >> /etc/systemd/system/steelsquid.service
 echo "WantedBy=multi-user.target" >> /etc/systemd/system/steelsquid.service
