@@ -1184,11 +1184,9 @@ function help_utils()
     echo 
     echb "steelsquid stream-on"
     echo "Enable http streaming of camera."
-    echo "Will take effect on next reboot...."
     echo 
     echb "steelsquid stream-off"
     echo "Disable streaming of camera."
-    echo "Will take effect on next reboot...."
     if [ $(is-raspberry-pi) == "true" ]; then
         echo 
         echb "steelsquid piio"
@@ -1205,11 +1203,9 @@ function help_utils()
         echo 
         echb "steelsquid rover-on"
         echo "Enable rover functionality."
-        echo "Will take effect on next reboot...."
         echo 
         echb "steelsquid rover-off"
         echo "Disable rover functionality."
-        echo "Will take effect on next reboot...."
     fi
 }
 if [ "$in_parameter_1" == "help-utils" ]; then
@@ -1639,7 +1635,8 @@ function stream_info()
     if [ $(get-flag "stream") == "true" ]; then
         echo
         echo "USB camera streaming: Enabled"
-        echo "http://xxx.xxx.xxx.xxx:8080/?action=stream        "
+        echo "WEB: http://xxx.xxx.xxx.xxx/utils"
+        echo "The Stream: http://xxx.xxx.xxx.xxx:8080/?action=stream"
         echo
     else
         echo
@@ -1660,28 +1657,16 @@ function stream_on()
 {
 	log "Enable streaming of USB camera"
     set-flag "stream"
-    sudo ln -s /usr/include/linux/videodev2.h /usr/include/linux/videodev.h
-    cd /opt
-    svn co https://svn.code.sf.net/p/mjpg-streamer/code mjpg-streamer
-    cd mjpg-streamer/mjpg-streamer
-    make
+
     rm -r /opt/mjpg-streamer/mjpg-streamer/www
-    echo "#"\!"/bin/bash" > /opt/mjpg-streamer/mjpg-streamer/startit
-    echo "cd /opt/mjpg-streamer/mjpg-streamer" >> /opt/mjpg-streamer/mjpg-streamer/startit
-    echo "export LD_LIBRARY_PATH=." >> /opt/mjpg-streamer/mjpg-streamer/startit    
-    echo "while [ -f \"/opt/steelsquid/flags/stream\" ]" >> /opt/mjpg-streamer/mjpg-streamer/startit
-    echo "do" >> /opt/mjpg-streamer/mjpg-streamer/startit
-    echo "killall /opt/mjpg-streamer/mjpg-streamer/mjpg_streamer" >> /opt/mjpg-streamer/mjpg-streamer/startit
-    echo "/opt/mjpg-streamer/mjpg-streamer/mjpg_streamer -i \"./input_uvc.so -f 15 -r 640x480 --led off\" -o \"./output_http.so -w ./www\"" >> /opt/mjpg-streamer/mjpg-streamer/startit
-    echo "sleep 1" >> /opt/mjpg-streamer/mjpg-streamer/startit
-    echo "done" >> /opt/mjpg-streamer/mjpg-streamer/startit
-    chmod +x /opt/mjpg-streamer/mjpg-streamer/startit
-    
     echo "[Unit]" > /usr/local/lib/systemd/system/mjpgstreamer.service
     echo "Description=Mjpg" >> /usr/local/lib/systemd/system/mjpgstreamer.service
     echo "" >> /usr/local/lib/systemd/system/mjpgstreamer.service
     echo "[Service]" >> /usr/local/lib/systemd/system/mjpgstreamer.service
-    echo "ExecStart=/opt/mjpg-streamer/mjpg-streamer/startit" >> /usr/local/lib/systemd/system/mjpgstreamer.service
+    echo "Environment=\"LD_LIBRARY_PATH=/opt/mjpg-streamer/mjpg-streamer\"" >> /usr/local/lib/systemd/system/mjpgstreamer.service
+    echo "ExecStart=/opt/mjpg-streamer/mjpg-streamer/mjpg_streamer -i \"input_uvc.so -f 15 -r 640x480 --led off\" -o \"output_http.so -w www\"" >> /usr/local/lib/systemd/system/mjpgstreamer.service
+    echo "Restart=always" >> /usr/local/lib/systemd/system/mjpgstreamer.service
+    echo "RestartSec=5" >> /usr/local/lib/systemd/system/mjpgstreamer.service
     echo "KillMode=process" >> /usr/local/lib/systemd/system/mjpgstreamer.service
     echo "" >> /usr/local/lib/systemd/system/mjpgstreamer.service
     echo "[Install]" >> /usr/local/lib/systemd/system/mjpgstreamer.service
@@ -1689,7 +1674,8 @@ function stream_on()
     systemctl --system daemon-reload
     systemctl enable mjpgstreamer
     systemctl start mjpgstreamer
-	log-reboot    
+	systemctl restart steelsquid
+	log-ok    
 }
 if [ "$in_parameter_1" == "stream-on" ]; then
 	stream_on
@@ -1706,7 +1692,8 @@ function stream_off()
     del-flag "stream"
     systemctl stop mjpgstreamer
     systemctl disable mjpgstreamer
-	log-reboot
+	systemctl restart steelsquid
+	log-ok
 }
 if [ "$in_parameter_1" == "stream-off" ]; then
 	stream_off
@@ -1797,7 +1784,7 @@ function rover_on()
     set-flag "rover"
     stream_on
     connection_on
-    set-flag "nokia"
+    enable_lcd_nokia
 	systemctl restart steelsquid
     log-ok
 }
@@ -1851,7 +1838,7 @@ function io_on()
 {
 	log "Enable Steelsquid PIIO Board"
     set-flag "piio"
-    set-flag "nokia"
+    enable_lcd_nokia
 	systemctl restart steelsquid
     log-ok
 }
@@ -3733,6 +3720,17 @@ echo "sudo steelsquid-event umount usb \"\$LDM_NODE\" \"\$LDM_MOUNTPOINT\"" >> /
 echo "fi" >> /usr/bin/ldm-shout
 chmod +x /usr/bin/ldm-shout
 
+
+
+##################################################################################
+# USB sreaming
+##################################################################################
+log "Download and install usb streaming"
+sudo ln -s /usr/include/linux/videodev2.h /usr/include/linux/videodev.h
+cd /opt
+svn co https://svn.code.sf.net/p/mjpg-streamer/code mjpg-streamer
+cd mjpg-streamer/mjpg-streamer
+make
 
 
 ##################################################################################

@@ -927,7 +927,14 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         '''
         Get the use of lcd to display ip
         '''
-        return steelsquid_utils.get_flag("lcd")
+        if steelsquid_utils.get_flag("nokia"):
+            return "nokia"
+        if steelsquid_utils.get_flag("hdd"):
+            return "hdd"
+        if steelsquid_utils.get_flag("auto"):
+            return "auto"
+        else:
+            return "False"
 
     def lcd_disable(self, session_id, parameters):
         '''
@@ -937,11 +944,27 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         proc.wait()
         return self.lcd(session_id, parameters)
 
-    def lcd_enable(self, session_id, parameters):
+    def lcd_auto(self, session_id, parameters):
         '''
         Get and set the use of lcd to display ip
         '''
-        proc=Popen(['steelsquid', 'lcd-on'], stdout = PIPE, stderr = STDOUT)  
+        proc=Popen(['steelsquid', 'lcd-auto'], stdout = PIPE, stderr = STDOUT)  
+        proc.wait()
+        return self.lcd(session_id, parameters)
+
+    def lcd_hdd(self, session_id, parameters):
+        '''
+        Get and set the use of lcd to display ip
+        '''
+        proc=Popen(['steelsquid', 'lcd-hdd'], stdout = PIPE, stderr = STDOUT)  
+        proc.wait()
+        return self.lcd(session_id, parameters)
+
+    def lcd_nokia(self, session_id, parameters):
+        '''
+        Get and set the use of lcd to display ip
+        '''
+        proc=Popen(['steelsquid', 'lcd-nokia'], stdout = PIPE, stderr = STDOUT)  
         proc.wait()
         return self.lcd(session_id, parameters)
 

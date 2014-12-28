@@ -228,27 +228,25 @@
             </table>
             <div id="stream_disabled" class="hide">
                 The USB web camera streaming is not enabled on this system.<br/>
-                Enabling streaming can take several minutes.<br/>
+                Enable streaming may take a minute to perform and you need to reload this page afterwards (you may get connection error).<br/>
                 <br/>
-                You need to <span class="highlight">reboot</span> the device for any changes to take effect.
                 <table>
                     <tr>
                         <td><button onclick="javascript:submitSyncConfirm('Are you sure you want to disable the streaming?', 'stream', 'True');">Enable Streaming</button></td>
-                        <td><button onclick="javascript:submitSyncConfirm('Are you sure you want to reboot?', 'reboot');">Reboot</button></td>
                     </tr>
                 </table>
             </div>
             <div id="stream_enabled" class="hide">
                 The USB web camera streaming is enabled on this system.<br/>
                 Below you should see the video from the USB camera.<br/>
+                If not, is it probably because your camera is not supported.<br>
                 <br/>
                 <img id="stream_img" src="" class="xform"/>
-                <br/><br>
-                You need to <span class="highlight">reboot</span> the device for any changes to take effect.
+                <br/><br/>
+                Disable streaming may take a minute to perform and you need to reload this page afterwards (you may get connection error).<br/>
                 <table>
                     <tr>
                         <td><button onclick="javascript:submitSyncConfirm('Are you sure you want to disable the streaming?', 'stream', 'False');">Disable Streaming</button></td>
-                        <td><button onclick="javascript:submitSyncConfirm('Are you sure you want to reboot?', 'reboot');">Reboot</button></td>
                     </tr>
                 </table>
             </div>
@@ -278,13 +276,11 @@
             </table>
             <div id="rover_disabled" class="hide">
                 The Rover Controller is not enabled on this system.<br/>
+                Enable Rover Controller may take a minute to perform and you need to reload this page afterwards (you may get connection error).<br/>
                 <br/>
-                <br/>
-                You need to <span class="highlight">reboot</span> the device for any changes to take effect.
                 <table>
                     <tr>
                         <td><button onclick="javascript:submitSyncFromPrompt('rover_enable', 'Please enter password for the user root?', '');">Enable Rover Controller</button></td>
-                        <td><button onclick="javascript:submitSyncConfirm('Are you sure you want to reboot?', 'reboot');">Reboot</button></td>
                     </tr>
                 </table>
             </div>
@@ -307,7 +303,7 @@
                 </table>
                 <br/>
                 <img id="rover_img" src="" class="xform"/>
-                <br/>
+                <br/><br/>
                 <table>
                     <tr>
                         <td></td>
@@ -326,12 +322,10 @@
                     </tr>
                 </table>
                 <br/>
-                <br/>
-                You need to <span class="highlight">reboot</span> the device for any changes to take effect.
+                Disable Rover Controller may take a minute to perform and you need to reload this page afterwards (you may get connection error).<br/>
                 <table>
                     <tr>
                         <td><button onclick="javascript:submitSyncFromPrompt('rover_disable', 'Please enter password for the user root?', '');">Disable Rover Controller</button></td>
-                        <td><button onclick="javascript:submitSyncConfirm('Are you sure you want to reboot?', 'reboot');">Reboot</button></td>
                     </tr>
                 </table>
             </div>

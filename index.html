@@ -823,14 +823,32 @@
              */
             function on_lcd(paramaters){
                 if(paramaters[0] == "False"){
-                    enable("lcd_button_enable")
+                    enable("lcd_button_auto")
+                    enable("lcd_button_hdd")
+                    enable("lcd_button_nokia")
                     disable("lcd_button_disable")
                     status_ok("lcd_status", "LCD disabled");
                 }
-                else if(paramaters[0] == "True"){
-                    disable("lcd_button_enable")
+                else if(paramaters[0] == "hdd"){
+                    enable("lcd_button_auto")
+                    disable("lcd_button_hdd")
+                    enable("lcd_button_nokia")
                     enable("lcd_button_disable")
-                    status_ok("lcd_status", "LCD enabled");
+                    status_ok("lcd_status", "LCD HDD44780");
+                }
+                else if(paramaters[0] == "nokia"){
+                    enable("lcd_button_auto")
+                    enable("lcd_button_hdd")
+                    disable("lcd_button_nokia")
+                    enable("lcd_button_disable")
+                    status_ok("lcd_status", "LCD nokia5110");
+                }
+                else if(paramaters[0] == "auto"){
+                    disable("lcd_button_auto")
+                    enable("lcd_button_hdd")
+                    enable("lcd_button_nokia")
+                    enable("lcd_button_disable")
+                    status_ok("lcd_status", "LCD automatic");
                 }
             }
             
@@ -844,7 +862,21 @@
             /**
              * On lcd
              */
-            function on_lcd_enable(paramaters){
+            function on_lcd_hdd(paramaters){
+                on_lcd(paramaters);
+            }
+
+            /**
+             * On lcd
+             */
+            function on_lcd_nokia(paramaters){
+                on_lcd(paramaters);
+            }
+
+            /**
+             * On lcd
+             */
+            function on_lcd_auto(paramaters){
                 on_lcd(paramaters);
             }
             
@@ -2257,7 +2289,7 @@
                     <tbody>
                         <tr>
                             <td colspan="2">
-                                Fill this out if you want an email from the system on certain events (Too many failed login attempts).<br />
+                                Fill this out if you want an email from the system on certain events.<br />
                                 <br/>
                                 Contact your ISP for this information.<br/>
                                 It is also possible to use a gmail account.<br/>
@@ -2886,7 +2918,6 @@
                             <td colspan="2">
                                 Here you can enable or disable streaming of a usb camera. <br />
                                 This do not work with the Raspberry Pi camera.</br>
-                                Enable this may taka several minutes.</br>
                                 The stream can be reached from http://[ipToRaspberry]:8080/?action=stream</br>
                                 e.g. &lt;img src="http://[ipToRaspberry]:8080/?action=stream"/&gt;</br>
                                 You can see the result under 'Utils'.</br>
@@ -3066,8 +3097,12 @@
                     <tbody>
                         <tr>
                             <td>
-                                You can print text on a <span class="highlight">HDD44780</span> compatible LCD (see <a href="http://www.steelsquid.org/pi-io-example">http://www.steelsquid.org/pi-io-example</a>)<br />
-                                Use via <span class="highlight">I2C</span>.<br/>
+                                You can print text on a <a href="http://tronixlabs.com/news/tutorial-serial-i2c-backpack-for-hd44780compatible-lcd-modules-with-arduino/">HDD44780</a> compatible LCD via <span class="highlight">I2C</span>.<br/>
+                                You can also connect a <a href="https://www.sparkfun.com/products/10168">nokia5110</a> LCD.<br>
+                                Automatic will try both nokia5110 and HDD44780.<br>
+                                See <a href="http://www.steelsquid.org/pi-io-example">http://www.steelsquid.org/pi-io-example</a><br>
+                                The IP of the device will also be displayed on the LCD<br>
+                                <br>
                                 If you change this you will get "Connection error" while service restart...
                             </td>
                         </tr>
@@ -3086,10 +3121,16 @@
                 <table>
                     <tr>
                         <td>
-                            <button id="lcd_button_enable"  onclick="javascript:submitSync('lcd_enable');">Enable</button>
+                            <button id="lcd_button_disable"  onclick="javascript:submitSync('lcd_disable');">Disable</button>
                         </td>
                         <td>
-                            <button id="lcd_button_disable"  onclick="javascript:submitSync('lcd_disable');">Disable</button>
+                            <button id="lcd_button_auto"  onclick="javascript:submitSync('lcd_auto');">Automatic</button>
+                        </td>
+                        <td>
+                            <button id="lcd_button_hdd"  onclick="javascript:submitSync('lcd_hdd');">HDD44780</button>
+                        </td>
+                        <td>
+                            <button id="lcd_button_nokia"  onclick="javascript:submitSync('lcd_nokia');">nokia5110</button>
                         </td>
                     </tr>
                 </table>
