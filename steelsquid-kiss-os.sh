@@ -2010,6 +2010,7 @@ function download_on()
     fi
 	set-flag "download"
     download_start
+    systemctl restart steelsquid
 }
 if [ "$in_parameter_1" == "download-on" ]; then
 	download_on
@@ -2026,6 +2027,7 @@ function download_off()
 	log "Disable download server"
     killall aria2c > /dev/null 2>&1
 	del-flag "download"
+    systemctl restart steelsquid
     log-ok
 }
 if [ "$in_parameter_1" == "download-off" ]; then
@@ -3043,6 +3045,7 @@ function overclock()
     echo "over_voltage_sdram=6" >> /boot/config.txt
     echo "force_turbo=1" >> /boot/config.txt
     echo "initial_turbo=30" >> /boot/config.txt
+    systemctl restart steelsquid
 	log "Overclocking enabled (Changes will be implemented at the next reboot)"
 }
 if [ "$in_parameter_1" == "overclock" ]; then
@@ -3071,6 +3074,7 @@ function defaultclock()
     sed -i '/^over_voltage_sdram/ d' /boot/config.txt
     sed -i '/^force_turbo/ d' /boot/config.txt
     echo "force_turbo=1" >> /boot/config.txt
+    systemctl restart steelsquid
 	log "Normal clocking (Changes will be implemented at the next reboot)"
 }
 if [ "$in_parameter_1" == "defaultclock" ]; then
@@ -3106,6 +3110,7 @@ function underclock()
     echo "sdram_freq_min=140" >> /boot/config.txt
     echo "gpu_freq_min=10" >> /boot/config.txt
     echo "force_turbo=0" >> /boot/config.txt
+    systemctl restart steelsquid
 	log "Underclocking enabled (Changes will be implemented at the next reboot)"
 }
 if [ "$in_parameter_1" == "underclock" ]; then

@@ -723,9 +723,11 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
             if parameters[0] == "True":
                 proc=Popen(['steelsquid', 'ssh-off'], stdout = PIPE, stderr = STDOUT)  
                 proc.wait()
+                steelsquid_utils.del_flag("ssh")
             else:
                 proc=Popen(['steelsquid', 'ssh-on'], stdout = PIPE, stderr = STDOUT)  
                 proc.wait()
+                steelsquid_utils.set_flag("ssh")
         return not steelsquid_utils.get_flag("ssh")
 
     def web_interface_disable(self, session_id, parameters):
@@ -870,9 +872,11 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
             if parameters[0] == "True":
                 proc=Popen(['steelsquid', 'display-off'], stdout = PIPE, stderr = STDOUT)  
                 proc.wait()
+                steelsquid_utils.set_flag("disable_monitor")
             else:
                 proc=Popen(['steelsquid', 'display-on'], stdout = PIPE, stderr = STDOUT)  
                 proc.wait()
+                steelsquid_utils.del_flag("disable_monitor")
         return steelsquid_utils.get_flag("disable_monitor")
 
     def camera(self, session_id, parameters):
@@ -883,9 +887,11 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
             if parameters[0] == "True":
                 proc=Popen(['steelsquid', 'camera-on'], stdout = PIPE, stderr = STDOUT)  
                 proc.wait()
+                steelsquid_utils.set_flag("camera")
             else:
                 proc=Popen(['steelsquid', 'camera-off'], stdout = PIPE, stderr = STDOUT)  
                 proc.wait()
+                steelsquid_utils.del_flag("camera")
         return steelsquid_utils.get_flag("camera")
 
     def stream(self, session_id, parameters):
@@ -896,9 +902,11 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
             if parameters[0] == "True":
                 proc=Popen(['steelsquid', 'stream-on'], stdout = PIPE, stderr = STDOUT)  
                 proc.wait()
+                steelsquid_utils.set_flag("stream")
             else:
                 proc=Popen(['steelsquid', 'stream-off'], stdout = PIPE, stderr = STDOUT)  
                 proc.wait()
+                steelsquid_utils.del_flag("stream")
         return steelsquid_utils.get_flag("stream")
 
 
@@ -1050,6 +1058,7 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
             raise Exception("Incorrect password for user root!")
         else:
             steelsquid_utils.execute_system_command(['steelsquid', 'download-on']) 
+            steelsquid_utils.set_flag("download")
         return steelsquid_utils.get_flag("download")
 
 
@@ -1061,7 +1070,8 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
             raise Exception("Incorrect password for user root!")
         else:
             steelsquid_utils.execute_system_command(['steelsquid', 'download-off']) 
-        return steelsquid_utils.get_flag("dovnload")
+            steelsquid_utils.del_flag("download")
+        return steelsquid_utils.get_flag("download")
 
     def download_activate(self, session_id, parameters):
         '''
