@@ -98,7 +98,6 @@ lock_ads1015_4A = threading.Lock()
 lock_ads1015_4B = threading.Lock()
 lock_mcp4725 = threading.Lock()
 lock_mcp4728 = threading.Lock()
-lock_worker = threading.Lock()
 DC = 9
 RST = 7
 SPI_PORT = 0
@@ -108,11 +107,14 @@ font = ImageFont.truetype("/usr/share/fonts/truetype/anonymous-pro/Anonymous Pro
 image = Image.new('1', (LCD.LCDWIDTH, LCD.LCDHEIGHT))
 draw = ImageDraw.Draw(image)
 lcd_auto = 0
+worker_commands = {}
+worker_thread_started = False
 
 
 def worker_thread():
-    while True:
-        with lock_worker:
+    global worker_commands
+    try:
+        while True:
             for work_key in worker_commands.keys():
                 try:
                     work = worker_commands[work_key]
@@ -203,11 +205,11 @@ def worker_thread():
                 except:
                     worker_commands.pop(work_key, None)
                     steelsquid_utils.shout("Fatal error in steelsquid_pi worker thread: " +work_key, is_error=True)
-        time.sleep(0.3)
+            time.sleep(0.3)
+    except AttributeError:
+        pass
             
 
-worker_commands = {}
-worker_thread_started = False
 if worker_thread_started == False:
     worker_thread_started = True
     thread.start_new_thread(worker_thread, ())
@@ -218,8 +220,7 @@ def cleanup():
     Clean all event detection (click, blink...)
     '''
     gpio_cleanup()
-    with lock_worker:
-        worker_thread.clear()
+    worker_thread.clear()
     
 
 def gpio_event_remove(gpio):
