@@ -249,26 +249,26 @@
                         html.push("<tr><td>");
                         if(hasPass == "True"){
                             if (mounted == "True"){
-                                html.push("<button onClick=\"javascript:submitSync('sshfs_umount', '" + count + "')\">Unmount</button>");
+                                html.push("<button onclick=\"javascript:submitSync('sshfs_umount', '" + count + "')\">Unmount</button>");
                                 html.push("<br />");
-                                html.push("<button onClick=\"javascript:submitSyncConfirm('Are you sure you want to delete the mount point', 'sshfs_del', '" + count + "')\">Delete</button>");
+                                html.push("<button onclick=\"javascript:submitSyncConfirm('Are you sure you want to delete the mount point', 'sshfs_del', '" + count + "')\">Delete</button>");
                             }
                             else{
-                                html.push("<button onClick=\"javascript:submitSync('sshfs_mount', '" + count + "')\">Mount</button>");
+                                html.push("<button onclick=\"javascript:submitSync('sshfs_mount', '" + count + "')\">Mount</button>");
                                 html.push("<br />");
-                                html.push("<button onClick=\"javascript:submitSyncConfirm('Are you sure you want to delete the mount point', 'sshfs_del', '" + count + "')\">Delete</button>");
+                                html.push("<button onclick=\"javascript:submitSyncConfirm('Are you sure you want to delete the mount point', 'sshfs_del', '" + count + "')\">Delete</button>");
                             }
                         }
                         else{
                             if (mounted == "True"){
-                                html.push("<button onClick=\"javascript:submitSync('sshfs_umount', '" + count + "')\">Unmount</button>");
+                                html.push("<button onclick=\"javascript:submitSync('sshfs_umount', '" + count + "')\">Unmount</button>");
                                 html.push("<br />");
-                                html.push("<button onClick=\"javascript:submitSyncConfirm('Are you sure you want to delete the mount point', 'sshfs_del', '" + count + "')\">Delete</button>");
+                                html.push("<button onclick=\"javascript:submitSyncConfirm('Are you sure you want to delete the mount point', 'sshfs_del', '" + count + "')\">Delete</button>");
                             }
                             else{
-                                html.push("<button onClick=\"javascript:var pass=window.prompt('Please enter password', '');if(pass!=null){submitSync('sshfs_mount', '" + count + "', pass);}\">Mount</button>");
+                                html.push("<button onclick=\"javascript:var pass=window.prompt('Please enter password', '');if(pass!=null){submitSync('sshfs_mount', '" + count + "', pass);}\">Mount</button>");
                                 html.push("<br />");
-                                html.push("<button onClick=\"javascript:submitSyncConfirm('Are you sure you want to delete the mount point', 'sshfs_del', '" + count + "')\">Delete</button>");
+                                html.push("<button onclick=\"javascript:submitSyncConfirm('Are you sure you want to delete the mount point', 'sshfs_del', '" + count + "')\">Delete</button>");
                             }
                         }
                         html.push("</td><td class='wrap'>");
@@ -372,14 +372,14 @@
                         var html = [];
                         html.push("<tr><td>");
                         if (mounted == "True"){
-                            html.push("<button onClick=\"javascript:submitSync('samba_umount', '" + count + "')\">Unmount</button>");
+                            html.push("<button onclick=\"javascript:submitSync('samba_umount', '" + count + "')\">Unmount</button>");
                             html.push("<br />");
-                            html.push("<button onClick=\"javascript:submitSyncConfirm('Are you sure you want to delete the mount point', 'samba_del', '" + count + "')\">Delete</button>");
+                            html.push("<button onclick=\"javascript:submitSyncConfirm('Are you sure you want to delete the mount point', 'samba_del', '" + count + "')\">Delete</button>");
                         }
                         else{
-                            html.push("<button onClick=\"javascript:submitSync('samba_mount', '" + count + "')\">Mount</button>");
+                            html.push("<button onclick=\"javascript:submitSync('samba_mount', '" + count + "')\">Mount</button>");
                             html.push("<br />");
-                            html.push("<button onClick=\"javascript:submitSyncConfirm('Are you sure you want to delete the mount point', 'samba_del', '" + count + "')\">Delete</button>");
+                            html.push("<button onclick=\"javascript:submitSyncConfirm('Are you sure you want to delete the mount point', 'samba_del', '" + count + "')\">Delete</button>");
                         }
                         html.push("</td><td class='wrap'>");
                         html.push(ip);
@@ -1531,17 +1531,15 @@
             </div>            
             <!--####################################################################################################-->
             <div class="layer" id="info">
-                <table class="header">
-                    <thead>
-                        <tr onclick="javascript:onBack();">
-                            <th>
-                                <img alt="logo" src="img/status.png"></img>
-                            </th>
-                            <th>
-                                Status (<span id="p_date">---</span>)
-                            </th>
-                        </tr>
-                    </thead>
+                <table class="sheader">
+                    <tr onclick="javascript:onBack();">
+                        <th>
+                            <img alt="logo" src="img/status.png"></img>
+                        </th>
+                        <th>
+                            Status (<span id="p_date">---</span>)
+                        </th>
+                    </tr>
                 </table>
                 <table>
                     <tr>
@@ -1724,15 +1722,13 @@
             </div>
             <!--####################################################################################################-->
             <div class="layer" id="wifi">
-                <table class="header">
-                    <thead>
-                        <tr onclick="javascript:onBack();">
-                            <th>
-                                <img alt="logo" src="img/network_wireless.png"></img>
-                            </th>
-                            <th>Wireless network</th>
-                        </tr>
-                    </thead>
+                <table class="sheader">
+                    <tr onclick="javascript:onBack();">
+                        <th>
+                            <img alt="logo" src="img/network_wireless.png"></img>
+                        </th>
+                        <th>Wireless network</th>
+                    </tr>
                 </table>
                 <table class="keyvalue">
                     <tr>
@@ -1874,6 +1870,7 @@
                                     <tr>
                                         <td colspan="2" style="padding-bottom:2px;margin-bottom:0px">
                                             <select id="sshfs_local_list">
+                                                <option value="dummy"></option>
                                             </select>
                                         </td>
                                     </tr>
@@ -2019,6 +2016,7 @@
                                     <tr>
                                         <td colspan="2" style="padding-bottom:2px;margin-bottom:0px">
                                             <select id="samba_local_list">
+                                                <option value="dummy"></option>
                                             </select>
                                         </td>
                                     </tr>
@@ -2185,15 +2183,13 @@
             </div>    
             <!--####################################################################################################-->
             <div class="layer" id="tz">
-                <table class="header">
-                    <thead>
-                        <tr onclick="javascript:onBack();">
-                            <th>
-                                <img alt="logo" src="img/time.png"></img>
-                            </th>
-                            <th>Date and Time</th>
-                        </tr>
-                    </thead>
+                <table class="sheader">
+                    <tr onclick="javascript:onBack();">
+                        <th>
+                            <img alt="logo" src="img/time.png"></img>
+                        </th>
+                        <th>Date and Time</th>
+                    </tr>
                 </table>
                 <table class="keyvalue">
                     <tbody>
@@ -2233,15 +2229,13 @@
             </div>
             <!--####################################################################################################-->
             <div class="layer" id="keyboard">
-                <table class="header">
-                    <thead>
-                        <tr onclick="javascript:onBack();">
-                            <th>
-                                <img alt="logo" src="img/keyboard.png"></img>
-                            </th>
-                            <th>Keyboard</th>
-                        </tr>
-                    </thead>
+                <table class="sheader">
+                    <tr onclick="javascript:onBack();">
+                        <th>
+                            <img alt="logo" src="img/keyboard.png"></img>
+                        </th>
+                        <th>Keyboard</th>
+                    </tr>
                 </table>
                 <table class="keyvalue">
                     <tbody>
@@ -2329,7 +2323,7 @@
                         </tr>
                         <tr>
                             <td>
-                                <input type="password" id="mail_password">
+                                <input type="password" id="mail_password"/>
                             </td>
                         </tr>
                         <tr>
@@ -2339,7 +2333,7 @@
                         </tr>
                         <tr>
                             <td>
-                                <input type="test" id="mail_mail">
+                                <input type="text" id="mail_mail"/>
                             </td>
                         </tr>
                     </tbody>
@@ -2347,10 +2341,10 @@
                 <table class="input">
                     <tr>
                         <td>
-                            <button onClick="javascript:submitSyncFromInput('mail_set', 'mail_host', 'mail_username', 'mail_password', 'mail_mail')">Save</button>
+                            <button onclick="javascript:submitSyncFromInput('mail_set', 'mail_host', 'mail_username', 'mail_password', 'mail_mail')">Save</button>
                         </td>
                         <td>
-                            <button onClick="javascript:submitSyncFromInput('mail_test', 'mail_host', 'mail_username', 'mail_password', 'mail_mail')">Test settings</button>
+                            <button onclick="javascript:submitSyncFromInput('mail_test', 'mail_host', 'mail_username', 'mail_password', 'mail_mail')">Test settings</button>
                         </td>
                     </tr>
                 </table>
@@ -2490,17 +2484,15 @@
             </div>
             <!--####################################################################################################-->
             <div class="layer" id="web_interface">
-                <table class="header">
-                    <thead>
-                        <tr onclick="javascript:onBack();">
-                            <th>
-                                <img alt="logo" src="img/html.png"></img>
-                            </th>
-                            <th>
-                                Administrator interface
-                            </th>
-                        </tr>
-                    </thead>
+                <table class="sheader">
+                    <tr onclick="javascript:onBack();">
+                        <th>
+                            <img alt="logo" src="img/html.png"></img>
+                        </th>
+                        <th>
+                            Administrator interface
+                        </th>
+                    </tr>
                 </table>
                 <table>
                     <tr>
@@ -2705,17 +2697,15 @@
             </div>
             <!--####################################################################################################-->
             <div class="layer" id="upgrade">
-                <table class="header">
-                    <thead>
-                        <tr onclick="javascript:onBack();">
-                            <th>
-                                <img alt="logo" src="img/upgrade.png"></img>
-                            </th>
-                            <th>
-                                Upgrade
-                            </th>
-                        </tr>
-                    </thead>
+                <table class="sheader">
+                    <tr onclick="javascript:onBack();">
+                        <th>
+                            <img alt="logo" src="img/upgrade.png"></img>
+                        </th>
+                        <th>
+                            Upgrade
+                        </th>
+                    </tr>
                 </table>
                 Choose the type of upgrade you want to perform.<br />
                 <ul>
@@ -2869,17 +2859,15 @@
             </div>
             <!--####################################################################################################-->
             <div class="layer" id="camera">
-                <table class="header">
-                    <thead>
-                        <tr onclick="javascript:onBack();">
-                            <th>
-                                <img alt="logo" src="img/camera.png"></img>
-                            </th>
-                            <th>
-                                Camera
-                            </th>
-                        </tr>
-                    </thead>
+                <table class="sheader">
+                    <tr onclick="javascript:onBack();">
+                        <th>
+                            <img alt="logo" src="img/camera.png"></img>
+                        </th>
+                        <th>
+                            Camera
+                        </th>
+                    </tr>
                 </table>
                 <table>
                     <tbody>
@@ -2910,17 +2898,16 @@
                         </td>
                     </tr>
                 </table>
-                </table>
                 <br /><br/>
                 <table>
                     <tbody>
                         <tr>
                             <td colspan="2">
                                 Here you can enable or disable streaming of a usb camera. <br />
-                                This do not work with the Raspberry Pi camera.</br>
-                                The stream can be reached from http://[ipToRaspberry]:8080/?action=stream</br>
-                                e.g. &lt;img src="http://[ipToRaspberry]:8080/?action=stream"/&gt;</br>
-                                You can see the result under 'Utils'.</br>
+                                This do not work with the Raspberry Pi camera.<br/>
+                                The stream can be reached from http://[ipToRaspberry]:8080/?action=stream<br/>
+                                e.g. &lt;img src="http://[ipToRaspberry]:8080/?action=stream"/&gt;<br/>
+                                You can see the result under 'Utils'.<br/>
                                 You need to <span class="highlight">reboot</span> the device for any changes to take effect.
                             </td>
                         </tr>
@@ -3081,28 +3068,26 @@
             </div>    
             <!--####################################################################################################-->
             <div class="layer" id="lcd">
-                <table class="header">
-                    <thead>
-                        <tr onclick="javascript:onBack();">
-                            <th>
-                                <img alt="logo" src="img/lcd.png"/>
-                            </th>
-                            <th >
-                                LCD
-                            </th>
-                        </tr>
-                    </thead>
+                <table class="sheader">
+                    <tr onclick="javascript:onBack();">
+                        <th>
+                            <img alt="logo" src="img/lcd.png"/>
+                        </th>
+                        <th >
+                            LCD
+                        </th>
+                    </tr>
                 </table>
                 <table>
                     <tbody>
                         <tr>
                             <td>
                                 You can print text on a <a href="http://tronixlabs.com/news/tutorial-serial-i2c-backpack-for-hd44780compatible-lcd-modules-with-arduino/">HDD44780</a> compatible LCD via <span class="highlight">I2C</span>.<br/>
-                                You can also connect a <a href="https://www.sparkfun.com/products/10168">nokia5110</a> LCD.<br>
-                                Automatic will try both nokia5110 and HDD44780.<br>
-                                See <a href="http://www.steelsquid.org/pi-io-example">http://www.steelsquid.org/pi-io-example</a><br>
-                                The IP of the device will also be displayed on the LCD<br>
-                                <br>
+                                You can also connect a <a href="https://www.sparkfun.com/products/10168">nokia5110</a> LCD.<br/>
+                                Automatic will try both nokia5110 and HDD44780.<br/>
+                                See <a href="http://www.steelsquid.org/pi-io-example">http://www.steelsquid.org/pi-io-example</a><br/>
+                                The IP of the device will also be displayed on the LCD<br/>
+                                <br/>
                                 If you change this you will get "Connection error" while service restart...
                             </td>
                         </tr>

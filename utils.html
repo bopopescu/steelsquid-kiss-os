@@ -213,133 +213,129 @@
                     </tbody>
                 </table>
             </div>
-        </div>
-        <!--####################################################################################################-->
-        <div class="layer" id="stream">
-            <table class="header">
-                <thead>
+            <!--####################################################################################################-->
+            <div class="layer" id="stream">
+                <table class="sheader">
                     <tr onclick="javascript:onBack();">
                         <th>
                             <img alt="logo" src="img/camera.png"></img>
                         </th>
                         <th>Camera streaming</th>
                     </tr>
-                </thead>
-            </table>
-            <div id="stream_disabled" class="hide">
-                The USB web camera streaming is not enabled on this system.<br/>
-                Enable streaming may take a minute to perform and you need to reload this page afterwards (you may get connection error).<br/>
-                <br/>
-                <table>
-                    <tr>
-                        <td><button onclick="javascript:submitSyncConfirm('Are you sure you want to disable the streaming?', 'stream', 'True');">Enable Streaming</button></td>
+                </table>
+                <div id="stream_disabled" class="hide">
+                    The USB web camera streaming is not enabled on this system.<br/>
+                    Enable streaming may take a minute to perform and you need to reload this page afterwards (you may get connection error).<br/>
+                    <br/>
+                    <table>
+                        <tr>
+                            <td><button onclick="javascript:submitSyncConfirm('Are you sure you want to disable the streaming?', 'stream', 'True');">Enable Streaming</button></td>
+                        </tr>
+                    </table>
+                </div>
+                <div id="stream_enabled" class="hide">
+                    The USB web camera streaming is enabled on this system.<br/>
+                    Below you should see the video from the USB camera.<br/>
+                    If not, is it probably because your camera is not supported.<br/>
+                    <br/>
+                    <img alt="The stream" id="stream_img" src="" class="xform"/>
+                    <br/><br/>
+                    Disable streaming may take a minute to perform and you need to reload this page afterwards (you may get connection error).<br/>
+                    <table>
+                        <tr>
+                            <td><button onclick="javascript:submitSyncConfirm('Are you sure you want to disable the streaming?', 'stream', 'False');">Disable Streaming</button></td>
+                        </tr>
+                    </table>
+                </div>
+                <br />
+                <table class="footer">
+                    <tr onclick="javascript:onBack();">
+                        <td>
+                            <img alt="logo" src="img/back.png"></img>
+                        </td>
+                        <td>
+                            Back to main menu
+                        </td>
                     </tr>
                 </table>
             </div>
-            <div id="stream_enabled" class="hide">
-                The USB web camera streaming is enabled on this system.<br/>
-                Below you should see the video from the USB camera.<br/>
-                If not, is it probably because your camera is not supported.<br>
-                <br/>
-                <img id="stream_img" src="" class="xform"/>
-                <br/><br/>
-                Disable streaming may take a minute to perform and you need to reload this page afterwards (you may get connection error).<br/>
-                <table>
-                    <tr>
-                        <td><button onclick="javascript:submitSyncConfirm('Are you sure you want to disable the streaming?', 'stream', 'False');">Disable Streaming</button></td>
-                    </tr>
-                </table>
-            </div>
-            <br />
-            <table class="footer">
-                <tr onclick="javascript:onBack();">
-                    <td>
-                        <img alt="logo" src="img/back.png"></img>
-                    </td>
-                    <td>
-                        Back to main menu
-                    </td>
-                </tr>
-            </table>
-        </div>
-        <!--####################################################################################################-->
-        <div class="layer" id="rover">
-            <table class="header">
-                <thead>
+            <!--####################################################################################################-->
+            <div class="layer" id="rover">
+                <table class="sheader">
                     <tr onclick="javascript:onBack();">
                         <th>
                             <img alt="logo" src="img/rover.png"></img>
                         </th>
                         <th>Rover Controller</th>
                     </tr>
-                </thead>
-            </table>
-            <div id="rover_disabled" class="hide">
-                The Rover Controller is not enabled on this system.<br/>
-                Enable Rover Controller may take a minute to perform and you need to reload this page afterwards (you may get connection error).<br/>
-                <br/>
-                <table>
-                    <tr>
-                        <td><button onclick="javascript:submitSyncFromPrompt('rover_enable', 'Please enter password for the user root?', '');">Enable Rover Controller</button></td>
+                </table>
+                <div id="rover_disabled" class="hide">
+                    The Rover Controller is not enabled on this system.<br/>
+                    Enable Rover Controller may take a minute to perform and you need to reload this page afterwards (you may get connection error).<br/>
+                    <br/>
+                    <table>
+                        <tr>
+                            <td><button onclick="javascript:submitSyncFromPrompt('rover_enable', 'Please enter password for the user root?', '');">Enable Rover Controller</button></td>
+                        </tr>
+                    </table>
+                </div>
+                <div id="rover_enabled" class="hide">
+                    The Rover Controller is enabled on this system.
+                    <br/><br/>
+                    <table class="keyvalue">
+                        <tr>
+                            <td>Connected to network:</td><td class="highlight" id="wifi_connected">---</td>
+                        </tr>
+                        <tr>
+                            <td>Network Wired IP:</td><td id="wifi_wired">---</td>
+                        </tr>
+                        <tr>
+                            <td>Network Wifi IP:</td><td id="wifi_wifi">---</td>
+                        </tr>
+                        <tr>
+                            <td>Internet IP:</td><td id="wifi_wan">---</td>
+                        </tr>
+                    </table>
+                    <br/>
+                    <img alt="The stream" id="rover_img" src="" class="xform"/>
+                    <br/><br/>
+                    <table>
+                        <tr>
+                            <td></td>
+                            <td><button onclick="javascript:submitAsync('rover_forward');">Forward</button></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td><button onclick="javascript:submitAsync('rover_left');">Left</button></td>
+                            <td><button onclick="javascript:submitAsync('rover_stop');">Stop</button></td>
+                            <td><button onclick="javascript:submitAsync('rover_right');">Right</button></td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td><button onclick="javascript:submitAsync('rover_backward');">Backward</button></td>
+                            <td></td>
+                        </tr>
+                    </table>
+                    <br/>
+                    Disable Rover Controller may take a minute to perform and you need to reload this page afterwards (you may get connection error).<br/>
+                    <table>
+                        <tr>
+                            <td><button onclick="javascript:submitSyncFromPrompt('rover_disable', 'Please enter password for the user root?', '');">Disable Rover Controller</button></td>
+                        </tr>
+                    </table>
+                </div>
+                <br />
+                <table class="footer">
+                    <tr onclick="javascript:onBack();">
+                        <td>
+                            <img alt="logo" src="img/back.png"></img>
+                        </td>
+                        <td>
+                            Back to main menu
+                        </td>
                     </tr>
                 </table>
             </div>
-            <div id="rover_enabled" class="hide">
-                The Rover Controller is enabled on this system.
-                <br/><br/>
-                <table class="keyvalue">
-                    <tr>
-                        <td>Connected to network:</td><td class="highlight" id="wifi_connected">---</td>
-                    </tr>
-                    <tr>
-                        <td>Network Wired IP:</td><td id="wifi_wired">---</td>
-                    </tr>
-                    <tr>
-                        <td>Network Wifi IP:</td><td id="wifi_wifi">---</td>
-                    </tr>
-                    <tr>
-                        <td>Internet IP:</td><td id="wifi_wan">---</td>
-                    </tr>
-                </table>
-                <br/>
-                <img id="rover_img" src="" class="xform"/>
-                <br/><br/>
-                <table>
-                    <tr>
-                        <td></td>
-                        <td><button onclick="javascript:submitAsync('rover_forward');">Forward</button></td>
-                        <td></td>
-                    </tr>
-                    <tr>
-                        <td><button onclick="javascript:submitAsync('rover_left');">Left</button></td>
-                        <td><button onclick="javascript:submitAsync('rover_stop');">Stop</button></td>
-                        <td><button onclick="javascript:submitAsync('rover_right');">Right</button></td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td><button onclick="javascript:submitAsync('rover_backward');">Backward</button></td>
-                        <td></td>
-                    </tr>
-                </table>
-                <br/>
-                Disable Rover Controller may take a minute to perform and you need to reload this page afterwards (you may get connection error).<br/>
-                <table>
-                    <tr>
-                        <td><button onclick="javascript:submitSyncFromPrompt('rover_disable', 'Please enter password for the user root?', '');">Disable Rover Controller</button></td>
-                    </tr>
-                </table>
-            </div>
-            <br />
-            <table class="footer">
-                <tr onclick="javascript:onBack();">
-                    <td>
-                        <img alt="logo" src="img/back.png"></img>
-                    </td>
-                    <td>
-                        Back to main menu
-                    </td>
-                </tr>
-            </table>
         </div>
     </body>
 </html>
