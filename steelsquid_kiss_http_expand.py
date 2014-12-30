@@ -25,8 +25,6 @@ else:
     import steelsquid_kiss_http_server
 import steelsquid_utils
 import steelsquid_event
-import os
-import time
 
 
 class SteelsquidKissExpandHttpServer(steelsquid_kiss_http_server.SteelsquidKissHttpServer):
@@ -35,8 +33,5 @@ class SteelsquidKissExpandHttpServer(steelsquid_kiss_http_server.SteelsquidKissH
 
     def __init__(self, port, root, authorization, only_localhost, local_web_password, use_https):
         super(SteelsquidKissExpandHttpServer, self).__init__(port, root, authorization, only_localhost, local_web_password, use_https)
-
-
-
 
 
