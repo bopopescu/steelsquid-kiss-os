@@ -98,6 +98,7 @@ lock_ads1015_4A = threading.Lock()
 lock_ads1015_4B = threading.Lock()
 lock_mcp4725 = threading.Lock()
 lock_mcp4728 = threading.Lock()
+lock_worker = threading.Lock()
 DC = 9
 RST = 7
 SPI_PORT = 0
@@ -111,96 +112,97 @@ lcd_auto = 0
 
 def worker_thread():
     while True:
-        for work_key in worker_commands.keys():
-            try:
-                work = worker_commands[work_key]
-                command = work[0]
-                if command == "gpio_flash_3v3":
-                    only_one = work[1]
-                    gpio = work[2]
-                    if only_one == None:
-                        gpio_toggle_3v3(gpio)
-                    elif only_one:
-                        gpio_set_3v3(gpio, True)
-                        work[1] = False
-                    else:
-                        gpio_set_3v3(gpio, False)
-                        worker_commands.pop(work_key, None)
-                elif command == "gpio_flash_gnd":
-                    only_one = work[1]
-                    gpio = work[2]
-                    if only_one == None:
-                        gpio_toggle_gnd(gpio)
-                    elif only_one:
-                        gpio_set_gnd(gpio, True)
-                        work[1] = False
-                    else:
-                        gpio_set_gnd(gpio, False)
-                        worker_commands.pop(work_key, None)
-                elif command == "mcp23017_flash":
-                    only_one = work[1]
-                    address = work[2]
-                    gpio = work[3]
-                    if only_one == None:
-                        mcp23017_toggle(address, gpio)
-                    elif only_one:
-                        mcp23017_set(address, gpio, True)
-                        work[1] = False
-                    else:
-                        mcp23017_set(address, gpio, False)
-                        worker_commands.pop(work_key, None)
-                elif command == "mcp23017_click":
-                    address = work[1]
-                    gpio = work[2]
-                    mcp = work[3]
-                    cal_m = work[4]
-                    #last = work[5]
-                    if(mcp.input(gpio) >> gpio)==0:
-                        work[5] = True
-                    else:
-                        if work[5] == True:
-                            try:
-                                cal_m(address, gpio)
-                            except:
-                                steelsquid_utils.shout("Error: mcp23017_click", is_error=True, always_show=True)
+        with lock_worker:
+            for work_key in worker_commands.keys():
+                try:
+                    work = worker_commands[work_key]
+                    command = work[0]
+                    if command == "gpio_flash_3v3":
+                        only_one = work[1]
+                        gpio = work[2]
+                        if only_one == None:
+                            gpio_toggle_3v3(gpio)
+                        elif only_one:
+                            gpio_set_3v3(gpio, True)
+                            work[1] = False
+                        else:
+                            gpio_set_3v3(gpio, False)
+                            worker_commands.pop(work_key, None)
+                    elif command == "gpio_flash_gnd":
+                        only_one = work[1]
+                        gpio = work[2]
+                        if only_one == None:
+                            gpio_toggle_gnd(gpio)
+                        elif only_one:
+                            gpio_set_gnd(gpio, True)
+                            work[1] = False
+                        else:
+                            gpio_set_gnd(gpio, False)
+                            worker_commands.pop(work_key, None)
+                    elif command == "mcp23017_flash":
+                        only_one = work[1]
+                        address = work[2]
+                        gpio = work[3]
+                        if only_one == None:
+                            mcp23017_toggle(address, gpio)
+                        elif only_one:
+                            mcp23017_set(address, gpio, True)
+                            work[1] = False
+                        else:
+                            mcp23017_set(address, gpio, False)
+                            worker_commands.pop(work_key, None)
+                    elif command == "mcp23017_click":
+                        address = work[1]
+                        gpio = work[2]
+                        mcp = work[3]
+                        cal_m = work[4]
+                        #last = work[5]
+                        if(mcp.input(gpio) >> gpio)==0:
+                            work[5] = True
+                        else:
+                            if work[5] == True:
+                                try:
+                                    cal_m(address, gpio)
+                                except:
+                                    steelsquid_utils.shout("Error: mcp23017_click", is_error=True, always_show=True)
+                                work[5] = False
+                    elif command == "mcp23017_event":
+                        address = work[1]
+                        gpio = work[2]
+                        mcp = work[3]
+                        cal_m = work[4]
+                        #last = work[5]
+                        if(mcp.input(gpio) >> gpio)==0:
+                            if work[5] == False:
+                                try:
+                                    cal_m(address, gpio, True)
+                                except:
+                                    steelsquid_utils.shout("Error: mcp23017_event", is_error=True, always_show=True)
+                            work[5] = True
+                        else:
+                            if work[5] == True:
+                                try:
+                                    cal_m(address, gpio, False)
+                                except:
+                                    steelsquid_utils.shout("Error: mcp23017_event", is_error=True, always_show=True)
                             work[5] = False
-                elif command == "mcp23017_event":
-                    address = work[1]
-                    gpio = work[2]
-                    mcp = work[3]
-                    cal_m = work[4]
-                    #last = work[5]
-                    if(mcp.input(gpio) >> gpio)==0:
-                        if work[5] == False:
+                    elif command == "ads1015_event":
+                        address = work[1]
+                        gpio = work[2]
+                        ads = work[3]
+                        cal_m = work[4]
+                        #last = work[5]
+                        gain = work[6]
+                        newv = ads.readADCSingleEnded(gpio, gain, 250) / 1000
+                        if newv != work[5]:
                             try:
-                                cal_m(address, gpio, True)
+                                cal_m(address, gpio, newv)
                             except:
-                                steelsquid_utils.shout("Error: mcp23017_event", is_error=True, always_show=True)
-                        work[5] = True
-                    else:
-                        if work[5] == True:
-                            try:
-                                cal_m(address, gpio, False)
-                            except:
-                                steelsquid_utils.shout("Error: mcp23017_event", is_error=True, always_show=True)
-                        work[5] = False
-                elif command == "ads1015_event":
-                    address = work[1]
-                    gpio = work[2]
-                    ads = work[3]
-                    cal_m = work[4]
-                    #last = work[5]
-                    gain = work[6]
-                    newv = ads.readADCSingleEnded(gpio, gain, 250) / 1000
-                    if newv != work[5]:
-                        try:
-                            cal_m(address, gpio, newv)
-                        except:
-                            steelsquid_utils.shout("Error: ads1015_event", is_error=True, always_show=True)
-                        work[5] = newv
-            except:
-                worker_commands.pop(work_key, None)
-                steelsquid_utils.shout("Fatal error in steelsquid_pi worker thread: " +work_key, is_error=True)
+                                steelsquid_utils.shout("Error: ads1015_event", is_error=True, always_show=True)
+                            work[5] = newv
+                except:
+                    worker_commands.pop(work_key, None)
+                    steelsquid_utils.shout("Fatal error in steelsquid_pi worker thread: " +work_key, is_error=True)
         time.sleep(0.3)
             
 
@@ -209,6 +211,15 @@ worker_thread_started = False
 if worker_thread_started == False:
     worker_thread_started = True
     thread.start_new_thread(worker_thread, ())
+
+
+def cleanup():
+    '''
+    Clean all event detection (click, blink...)
+    '''
+    gpio_cleanup()
+    with lock_worker:
+        worker_thread.clear()
     
 
 def gpio_event_remove(gpio):

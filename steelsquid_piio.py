@@ -31,6 +31,14 @@ BUTTON_LEFT = 6
 BUTTON_RIGHT = 5
 BUTTON_SELECT = 7
 
+
+def cleanup():
+    '''
+    Clean all event detection (click, blink...)
+    '''
+    steelsquid_pi.cleanup()
+
+
 def gpio_pi_set_3v3(pin, state):
     '''
     set gpio pin to hight (true) or low (false) on a pin connecte to 3.3v
