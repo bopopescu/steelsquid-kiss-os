@@ -388,7 +388,7 @@ def main():
             pkgpath = os.path.dirname(run.__file__)
             for name in pkgutil.iter_modules([pkgpath]):
                 thread.start_new_thread(import_file_dyn, (name[1],)) 
-            steelsquid_utils.shout("Listen for events (all is OK)", debug=True)
+            steelsquid_utils.shout("Listen for events", debug=True)
             steelsquid_event.broadcast_event("network", ())
             steelsquid_event.activate_event_handler(create_ner_thread=False)
         elif sys.argv[1] == "stop":
