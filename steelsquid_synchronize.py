@@ -3,6 +3,8 @@
 
 '''
 Automatic listen for changes abd commit changes to a nother system via ssh (install on remote system)
+Messages and error from the raspberry will also be displayed (same as on the console on the Raspberry Pi).
+Example if you execute steelsquid_utils.shout(...) or steelsquid_utils.debug(...) it will show up on the screen when you syncronize.
 
 Using settings from steelsquid-kiss-os.sh
 base_remote_server=192.168.0.194
@@ -44,9 +46,12 @@ raspberry
 import time
 import sys
 import thread
+import threading
 import os
 import steelsquid_utils
 import paramiko
+import select
+from datetime import datetime
 
 steel_last = 0
 base_remote_server=""
@@ -58,7 +63,9 @@ web_files = []
 extra_files = []
 ssh = None
 sftp = None
-
+channel = None
+channel_f = None
+lock = threading.Lock()
 
 def load_data():
     '''
@@ -70,6 +77,7 @@ def load_data():
     global python_files
     global web_files
     global extra_files
+    print ""
     steelsquid_utils.log("Load settings from steelsquid-kiss-os.sh")
     with open("steelsquid-kiss-os.sh") as f:
         for line in f:
@@ -93,6 +101,7 @@ def load_data():
                 line = line.replace("\"","")
                 web_files.append([line, 0])
     if os.path.isfile("config.txt"):
+        print ""
         steelsquid_utils.log("Load settings from config.txt")
         i = 0
         with open("config.txt") as f:
@@ -114,35 +123,7 @@ def load_data():
                     extra_files.append(line)
                 i = i + 1 
 
-def transmit(local, remote):
-    try:
-        global ssh
-        global sftp
-        if ssh == None:
-            ssh = paramiko.SSHClient()
-            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            ssh.connect(base_remote_server, port=int(base_remote_port), username=base_remote_user, password=base_remote_password)
-            sftp = ssh.open_sftp()
-        try:
-            sftp.put(local, remote)
-        except:
-            try:
-                sftp.close()
-            except:
-                pass
-            try:
-                ssh.close()
-            except:
-                pass
-            ssh.connect(base_remote_server, port=int(base_remote_port), username=base_remote_user, password=base_remote_password)
-            sftp = ssh.open_sftp()
-            sftp.put(local, remote)            
-        steelsquid_utils.log("SYNC: " + local)
-    except Exception, e:
-        steelsquid_utils.log("ERROR ("+local+" > "+remote+"): " + str(e))
         
-                    
-
 def listener():
     '''
     '''
@@ -176,6 +157,53 @@ def listener():
                 o[2] = file_change
                 transmit(file_local, file_remote)
         time.sleep(0.5)
+
+
+def connect():
+    with lock:
+        global ssh
+        global channel
+        global channel_f
+        global sftp
+        disconnect()
+        try:
+            print ""
+            steelsquid_utils.log("Connecting to: " + base_remote_server)
+            ssh.connect(base_remote_server, port=int(base_remote_port), username=base_remote_user, password=base_remote_password)
+            channel = ssh.get_transport().open_session()
+            channel.get_pty()
+            channel.invoke_shell()
+            channel_f = channel.makefile()
+            sftp = ssh.open_sftp()
+        except Exception, e:
+            steelsquid_utils.log(str(e))
+            raise e
+
+
+def disconnect():
+    global ssh
+    global sftp
+    try:
+        sftp.close()
+    except:
+        pass
+    try:
+        ssh.close()
+    except:
+        pass
+    
+
+def transmit(local, remote):
+    print ""
+    steelsquid_utils.log("SYNC: " + local)
+    try:
+        sftp.put(local, remote)
+    except:
+        try:
+            connect()
+            sftp.put(local, remote)            
+        except:
+            pass
         
 
 def send_command(command):
@@ -185,20 +213,57 @@ def send_command(command):
         ssh.exec_command(command)
     except:
         try:
-            sftp.close()
+            connect()
+            ssh.exec_command(command)
         except:
             pass
+
+
+def listen_for_std():
+    '''
+    '''
+    time.sleep(1)
+    print ""
+    steelsquid_utils.log("Listen for output from remote device")
+    global channel_f
+    while True:
         try:
-            ssh.close()
+            if not channel_f.closed:
+                first = True
+                last_time = 1000
+                for line in channel_f:
+                    if first:
+                        first = False
+                    else:
+                        line = line[:-1]
+                        line = " ".join(line.split())
+                        if len(line)>0:
+                            cur_time = time.time() * 1000
+                            ms = cur_time - last_time
+                            if ms > 100:
+                                print ""
+                                steelsquid_utils.log("FROM REMOTE DEVICE:")
+                            print line
+                            last_time = cur_time
         except:
-            pass
-        ssh.connect(base_remote_server, port=int(base_remote_port), username=base_remote_user, password=base_remote_password)
-        sftp = ssh.open_sftp()
-        ssh.exec_command(command)
+            steelsquid_utils.shout()
+            try:
+                connect()
+            except:
+                pass
+        time.sleep(2)
+            
     
 
 if __name__ == '__main__':
     load_data()
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    try:
+        connect()
+    except:
+        pass
+    thread.start_new_thread(listen_for_std, ()) 
     print ""
     print "Listen for changes and commit to " + base_remote_server
     print " - 0, H: Show this help."
@@ -208,7 +273,6 @@ if __name__ == '__main__':
     print " - 4, S: Restart steelsquid service."
     print " - 5, K: Stop steelsquid service."
     print " - 6, R: Reboot the remote machine."
-    print ""
     thread.start_new_thread(listener, ()) 
     answer = ""
     cont = True

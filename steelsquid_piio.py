@@ -4,6 +4,7 @@
 '''
 Mostly wrapper functions for my steelsquid IO board
 Use PIN number from the board.
+And a lot of I2C adresses i hardcoded
 
 @organization: Steelsquid
 @author: Andreas Nilsson
@@ -30,6 +31,9 @@ BUTTON_DOWN = 4
 BUTTON_LEFT = 6
 BUTTON_RIGHT = 5
 BUTTON_SELECT = 7
+
+# Servo start position
+servo_position = 260
 
 
 def cleanup():
@@ -85,7 +89,7 @@ def gpio_pi_toggle_3v3(pin):
     @param pin: GPIO number (1 to 24)
     '''
     gpio = __convert_to_gpio(pin)
-    steelsquid_pi.gpio_toggle_3v3(gpio)
+    return steelsquid_pi.gpio_toggle_3v3(gpio)
 
 def gpio_pi_toggle_gnd(pin):
     '''
@@ -93,7 +97,23 @@ def gpio_pi_toggle_gnd(pin):
     @param pin: GPIO number (1 to 24)
     '''
     gpio = __convert_to_gpio(pin)
-    steelsquid_pi.gpio_toggle_3v3(gpio)
+    return steelsquid_pi.gpio_toggle_3v3(gpio)
+
+
+def gpio_pi_toggle_current_3v3(pin):
+    '''
+    Get current toggle status
+    '''
+    gpio = __convert_to_gpio(pin)
+    return steelsquid_pi.gpio_toggle_current_3v3(gpio)
+
+
+def gpio_pi_toggle_current_gnd(pin):
+    '''
+    Get current toggle status
+    '''
+    gpio = __convert_to_gpio(pin)
+    return steelsquid_pi.gpio_toggle_current_3v3(gpio)
 
 
 def gpio_pi_event_3v3(pin, callback_method):
@@ -221,7 +241,7 @@ def led_error_toggle():
     Toggle on / off the red LED
     LEDR
     '''
-    steelsquid_pi.mcp23017_toggle(23, 9)
+    return steelsquid_pi.mcp23017_toggle(23, 9)
 
 
 def led_error_flash(status):
@@ -247,7 +267,7 @@ def led_ok_toggle():
     Toggle on / off the green LED
     LEDG
     '''
-    steelsquid_pi.mcp23017_toggle(23, 10)
+    return steelsquid_pi.mcp23017_toggle(23, 10)
 
 
 def led_ok_flash(status):
@@ -283,7 +303,7 @@ def summer_toggle():
     SUM
     Toggle on / off the summer
     '''
-    steelsquid_pi.mcp23017_toggle(23, 15)
+    return steelsquid_pi.mcp23017_toggle(23, 15)
 
 
 def button(which_button):
@@ -354,7 +374,15 @@ def relay_toggle(relay_nr):
     Flash on / off the relay
     '''
     relay_nr = relay_nr + 1
-    steelsquid_pi.mcp23017_toggle(23, relay_nr)
+    return steelsquid_pi.mcp23017_toggle(23, relay_nr)
+
+
+def relay_toggle_current(relay_nr):
+    '''
+    Current relay toggle status
+    '''
+    relay_nr = relay_nr + 1
+    return steelsquid_pi.mcp23017_toggle_current(23, relay_nr)
 
 
 def relay_flash(relay_nr, status):
@@ -385,7 +413,16 @@ def gpio_22_xv_toggle(pin_nr):
     GPIO_22_XV
     '''
     pin_nr = int(pin_nr)
-    steelsquid_pi.mcp23017_toggle(22, pin_nr-1)
+    return steelsquid_pi.mcp23017_toggle(22, pin_nr-1)
+
+
+def gpio_22_xv_toggle_current(pin_nr):
+    '''
+    Get current toggle status
+    '''
+    pin_nr = int(pin_nr)
+    return steelsquid_pi.mcp23017_toggle_current(22, pin_nr-1)
+
 
 def gpio_22_xv_flash(pin_nr, status):
     '''
@@ -450,7 +487,17 @@ def gpio_20_3v3_toggle(pin):
     GPIO_20_3V3
     '''
     pin = int(pin)
-    steelsquid_pi.mcp23017_toggle(20, pin-1)
+    return steelsquid_pi.mcp23017_toggle(20, pin-1)
+
+
+
+def gpio_20_3v3_toggle_current(pin):
+    '''
+    Get current toggle status
+    '''
+    pin = int(pin)
+    return steelsquid_pi.mcp23017_toggle_current(20, pin-1)
+
 
 def gpio_20_3v3_flash(pin, status):
     '''
@@ -515,7 +562,16 @@ def gpio_21_5v_toggle(pin):
     GPIO_21_5V
     '''
     pin = int(pin)
-    steelsquid_pi.mcp23017_toggle(21, pin-1)
+    return steelsquid_pi.mcp23017_toggle(21, pin-1)
+
+
+def gpio_21_5v_toggle_current(pin):
+    '''
+    Get current toggle value
+    '''
+    pin = int(pin)
+    return steelsquid_pi.mcp23017_toggle_current(21, pin-1)
+
 
 def gpio_21_5v_flash(pin, status):
     '''
@@ -613,10 +669,23 @@ def measure_distance(trig_gpio, echo_gpio, force_setup = False):
 def servo(servo, value):
     '''
     Move Adafruit 16-channel I2c servo to position (pwm value)
-    @param servo: 0 to 15
+    @param servo: 1 to 16
     @param value: min=150, max=600 (may differ between servos)
     '''
-    steelsquid_pi.rbada70_move(servo, value)
+    servo = int(servo)
+    steelsquid_pi.rbada70_move(servo-1, value)
+
+
+def servo_move(servo, value):
+    '''
+    Move Adafruit 16-channel I2c servo to position (pwm value)
+    @param servo: 1 to 16
+    @param value: increase/decrice with this value (min=150, max=600 (may differ between servos))
+    '''
+    global servo_position
+    servo_position = servo_position + int(value)
+    servo = int(servo)
+    steelsquid_pi.rbada70_move(servo-1, servo_position)
 
 
 def trex_reset():

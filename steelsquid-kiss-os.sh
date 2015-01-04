@@ -1628,6 +1628,128 @@ fi
 
 
 ##################################################################################
+# lcd info
+##################################################################################
+function lcd_info()
+{
+    if [ $(get-flag "nokia") == "true" ]; then
+        echo
+        echo "LCD is enabled (nokia5101)"
+        echo
+    elif [ $(get-flag "hdd") == "true" ]; then
+        echo
+        echo "LCD is enabled (HDD44780)"
+        echo
+    elif [ $(get-flag "auto") == "true" ]; then
+        echo
+        echo "LCD in automatic mode"
+        echo
+    else
+        echo
+        echo "LCD is disabled"
+        echo
+    fi
+}
+if [ "$in_parameter_1" == "lcd" ]; then
+	lcd_info
+	exit 0
+fi
+
+
+
+##################################################################################
+# Enable print IP to lcd
+##################################################################################
+function enable_lcd_nokia()
+{
+	log "Enable print IP and messges to nokia5110 LCD"
+	set-flag "nokia"
+	del-flag "hdd"
+	del-flag "auto"
+    systemctl restart steelsquid
+	log-ok
+}
+if [ "$in_parameter_1" == "lcd-nokia" ]; then
+	enable_lcd_nokia
+	exit 0
+fi
+
+
+##################################################################################
+# Enable print IP to lcd
+##################################################################################
+function enable_lcd_auto()
+{
+	log "Enable print IP and messges to nokia5110 or HDD44780 LCD"
+	set-flag "auto"
+	del-flag "nokia"
+	del-flag "hdd"
+    systemctl restart steelsquid
+	log-ok
+}
+if [ "$in_parameter_1" == "lcd-auto" ]; then
+	enable_lcd_auto
+	exit 0
+fi
+
+
+##################################################################################
+# Enable print IP to lcd
+##################################################################################
+function enable_lcd_hdd()
+{
+	log "Enable print IP and messges to HDD44780 LCD"
+	set-flag "hdd"
+	del-flag "nokia"
+	del-flag "auto"
+    systemctl restart steelsquid
+	log-ok
+}
+if [ "$in_parameter_1" == "lcd-hdd" ]; then
+	enable_lcd_hdd
+	exit 0
+fi
+
+
+##################################################################################
+# Disable print IP to lcd
+##################################################################################
+function disable_lcd()
+{
+	log "Disable print IP and messges to LCD"
+	del-flag "nokia"
+	del-flag "hdd"
+	del-flag "auto"
+    systemctl restart steelsquid
+	log-ok
+}
+if [ "$in_parameter_1" == "lcd-off" ]; then
+	disable_lcd
+	exit 0
+fi
+
+
+##################################################################################
+# Set get contrast for nokia lcd
+##################################################################################
+function contrast_lcd()
+{
+    if [ "$in_parameter_2" == "" ]; then
+        echo "Contrast: "$(get-parameter "nokia_contrast")
+    else
+        set-parameter "nokia_contrast" $in_parameter_2
+        systemctl restart steelsquid
+        log-ok
+    fi
+}
+if [ "$in_parameter_1" == "lcd-contrast" ]; then
+	contrast_lcd
+	exit 0
+fi
+
+
+
+##################################################################################
 # Show status streaming of USB camera
 ##################################################################################
 function stream_info()
@@ -1782,10 +1904,10 @@ function rover_on()
 {
 	log "Enable rover"
     set-flag "rover"
+    set-flag "piio"
     stream_on
-    connection_on
+    socket_on
     enable_lcd_nokia
-	systemctl restart steelsquid
     log-ok
 }
 if [ "$in_parameter_1" == "rover-on" ]; then
@@ -2689,128 +2811,6 @@ if [ "$in_parameter_1" == "expand" ]; then
 	log "Expand Filesystem."
 	raspi-expand-rootfs.sh
 	do-ok-exit "Root partition has been resized.\nThe filesystem will be enlarged upon the next reboot"
-fi
-
-
-
-##################################################################################
-# lcd info
-##################################################################################
-function lcd_info()
-{
-    if [ $(get-flag "nokia") == "true" ]; then
-        echo
-        echo "LCD is enabled (nokia5101)"
-        echo
-    elif [ $(get-flag "hdd") == "true" ]; then
-        echo
-        echo "LCD is enabled (HDD44780)"
-        echo
-    elif [ $(get-flag "auto") == "true" ]; then
-        echo
-        echo "LCD in automatic mode"
-        echo
-    else
-        echo
-        echo "LCD is disabled"
-        echo
-    fi
-}
-if [ "$in_parameter_1" == "lcd" ]; then
-	lcd_info
-	exit 0
-fi
-
-
-
-##################################################################################
-# Enable print IP to lcd
-##################################################################################
-function enable_lcd_nokia()
-{
-	log "Enable print IP and messges to nokia5110 LCD"
-	set-flag "nokia"
-	del-flag "hdd"
-	del-flag "auto"
-    systemctl restart steelsquid
-	log-ok
-}
-if [ "$in_parameter_1" == "lcd-nokia" ]; then
-	enable_lcd_nokia
-	exit 0
-fi
-
-
-##################################################################################
-# Enable print IP to lcd
-##################################################################################
-function enable_lcd_auto()
-{
-	log "Enable print IP and messges to nokia5110 or HDD44780 LCD"
-	set-flag "auto"
-	del-flag "nokia"
-	del-flag "hdd"
-    systemctl restart steelsquid
-	log-ok
-}
-if [ "$in_parameter_1" == "lcd-auto" ]; then
-	enable_lcd_auto
-	exit 0
-fi
-
-
-##################################################################################
-# Enable print IP to lcd
-##################################################################################
-function enable_lcd_hdd()
-{
-	log "Enable print IP and messges to HDD44780 LCD"
-	set-flag "hdd"
-	del-flag "nokia"
-	del-flag "auto"
-    systemctl restart steelsquid
-	log-ok
-}
-if [ "$in_parameter_1" == "lcd-hdd" ]; then
-	enable_lcd_hdd
-	exit 0
-fi
-
-
-##################################################################################
-# Disable print IP to lcd
-##################################################################################
-function disable_lcd()
-{
-	log "Disable print IP and messges to LCD"
-	del-flag "nokia"
-	del-flag "hdd"
-	del-flag "auto"
-    systemctl restart steelsquid
-	log-ok
-}
-if [ "$in_parameter_1" == "lcd-off" ]; then
-	disable_lcd
-	exit 0
-fi
-
-
-##################################################################################
-# Set get contrast for nokia lcd
-##################################################################################
-function contrast_lcd()
-{
-    if [ "$in_parameter_2" == "" ]; then
-        echo "Contrast: "$(get-parameter "nokia_contrast")
-    else
-        set-parameter "nokia_contrast" $in_parameter_2
-        systemctl restart steelsquid
-        log-ok
-    fi
-}
-if [ "$in_parameter_1" == "lcd-contrast" ]; then
-	contrast_lcd
-	exit 0
 fi
 
 

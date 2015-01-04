@@ -346,9 +346,19 @@ def gpio_toggle_3v3(gpio):
     if toggle[gpio] == True:
         toggle[gpio] = False
         gpio_set_3v3(gpio, False)
+        return False
     else:
         toggle[gpio] = True
         gpio_set_3v3(gpio, True)
+        return True
+
+
+def gpio_toggle_current_3v3(gpio):
+    '''
+    Get current togle status
+    '''
+    global toggle
+    return toggle[gpio]
 
 
 def gpio_toggle_gnd(gpio):
@@ -360,9 +370,19 @@ def gpio_toggle_gnd(gpio):
     if toggle[gpio] == True:
         toggle[gpio] = False
         gpio_set_gnd(gpio, False)
+        return False
     else:
         toggle[gpio] = True
         gpio_set_gnd(gpio, True)
+        return True
+
+
+def gpio_toggle_current_gnd(gpio):
+    '''
+    Get current togle status
+    '''
+    global toggle
+    return toggle[gpio]
 
 
 def gpio_event_3v3(gpio, callback_method):
@@ -748,9 +768,25 @@ def mcp23017_toggle(address, gpio):
             toggle_mcp.remove([address, gpio])
         except:
             pass
+        return False
     else:
         mcp.output(gpio, 1)
         toggle_mcp.append([address, gpio])
+        return True
+
+
+def mcp23017_toggle_current(address, gpio):
+    '''
+    Get current toggle status
+    '''
+    gpio = int(gpio)
+    address = int(address)
+    mcp = mcp23017_setup_out(address, gpio)
+    global toggle_mcp
+    if [address, gpio] in toggle_mcp:
+        return True
+    else:
+        return False
 
 
 def mcp23017_flash(address, gpio, status):

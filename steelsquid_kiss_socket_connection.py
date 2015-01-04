@@ -18,7 +18,6 @@ import steelsquid_utils
 import socket
 import sys
 import select
-import steelsquid_sabertooth
 import thread
 import os
 import time
@@ -93,17 +92,124 @@ class SteelsquidKissSocketServer(steelsquid_socket_connection.SteelsquidSocketCo
             pass
 
 
-    def drive_request(self, parameters):
-        import steelsquid_pi_board
+    def rover_drive_request(self, parameters):
+        '''
+        '''
+        import steelsquid_piio
         left = int(parameters[0])
         right = int(parameters[1])
-        steelsquid_pi_board.sabertooth_set_speed(left, right)
+        steelsquid_piio.trex_motor(left, right)
+        
 
-    def drive_response(self, parameters):
+    def rover_drive_response(self, parameters):
+        '''
+        '''
+        pass
+        
+
+    def rover_drive_error(self, parameters):
+        '''
+        '''
         pass
 
-    def drive_error(self, parameters):
-        print "ERROR"
-        print parameters
+
+    def rover_light_request(self, parameters):
+        '''
+        '''
+        import steelsquid_piio
+        status = steelsquid_piio.gpio_22_xv_toggle(2)
+        steelsquid_piio.gpio_22_xv(3, status)
+        return status
+        
+
+    def rover_light_response(self, parameters):
+        '''
+        '''
+        pass
+        
+
+    def rover_light_error(self, parameters):
+        '''
+        '''
+        pass
 
 
+    def rover_alarm_request(self, parameters):
+        '''
+        '''
+        import steelsquid_piio
+        return steelsquid_piio.gpio_22_xv_toggle(1)
+        
+
+    def rover_alarm_response(self, parameters):
+        '''
+        '''
+        pass
+        
+
+    def rover_alarm_error(self, parameters):
+        '''
+        '''
+        pass
+
+
+    def rover_info_request(self, parameters):
+        '''
+        '''
+        import steelsquid_piio
+        return [steelsquid_piio.gpio_22_xv_toggle_current(2), steelsquid_piio.gpio_22_xv_toggle_current(1)]
+        
+
+    def rover_info_response(self, parameters):
+        '''
+        '''
+        pass
+        
+
+    def rover_info_error(self, parameters):
+        '''
+        '''
+        pass
+
+
+    def rover_cam_request(self, parameters):
+        '''
+        '''
+        import steelsquid_piio
+        if parameters[0]=="True":
+            steelsquid_piio.servo_move(1, 10)
+        else:
+            steelsquid_piio.servo_move(1, -10)
+        
+
+    def rover_cam_response(self, parameters):
+        '''
+        '''
+        pass
+        
+
+    def rover_cam_error(self, parameters):
+        '''
+        '''
+        pass
+
+
+    def rover_drive_request(self, parameters):
+        '''
+        '''
+        import steelsquid_piio
+        left = int(parameters[0])
+        right = int(parameters[1])
+        steelsquid_piio.trex_motor(left, right)
+        
+
+    def rover_drive_response(self, parameters):
+        '''
+        '''
+        pass
+        
+
+    def rover_drive_error(self, parameters):
+        '''
+        '''
+        pass

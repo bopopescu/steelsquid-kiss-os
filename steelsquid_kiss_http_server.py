@@ -32,6 +32,7 @@ DOWNLOAD_RPC = "http://localhost:6800/rpc"
 DOWNLOAD_LIST =['gid', 'totalLength', 'completedLength', 'downloadSpeed', 'uploadSpeed', 'files', 'status']
 ALLOWED = ['/media/', '/mnt/', '/root/']
 
+
 class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
 
 
@@ -1717,14 +1718,17 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         '''
         enabled = steelsquid_utils.get_flag("rover")
         if enabled:
+            import steelsquid_trex
             answer = steelsquid_utils.execute_system_command(['steelsquid-nm', 'system-status'])
+            battery_voltage, _, _, _, _, _, _, _, _ = status = steelsquid_trex.trex_status()
+            battery_voltage = float(battery_voltage)/100
             if answer[0] == 'None':
-                return [True, "Not connected!", "---", "---", "---"]
+                return [True, "Not connected!", "---", "---", "---", battery_voltage]
             else:
                 ip_wired = steelsquid_utils.network_ip_wired()
                 ip_wifi = steelsquid_utils.network_ip_wifi()
                 wan_ipp = steelsquid_utils.network_ip_wan()
-                return [True, answer[0], ip_wired, ip_wifi, wan_ipp]
+                return [True, answer[0], ip_wired, ip_wifi, wan_ipp, battery_voltage]
         else:
             return enabled
         
@@ -1756,39 +1760,75 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         '''
         
         '''
-        import steelsquid_pi_board
-        steelsquid_pi_board.sabertooth_set_speed(0, 0)
+        import steelsquid_piio
+        steelsquid_piio.trex_motor(0, 0)
 
 
     def rover_left(self, session_id, parameters):
         '''
         
         '''
-        import steelsquid_pi_board
-        steelsquid_pi_board.sabertooth_set_speed(20, -20)
+        import steelsquid_piio
+        steelsquid_piio.trex_motor(-40, 40)
 
 
     def rover_right(self, session_id, parameters):
         '''
         
         '''
-        import steelsquid_pi_board
-        steelsquid_pi_board.sabertooth_set_speed(-20, 20)
+        import steelsquid_piio
+        steelsquid_piio.trex_motor(40, -40)
 
 
     def rover_forward(self, session_id, parameters):
         '''
         
         '''
-        import steelsquid_pi_board
-        steelsquid_pi_board.sabertooth_set_speed(20, 20)
+        import steelsquid_piio
+        steelsquid_piio.trex_motor(40, 40)
 
 
     def rover_backward(self, session_id, parameters):
         '''
         
         '''
-        import steelsquid_pi_board
-        steelsquid_pi_board.sabertooth_set_speed(-20, -20)
+        import steelsquid_piio
+        steelsquid_piio.trex_motor(-40, -40)
+
+
+    def rover_light(self, session_id, parameters):
+        '''
+        
+        '''
+        import steelsquid_piio
+        if parameters[0]=="True":
+            steelsquid_piio.gpio_22_xv(2, True)
+            steelsquid_piio.gpio_22_xv(3, True)
+        else:
+            steelsquid_piio.gpio_22_xv(2, False)
+            steelsquid_piio.gpio_22_xv(3, False)
+
+
+    def rover_alarm(self, session_id, parameters):
+        '''
+        
+        '''
+        import steelsquid_piio
+        if parameters[0]=="True":
+            steelsquid_piio.gpio_22_xv(1, True)
+        else:
+            steelsquid_piio.gpio_22_xv(1, False)
+
+
+    def rover_cam(self, session_id, parameters):
+        '''
+        
+        '''
+        import steelsquid_piio
+        if parameters[0]=="True":
+            steelsquid_piio.servo_move(1, 10)
+        else:
+            steelsquid_piio.servo_move(1, -10)
+            
 
 

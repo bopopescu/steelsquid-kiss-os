@@ -325,8 +325,16 @@ def on_reload(args, para):
     elif para[0] == "custom":
         pkgpath = os.path.dirname(run.__file__)
         for name in pkgutil.iter_modules([pkgpath]):
-            thread.start_new_thread(reload_file_dyn, (name[1],)) 
+            thread.start_new_thread(reload_file_dyn, (name[1],))
     
+
+def enable_rover():
+    '''
+    Enable the rover functionality
+    '''    
+    import steelsquid_piio
+    steelsquid_piio.servo_move(1, 0)                
+
 
 def main():
     '''
@@ -385,6 +393,8 @@ def main():
             if steelsquid_utils.get_flag("piio") and steelsquid_utils.get_flag("development"):
                 steelsquid_event.subscribe_to_event("button", dev_button, ())
                 steelsquid_event.subscribe_to_event("dip", dev_dip, ())
+            if steelsquid_utils.get_flag("rover"):
+                enable_rover()
             pkgpath = os.path.dirname(run.__file__)
             for name in pkgutil.iter_modules([pkgpath]):
                 thread.start_new_thread(import_file_dyn, (name[1],)) 
@@ -399,7 +409,7 @@ def main():
                 pass
             steelsquid_utils.execute_system_command_blind(["steelsquid-event", "shutdown"])
     except:
-        steelsquid_utils.shout()
+        steelsquid_utils.shout("Fatal error when on boot steelsquid service", is_error=True)
         os._exit(0)
 
 

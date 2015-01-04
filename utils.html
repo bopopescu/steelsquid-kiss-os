@@ -33,12 +33,18 @@
              * This will execute every 10 second
              */
             function onEvery05s(){
+                if (isLayerShowing('stream') || isLayerShowing('rover')){
+                    $("#stream_img").attr("src", "http://"+window.location.hostname+":8080/?action=stream");         
+                }
             }
 
             /**
-             * This will execute every 10 second
+             * This will execute every 60 second
              */
-            function onEvery10s(){
+            function onEvery60s(){
+                if (isLayerShowing('rover')){
+                    submitNoPW('rover');
+                }
             }
 
             /**
@@ -50,6 +56,7 @@
                 }
                 if(layer == "rover"){
                     submitNoPW('rover');
+                    $("#rover_img").attr("src", "http://"+window.location.hostname+":8080/?action=stream");       
                 }
             }
             
@@ -83,7 +90,7 @@
                     $("#wifi_wired").html(paramaters[2]);
                     $("#wifi_wifi").html(paramaters[3]);
                     $("#wifi_wan").html(paramaters[4]);
-                    $("#rover_img").attr("src", "http://"+window.location.hostname+":8080/?action=stream");         
+                    $("#rover_voltage").html(paramaters[5]);
                 }
                 else{
                     hide('rover_enabled');
@@ -99,6 +106,8 @@
                     show('stream_enabled');
                     hide('stream_disabled');
                     $("#stream_img").attr("src", "http://"+window.location.hostname+":8080/?action=stream");         
+                    $("#video_link").attr("href", "http://"+window.location.hostname+":8080/?action=stream");         
+                    $("#video_link").html("http://"+window.location.hostname+":8080/?action=stream");
                 }
                 else{
                     hide('stream_enabled');
@@ -237,8 +246,16 @@
                     The USB web camera streaming is enabled on this system.<br/>
                     Below you should see the video from the USB camera.<br/>
                     If not, is it probably because your camera is not supported.<br/>
+                    This is the url to the video: <a id="video_link" href=""></a><br>
                     <br/>
-                    <img alt="The stream" id="stream_img" src="" class="xform"/>
+                    <img alt="The stream" id="stream_img" src=""/>
+                    <br/>
+                    <table style="width:100%">
+                        <tr>
+                            <td style="width:50%"><button id="but_normal" style="text-decoration: underline;" onclick="javascript:$('#stream_img').removeClass('flip-vertical');$('#but_normal').css({'text-decoration':'underline'});;$('#but_flip').css({'text-decoration':'none'});">Camera normal</button></td>
+                            <td style="width:50%"><button id="but_flip" onclick="javascript:$('#stream_img').removeClass('flip-vertical').addClass('flip-vertical');$('#but_normal').css({'text-decoration':'none'});;$('#but_flip').css({'text-decoration':'underline'});">Camera flip</button></td>
+                        </tr>
+                    </table>
                     <br/><br/>
                     Disable streaming may take a minute to perform and you need to reload this page afterwards (you may get connection error).<br/>
                     <table>
@@ -295,28 +312,61 @@
                         <tr>
                             <td>Internet IP:</td><td id="wifi_wan">---</td>
                         </tr>
+                        <tr>
+                            <td>Battery voltage:</td><td id="rover_voltage">---</td>
+                        </tr>
                     </table>
                     <br/>
-                    <img alt="The stream" id="rover_img" src="" class="xform"/>
+                    Below you should see the video from the USB camera.
+                    <br/>
+                    <img alt="The stream" id="rover_img" src="" class="flip-vertical"/>
                     <br/><br/>
-                    <table>
+                    <table style="width:100%">
                         <tr>
-                            <td></td>
-                            <td><button onclick="javascript:submitAsync('rover_forward');">Forward</button></td>
-                            <td></td>
+                            <td style="width:33%">
+                                <table style="width:100%">
+                                    <tr>
+                                        <td style="width:50%"><button onclick="javascript:submitAsync('rover_cam', 'True');">Cam up</button></td>
+                                        <td style="width:50%"><button onclick="javascript:submitAsync('rover_cam', 'False');">Cam down</button></td>
+                                    </tr>
+                                </table>
+                            </td>
+                            <td style="width:33%"><button style="font-weight:bold" onclick="javascript:submitAsync('rover_forward');">Forward</button></td>
+                            <td style="width:33%">
+                                <table style="width:100%">
+                                    <tr>
+                                        <td style="width:50%"><button onclick="javascript:submitAsync('rover_light', 'True');">Light on</button></td>
+                                        <td style="width:50%"><button onclick="javascript:submitAsync('rover_light', 'False');">Light off</button></td>
+                                    </tr>
+                                </table>
+                            </td>
                         </tr>
                         <tr>
-                            <td><button onclick="javascript:submitAsync('rover_left');">Left</button></td>
-                            <td><button onclick="javascript:submitAsync('rover_stop');">Stop</button></td>
-                            <td><button onclick="javascript:submitAsync('rover_right');">Right</button></td>
+                            <td style="width:33%"><button style="font-weight:bold" onclick="javascript:submitAsync('rover_left');">Left</button></td>
+                            <td style="width:33%"><button style="font-weight:bold" onclick="javascript:submitAsync('rover_stop');">Stop</button></td>
+                            <td style="width:33%"><button style="font-weight:bold" onclick="javascript:submitAsync('rover_right');">Right</button></td>
                         </tr>
                         <tr>
-                            <td></td>
-                            <td><button onclick="javascript:submitAsync('rover_backward');">Backward</button></td>
-                            <td></td>
+                            <td style="width:33%">
+                                <table style="width:100%">
+                                    <tr>
+                                        <td style="width:50%"><button id="rov_normal" onclick="javascript:$('#rover_img').removeClass('flip-vertical');$('#rov_normal').css({'text-decoration':'underline'});;$('#rov_flip').css({'text-decoration':'none'});">Cam norm</button></td>
+                                        <td style="width:50%"><button id="rov_flip" style="text-decoration: underline;" onclick="javascript:$('#rover_img').removeClass('flip-vertical').addClass('flip-vertical');$('#rov_normal').css({'text-decoration':'none'});;$('#rov_flip').css({'text-decoration':'underline'});">Came flip</button></td>
+                                    </tr>
+                                </table>
+                            </td>
+                            <td style="width:33%"><button style="font-weight:bold" onclick="javascript:submitAsync('rover_backward');">Backward</button></td>
+                            <td style="width:33%">
+                                <table>
+                                    <tr style="width:100%">
+                                        <td style="width:50%"><button onclick="javascript:submitAsync('rover_alarm', 'True');">Alarm on</button></td>
+                                        <td style="width:50%"><button onclick="javascript:submitAsync('rover_alarm', 'False');">Alarm off</button></td>
+                                    </tr>
+                                </table>
+                            </td>
                         </tr>
                     </table>
-                    <br/>
+                    <br/><br/>
                     Disable Rover Controller may take a minute to perform and you need to reload this page afterwards (you may get connection error).<br/>
                     <table>
                         <tr>
