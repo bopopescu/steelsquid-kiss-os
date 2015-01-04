@@ -243,7 +243,7 @@ def listen_for_std():
                             if ms > 100:
                                 print ""
                                 steelsquid_utils.log("FROM REMOTE DEVICE:")
-                            print line
+                            print remove_timestamp(line)
                             last_time = cur_time
         except:
             steelsquid_utils.shout()
@@ -253,7 +253,12 @@ def listen_for_std():
                 pass
         time.sleep(2)
             
-    
+def remove_timestamp(line):
+    if len(line)>19:
+        if line[4]=='-' and line[7]=='-' and line[10]==' ' and line[13]==':' and line[16]==':' and line[19]==' ':
+            return line[20:]
+    return line
+
 
 if __name__ == '__main__':
     load_data()
