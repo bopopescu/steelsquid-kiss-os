@@ -727,6 +727,14 @@ def trex_motor(left, right):
     steelsquid_trex.trex_motor(left, right)
 
 
+def trex_motor_last_change():
+    '''
+    Last timestamp when motor chnge values
+    @return: last time i ms
+    '''
+    return steelsquid_trex.motor_last_change
+
+
 def trex_servo(servo, position):
     '''
     Set servo position

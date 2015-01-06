@@ -59,6 +59,7 @@ import sys
 #If the python3 packages not is in path (quick2wire)
 sys.path.append("/usr/lib/python3/dist-packages")
 import threading
+import time
 import smbus
 import quick2wire.i2c as i2c
 from quick2wire.i2c import I2CMaster, writing_bytes, reading
@@ -71,7 +72,7 @@ i2c_read_bus = i2c.I2CMaster()
 trex_lock = threading.Lock()
 trex_package = [None] * 26
 trex_voltage_f = 8
-
+motor_last_change = 0
 
 def __trex_reset():
     '''
@@ -166,6 +167,8 @@ def trex_motor(left, right):
     0 = stop
     255 = Full speed ahead
     '''
+    global motor_last_change
+    motor_last_change = time.time()*1000
     left = int(left)
     right = int(right)
     trex_lock.acquire()

@@ -338,8 +338,21 @@ def enable_rover():
     steelsquid_piio.servo_position_min = steelsquid_utils.get_parameter("servo_position_min", steelsquid_piio.servo_position_min)
     steelsquid_piio.motor_forward = steelsquid_utils.get_parameter("motor_forward", steelsquid_piio.motor_forward)
     steelsquid_piio.motor_backward = steelsquid_utils.get_parameter("motor_backward", steelsquid_piio.motor_backward)
-    steelsquid_piio.servo(1, steelsquid_piio.servo_position)                
+    steelsquid_piio.servo(1, steelsquid_piio.servo_position)       
+    steelsquid_event.subscribe_to_event("second", on_second, ())         
 
+
+def on_second(args, para):
+    '''
+    If no signal after 1 second stop the rover. (connection lost!!!)
+    '''
+    now = time.time()*1000
+    if now - steelsquid_piio.trex_motor_last_change() > 1000:
+        try:
+            steelsquid_piio.trex_motor(0,0)
+        except:
+            pass
+    
 
 def main():
     '''

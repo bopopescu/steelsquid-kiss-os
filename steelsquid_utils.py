@@ -324,6 +324,7 @@ def shout_time(message, to_lcd=True, debug=False, is_error=False, always_show=Fa
 def debug(message):
     '''
     Shout a debug message with timestamp
+    Not print to LCD and byepass check for sam message in a row
     '''
     message = str(message)
     shout(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " " + message, to_lcd=False, debug=True, is_error=False, always_show=True, leave_on_lcd = False)
@@ -342,8 +343,6 @@ def shout(string=None, to_lcd=True, debug=False, is_error=False, always_show=Fal
     @param leave_on_lcd: Leave the message on the LCD
                          If False the message will disepare after 10 seconds (last permanent message shows) 
     '''
-    if string!=None:
-        string = str(string)
     if debug==False or development():
         global last_shout_message
         global last_shout_time
@@ -354,40 +353,43 @@ def shout(string=None, to_lcd=True, debug=False, is_error=False, always_show=Fal
             if string == None:
                 string = str(exc_type) + ": " + str(exc_value) +"\n"+str(ex)
             else:
+                string = str(string)
                 string = string + "\n" + str(exc_type) + ": " + str(exc_value) +"\n"+str(ex)
             del exc_tb
-        string = str(string)
+        else if string == None:
+            string = str(string)
         do_it = True
-        now = time.time()
-        if last_shout_message != None and last_shout_time != -1:
-            diff = now - last_shout_time
-            if diff > 60:
-                do_it=True
-            elif diff <= 60 and last_shout_message!=string:
-                do_it=True
-            else:
-                do_it=False
-        if do_it or always_show:
+        if not always_show:
+            now = time.time()
+            if last_shout_message != None and last_shout_time != -1:
+                diff = now - last_shout_time
+                if diff > 60:
+                    do_it=True
+                elif diff <= 60 and last_shout_message!=string:
+                    do_it=True
+                else:
+                    do_it=False
+        if do_it:
             last_shout_time = now
             last_shout_message = string
             try:
                 execute_system_command(['shout', string])
             except:
                 pass
-            if get_flag("io"):
-                import steelsquid_piio
-                if is_error:
-                    try:
-                        steelsquid_piio.led_error_flash(None)
-                        steelsquid_piio.sum_flash(None)
-                    except:
-                        pass
-                else:
-                    try:
-                        steelsquid_piio.led_ok_flash(None)
-                    except:
-                        pass
             if to_lcd and is_raspberry_pi():
+                if get_flag("piio"):
+                    import steelsquid_piio
+                    if is_error:
+                        try:
+                            steelsquid_piio.led_error_flash(None)
+                            steelsquid_piio.sum_flash(None)
+                        except:
+                            pass
+                    else:
+                        try:
+                            steelsquid_piio.led_ok_flash(None)
+                        except:
+                            pass
                 if leave_on_lcd:
                     mestime = 0
                 else:
