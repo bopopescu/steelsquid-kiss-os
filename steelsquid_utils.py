@@ -313,11 +313,20 @@ def printb(string):
     print('\033[1m' + string + '\033[0m')
 
 
-def shout_time(message):
+def shout_time(message, to_lcd=True, debug=False, is_error=False, always_show=False, leave_on_lcd = False):
     '''
     Shout with time
     '''
-    shout(datetime.datetime.now().strftime("%H:%M:%S") + "\n" + message)
+    message = str(message)
+    shout(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " " + message, to_lcd, debug, is_error, always_show, leave_on_lcd)
+
+
+def debug(message):
+    '''
+    Shout a debug message with timestamp
+    '''
+    message = str(message)
+    shout(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " " + message, to_lcd=False, debug=True, is_error=False, always_show=True, leave_on_lcd = False)
 
 
 def shout(string=None, to_lcd=True, debug=False, is_error=False, always_show=False, leave_on_lcd = False):
@@ -333,6 +342,8 @@ def shout(string=None, to_lcd=True, debug=False, is_error=False, always_show=Fal
     @param leave_on_lcd: Leave the message on the LCD
                          If False the message will disepare after 10 seconds (last permanent message shows) 
     '''
+    if string!=None:
+        string = str(string)
     if debug==False or development():
         global last_shout_message
         global last_shout_time

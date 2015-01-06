@@ -252,8 +252,8 @@
                     <br/>
                     <table style="width:100%">
                         <tr>
-                            <td style="width:50%"><button id="but_normal" style="text-decoration: underline;" onclick="javascript:$('#stream_img').removeClass('flip-vertical');$('#but_normal').css({'text-decoration':'underline'});;$('#but_flip').css({'text-decoration':'none'});">Camera normal</button></td>
-                            <td style="width:50%"><button id="but_flip" onclick="javascript:$('#stream_img').removeClass('flip-vertical').addClass('flip-vertical');$('#but_normal').css({'text-decoration':'none'});;$('#but_flip').css({'text-decoration':'underline'});">Camera flip</button></td>
+                            <td style="width:50%"><button id="but_normal" style="text-decoration: underline;" onclick="javascript:$('#stream_img').removeClass('rotate-180');$('#but_normal').css({'text-decoration':'underline'});;$('#but_flip').css({'text-decoration':'none'});">Camera normal</button></td>
+                            <td style="width:50%"><button id="but_flip" onclick="javascript:$('#stream_img').removeClass('rotate-180').addClass('rotate-180');$('#but_normal').css({'text-decoration':'none'});;$('#but_flip').css({'text-decoration':'underline'});">Camera rotate</button></td>
                         </tr>
                     </table>
                     <br/><br/>
@@ -319,7 +319,7 @@
                     <br/>
                     Below you should see the video from the USB camera.
                     <br/>
-                    <img alt="The stream" id="rover_img" src="" class="flip-vertical"/>
+                    <img alt="The stream" id="rover_img" src="" class="rotate-180"/>
                     <br/><br/>
                     <table style="width:100%">
                         <tr>
@@ -350,8 +350,8 @@
                             <td style="width:33%">
                                 <table style="width:100%">
                                     <tr>
-                                        <td style="width:50%"><button id="rov_normal" onclick="javascript:$('#rover_img').removeClass('flip-vertical');$('#rov_normal').css({'text-decoration':'underline'});;$('#rov_flip').css({'text-decoration':'none'});">Cam norm</button></td>
-                                        <td style="width:50%"><button id="rov_flip" style="text-decoration: underline;" onclick="javascript:$('#rover_img').removeClass('flip-vertical').addClass('flip-vertical');$('#rov_normal').css({'text-decoration':'none'});;$('#rov_flip').css({'text-decoration':'underline'});">Came flip</button></td>
+                                        <td style="width:50%"><button id="rov_normal" onclick="javascript:$('#rover_img').removeClass('rotate-180');$('#rov_normal').css({'text-decoration':'underline'});;$('#rov_flip').css({'text-decoration':'none'});">Cam norm</button></td>
+                                        <td style="width:50%"><button id="rov_flip" style="text-decoration: underline;" onclick="javascript:$('#rover_img').removeClass('rotate-180').addClass('rotate-180');$('#rov_normal').css({'text-decoration':'none'});;$('#rov_flip').css({'text-decoration':'underline'});">Came rotate</button></td>
                                     </tr>
                                 </table>
                             </td>

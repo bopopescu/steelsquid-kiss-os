@@ -1718,9 +1718,9 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         '''
         enabled = steelsquid_utils.get_flag("rover")
         if enabled:
-            import steelsquid_trex
+            import steelsquid_piio
             answer = steelsquid_utils.execute_system_command(['steelsquid-nm', 'system-status'])
-            battery_voltage, _, _, _, _, _, _, _, _ = status = steelsquid_trex.trex_status()
+            battery_voltage, _, _, _, _, _, _, _, _ = steelsquid_piio.trex_status()
             battery_voltage = float(battery_voltage)/100
             if answer[0] == 'None':
                 return [True, "Not connected!", "---", "---", "---", battery_voltage]

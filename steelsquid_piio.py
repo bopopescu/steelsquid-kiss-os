@@ -32,8 +32,16 @@ BUTTON_LEFT = 6
 BUTTON_RIGHT = 5
 BUTTON_SELECT = 7
 
+# Max Servo position
+servo_position_max = 400
+# Min Servo position
+servo_position_min = 140
 # Servo start position
 servo_position = 260
+# Motor max forward
+motor_forward = 255
+# Motor max backward
+motor_backward = -255
 
 
 def cleanup():
@@ -671,8 +679,15 @@ def servo(servo, value):
     Move Adafruit 16-channel I2c servo to position (pwm value)
     @param servo: 1 to 16
     @param value: min=150, max=600 (may differ between servos)
+    Set max/min value in the paramaters: servo_position_max, servo_position_min
     '''
     servo = int(servo)
+    value = int(value)
+    if value>servo_position_max:
+        value = servo_position_max
+    elif value<servo_position_min:
+        value = servo_position_min
+    servo_position = value
     steelsquid_pi.rbada70_move(servo-1, value)
 
 
@@ -681,9 +696,14 @@ def servo_move(servo, value):
     Move Adafruit 16-channel I2c servo to position (pwm value)
     @param servo: 1 to 16
     @param value: increase/decrice with this value (min=150, max=600 (may differ between servos))
+    Set max/min value in the paramaters: servo_position_max, servo_position_min
     '''
     global servo_position
     servo_position = servo_position + int(value)
+    if servo_position>servo_position_max:
+        servo_position = servo_position_max
+    elif servo_position<servo_position_min:
+        servo_position = servo_position_min
     servo = int(servo)
     steelsquid_pi.rbada70_move(servo-1, servo_position)
 

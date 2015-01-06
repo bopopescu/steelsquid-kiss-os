@@ -70,7 +70,7 @@ i2c_write_bus = smbus.SMBus(1)
 i2c_read_bus = i2c.I2CMaster()
 trex_lock = threading.Lock()
 trex_package = [None] * 26
-trex_voltage_f = 100
+trex_voltage_f = 8
 
 
 def __trex_reset():
@@ -119,6 +119,7 @@ def __trex_status():
     Read status from trex
     Return as a byte array
     '''
+    import steelsquid_utils
     answer = i2c_read_bus.transaction(i2c.reading(TREX_ADDRESS, 24))[0]
     return map(ord, answer)
 
@@ -207,7 +208,7 @@ def trex_status():
     Return tuple: battery_voltage, left_motor_current, right_motor_current, accelerometer_x, accelerometer_y, accelerometer_z, impact_x, impact_y, impact_z
     '''
     b = __trex_status()
-    battery_voltage =  __hight_low_int(b[2], b[2]) + trex_voltage_f
+    battery_voltage =  __hight_low_int(b[2], b[3]) + trex_voltage_f
     left_motor_current =  __hight_low_int(b[4], b[5])
     right_motor_current =  __hight_low_int(b[8], b[9])
     accelerometer_x =  __hight_low_int(b[12], b[13])

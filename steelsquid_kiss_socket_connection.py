@@ -157,7 +157,9 @@ class SteelsquidKissSocketServer(steelsquid_socket_connection.SteelsquidSocketCo
         '''
         '''
         import steelsquid_piio
-        return [steelsquid_piio.gpio_22_xv_toggle_current(2), steelsquid_piio.gpio_22_xv_toggle_current(1)]
+        battery_voltage, _, _, _, _, _, _, _, _ = steelsquid_piio.trex_status()
+        battery_voltage = float(battery_voltage)/100
+        return [steelsquid_piio.gpio_22_xv_toggle_current(2), steelsquid_piio.gpio_22_xv_toggle_current(1), battery_voltage, steelsquid_piio.servo_position, steelsquid_piio.servo_position_min, steelsquid_piio.servo_position_max, steelsquid_piio.motor_backward, steelsquid_piio.motor_forward]
         
 
     def rover_info_response(self, parameters):
@@ -172,23 +174,21 @@ class SteelsquidKissSocketServer(steelsquid_socket_connection.SteelsquidSocketCo
         pass
 
 
-    def rover_cam_request(self, parameters):
+    def rover_tilt_request(self, parameters):
         '''
         '''
         import steelsquid_piio
-        if parameters[0]=="True":
-            steelsquid_piio.servo_move(1, 10)
-        else:
-            steelsquid_piio.servo_move(1, -10)
+        value = int(parameters[0])
+        steelsquid_piio.servo(1, value)
         
 
-    def rover_cam_response(self, parameters):
+    def rover_tilt_response(self, parameters):
         '''
         '''
         pass
         
 
-    def rover_cam_error(self, parameters):
+    def rover_tilt_error(self, parameters):
         '''
         '''
         pass

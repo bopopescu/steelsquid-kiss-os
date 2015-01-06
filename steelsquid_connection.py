@@ -245,19 +245,20 @@ class SteelsquidConnection(object):
                     the_answer = fn([steelsquid_utils.decode_string(str(parameters))])
             else:
                 the_answer = fn([])
-            if the_answer == None:
-                return []
-            elif isinstance(the_answer, (list)):
-                count = 0
-                for string in the_answer:
-                    the_answer[count] = steelsquid_utils.encode_string(str(string))
-                    count = count + 1
-                return the_answer
-            else:
-                return [steelsquid_utils.encode_string(str(the_answer))]
+            if the_answer != None:
+                if isinstance(the_answer, (list)):
+                    count = 0
+                    for string in the_answer:
+                        the_answer[count] = steelsquid_utils.encode_string(str(string))
+                        count = count + 1
+                    return the_answer
+                else:
+                    return [steelsquid_utils.encode_string(str(the_answer))]
         except RuntimeError, err:
+            steelsquid_utils.shout(debug=True)
             raise err
         except:
+            steelsquid_utils.shout(debug=True)
             import traceback                
             import sys
             exc_type, exc_value, exc_traceback = sys.exc_info()

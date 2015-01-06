@@ -333,7 +333,12 @@ def enable_rover():
     Enable the rover functionality
     '''    
     import steelsquid_piio
-    steelsquid_piio.servo_move(1, 0)                
+    steelsquid_piio.servo_position = steelsquid_utils.get_parameter("servo_position", steelsquid_piio.servo_position)
+    steelsquid_piio.servo_position_max = steelsquid_utils.get_parameter("servo_position_max", steelsquid_piio.servo_position_max)
+    steelsquid_piio.servo_position_min = steelsquid_utils.get_parameter("servo_position_min", steelsquid_piio.servo_position_min)
+    steelsquid_piio.motor_forward = steelsquid_utils.get_parameter("motor_forward", steelsquid_piio.motor_forward)
+    steelsquid_piio.motor_backward = steelsquid_utils.get_parameter("motor_backward", steelsquid_piio.motor_backward)
+    steelsquid_piio.servo(1, steelsquid_piio.servo_position)                
 
 
 def main():

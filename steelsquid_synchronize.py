@@ -253,7 +253,7 @@ def listen_for_std():
                 pass
         time.sleep(2)
             
-def remove_timestamp(line):
+def remove_timestamp(line): 
     if len(line)>19:
         if line[4]=='-' and line[7]=='-' and line[10]==' ' and line[13]==':' and line[16]==':' and line[19]==' ':
             return line[20:]
