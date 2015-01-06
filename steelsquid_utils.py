@@ -356,7 +356,7 @@ def shout(string=None, to_lcd=True, debug=False, is_error=False, always_show=Fal
                 string = str(string)
                 string = string + "\n" + str(exc_type) + ": " + str(exc_value) +"\n"+str(ex)
             del exc_tb
-        else if string == None:
+        elif string == None:
             string = str(string)
         do_it = True
         if not always_show:
