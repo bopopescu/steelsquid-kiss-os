@@ -1110,24 +1110,86 @@ def nokia5110_write(text, number_of_seconds = 0, force_setup = False):
             nokia_lcd.display()
 
 
+def ssd1306_write(text, number_of_seconds = 0):
+    '''
+    Print text to ssd1306 oled  LCD
+    @param text: Text to write (\n or \\ = new line)
+    @param number_of_seconds: How long to show this message, then show the last message again (if there was one)
+                              < 1 Show for ever
+    EX1: Message in the screen: A message
+         lcd_write("A new message", number_of_seconds = 10)
+         Message in the screen: A new message
+         After ten seconds:
+         Message in the screen: A message
+    EX2: Message in the screen: 
+         lcd_write("A new message", number_of_seconds = 10)
+         Message in the screen: A new message
+         After ten seconds:
+         Message in the screen: A new message
+    The text can also be a list, will join the list with spaces between.
+    '''
+    import steelsquid_oled_ssd1306
+    global lcd_last_text
+    if number_of_seconds > 0 and len(lcd_last_text) > 0:
+        steelsquid_utils.execute_delay(number_of_seconds, ssd1306_write, (None))
+        ssd1306_write(text, -111)
+    else:
+        with lock:
+            if text == None:
+                text = lcd_last_text
+            elif number_of_seconds != -111:
+                lcd_last_text = text
+            if isinstance(text, list):
+                l = []
+                for arg in text:
+                    l.append(arg)
+                    l.append(" ")
+                if len(l) > 0:
+                    l = l[:-1]
+                text = ''.join(l)
+            text = text.replace("\\", "\n")
+            if len(text)>25 and "\n" not in text:
+                text = "".join(text[i:i+25] + "\n" for i in xrange(0,len(text),25))
+            sli = text.split("\n")
+            i = 1
+            steelsquid_oled_ssd1306.init()
+            for line in sli:
+                if len(line)>25:
+                    line = line[:25]
+                steelsquid_oled_ssd1306.write(line, 2, i)
+                i = i + 10
+                if i > 61:
+                    break
+            steelsquid_oled_ssd1306.show()
+
+
 def lcd_auto_write(text, number_of_seconds = 0, force_setup = False):
     global lcd_auto
     if lcd_auto == 0:
         try:
-            nokia5110_write(text, number_of_seconds, force_setup)
+            ssd1306_write(text, number_of_seconds)
             lcd_auto = 1
         except:
             try:
-                hdd44780_write(text, number_of_seconds, force_setup, True)
+                nokia5110_write(text, number_of_seconds, force_setup)
                 lcd_auto = 2
             except:
-                lcd_auto = 3
+                try:
+                    hdd44780_write(text, number_of_seconds, force_setup, True)
+                    lcd_auto = 3
+                except:
+                    lcd_auto = 4
     elif lcd_auto == 1:
+        try:
+            ssd1306_write(text, number_of_seconds)
+        except:
+           lcd_auto = 0
+    elif lcd_auto == 2:
         try:
             nokia5110_write(text, number_of_seconds, force_setup)
         except:
            lcd_auto = 0
-    elif lcd_auto == 2:
+    elif lcd_auto == 3:
         try:
             hdd44780_write(text, number_of_seconds, force_setup, True)       
         except:

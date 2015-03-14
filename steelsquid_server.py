@@ -72,7 +72,7 @@ class SteelsquidServer(object):
         @param listener: The listener (Can be None)
         @param error: The error (Can be None)
         '''
-        steelsquid_utils.shout("Listener closed", debug=True)
+        steelsquid_utils.shout("Server: Listener closed", debug=True)
 
     def on_client_command(self, client):
         '''
@@ -105,7 +105,7 @@ class SteelsquidServer(object):
         @param client: Close this client
         @param error: optionally error (Can be None)
         '''
-        steelsquid_utils.shout("Client closed: " + str(client), debug=True)
+        steelsquid_utils.shout("Server: Client closed\n" + str(client), debug=True)
 
 
     def start_server(self):

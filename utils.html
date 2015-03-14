@@ -43,7 +43,7 @@
              */
             function onEvery30s(){
                 if (isLayerShowing('rover')){
-                    submitNoPW('rover');
+                    submitNoPW('rover_info');
                 }
             }
 
@@ -55,48 +55,10 @@
                     submitNoPW('stream');
                 }
                 if(layer == "rover"){
-                    submitNoPW('rover');
+                    submitNoPW('rover_info');
                     $("#rover_img").attr("src", "http://"+window.location.hostname+":8080/?action=stream");       
                 }
-            }
-            
-            /**
-             * On submit command
-             */
-            function onWork(command){
-            }
-
-            /**
-             * On answer from submit dommand
-             */
-            function onSleep(command){
-            }
-
-            
-            /**
-             * On window resize
-             */
-            function onResize(width, height){
-            }                
-            
-            /**
-             * On rover
-             */
-            function on_rover(paramaters){
-                if(paramaters[0] == "True"){
-                    show('rover_enabled');
-                    hide('rover_disabled');
-                    $("#wifi_connected").html(paramaters[1]);
-                    $("#wifi_wired").html(paramaters[2]);
-                    $("#wifi_wifi").html(paramaters[3]);
-                    $("#wifi_wan").html(paramaters[4]);
-                    $("#rover_voltage").html(paramaters[5]);
-                }
-                else{
-                    hide('rover_enabled');
-                    show('rover_disabled');
-                }
-            }
+            }           
 
             /**
              * On stream
@@ -112,6 +74,57 @@
                 else{
                     hide('stream_enabled');
                     show('stream_disabled');
+                }
+            }
+            
+            /**
+             * On rover
+             */
+            function on_rover_info(paramaters){
+                if(paramaters[0] == "True"){
+                    show('rover_enabled');
+                    hide('rover_disabled');
+                    $("#rover_voltage").html(paramaters[1]);
+                    if(paramaters[2] == "True"){
+                        $("#rover_light").html("Enabled");
+                    }
+                    else{
+                        $("#rover_light").html("Disabled");
+                    }
+                    if(paramaters[3] == "True"){
+                        $("#rover_alarm").html("Enabled");
+                    }
+                    else{
+                        $("#rover_alarm").html("Disabled");
+                    }
+                }
+                else{
+                    hide('rover_enabled');
+                    show('rover_disabled');
+                }
+            }
+
+            /**
+             * On rover
+             */
+            function on_rover_light(paramaters){
+                if(paramaters[0] == "True"){
+                    $("#rover_light").html("Enabled");
+                }
+                else{
+                    $("#rover_light").html("Disabled");
+                }
+            }
+
+            /**
+             * On rover
+             */
+            function on_rover_alarm(paramaters){
+                if(paramaters[0] == "True"){
+                    $("#rover_alarm").html("Enabled");
+                }
+                else{
+                    $("#rover_alarm").html("Disabled");
                 }
             }
             
@@ -301,19 +314,19 @@
                     <br/><br/>
                     <table class="keyvalue">
                         <tr>
-                            <td>Connected to network:</td><td class="highlight" id="wifi_connected">---</td>
-                        </tr>
-                        <tr>
-                            <td>Network Wired IP:</td><td id="wifi_wired">---</td>
-                        </tr>
-                        <tr>
-                            <td>Network Wifi IP:</td><td id="wifi_wifi">---</td>
-                        </tr>
-                        <tr>
-                            <td>Internet IP:</td><td id="wifi_wan">---</td>
-                        </tr>
-                        <tr>
                             <td>Battery voltage:</td><td id="rover_voltage">---</td>
+                        <tr>
+                        </tr>
+                            <td>Light:</td><td id="rover_light">---</td>
+                        <tr>
+                        </tr>
+                            <td>Alarm:</td><td id="rover_alarm">---</td>
+                        </tr>
+                    </table>
+                    <table>
+                        <tr>
+                            <td style="width:50%"><button id="rov_normal" onclick="javascript:$('#rover_img').removeClass('rotate-180');$('#rov_normal').css({'text-decoration':'underline'});;$('#rov_flip').css({'text-decoration':'none'});">Cam norm</button></td>
+                            <td style="width:50%"><button id="rov_flip" style="text-decoration: underline;" onclick="javascript:$('#rover_img').removeClass('rotate-180').addClass('rotate-180');$('#rov_normal').css({'text-decoration':'none'});;$('#rov_flip').css({'text-decoration':'underline'});">Came rotate</button></td>
                         </tr>
                     </table>
                     <br/>
@@ -323,23 +336,9 @@
                     <br/><br/>
                     <table style="width:100%">
                         <tr>
-                            <td style="width:33%">
-                                <table style="width:100%">
-                                    <tr>
-                                        <td style="width:50%"><button onclick="javascript:submitAsync('rover_cam', 'True');">Cam up</button></td>
-                                        <td style="width:50%"><button onclick="javascript:submitAsync('rover_cam', 'False');">Cam down</button></td>
-                                    </tr>
-                                </table>
-                            </td>
+                            <td style="width:33%"><button onclick="javascript:submitAsync('rover_tilt', 'True');">Tilt up</button></td>
                             <td style="width:33%"><button style="font-weight:bold" onclick="javascript:submitAsync('rover_forward');">Forward</button></td>
-                            <td style="width:33%">
-                                <table style="width:100%">
-                                    <tr>
-                                        <td style="width:50%"><button onclick="javascript:submitAsync('rover_light', 'True');">Light on</button></td>
-                                        <td style="width:50%"><button onclick="javascript:submitAsync('rover_light', 'False');">Light off</button></td>
-                                    </tr>
-                                </table>
-                            </td>
+                            <td style="width:33%"><button onclick="javascript:submitSync('rover_light');">Toggle light</button></td>
                         </tr>
                         <tr>
                             <td style="width:33%"><button style="font-weight:bold" onclick="javascript:submitAsync('rover_left');">Left</button></td>
@@ -347,23 +346,9 @@
                             <td style="width:33%"><button style="font-weight:bold" onclick="javascript:submitAsync('rover_right');">Right</button></td>
                         </tr>
                         <tr>
-                            <td style="width:33%">
-                                <table style="width:100%">
-                                    <tr>
-                                        <td style="width:50%"><button id="rov_normal" onclick="javascript:$('#rover_img').removeClass('rotate-180');$('#rov_normal').css({'text-decoration':'underline'});;$('#rov_flip').css({'text-decoration':'none'});">Cam norm</button></td>
-                                        <td style="width:50%"><button id="rov_flip" style="text-decoration: underline;" onclick="javascript:$('#rover_img').removeClass('rotate-180').addClass('rotate-180');$('#rov_normal').css({'text-decoration':'none'});;$('#rov_flip').css({'text-decoration':'underline'});">Came rotate</button></td>
-                                    </tr>
-                                </table>
-                            </td>
+                            <td style="width:33%"><button onclick="javascript:submitAsync('rover_tilt', 'false');">Tilt down</button></td>
                             <td style="width:33%"><button style="font-weight:bold" onclick="javascript:submitAsync('rover_backward');">Backward</button></td>
-                            <td style="width:33%">
-                                <table>
-                                    <tr style="width:100%">
-                                        <td style="width:50%"><button onclick="javascript:submitAsync('rover_alarm', 'True');">Alarm on</button></td>
-                                        <td style="width:50%"><button onclick="javascript:submitAsync('rover_alarm', 'False');">Alarm off</button></td>
-                                    </tr>
-                                </table>
-                            </td>
+                            <td style="width:33%"><button onclick="javascript:submitSync('rover_alarm');">Toggle alarm</button></td>
                         </tr>
                     </table>
                     <br/><br/>

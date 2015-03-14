@@ -41,8 +41,7 @@ class SteelsquidSocketConnection(steelsquid_connection.SteelsquidConnection):
         '''
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        steelsquid_utils.shout("Started as client", debug=True)
-        steelsquid_utils.shout("S Client: " + str(self.port) + "\n"+self.host)
+        steelsquid_utils.shout("Socket Connection: Client\n"+self.host +":"+ str(self.port), debug=True)
         return sock
 
 
@@ -58,7 +57,7 @@ class SteelsquidSocketConnection(steelsquid_connection.SteelsquidConnection):
         s.settimeout(2)
         s.bind(('', self.port))
         s.listen(3)
-        steelsquid_utils.shout("Socket Server\n" + str(self.port))
+        steelsquid_utils.shout("Socket Connection: Server "+str(self.port), debug=True)
         return s
 
 
@@ -71,7 +70,7 @@ class SteelsquidSocketConnection(steelsquid_connection.SteelsquidConnection):
         @return: connection_object (the connection_object object)
         '''
         connection_object.connect((self.host, self.port))
-        steelsquid_utils.shout("Connected to client", debug=True)
+        steelsquid_utils.shout("Socket Connection: Connected to client", debug=True)
         return connection_object
 
 
@@ -85,7 +84,7 @@ class SteelsquidSocketConnection(steelsquid_connection.SteelsquidConnection):
         '''
         try:
             sock, _ = listener_object.accept()
-            steelsquid_utils.shout("Client connected", debug=True)
+            steelsquid_utils.shout("Socket Connection: Client connected", debug=True)
             return sock
         except socket.timeout:
             return None
@@ -141,7 +140,7 @@ class SteelsquidSocketConnection(steelsquid_connection.SteelsquidConnection):
         @param server_object: The connection (Can be None)
         @param error_message: I a error (Can be None)
         '''
-        steelsquid_utils.shout("Connection closed: "+ error_message, debug=True)
+        steelsquid_utils.shout("Socket Connection: Connection closed\n"+ error_message, debug=True)
         connection_object.close()
 
     
@@ -152,7 +151,7 @@ class SteelsquidSocketConnection(steelsquid_connection.SteelsquidConnection):
         @param listener_object: The listener (Can be None)
         @param error_message: I a error (Can be None)
         '''
-        steelsquid_utils.shout("Listener closed: " + error_message, debug=True)
+        steelsquid_utils.shout("Socket Connection: Listener closed: " + error_message, debug=True)
         listener_object.close()
 
 

@@ -383,7 +383,7 @@ def event_executer(event, subs, parameters):
                 else:
                     function(args, parameters)
         if event == "shutdown":
-            deactivate_event_handler()
+            __deactivate_event_handle()
     except:
         if event != "shout":
             steelsquid_utils.shout()
@@ -402,10 +402,36 @@ def activate_event_handler(create_ner_thread=True):
         event_work()
 
 
+def __deactivate_event_handler():
+    '''
+    Stop the event handler (if get shutdown event)
+    '''
+    try:
+        global running
+        running = False
+        for sub in subscribers_loop:
+            sub[2] = False
+        del subscribers_loop[:]
+        del subscribers_second[:]
+        del subscribers_seconds[:]
+        del subscribers[:]
+    except:
+        pass
+
+
 def deactivate_event_handler():
     '''
     Stop the event handler
     '''
+    try:
+        for e, function, args, long_running in subscribers:
+            if e == "shutdown":
+                if long_running:
+                    thread.start_new_thread(function, (args, None))
+                else:
+                    function(args, None)
+    except:
+        pass
     try:
         global running
         running = False

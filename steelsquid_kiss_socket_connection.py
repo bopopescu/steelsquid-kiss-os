@@ -13,6 +13,7 @@ Socket inplementation of steelsquid_connection...
 '''
 
 
+import steelsquid_kiss_global
 import steelsquid_socket_connection
 import steelsquid_utils
 import socket
@@ -69,45 +70,19 @@ class SteelsquidKissSocketServer(steelsquid_socket_connection.SteelsquidSocketCo
         listener_object.close()
 
 
-    def on_start(self):
-        '''
-        Override this to do start on start
-        '''
-        steelsquid_utils.shout("Socket connection started")
-        if steelsquid_utils.get_flag("rover"):
-            steelsquid_utils.shout("Rover enabled")
-        try:
-            steelsquid_pi_board.sabertooth_set_speed(0, 0)
-        except:
-            pass
-
-
-    def on_stop(self):
-        '''
-        Override this to do start on stop
-        '''
-        try:
-            steelsquid_pi_board.sabertooth_set_speed(0, 0)
-        except:
-            pass
-
-
-    def rover_drive_request(self, parameters):
+    def rover_info_request(self, parameters):
         '''
         '''
-        import steelsquid_piio
-        left = int(parameters[0])
-        right = int(parameters[1])
-        steelsquid_piio.trex_motor(left, right)
+        return steelsquid_kiss_global.Rover.info()
         
 
-    def rover_drive_response(self, parameters):
+    def rover_info_response(self, parameters):
         '''
         '''
         pass
         
 
-    def rover_drive_error(self, parameters):
+    def rover_info_error(self, parameters):
         '''
         '''
         pass
@@ -116,10 +91,7 @@ class SteelsquidKissSocketServer(steelsquid_socket_connection.SteelsquidSocketCo
     def rover_light_request(self, parameters):
         '''
         '''
-        import steelsquid_piio
-        status = steelsquid_piio.gpio_22_xv_toggle(2)
-        steelsquid_piio.gpio_22_xv(3, status)
-        return status
+        return steelsquid_kiss_global.Rover.light()
         
 
     def rover_light_response(self, parameters):
@@ -137,8 +109,7 @@ class SteelsquidKissSocketServer(steelsquid_socket_connection.SteelsquidSocketCo
     def rover_alarm_request(self, parameters):
         '''
         '''
-        import steelsquid_piio
-        return steelsquid_piio.gpio_22_xv_toggle(1)
+        return steelsquid_kiss_global.Rover.alarm()
         
 
     def rover_alarm_response(self, parameters):
@@ -153,33 +124,10 @@ class SteelsquidKissSocketServer(steelsquid_socket_connection.SteelsquidSocketCo
         pass
 
 
-    def rover_info_request(self, parameters):
-        '''
-        '''
-        import steelsquid_piio
-        battery_voltage, _, _, _, _, _, _, _, _ = steelsquid_piio.trex_status()
-        battery_voltage = float(battery_voltage)/100
-        return [steelsquid_piio.gpio_22_xv_toggle_current(2), steelsquid_piio.gpio_22_xv_toggle_current(1), battery_voltage, steelsquid_piio.servo_position, steelsquid_piio.servo_position_min, steelsquid_piio.servo_position_max, steelsquid_piio.motor_backward, steelsquid_piio.motor_forward]
-        
-
-    def rover_info_response(self, parameters):
-        '''
-        '''
-        pass
-        
-
-    def rover_info_error(self, parameters):
-        '''
-        '''
-        pass
-
-
     def rover_tilt_request(self, parameters):
         '''
         '''
-        import steelsquid_piio
-        value = int(parameters[0])
-        steelsquid_piio.servo(1, value)
+        steelsquid_kiss_global.Rover.tilt(parameters[0])
         
 
     def rover_tilt_response(self, parameters):
@@ -197,10 +145,7 @@ class SteelsquidKissSocketServer(steelsquid_socket_connection.SteelsquidSocketCo
     def rover_drive_request(self, parameters):
         '''
         '''
-        import steelsquid_piio
-        left = int(parameters[0])
-        right = int(parameters[1])
-        steelsquid_piio.trex_motor(left, right)
+        steelsquid_kiss_global.Rover.drive(parameters[0], parameters[1])
         
 
     def rover_drive_response(self, parameters):

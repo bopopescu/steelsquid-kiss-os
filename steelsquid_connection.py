@@ -158,7 +158,7 @@ class SteelsquidConnection(object):
         @param server_object: The connection (Can be None)
         @param error_message: I a error (Can be None)
         '''
-        steelsquid_utils.shout("Connection closed", debug=True)
+        steelsquid_utils.shout("Connection: Connection closed", debug=True)
 
     
     def on_close_listener(self, listener_object, error_message):
@@ -168,7 +168,7 @@ class SteelsquidConnection(object):
         @param listener_object: The listener (Can be None)
         @param error_message: I a error (Can be None)
         '''
-        steelsquid_utils.shout("Listener closed", debug=True)
+        steelsquid_utils.shout("Connection: Listener closed", debug=True)
 
 
     def on_start(self):

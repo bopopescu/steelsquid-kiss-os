@@ -64,7 +64,7 @@ python_downloads[11]="$base/steelsquid_kiss_http_expand.py"
 python_downloads[12]="$base/steelsquid_kiss_socket_connection.py"
 python_downloads[13]="$base/steelsquid_kiss_socket_expand.py"
 python_downloads[14]="$base/steelsquid_pi.py"
-python_downloads[15]="$base/steelsquid_piio.py"
+python_downloads[15]="$base/steelsquid_io.py"
 python_downloads[16]="$base/steelsquid_gpio_set.py"
 python_downloads[17]="$base/steelsquid_gpio_get.py"
 python_downloads[18]="$base/steelsquid_gpio_event.py"
@@ -82,6 +82,7 @@ python_downloads[29]="$base/steelsquid_ads1015.py"
 python_downloads[30]="$base/steelsquid_mcp4725.py"
 python_downloads[31]="$base/steelsquid_mcp4728.py"
 python_downloads[32]="$base/steelsquid_synchronize.py"
+python_downloads[33]="$base/steelsquid_oled_ssd1306.py"
 
 # Links to python_downloads
 python_links[1]="/usr/bin/steelsquid-boot"
@@ -98,7 +99,7 @@ python_links[11]="/usr/bin/dummy"
 python_links[12]="/usr/bin/dummy"
 python_links[13]="/usr/bin/dummy"
 python_links[14]="/usr/bin/dummy"
-python_links[15]="/usr/bin/piio"
+python_links[15]="/usr/bin/io"
 python_links[16]="/usr/bin/gpio-set"
 python_links[17]="/usr/bin/gpio-get"
 python_links[18]="/usr/bin/gpio-event"
@@ -116,6 +117,7 @@ python_links[29]="/usr/bin/ads1015"
 python_links[30]="/usr/bin/mcp4725"
 python_links[31]="/usr/bin/mcp4728"
 python_links[32]="/usr/bin/synchronize"
+python_links[33]="/usr/bin/ssd1306"
 
 # Download to web root folder
 web_root_downloads[1]="$base/index.html"
@@ -846,6 +848,10 @@ function help_io()
     echo "Print message to nokia5110 LCD connected via spi."
     echo "See http://www.steelsquid.org/pi-io-example"
     echo 
+    echb "lcd-message ssd <message>"
+    echo "Print message to ssd1306 oled LCD connected via spi."
+    echo "See http://www.steelsquid.org/pi-io-example"
+    echo 
     echb "distance <GPIO for Trig> <GPIO for Echo>"
     echo "Measure_distance with a with HC-SR04"
     echo "See http://www.steelsquid.org/pi-io-example"
@@ -854,7 +860,7 @@ function help_io()
     echo "Is this device a raspberry pi"
     echo 
     echb "lcd"
-    echo "Is LCD disabled/nokia5110/HDD44780"
+    echo "Is LCD disabled/nokia5110/HDD44780/ssd1306"
     echo 
     echb "lcd-hdd"
     echo "Enable the LCD via HDD44780 (i2c)"
@@ -862,8 +868,11 @@ function help_io()
     echb "lcd-nokia"
     echo "Enable the LCD via nokia5110 (spi)"
     echo 
+    echb "lcd-ssd"
+    echo "Enable the LCD via ssd1306 oled (02c)"
+    echo 
     echb "lcd-auto"
-    echo "Try to use nokia5110 or HDD44780"
+    echo "Try to use nokia5110/HDD44780/ssd1306"
     echo 
     echb "lcd-off"
     echo "Disable the LCD"
@@ -898,8 +907,8 @@ function help_io()
     echb "sabertooth"
     echo "A simple serial interface for Sabertooth motor controller."
     echo 
-    echb "piio"
-    echo "Comands for my Steelsquid PIIO board."
+    echb "io"
+    echo "Comands for my Steelsquid IO board."
 }
 if [ "$in_parameter_1" == "help-io" ]; then
     echo 
@@ -988,7 +997,7 @@ function help_files()
     echb "/opt/steelsquid/python/steelsquid_http_server.py"
     echo "Python http server"
     echo 
-    echb "/opt/steelsquid/python/steelsquid_piio.py"
+    echb "/opt/steelsquid/python/steelsquid_io.py"
     echo "Mostly wrapper functions for my steelsquid IO board"
     echo 
     echb "/opt/steelsquid/python/steelsquid_kiss_global.py"
@@ -1008,6 +1017,9 @@ function help_files()
     echo 
     echb "/opt/steelsquid/python/steelsquid_lcd_hdd44780.py"
     echo "Print message to HDD44780 compatible LCD"
+    echo 
+    echb "/opt/steelsquid/python/steelsquid_oled_ssd1306.py"
+    echo "Print message to ssd1306 oled compatible LCD"
     echo 
     echb "/opt/steelsquid/python/steelsquid_lcd_nokia5110.py"
     echo "Print message to nokia511 LCD"
@@ -1051,7 +1063,7 @@ function help_files()
     echb "/opt/steelsquid/python/steelsquid_utils.py"
     echo "Python utils"
     echo 
-    echb "/opt/steelsquid/python/run"
+    echb "/opt/steelsquid/python/expand"
     echo "All python scrips in this folder will be imported (executed) on boot."
     echo "Use this to inmplement your own stuff."
     echo 
@@ -1189,13 +1201,13 @@ function help_utils()
     echo "Disable streaming of camera."
     if [ $(is-raspberry-pi) == "true" ]; then
         echo 
-        echb "steelsquid piio"
-        echo "Is this a Steelsquid PIIO Board."
+        echb "steelsquid io"
+        echo "Is this a Steelsquid IO Board."
         echo 
-        echb "steelsquid piio-on"
+        echb "steelsquid io-on"
         echo "Enable Steelsquid IO Board."
         echo 
-        echb "steelsquid piio-off"
+        echb "steelsquid io-off"
         echo "Disable Steelsquid IO Board."
         echo 
         echb "steelsquid rover"
@@ -1640,6 +1652,10 @@ function lcd_info()
         echo
         echo "LCD is enabled (HDD44780)"
         echo
+    elif [ $(get-flag "ssd") == "true" ]; then
+        echo
+        echo "LCD is enabled (ssd1306)"
+        echo
     elif [ $(get-flag "auto") == "true" ]; then
         echo
         echo "LCD in automatic mode"
@@ -1666,6 +1682,7 @@ function enable_lcd_nokia()
 	set-flag "nokia"
 	del-flag "hdd"
 	del-flag "auto"
+	del-flag "ssd"
     systemctl restart steelsquid
 	log-ok
 }
@@ -1684,6 +1701,7 @@ function enable_lcd_auto()
 	set-flag "auto"
 	del-flag "nokia"
 	del-flag "hdd"
+	del-flag "ssd"
     systemctl restart steelsquid
 	log-ok
 }
@@ -1702,11 +1720,31 @@ function enable_lcd_hdd()
 	set-flag "hdd"
 	del-flag "nokia"
 	del-flag "auto"
+	del-flag "ssd"
     systemctl restart steelsquid
 	log-ok
 }
 if [ "$in_parameter_1" == "lcd-hdd" ]; then
 	enable_lcd_hdd
+	exit 0
+fi
+
+
+##################################################################################
+# Enable print IP to lcd
+##################################################################################
+function enable_lcd_ssd()
+{
+	log "Enable print IP and messges to ssd1306 oled LCD"
+	del-flag "hdd"
+	del-flag "nokia"
+	del-flag "auto"
+	set-flag "ssd"
+    systemctl restart steelsquid
+	log-ok
+}
+if [ "$in_parameter_1" == "lcd-ssd" ]; then
+	enable_lcd_ssd
 	exit 0
 fi
 
@@ -1720,6 +1758,7 @@ function disable_lcd()
 	del-flag "nokia"
 	del-flag "hdd"
 	del-flag "auto"
+	del-flag "ssd"
     systemctl restart steelsquid
 	log-ok
 }
@@ -1904,10 +1943,10 @@ function rover_on()
 {
 	log "Enable rover"
     set-flag "rover"
-    set-flag "piio"
+    set-flag "io"
     stream_on
     socket_on
-    enable_lcd_nokia
+    enable_lcd_ssd
     log-ok
 }
 if [ "$in_parameter_1" == "rover-on" ]; then
@@ -1937,17 +1976,17 @@ fi
 ##################################################################################
 function io_info()
 {
-    if [ $(get-flag "piio") == "true" ]; then
+    if [ $(get-flag "io") == "true" ]; then
         echo
-        echo "Steelsquid PIIO Board: Enabled"
+        echo "Steelsquid IO Board: Enabled"
         echo
     else
         echo
-        echo "Steelsquid PIIO Board: Disabled"
+        echo "Steelsquid IO Board: Disabled"
         echo
     fi
 }
-if [ "$in_parameter_1" == "piio" ]; then
+if [ "$in_parameter_1" == "io" ]; then
 	io_info
 	exit 0
 fi
@@ -1958,13 +1997,13 @@ fi
 ##################################################################################
 function io_on()
 {
-	log "Enable Steelsquid PIIO Board"
-    set-flag "piio"
-    enable_lcd_nokia
+	log "Enable Steelsquid IO Board"
+    set-flag "io"
+    enable_lcd_ssd
 	systemctl restart steelsquid
     log-ok
 }
-if [ "$in_parameter_1" == "piio-on" ]; then
+if [ "$in_parameter_1" == "io-on" ]; then
 	io_on
 	exit 0
 fi
@@ -1976,11 +2015,11 @@ fi
 function io_off()
 {
 	log "Disable Steelsquid IO Board"
-    del-flag "piio"
+    del-flag "io"
 	systemctl restart steelsquid
     log-ok
 }
-if [ "$in_parameter_1" == "piio-off" ]; then
+if [ "$in_parameter_1" == "io-off" ]; then
 	io_off
 	exit 0
 fi
@@ -3481,8 +3520,8 @@ if [ $(get_installed) == "false" ]; then
         aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv linux-image-rpi-rpfv raspberrypi-bootloader-nokernel i2c-tools alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-ti-connectivity libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer zd1211-firmware libraspberrypi-bin fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw console-data
         aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv linux-image-rpi-rpfv raspberrypi-bootloader-nokernel i2c-tools alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-ti-connectivity libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer zd1211-firmware libraspberrypi-bin fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw console-data
         exit-check 
-        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install build-essential python-dbus python-pexpect python-dev python-setuptools python-pip python-pam python-smbus psmisc git libudev-dev libmount-dev
-        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install build-essential python-dbus python-pexpect python-dev python-setuptools python-pip python-pam python-smbus psmisc git libudev-dev libmount-dev
+        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install build-essential python-dbus python-pexpect python-dev python-setuptools python-pip python-pam python-smbus psmisc git libudev-dev libmount-dev python-imaging
+        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install build-essential python-dbus python-pexpect python-dev python-setuptools python-pip python-pam python-smbus psmisc git libudev-dev libmount-dev python-imaging
         exit-check 
         aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install deborphan network-manager dash nano sudo aptitude udev ntfs-3g console-setup beep ecryptfs-utils alsa-utils alsa-base va-driver-all vdpau-va-driver
         aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install deborphan network-manager dash nano sudo aptitude udev ntfs-3g console-setup beep ecryptfs-utils alsa-utils alsa-base va-driver-all vdpau-va-driver
@@ -3497,8 +3536,8 @@ if [ $(get_installed) == "false" ]; then
         aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv linux-image-rpi-rpfv raspberrypi-bootloader-nokernel i2c-tools alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-ti-connectivity libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer zd1211-firmware libraspberrypi-bin fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw console-data
         aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv linux-image-rpi-rpfv raspberrypi-bootloader-nokernel i2c-tools alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-ti-connectivity libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer zd1211-firmware libraspberrypi-bin fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw console-data
         exit-check 
-        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install build-essential python-dbus python-pexpect python-dev python-setuptools python-pip python-pam python-smbus psmisc git libudev-dev libmount-dev
-        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install build-essential python-dbus python-pexpect python-dev python-setuptools python-pip python-pam python-smbus psmisc git libudev-dev libmount-dev
+        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install build-essential python-dbus python-pexpect python-dev python-setuptools python-pip python-pam python-smbus psmisc git libudev-dev libmount-dev python-imaging
+        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install build-essential python-dbus python-pexpect python-dev python-setuptools python-pip python-pam python-smbus psmisc git libudev-dev libmount-dev python-imaging
         exit-check 
         aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install deborphan network-manager dash nano sudo aptitude udev ntfs-3g console-setup beep ecryptfs-utils alsa-utils alsa-base va-driver-all vdpau-va-driver
         aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install deborphan network-manager dash nano sudo aptitude udev ntfs-3g console-setup beep ecryptfs-utils alsa-utils alsa-base va-driver-all vdpau-va-driver
@@ -3572,20 +3611,12 @@ if [ $(is-raspberry-pi) == "true" ]; then
     cd /tmp
     git clone https://github.com/adafruit/Adafruit_Nokia_LCD.git
     cd Adafruit_Nokia_LCD
-    python setup.py install
+    python setup.py install -f -O2
     log "Adafruit-Raspberry-Pi-Python-Code installed"
 fi
 
-
-
-##################################################################################
-# Change i2c baud rate to 9600
-##################################################################################
-if [ $(is-raspberry-pi) == "true" ]; then
-    log "# Change i2c baud rate to 9600"
-    echo "options i2c_bcm2708 baudrate=9600" > /etc/modprobe.d/i2c.conf
-fi
-
+self._gpio.setup(self._rst, GPIO.OUT)
+self.reset()
 
 
 ##################################################################################
@@ -3616,8 +3647,8 @@ fi
 log "Set pythonpath"
 mkdir /opt/steelsquid/python
 echo "export PYTHONPATH=/opt/steelsquid/python:/usr/lib/python3/dist-packages" > /etc/profile.d/pythonpath.sh
-mkdir /opt/steelsquid/python/run
-echo "" >> /opt/steelsquid/python/run/__init__.py
+mkdir /opt/steelsquid/python/expand
+echo "" >> /opt/steelsquid/python/expand/__init__.py
 
 
 
@@ -4099,6 +4130,7 @@ echo "" >> /etc/systemd/system/steelsquid.service
 echo "[Service]" >> /etc/systemd/system/steelsquid.service
 echo "ExecStart=/usr/bin/steelsquid-boot start" >> /etc/systemd/system/steelsquid.service
 echo "ExecStop=/usr/bin/shout \"Steelsquid service closed.\nIf you shutdown the computer or restart the service this is OK.\nIf this is a error it is probably in steelsquid-boot.py\nYou can enable logging for more info: steelsquid log-on\"" >> /etc/systemd/system/steelsquid.service
+echo "TimeoutStopSec=2" >> /etc/systemd/system/steelsquid.service
 echo "" >> /etc/systemd/system/steelsquid.service
 echo "[Install]" >> /etc/systemd/system/steelsquid.service
 echo "WantedBy=multi-user.target" >> /etc/systemd/system/steelsquid.service

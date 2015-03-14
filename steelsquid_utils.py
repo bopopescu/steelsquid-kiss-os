@@ -377,17 +377,17 @@ def shout(string=None, to_lcd=True, debug=False, is_error=False, always_show=Fal
             except:
                 pass
             if to_lcd and is_raspberry_pi():
-                if get_flag("piio"):
-                    import steelsquid_piio
+                if get_flag("io"):
+                    import steelsquid_io
                     if is_error:
                         try:
-                            steelsquid_piio.led_error_flash(None)
-                            steelsquid_piio.sum_flash(None)
+                            steelsquid_io.led_error_flash(None)
+                            steelsquid_io.sum_flash(None)
                         except:
                             pass
                     else:
                         try:
-                            steelsquid_piio.led_ok_flash(None)
+                            steelsquid_io.led_ok_flash(None)
                         except:
                             pass
                 if leave_on_lcd:
@@ -402,6 +402,11 @@ def shout(string=None, to_lcd=True, debug=False, is_error=False, always_show=Fal
                 elif get_flag("nokia"):
                     try:
                         steelsquid_pi.nokia5110_write(string, mestime, force_setup = False)
+                    except:
+                        pass
+                elif get_flag("ssd"):
+                    try:
+                        steelsquid_pi.ssd1306_write(string, mestime)
                     except:
                         pass
                 elif get_flag("auto"):
@@ -780,6 +785,8 @@ def system_info():
             p_has_lcd = "Enabled (Nokia5110)"
         elif get_flag("auto"):
             p_has_lcd = "Automatic"
+        elif get_flag("ssd"):
+            p_has_lcd = "Enabled (ssd1306)"
 
     # Stream
     if get_flag("stream"):

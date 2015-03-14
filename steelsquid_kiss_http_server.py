@@ -940,6 +940,8 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
             return "nokia"
         if steelsquid_utils.get_flag("hdd"):
             return "hdd"
+        if steelsquid_utils.get_flag("ssd"):
+            return "ssd"
         if steelsquid_utils.get_flag("auto"):
             return "auto"
         else:
@@ -974,6 +976,14 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         Get and set the use of lcd to display ip
         '''
         proc=Popen(['steelsquid', 'lcd-nokia'], stdout = PIPE, stderr = STDOUT)  
+        proc.wait()
+        return self.lcd(session_id, parameters)
+
+    def lcd_ssd(self, session_id, parameters):
+        '''
+        Get and set the use of lcd to display ip
+        '''
+        proc=Popen(['steelsquid', 'lcd-ssd'], stdout = PIPE, stderr = STDOUT)  
         proc.wait()
         return self.lcd(session_id, parameters)
 
@@ -1712,26 +1722,11 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         return steelsquid_utils.get_flag("io")
              
              
-    def rover(self, session_id, parameters):
+    def rover_info(self, session_id, parameters):
         '''
         
         '''
-        enabled = steelsquid_utils.get_flag("rover")
-        if enabled:
-            import steelsquid_piio
-            answer = steelsquid_utils.execute_system_command(['steelsquid-nm', 'system-status'])
-            battery_voltage, _, _, _, _, _, _, _, _ = steelsquid_piio.trex_status()
-            battery_voltage = float(battery_voltage)/100
-            if answer[0] == 'None':
-                return [True, "Not connected!", "---", "---", "---", battery_voltage]
-            else:
-                ip_wired = steelsquid_utils.network_ip_wired()
-                ip_wifi = steelsquid_utils.network_ip_wifi()
-                wan_ipp = steelsquid_utils.network_ip_wan()
-                return [True, answer[0], ip_wired, ip_wifi, wan_ipp, battery_voltage]
-        else:
-            return enabled
-        
+        return steelsquid_kiss_global.Rover.info()
 
 
     def rover_enable(self, session_id, parameters):
@@ -1755,80 +1750,65 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
             steelsquid_utils.execute_system_command(['steelsquid', 'rover-off']) 
         return steelsquid_utils.get_flag("rover")
 
-
-    def rover_stop(self, session_id, parameters):
-        '''
-        
-        '''
-        import steelsquid_piio
-        steelsquid_piio.trex_motor(0, 0)
-
-
-    def rover_left(self, session_id, parameters):
-        '''
-        
-        '''
-        import steelsquid_piio
-        steelsquid_piio.trex_motor(-40, 40)
-
-
-    def rover_right(self, session_id, parameters):
-        '''
-        
-        '''
-        import steelsquid_piio
-        steelsquid_piio.trex_motor(40, -40)
-
-
-    def rover_forward(self, session_id, parameters):
-        '''
-        
-        '''
-        import steelsquid_piio
-        steelsquid_piio.trex_motor(40, 40)
-
-
-    def rover_backward(self, session_id, parameters):
-        '''
-        
-        '''
-        import steelsquid_piio
-        steelsquid_piio.trex_motor(-40, -40)
-
-
     def rover_light(self, session_id, parameters):
         '''
         
         '''
-        import steelsquid_piio
-        if parameters[0]=="True":
-            steelsquid_piio.gpio_22_xv(2, True)
-            steelsquid_piio.gpio_22_xv(3, True)
-        else:
-            steelsquid_piio.gpio_22_xv(2, False)
-            steelsquid_piio.gpio_22_xv(3, False)
+        return steelsquid_kiss_global.Rover.light()
 
 
     def rover_alarm(self, session_id, parameters):
         '''
         
         '''
-        import steelsquid_piio
-        if parameters[0]=="True":
-            steelsquid_piio.gpio_22_xv(1, True)
-        else:
-            steelsquid_piio.gpio_22_xv(1, False)
+        return steelsquid_kiss_global.Rover.alarm()
 
 
-    def rover_cam(self, session_id, parameters):
+    def rover_tilt(self, session_id, parameters):
         '''
         
         '''
-        import steelsquid_piio
+        import steelsquid_io
         if parameters[0]=="True":
-            steelsquid_piio.servo_move(1, 10)
+            steelsquid_kiss_global.Rover.tilt(True)
         else:
-            steelsquid_piio.servo_move(1, -10)
+            steelsquid_kiss_global.Rover.tilt(False)
             
+
+    def rover_stop(self, session_id, parameters):
+        '''
+        
+        '''
+        steelsquid_kiss_global.Rover.drive(0, 0)
+
+
+    def rover_left(self, session_id, parameters):
+        '''
+        
+        '''
+        steelsquid_kiss_global.Rover.drive(-40, 40)
+
+
+    def rover_right(self, session_id, parameters):
+        '''
+        
+        '''
+        steelsquid_kiss_global.Rover.drive(40, -40)
+
+
+    def rover_forward(self, session_id, parameters):
+        '''
+        
+        '''
+        steelsquid_kiss_global.Rover.drive(40, 40)
+
+
+    def rover_backward(self, session_id, parameters):
+        '''
+        
+        '''
+        steelsquid_kiss_global.Rover.drive(-40, -40)
+
+
 
 

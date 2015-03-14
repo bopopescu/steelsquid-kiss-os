@@ -241,7 +241,7 @@ class SteelsquidHttpServer(steelsquid_server.SteelsquidServer):
         if error:
             steelsquid_utils.shout(debug=True)
         else:
-            steelsquid_utils.shout("Listener closed", debug=True)
+            steelsquid_utils.shout("Http Server: Listener closed", debug=True)
         try:
             listener.shutdown()
         except:

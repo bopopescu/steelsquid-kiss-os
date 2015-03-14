@@ -658,7 +658,7 @@
             /**
              * Rover
              */
-            function on_rover(paramaters){
+            function on_rover_info(paramaters){
                 if(paramaters[0] == "True"){
                     $("#rover_button").html("<button onclick=\"javascript:submitSyncFromPrompt('rover_disable', 'Please enter password for the user root?', '');\">Disable Rover</button>");
                     $("#rover_info").html("The Rover Controller is enabled");
@@ -669,10 +669,10 @@
                 }
             }
             function on_rover_enable(paramaters){
-                on_rover(paramaters);
+                on_rover_info(paramaters);
             }
             function on_rover_disable(paramaters){
-                on_rover(paramaters);
+                on_rover_info(paramaters);
             }
             
 
@@ -826,6 +826,7 @@
                     enable("lcd_button_auto")
                     enable("lcd_button_hdd")
                     enable("lcd_button_nokia")
+                    enable("lcd_button_ssd")
                     disable("lcd_button_disable")
                     status_ok("lcd_status", "LCD disabled");
                 }
@@ -833,6 +834,7 @@
                     enable("lcd_button_auto")
                     disable("lcd_button_hdd")
                     enable("lcd_button_nokia")
+                    enable("lcd_button_ssd")
                     enable("lcd_button_disable")
                     status_ok("lcd_status", "LCD HDD44780");
                 }
@@ -840,8 +842,17 @@
                     enable("lcd_button_auto")
                     enable("lcd_button_hdd")
                     disable("lcd_button_nokia")
+                    enable("lcd_button_ssd")
                     enable("lcd_button_disable")
                     status_ok("lcd_status", "LCD nokia5110");
+                }
+                else if(paramaters[0] == "ssd"){
+                    enable("lcd_button_auto")
+                    enable("lcd_button_hdd")
+                    enable("lcd_button_nokia")
+                    disable("lcd_button_ssd")
+                    enable("lcd_button_disable")
+                    status_ok("lcd_status", "LCD automatic");
                 }
                 else if(paramaters[0] == "auto"){
                     disable("lcd_button_auto")
@@ -870,6 +881,13 @@
              * On lcd
              */
             function on_lcd_nokia(paramaters){
+                on_lcd(paramaters);
+            }
+
+            /**
+             * On lcd
+             */
+            function on_lcd_ssd(paramaters){
                 on_lcd(paramaters);
             }
 
@@ -967,7 +985,7 @@
                     submitSync('web_interface_https');
                     submitSync('web_interface_authentication');
                     submitSync('web_interface_share');
-                    submitSync('rover');
+                    submitSync('rover_info');
                     submitSync('downman');
                 }
                 else if(layer == "lcd"){
@@ -3084,7 +3102,7 @@
                             <td>
                                 You can print text on a <a href="http://tronixlabs.com/news/tutorial-serial-i2c-backpack-for-hd44780compatible-lcd-modules-with-arduino/">HDD44780</a> compatible LCD via <span class="highlight">I2C</span>.<br/>
                                 You can also connect a <a href="https://www.sparkfun.com/products/10168">nokia5110</a> LCD.<br/>
-                                Automatic will try both nokia5110 and HDD44780.<br/>
+                                Automatic will try both nokia5110, HDD44780 or ssd1306 (oled).<br/>
                                 See <a href="http://www.steelsquid.org/pi-io-example">http://www.steelsquid.org/pi-io-example</a><br/>
                                 The IP of the device will also be displayed on the LCD<br/>
                                 <br/>
@@ -3116,6 +3134,9 @@
                         </td>
                         <td>
                             <button id="lcd_button_nokia"  onclick="javascript:submitSync('lcd_nokia');">nokia5110</button>
+                        </td>
+                        <td>
+                            <button id="lcd_button_ssd"  onclick="javascript:submitSync('lcd_ssd');">ssd1306</button>
                         </td>
                     </tr>
                 </table>

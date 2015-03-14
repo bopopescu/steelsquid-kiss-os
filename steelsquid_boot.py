@@ -5,7 +5,6 @@
 This will execute when steelsquid-kiss-os starts.
 Execute until system shutdown.
  - Mount and umount drives
- - Monitor ssh
  - Start web-server
  - Start event handler
 @organization: Steelsquid
@@ -25,7 +24,8 @@ from subprocess import Popen, PIPE, STDOUT
 import subprocess
 import os.path, pkgutil
 import importlib
-import run
+import expand
+import signal
 
 
 try:
@@ -53,11 +53,22 @@ if steelsquid_utils.is_raspberry_pi:
         steelsquid_utils.shout("Fatal error when import steelsquid_pi", is_error=True)
 
 
-if steelsquid_utils.get_flag("piio"):
+if steelsquid_utils.get_flag("io"):
     try:
-        import steelsquid_piio
+        import steelsquid_io
     except:
-        steelsquid_utils.shout("Fatal error when import steelsquid_piio", is_error=True)
+        steelsquid_utils.shout("Fatal error when import steelsquid_io", is_error=True)
+
+
+def signal_term_handler(signal, frame):
+    '''
+    SIGTERM
+    '''
+    steelsquid_event.deactivate_event_handler()
+
+
+# Listen for SIGTERM
+signal.signal(signal.SIGTERM, signal_term_handler)
 
 
 def print_help():
@@ -216,7 +227,6 @@ def on_shutdown(args, para):
         except:
             pass
     steelsquid_utils.execute_system_command_blind(['killall', 'aria2c'])
-    steelsquid_event.deactivate_event_handler()
 
 
 def on_shout(args, para):
@@ -226,83 +236,40 @@ def on_shout(args, para):
     steelsquid_utils.shout(" ".join(para))
 
 
-def on_button_up(address, pin):
-    steelsquid_event.broadcast_event("button", [steelsquid_piio.BUTTON_UP])
-
-
-def on_button_down(address, pin):
-    steelsquid_event.broadcast_event("button", [steelsquid_piio.BUTTON_DOWN])
-
-
-def on_button_left(address, pin):
-    steelsquid_event.broadcast_event("button", [steelsquid_piio.BUTTON_LEFT])
-
-
-def on_button_right(address, pin):
-    steelsquid_event.broadcast_event("button", [steelsquid_piio.BUTTON_RIGHT])
-
-
-def on_button_select(address, pin):
-    steelsquid_event.broadcast_event("button", [steelsquid_piio.BUTTON_SELECT])
-
-
-def on_dip_1(address, pin, status):
-    steelsquid_event.broadcast_event("dip", [1, status])
-
-
-def on_dip_2(address, pin, status):
-    steelsquid_event.broadcast_event("dip", [2, status])
-
-
-def on_dip_3(address, pin, status):
-    steelsquid_event.broadcast_event("dip", [3, status])
-
-
-def on_dip_4(address, pin, status):
-    steelsquid_event.broadcast_event("dip", [4, status])
-
-
-def dev_button(args, para):
-    bu = int(para[0])
-    if bu == steelsquid_piio.BUTTON_UP:
-        steelsquid_utils.shout_time("Button UP pressed!")
-    elif bu == steelsquid_piio.BUTTON_DOWN:
-        steelsquid_utils.shout_time("Button DOWN pressed!")
-    elif bu == steelsquid_piio.BUTTON_LEFT:
-        steelsquid_utils.shout_time("Button LEFT pressed!")
-    elif bu == steelsquid_piio.BUTTON_RIGHT:
-        steelsquid_utils.shout_time("Button RIGHT pressed!")
-    elif bu == steelsquid_piio.BUTTON_SELECT:
-        steelsquid_utils.shout_time("Button SELECT pressed!")
-    
-
-def dev_dip(args, para):
-    steelsquid_utils.shout_time("DIP " + str(para[0]) +": "+ str(para[1]))
-
-
 def on_shutdown_button(gpio):
-    on_shutdown(None, None)
+    '''
+    Shutdown button pressed (GPIO)
+    '''
     steelsquid_utils.execute_system_command_blind(['shutdown', '-h', 'now'], wait_for_finish=False)
 
 
 def import_file_dyn(name):
+    '''
+    Load custom module
+    '''
     try:
-        steelsquid_utils.shout("Load custom module: " + 'run.'+name, debug=True)
-        importlib.import_module('run.'+name)
+        steelsquid_utils.shout("Load custom module: " + 'expand.'+name, debug=True)
+        importlib.import_module('expand.'+name)
     except:
-        steelsquid_utils.shout("Fatal error when load custom module: " + 'run.'+name, is_error=True)
+        steelsquid_utils.shout("Fatal error when load custom module: " + 'expand.'+name, is_error=True)
 
 
 def reload_file_dyn(name):
+    '''
+    Reload custom module
+    '''
     try:
-        steelsquid_utils.shout("Reload custom module: " + 'run.'+name)
-        the_lib = importlib.import_module('run.'+name)
+        steelsquid_utils.shout("Reload custom module: " + 'expand.'+name)
+        the_lib = importlib.import_module('expand.'+name)
         reload(the_lib)
     except:
-        steelsquid_utils.shout("Fatal error when reload custom module: " + 'run.'+name, is_error=True)
+        steelsquid_utils.shout("Fatal error when reload custom module: " + 'expand.'+name, is_error=True)
 
 
 def on_reload(args, para):
+    '''
+    Reload http/connection/custom modules
+    '''
     if para[0] == "server":
         if steelsquid_utils.get_flag("web"):
             try:
@@ -323,36 +290,10 @@ def on_reload(args, para):
             except:
                 steelsquid_utils.shout("Fatal error when sestart steelsquid_kiss_socket_expand", is_error=True)
     elif para[0] == "custom":
-        pkgpath = os.path.dirname(run.__file__)
+        pkgpath = os.path.dirname(expand.__file__)
         for name in pkgutil.iter_modules([pkgpath]):
             thread.start_new_thread(reload_file_dyn, (name[1],))
-    
 
-def enable_rover():
-    '''
-    Enable the rover functionality
-    '''    
-    import steelsquid_piio
-    steelsquid_piio.servo_position = steelsquid_utils.get_parameter("servo_position", steelsquid_piio.servo_position)
-    steelsquid_piio.servo_position_max = steelsquid_utils.get_parameter("servo_position_max", steelsquid_piio.servo_position_max)
-    steelsquid_piio.servo_position_min = steelsquid_utils.get_parameter("servo_position_min", steelsquid_piio.servo_position_min)
-    steelsquid_piio.motor_forward = steelsquid_utils.get_parameter("motor_forward", steelsquid_piio.motor_forward)
-    steelsquid_piio.motor_backward = steelsquid_utils.get_parameter("motor_backward", steelsquid_piio.motor_backward)
-    steelsquid_piio.servo(1, steelsquid_piio.servo_position)       
-    steelsquid_event.subscribe_to_event("second", on_second, ())         
-
-
-def on_second(args, para):
-    '''
-    If no signal after 1 second stop the rover. (connection lost!!!)
-    '''
-    now = time.time()*1000
-    if now - steelsquid_piio.trex_motor_last_change() > 1000:
-        try:
-            steelsquid_piio.trex_motor(0,0)
-        except:
-            pass
-    
 
 def main():
     '''
@@ -381,17 +322,6 @@ def main():
             if steelsquid_utils.is_raspberry_pi():
                 if steelsquid_utils.get_flag("disable_monitor"):
                     steelsquid_utils.execute_system_command_blind(["/opt/vc/bin/tvservice", "-o"])
-                if steelsquid_utils.get_flag("piio"):
-                    steelsquid_utils.shout("Steelsquid IO board enabled", debug=True)
-                    steelsquid_piio.button_click(steelsquid_piio.BUTTON_UP, on_button_up)
-                    steelsquid_piio.button_click(steelsquid_piio.BUTTON_DOWN, on_button_down)
-                    steelsquid_piio.button_click(steelsquid_piio.BUTTON_LEFT, on_button_left)
-                    steelsquid_piio.button_click(steelsquid_piio.BUTTON_RIGHT, on_button_right)
-                    steelsquid_piio.button_click(steelsquid_piio.BUTTON_SELECT, on_button_select)
-                    steelsquid_piio.dip_event(1, on_dip_1)
-                    steelsquid_piio.dip_event(2, on_dip_2)
-                    steelsquid_piio.dip_event(3, on_dip_3)
-                    steelsquid_piio.dip_event(4, on_dip_4)
                 if steelsquid_utils.get_flag("power"):
                     steelsquid_utils.shout("Listen for clean shutdown", debug=True)
                     steelsquid_pi.gpio_set_gnd(24, True)
@@ -408,12 +338,11 @@ def main():
             steelsquid_event.subscribe_to_event("umount", on_umount, ())
             steelsquid_event.subscribe_to_event("shout", on_shout, ())
             steelsquid_event.subscribe_to_event("reload", on_reload, ())
-            if steelsquid_utils.get_flag("piio") and steelsquid_utils.get_flag("development"):
-                steelsquid_event.subscribe_to_event("button", dev_button, ())
-                steelsquid_event.subscribe_to_event("dip", dev_dip, ())
+            if steelsquid_utils.get_flag("io"):
+                steelsquid_kiss_global.IO.enable()
             if steelsquid_utils.get_flag("rover"):
-                enable_rover()
-            pkgpath = os.path.dirname(run.__file__)
+                steelsquid_kiss_global.Rover.enable()
+            pkgpath = os.path.dirname(expand.__file__)
             for name in pkgutil.iter_modules([pkgpath]):
                 thread.start_new_thread(import_file_dyn, (name[1],)) 
             steelsquid_utils.shout("Listen for events", debug=True)
@@ -421,10 +350,6 @@ def main():
             steelsquid_event.activate_event_handler(create_ner_thread=False)
         elif sys.argv[1] == "stop":
             steelsquid_utils.shout("Goodbye :-(")
-            try:
-                steelsquid_pi.hdd44780_status(False)
-            except:
-                pass
             steelsquid_utils.execute_system_command_blind(["steelsquid-event", "shutdown"])
     except:
         steelsquid_utils.shout("Fatal error when on boot steelsquid service", is_error=True)

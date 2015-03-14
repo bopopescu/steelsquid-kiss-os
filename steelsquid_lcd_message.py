@@ -31,12 +31,15 @@ if len(sys.argv)<3:
     print("See http://www.steelsquid.org/pi-io-example")
     print("")
     printb("lcd-missage hdd <message>")
-    print("Print message to HDD44780 compatible LCD connected bia i2c to the Raspberry Pi.")
+    print("Print message to HDD44780 compatible LCD connected via i2c to the Raspberry Pi.")
     print("See http://www.steelsquid.org/pi-io-example")
     print("")
     printb("lcd-missage nokia <message>")
-    print("Print message to Nokia5110 LCD connected bia spi to the Raspberry Pi.")
+    print("Print message to Nokia5110 LCD connected via spi to the Raspberry Pi.")
     print("See http://www.steelsquid.org/pi-io-example")
+    print("")
+    printb("lcd-missage ssd <message>")
+    print("Print message to ssd1306 oled LCD connected via i2c to the Raspberry Pi.")
     print("")
     print("http://tronixlabs.com/news/tutorial-serial-i2c-backpack-for-hd44780compatible-lcd-modules-with-arduino/")
     print("https://www.sparkfun.com/products/10168")
@@ -49,3 +52,5 @@ elif sys.argv[1] == 'hdd':
 	steelsquid_pi.hdd44780_write(sys.argv[2:], is_i2c=True)
 elif sys.argv[1] == 'nokia':
 	steelsquid_pi.nokia5110_write(sys.argv[2:])
+elif sys.argv[1] == 'ssd':
+	steelsquid_pi.ssd1306_write(sys.argv[2:])
