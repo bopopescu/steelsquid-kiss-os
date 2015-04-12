@@ -828,7 +828,11 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         '''
         Shutdown the computer
         '''
-        os.system('shutdown -h now')
+        if steelsquid_utils.get_flag("io"):
+            import steelsquid_io
+            steelsquid_io.power_off()
+        else:
+            os.system('shutdown -h now')
         return "System shutting down"
 
     def reboot(self, session_id, parameters):
@@ -900,15 +904,28 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         Enable or disable streamimg
         '''
         if len(parameters) > 0:
-            if parameters[0] == "True":
+            if parameters[0] == "usb":
                 proc=Popen(['steelsquid', 'stream-on'], stdout = PIPE, stderr = STDOUT)  
                 proc.wait()
                 steelsquid_utils.set_flag("stream")
+                steelsquid_utils.del_flag("stream-pi")
+            elif parameters[0] == "pi":
+                proc=Popen(['steelsquid', 'stream-pi-on'], stdout = PIPE, stderr = STDOUT)  
+                proc.wait()
+                steelsquid_utils.del_flag("stream")
+                steelsquid_utils.set_flag("stream-pi")
+                steelsquid_utils.set_flag("camera")
             else:
                 proc=Popen(['steelsquid', 'stream-off'], stdout = PIPE, stderr = STDOUT)  
                 proc.wait()
                 steelsquid_utils.del_flag("stream")
-        return steelsquid_utils.get_flag("stream")
+                steelsquid_utils.del_flag("stream-pi")
+        if steelsquid_utils.get_flag("stream"):
+            return "usb"
+        elif steelsquid_utils.get_flag("stream-pi"):
+            return "pi"
+        else:
+            return "false"
 
 
     def overclock(self, session_id, parameters):
@@ -1721,7 +1738,97 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
             steelsquid_utils.execute_system_command(['steelsquid', 'io-off']) 
         return steelsquid_utils.get_flag("io")
              
+
+    def socket_info(self, session_id, parameters):
+        '''
+        
+        '''
+        return steelsquid_utils.get_flag("socket_connection")
+
+
+    def socket_enable(self, session_id, parameters):
+        '''
+        
+        '''
+        if not steelsquid_utils.authenticate("root", parameters[0]):
+            raise Exception("Incorrect password for user root!")
+        else:
+            steelsquid_utils.execute_system_command(['steelsquid', 'socket-on']) 
+        return steelsquid_utils.get_flag("socket_connection")
+
+
+    def socket_disable(self, session_id, parameters):
+        '''
+        
+        '''
+        if not steelsquid_utils.authenticate("root", parameters[0]):
+            raise Exception("Incorrect password for user root!")
+        else:
+            steelsquid_utils.execute_system_command(['steelsquid', 'socket-off']) 
+        return steelsquid_utils.get_flag("socket_connection")
              
+
+    def bluetooth_info(self, session_id, parameters):
+        '''
+        
+        '''
+        return [steelsquid_utils.get_flag("bluetooth_pairing"), steelsquid_utils.get_flag("bluetooth_connection")]
+
+
+    def bluetooth_enable(self, session_id, parameters):
+        '''
+        
+        '''
+        if not steelsquid_utils.authenticate("root", parameters[0]):
+            raise Exception("Incorrect password for user root!")
+        else:
+            steelsquid_utils.execute_system_command(['steelsquid', 'bluetooth-on']) 
+        return [steelsquid_utils.get_flag("bluetooth_pairing"), steelsquid_utils.get_flag("bluetooth_connection")]
+
+
+    def bluetooth_disable(self, session_id, parameters):
+        '''
+        
+        '''
+        if not steelsquid_utils.authenticate("root", parameters[0]):
+            raise Exception("Incorrect password for user root!")
+        else:
+            steelsquid_utils.execute_system_command(['steelsquid', 'bluetooth-off']) 
+        return [steelsquid_utils.get_flag("bluetooth_pairing"), steelsquid_utils.get_flag("bluetooth_connection")]
+
+
+    def bluetooth_pin(self, session_id, parameters):
+        '''
+        
+        '''
+        if not parameters[0].isdigit():
+            raise Exception("PIN must be digits")
+        steelsquid_utils.execute_system_command(['steelsquid', 'bluetooth-pin', parameters[0]]) 
+        return "Bluetooth PIN changed"             
+
+
+    def bluetooth_con_enable(self, session_id, parameters):
+        '''
+        
+        '''
+        if not steelsquid_utils.authenticate("root", parameters[0]):
+            raise Exception("Incorrect password for user root!")
+        else:
+            steelsquid_utils.execute_system_command(['steelsquid', 'bluetooth-con-on']) 
+        return [steelsquid_utils.get_flag("bluetooth_pairing"), steelsquid_utils.get_flag("bluetooth_connection")]
+
+
+    def bluetooth_con_disable(self, session_id, parameters):
+        '''
+        
+        '''
+        if not steelsquid_utils.authenticate("root", parameters[0]):
+            raise Exception("Incorrect password for user root!")
+        else:
+            steelsquid_utils.execute_system_command(['steelsquid', 'bluetooth-con-off']) 
+        return [steelsquid_utils.get_flag("bluetooth_pairing"), steelsquid_utils.get_flag("bluetooth_connection")]
+
+
     def rover_info(self, session_id, parameters):
         '''
         

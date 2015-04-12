@@ -19,7 +19,6 @@ import uuid
 import os
 import pwd
 import grp
-import urllib
 import shutil
 import sys
 import threading
@@ -166,13 +165,13 @@ def read_from_file_and_delete(filename):
         deleteFileOrFolder(filename)
 
 
-def has_internet_connection():
+def has_internet_connection(timeout = 4):
     '''
     Check if there is internet connection.
     @return: true/False
     '''
     try:
-        con = urllib2.urlopen("http://www.google.com")
+        con = urllib2.urlopen("http://www.google.com", timeout = timeout)
         con.read()
         return True
     except:
@@ -318,7 +317,7 @@ def shout_time(message, to_lcd=True, debug=False, is_error=False, always_show=Fa
     Shout with time
     '''
     message = str(message)
-    shout(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " " + message, to_lcd, debug, is_error, always_show, leave_on_lcd)
+    shout(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "\n" + message, to_lcd, debug, is_error, always_show, leave_on_lcd)
 
 
 def debug(message):
@@ -356,11 +355,11 @@ def shout(string=None, to_lcd=True, debug=False, is_error=False, always_show=Fal
                 string = str(string)
                 string = string + "\n" + str(exc_type) + ": " + str(exc_value) +"\n"+str(ex)
             del exc_tb
-        elif string == None:
+        elif string != None:
             string = str(string)
         do_it = True
+        now = time.time()
         if not always_show:
-            now = time.time()
             if last_shout_message != None and last_shout_time != -1:
                 diff = now - last_shout_time
                 if diff > 60:
@@ -381,7 +380,7 @@ def shout(string=None, to_lcd=True, debug=False, is_error=False, always_show=Fal
                     import steelsquid_io
                     if is_error:
                         try:
-                            steelsquid_io.led_error_flash(None)
+                            steelsquid_io.led_err_flash(None)
                             steelsquid_io.sum_flash(None)
                         except:
                             pass
@@ -581,14 +580,16 @@ def network_ip_vpn():
         return output
 
 
-def network_ip_wan():
+def network_ip_wan(timeout = 4):
     """
     Get wan ip (internet)
     @return: the ip
     """
     try:
-        pub_ip = urllib.urlopen('http://curlmyip.com').read().strip('\n')
-        return pub_ip
+        req = urllib2.Request('http://ipecho.net/plain')
+        response = urllib2.urlopen(req, timeout = timeout)
+        the_page = response.read()        
+        return the_page.strip('\n')
     except:
         return "---"
 
@@ -790,7 +791,9 @@ def system_info():
 
     # Stream
     if get_flag("stream"):
-        p_stream = "Enabled"
+        p_stream = "USB camera"
+    elif get_flag("stream-pi"):
+        p_stream = "Raspberry PI camera"
     else:
         p_stream = "Disabled"
 
@@ -831,23 +834,30 @@ def system_info():
         p_modem = "Enabled"
     else:
         p_modem = "Disabled"
+
+    #Voltage
+    if get_flag("io"):
+        import steelsquid_io
+        p_io_voltage = steelsquid_io.voltage()
+    else:
+        p_io_voltage = "---"
         
-    return (p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_disk_size, p_disk_used, p_disk_aval, overclock, p_gpu_mem, p_log, p_disable_monitor, p_camera, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir, p_io, p_power, p_modem)
+    return (p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_disk_size, p_disk_used, p_disk_aval, overclock, p_gpu_mem, p_log, p_disable_monitor, p_camera, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir, p_io, p_power, p_modem, p_io_voltage)
 
 
 def system_info_array():
     '''
     Return system info array
     '''
-    p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_disk_size, p_disk_used, p_disk_aval, overclock, p_gpu_mem, p_log, p_disable_monitor, p_camera, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir, p_io, p_power, p_modem = system_info()
-    return [p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_disk_size, p_disk_used, p_disk_aval, overclock, p_gpu_mem, p_log, p_disable_monitor, p_camera, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir, p_io, p_power, p_modem]
+    p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_disk_size, p_disk_used, p_disk_aval, overclock, p_gpu_mem, p_log, p_disable_monitor, p_camera, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir, p_io, p_power, p_modem, p_io_voltage = system_info()
+    return [p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_disk_size, p_disk_used, p_disk_aval, overclock, p_gpu_mem, p_log, p_disable_monitor, p_camera, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir, p_io, p_power, p_modem, p_io_voltage]
 
 
 def print_system_info():
     '''
     Print system info to screen
     '''
-    p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_disk_size, p_disk_used, p_disk_aval, overclock, p_gpu_mem, p_log, p_disable_monitor, p_camera, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir, p_io, p_power, p_modem = system_info()
+    p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_disk_size, p_disk_used, p_disk_aval, overclock, p_gpu_mem, p_log, p_disable_monitor, p_camera, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir, p_io, p_power, p_modem, p_io_voltage = system_info()
     print
     printb("Device information (%s)" % p_date)
     print
@@ -901,8 +911,10 @@ def print_system_info():
     print("Rover: %s" % p_rover)
     print("Download manager: %s" % p_download)
     print("Download dir: %s" % p_download_dir)
-    print("Steelsquid IO Board: %s" % p_io)
     print("Clean power off: %s" % p_power)
+    print
+    print("Steelsquid IO Board: %s" % p_io)
+    print("Voltage: %s" % p_io_voltage)
 
 
 def is_video_file(name):
@@ -1734,8 +1746,44 @@ def console_read(text):
     '''
     return raw_input(make_log_string(text)+"$ ")
         
-    
+
+def median(data_list):
+	'''
+	Finds the median in a list of numbers.
+	'''
+	data_list = map(float, data_list)
+	n = len(data_list)
+	data_list.sort()
+	if n & 1:
+		index = n / 2 
+		return data_list[index]
+	else:
+		low_index = n / 2 - 1
+		high_index = n / 2
+		average = (data_list[low_index] + data_list[high_index]) / 2
+		return average
+
+
+def to_boolean(value):
+    '''
+    conver a value to boolean
+    '''
+    if value == None:
+        return False
+    elif value == 0:
+        return False
+    elif value == 1:
+        return True
+    else:
+        value = value.lower()
+        if value == "false" or value == "off" or value == "no" or value == "n" or value == "0":
+            return False
+        elif value == "true" or value == "on" or value == "yes" or value == "y" or value == "1":
+            return True
+        else:
+            raise RuntimeError("Unable to convert to boolean: " + str(value))
+
+
 if is_raspberry_pi():
     import steelsquid_pi
-
 

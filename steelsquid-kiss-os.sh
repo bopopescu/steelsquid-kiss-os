@@ -35,7 +35,7 @@ steelsquid_folder=/opt/steelsquid
 home_folder=$steelsquid_folder
 
 # Git url
-base=https://steelsquid-kiss-os.googlecode.com/git
+base=https://raw.githubusercontent.com/steelsquid/steelsquid-kiss-os/master
 
 # Remote server when using commit-remote
 base_remote_server=192.168.0.194
@@ -51,44 +51,35 @@ img_iso=https://googledrive.com/host/0B2XmU-Cgji4bcDFmV25xM3Vic3c
 
 # Python downloads (install this pyton scripts)
 python_downloads[1]="$base/steelsquid_boot.py"
-python_downloads[2]="$base/steelsquid_utils.py"
+python_downloads[2]="$base/steelsquid_event.py"
 python_downloads[3]="$base/steelsquid_nm.py"
-python_downloads[4]="$base/steelsquid_event.py"
-python_downloads[5]="$base/steelsquid_connection.py"
-python_downloads[6]="$base/steelsquid_socket_connection.py"
-python_downloads[7]="$base/steelsquid_server.py"
-python_downloads[8]="$base/steelsquid_http_server.py"
-python_downloads[9]="$base/steelsquid_kiss_global.py"
-python_downloads[10]="$base/steelsquid_kiss_http_server.py"
-python_downloads[11]="$base/steelsquid_kiss_http_expand.py"
-python_downloads[12]="$base/steelsquid_kiss_socket_connection.py"
-python_downloads[13]="$base/steelsquid_kiss_socket_expand.py"
-python_downloads[14]="$base/steelsquid_pi.py"
-python_downloads[15]="$base/steelsquid_io.py"
-python_downloads[16]="$base/steelsquid_gpio_set.py"
-python_downloads[17]="$base/steelsquid_gpio_get.py"
-python_downloads[18]="$base/steelsquid_gpio_event.py"
-python_downloads[19]="$base/steelsquid_lcd_hdd44780.py"
-python_downloads[20]="$base/steelsquid_lcd_message.py"
-python_downloads[21]="$base/steelsquid_distance.py"
-python_downloads[22]="$base/steelsquid_omx.py"
-python_downloads[23]="$base/steelsquid_sabertooth.py"
-python_downloads[24]="$base/steelsquid_trex.py"
-python_downloads[25]="$base/steelsquid_adafruit_servo.py"
-python_downloads[26]="$base/steelsquid_mcp23017_get.py"
-python_downloads[27]="$base/steelsquid_mcp23017_set.py"
-python_downloads[28]="$base/steelsquid_mcp23017_event.py"
-python_downloads[29]="$base/steelsquid_ads1015.py"
-python_downloads[30]="$base/steelsquid_mcp4725.py"
-python_downloads[31]="$base/steelsquid_mcp4728.py"
-python_downloads[32]="$base/steelsquid_synchronize.py"
-python_downloads[33]="$base/steelsquid_oled_ssd1306.py"
+python_downloads[4]="$base/steelsquid_pi.py"
+python_downloads[5]="$base/steelsquid_io.py"
+python_downloads[6]="$base/steelsquid_synchronize.py"
+python_downloads[7]="$base/steelsquid_utils.py"
+python_downloads[8]="$base/steelsquid_connection.py"
+python_downloads[9]="$base/steelsquid_socket_connection.py"
+python_downloads[10]="$base/steelsquid_server.py"
+python_downloads[11]="$base/steelsquid_http_server.py"
+python_downloads[12]="$base/steelsquid_kiss_global.py"
+python_downloads[13]="$base/steelsquid_kiss_http_server.py"
+python_downloads[14]="$base/steelsquid_kiss_http_expand.py"
+python_downloads[15]="$base/steelsquid_kiss_socket_connection.py"
+python_downloads[16]="$base/steelsquid_kiss_socket_expand.py"
+python_downloads[17]="$base/steelsquid_lcd_hdd44780.py"
+python_downloads[18]="$base/steelsquid_omx.py"
+python_downloads[19]="$base/steelsquid_sabertooth.py"
+python_downloads[20]="$base/steelsquid_trex.py"
+python_downloads[21]="$base/steelsquid_oled_ssd1306.py"
+python_downloads[22]="$base/steelsquid_bluetooth_connection.py"
 
 # Links to python_downloads
 python_links[1]="/usr/bin/steelsquid-boot"
-python_links[2]="/usr/bin/dummy"
-python_links[3]="/usr/bin/steelsquid-nm"
-python_links[4]="/usr/bin/steelsquid-event"
+python_links[4]="/usr/bin/event"
+python_links[3]="/usr/bin/net"
+python_links[14]="/usr/bin/pi"
+python_links[15]="/usr/bin/io"
+python_links[18]="/usr/bin/synchronize"
 python_links[5]="/usr/bin/dummy"
 python_links[6]="/usr/bin/dummy"
 python_links[7]="/usr/bin/dummy"
@@ -98,26 +89,9 @@ python_links[10]="/usr/bin/dummy"
 python_links[11]="/usr/bin/dummy"
 python_links[12]="/usr/bin/dummy"
 python_links[13]="/usr/bin/dummy"
-python_links[14]="/usr/bin/dummy"
-python_links[15]="/usr/bin/io"
-python_links[16]="/usr/bin/gpio-set"
-python_links[17]="/usr/bin/gpio-get"
-python_links[18]="/usr/bin/gpio-event"
+python_links[16]="/usr/bin/dummy"
+python_links[17]="/usr/bin/dummy"
 python_links[19]="/usr/bin/dummy"
-python_links[20]="/usr/bin/lcd-message"
-python_links[21]="/usr/bin/distance"
-python_links[22]="/usr/bin/dummy"
-python_links[23]="/usr/bin/sabertooth"
-python_links[24]="/usr/bin/trex"
-python_links[25]="/usr/bin/ada-servo"
-python_links[26]="/usr/bin/mcp23017-get"
-python_links[27]="/usr/bin/mcp23017-set"
-python_links[28]="/usr/bin/mcp23017-event"
-python_links[29]="/usr/bin/ads1015"
-python_links[30]="/usr/bin/mcp4725"
-python_links[31]="/usr/bin/mcp4728"
-python_links[32]="/usr/bin/synchronize"
-python_links[33]="/usr/bin/ssd1306"
 
 # Download to web root folder
 web_root_downloads[1]="$base/index.html"
@@ -171,6 +145,8 @@ web_img_downloads[40]="$base/img/gpu.png"
 web_img_downloads[41]="$base/img/camera.png"
 web_img_downloads[42]="$base/img/bar_utils.png" 
 web_img_downloads[43]="$base/img/rover.png" 
+web_img_downloads[44]="$base/img/socket.png" 
+web_img_downloads[45]="$base/img/bluetooth.png" 
 
 # Must have packages will install if necessary
 packages=( wget iputils-ping aptitude tar gzip sed )
@@ -379,10 +355,18 @@ function is-raspberry-pi()
 function help_upgrade()
 {
     echo 
+    echo 
+    echo 
+    echb "############################################################################"
+    echb "How to upgrade the system."
+    echb "############################################################################"
+    echo 
     echb "steelsquid upgrade"
     echo "Upgrade the whole system."
-    echo "Depending on how old the system is, it may take a long time to do the upgrade."
-    echo "NOTE! Do not turn off the device while the upgrade is in progress and the device must have internet connection."
+    echo "Depending on how old the system is, it may take a long time to do the"
+    echo "upgrade."
+    echo "NOTE! Do not turn off the device while the upgrade is in progress and the "
+    echo "      device must have internet connection."
     echo "When the update is complete it should say:"
     echo "Steelsquid-kiss-os executed OK, please reboot :-)"
     echo 
@@ -405,9 +389,6 @@ function help_upgrade()
     echo "Download and upgrade icons and images to the web server."
 }
 if [ "$in_parameter_1" == "help-upgrade" ]; then
-    echo 
-    echb "DESCRIPTION"
-    echo "How to upgrade the system."
     help_upgrade
     echo
 	exit 0
@@ -416,28 +397,34 @@ fi
 function help_network()
 {
     echo 
-    echb "steelsquid-nm status"
+    echo 
+    echo 
+    echb "############################################################################"
+    echb "Network help (connect to wifi, vpn, download manager)."
+    echb "############################################################################"
+    echo 
+    echb "net status"
     echo "See which access point you are connected to"
     echo 
-    echb "steelsquid-nm list"
+    echb "net list"
     echo "List all wifi network access points"
     echo 
-    echb "steelsquid-nm connect <number>"
+    echb "net connect <number>"
     echo "Connect to open wifi network."
     echo 
-    echb "steelsquid-nm connect <number> <password>"
+    echb "net connect <number> <password>"
     echo "Connect to protected wifi network."
     echo 
-    echb "steelsquid-nm vpn-openvpn <ovpn_file> <username> <password>"
+    echb "net vpn-openvpn <ovpn_file> <username> <password>"
     echo "Import a .ovpn file (configure vpn)" 
     echo 
-    echb "steelsquid-nm vpn-status"
+    echb "net vpn-status"
     echo "Unconfigured, Configured: <name of vpn>, Connected: <name of vpn>"
     echo 
-    echb "steelsquid-nm vpn-connect"
+    echb "net vpn-connect"
     echo "Connect to vpn"
     echo 
-    echb "steelsquid-nm vpn-disconnect"
+    echb "net vpn-disconnect"
     echo "Disconnect from vpn"
     echo 
     echb "hostname"
@@ -476,9 +463,6 @@ function help_network()
     echo 
 }
 if [ "$in_parameter_1" == "help-network" ]; then
-    echo 
-    echb "DESCRIPTION"
-    echo "Network help (connect to wifi, vpn, download manager)."
     help_network
     echo
 	exit 0
@@ -486,6 +470,12 @@ fi
 ##################################
 function help_settings()
 {
+    echo 
+    echo 
+    echo 
+    echb "############################################################################"
+    echb "System settings."
+    echb "############################################################################"
     echo 
     echb "cat /etc/timezone"
     echo "Show current timezne."
@@ -523,9 +513,6 @@ function help_settings()
     echo "Email that you want notification sent to"
 }
 if [ "$in_parameter_1" == "help-settings" ]; then
-    echo 
-    echb "DESCRIPTION"
-    echo "System settings."
     help_settings
     echo
 	exit 0
@@ -533,6 +520,12 @@ fi
 ##################################
 function help_servers()
 {
+    echo 
+    echo 
+    echo 
+    echb "############################################################################"
+    echb "Servers on this system."
+    echb "############################################################################"
     echo 
     echb "steelsquid ssh"
     echo "Status on the SSH-server"
@@ -583,11 +576,26 @@ function help_servers()
     echo 
     echb "steelsquid socket-off"
     echo "Disable socket connection protocol"
+    echo 
+    echb "steelsquid bluetooth"
+    echo "Is bluetooth pairing enabled."
+    echo 
+    echb "steelsquid bluetooth-on"
+    echo "Enable bluetooth pairing."
+    echo 
+    echb "steelsquid bluetooth-off"
+    echo "Disable bluetooth pairing."
+    echo 
+    echb "steelsquid bluetooth-pin <pin>"
+    echo "Set the bluetooth pairing PIN (default 1234)."
+    echo 
+    echb "steelsquid bluetooth-con-on"
+    echo "Enable bluetooth connection."
+    echo 
+    echb "steelsquid bluetooth-con-off"
+    echo "Disable bluetooth connection."
 }
 if [ "$in_parameter_1" == "help-servers" ]; then
-    echo 
-    echb "DESCRIPTION"
-    echo "Servers on this system."
     help_servers
     echo
 	exit 0
@@ -595,6 +603,12 @@ fi
 ##################################
 function help_system()
 {
+    echo 
+    echo 
+    echo 
+    echb "############################################################################"
+    echb "System and hardware."
+    echb "############################################################################"
     if [ $(is-raspberry-pi) == "true" ]; then
         echo 
         echb "steelsquid expand"
@@ -614,17 +628,6 @@ function help_system()
         echo "This will make any Desktop environment useless."
         echo "On a reboot the display will turned on, but power off after a few seconds."
     fi
-    echo 
-    echb "steelsquid log"
-    echo "Is logging enabled"
-    echo 
-    echb "steelsquid log-on"
-    echo "Enable logging"
-    echo "Will take effect on next reboot...."
-    echo 
-    echb "steelsquid log-off"
-    echo "Disable logging"
-    echo "Will take effect on next reboot...."
     echo 
     echb "steelsquid camera"
     echo "Is the camera enabled"
@@ -661,57 +664,8 @@ function help_system()
         echo "ARM (CPU) gets the remaining memory"
         echo "Will take effect on next reboot...."
     fi
-    echo 
-    echb "set-flag <flagName>"
-    echo "Set flag"
-    echo 
-    echb "get-flag <flagName>"
-    echo "Has flag"
-    echo 
-    echb "del-flag <flagName>"
-    echo "Delete flag"
-    echo 
-    echb "set-parameter <name> <value>"
-    echo "Set paramater value"
-    echo 
-    echb "get-parameter <name>"
-    echo "Get paramater value"
-    echo 
-    echb "has-parameter <name>"
-    echo "Has a paramater"
-    echo 
-    echb "del-parameter <name>"
-    echo "Delete a parameter"
-    echo 
-    echb "steelsquid-event <event>"
-    echo "Broadcast event without parameters"
-    echo 
-    echb "steelsquid-event <event> <parameter1> <parameter2>..."
-    echo "Broadcast event with paramaters"
-    echo 
-    echb "steelsquid-event start <name>"
-    echo "Start execute (loop) a function with name <name>"
-    echo 
-    echb "steelsquid-event stop"
-    echo "Stop execute (loop) all functions"
-    echo 
-    echb "steelsquid-event stop <name>"
-    echo "Stop execute (loop) a function with name <name>"
-    echo 
-    echb "steelsquid-event power"
-    echo "Is the power off functionality enabled"
-    echo "Connect a button to the raspberry to shut down cleanly"
-    echo 
-    echb "steelsquid-event power-on"
-    echo "Enable power off functionality"
-    echo 
-    echb "steelsquid-event power-off"
-    echo "Disable power off functionality"
 }
 if [ "$in_parameter_1" == "help-system" ]; then
-    echo 
-    echb "DESCRIPTION"
-    echo "System and hardware."
     help_system
     echo
 	exit 0
@@ -719,6 +673,12 @@ fi
 ##################################
 function help_other()
 {
+    echo 
+    echo 
+    echo 
+    echb "############################################################################"
+    echb "Some other useful commands"
+    echb "############################################################################"
     echo 
     echb "shout <message>"
     echo "Send message to user on ssh, terminal and desktop"
@@ -815,17 +775,243 @@ function help_other()
     echo "Decrypt a file using aes-256-cbc"
 }
 if [ "$in_parameter_1" == "help-other" ]; then
-    echo 
-    echb "DESCRIPTION"
-    echo "Some other useful commands"
     help_other
     echo
 	exit 0
 fi
 ##################################
-function help_io()
+function help_files()
 {
-    echo "NOTE! When you execute this from the command line it execute outside of steelsquid daemon, and may interrupt for example the LCD, DAC, ADC or extra GPIO."
+    echo 
+    echo 
+    echo 
+    echb "############################################################################"
+    echb "Description of some files and folders."
+    echb "############################################################################"
+    echo 
+    echb "$steelsquid_folder/flags/"
+    echo "Configuration flags"
+    echo 
+    echb "$steelsquid_folder/lists/"
+    echo "Configuration lists"
+    echo 
+    echb "$steelsquid_folder/parameters/"
+    echo "Configuration parameters"
+    echo 
+    echb "$steelsquid_folder/pem/"
+    echo "HTTPS cerificate files"
+    echo "Will be created when https is enabled"
+    echo 
+    echb "$steelsquid_folder/web/"
+    echo "Web root"
+    echo 
+    echb "$steelsquid_folder/events/"
+    echo "If you create a executable file with the same name as the event under $steelsquid_folder/events that will also be excuted"
+    echo "The parametars will be arg to the file"
+    echo "See /opt/steelsquid/python/steelsquid_event.py"
+    echo 
+    echb "/root/Media"
+    echo "Link to /media"
+    echo 
+    echb "/media"
+    echo "USB disks will automatically be installed here."
+    echo 
+    echb "$steelsquid_folder/steelsquid-kiss-os.sh"
+    echo "The steelsquid install and update script"
+    echo 
+    echb "/etc/init.d/steelsquid"
+    echo "Init script for /usr/bin/steelsquid-boot"
+    echo 
+    echb "/etc/NetworkManager/dispatcher.d/99steelsquid.sh"
+    echo "Fire network status"
+    echo 
+    echb "/usr/bin/steelsquid -> $steelsquid_folder/steelsquid-kiss-os.sh"
+    echo "The steelsquid script"
+    echo 
+    echb "/opt/steelsquid/python"
+    echo "Home for all python files"
+    echo 
+    echb "/usr/bin/steelsquid-boot -> /opt/steelsquid/python/steelsquid_boot.py"
+    echo "Python script that execute on boot and shutdown"
+    echo 
+    echb "/opt/steelsquid/python/steelsquid_connection.py"
+    echo "A simple module that i use to sen async command to and from client/server."
+    echo 
+    echb "/usr/bin/events -> /opt/steelsquid/python/steelsquid_event.py"
+    echo "Broadcast and subscribe to events"
+    echo 
+    echb "/opt/steelsquid/python/steelsquid_http_server.py"
+    echo "Python http server"
+    echo 
+    echb "/usr/bin/io -> /opt/steelsquid/python/steelsquid_io.py"
+    echo "Mostly wrapper functions for my steelsquid IO board"
+    echo 
+    echb "/opt/steelsquid/python/steelsquid_kiss_global.py"
+    echo "Global stuff for steelsquid kiss os"
+    echo 
+    echb "/opt/steelsquid/python/steelsquid_kiss_http_expand.py"
+    echo "Use this to implement HTTP stuff, will execute on boot"
+    echo 
+    echb "/opt/steelsquid/python/steelsquid_kiss_http_server.py"
+    echo "Control/Configure steelsquid-kiss-os from web browser"
+    echo 
+    echb "/opt/steelsquid/python/steelsquid_kiss_socket_connection.py"
+    echo "Controll steelsquid kiss os with simle socket commands"
+    echo 
+    echb "/opt/steelsquid/python/steelsquid_kiss_socket_expand.py"
+    echo "Use this to expand socket functionality"
+    echo 
+    echb "/opt/steelsquid/python/steelsquid_lcd_hdd44780.py"
+    echo "Print message to HDD44780 compatible LCD"
+    echo 
+    echb "/opt/steelsquid/python/steelsquid_oled_ssd1306.py"
+    echo "Print message to ssd1306 oled compatible LCD"
+    echo 
+    echb "/opt/steelsquid/python/steelsquid_lcd_nokia5110.py"
+    echo "Print message to nokia511 LCD"
+    echo 
+    echb "/usr/bin/net -> /opt/steelsquid/python/steelsquid_nm.py"
+    echo "Python script that list and connect to wifi network"
+    echo 
+    echb "/opt/steelsquid/python/steelsquid_omx.py"
+    echo "Play movies on the raspberry pi usting the GPU"
+    echo 
+    echb "/usr/bin/pi -> /opt/steelsquid/python/steelsquid_pi.py"
+    echo "Some useful stuff for Raspberry Pi (connect diferent stuff)"
+    echo 
+    echb "/usr/bin/steelsquid-sabertooth -> /opt/steelsquid/python/steelsquid_sabertooth.py"
+    echo "A simple serial interface for Sabertooth motor controller."
+    echo 
+    echb "/usr/bin/steelsquid -> /opt/steelsquid/python/ssteelsquid_synchronize.py"
+    echo "Automatic listen for changes abd commit changes to a nother system via ssh (install on remote system)"
+    echo 
+    echb "/opt/steelsquid/python/steelsquid_server.py"
+    echo "A python server (handle execute commands)"
+    echo 
+    echb "/opt/steelsquid/python/steelsquid_socket_connection.py"
+    echo "Socket inplementation of steelsquid_connection"
+    echo 
+    echb "/opt/steelsquid/python/steelsquid_utils.py"
+    echo "Python utils"
+    echo 
+    echb "/opt/steelsquid/python/expand"
+    echo "All python scrips in this folder will be imported (executed) on boot."
+    echo "Use this to inmplement your own stuff."
+    echo 
+    echb "/usr/local/lib/python2.7/dist-packages"
+    echo "External python 2 libraries (Adafruit, RPi, picamera, wiringpi2)"
+    echo 
+    echb "/usr/lib/python3/dist-packages"
+    echo "External python 3 libraries (quick2wire)"
+    echo 
+    echb "/opt/steelsquid/events"
+    echo "If you create a executable file with the same name as the event under this folder that will be executed."
+    echo "The parametars will be arg to the file"
+    echo "If: broadcast_event(\"kalle\", (\"arg1\", \"arg2\"))"
+    echo "This will exucute: /opt/steelsquid/events/kalle \"arg1\" \"arg2\""
+}
+if [ "$in_parameter_1" == "help-files" ]; then
+    help_files
+    echo
+	exit 0
+fi
+##################################
+function help_develop()
+{
+    echo 
+    echo 
+    echo 
+    echb "############################################################################"
+    echb "Commands for development."
+    echb "############################################################################"
+    echo 
+    echb "steelsquid restart"
+    echo "Restart the steelsquid daemon"
+    echo 
+    echb "steelsquid dev"
+    echo "Is the system in development mode"
+    echo 
+    echb "steelsquid dev-on"
+    echo "Enable development mode"
+    echo 
+    echb "steelsquid dev-off"
+    echo "Disable development mode"
+    echo 
+    echb "set-flag expanded"
+    echo "It will tell the upgrade script not to overwrite:"
+    echo " - steelsquid_kiss_http_expand.py"
+    echo " - steelsquid_kiss_socket_expand.py"
+    echo " - steelsquid_kiss_global.py"
+    echo " - utils.html"
+    echo "This is useful if you have expanded functionality. otherwise, the changes will be overwritten when you execute upgrade."
+    echo 
+    echb "steelsquid download-imp"
+    echo "Download a steelsquid-kiss-os.img file."
+    echo 
+    echb "steelsquid read </dev/sdX>"
+    echo "Create a steelsquid-kiss-os.img from drive."
+    echo 
+    echb "steelsquid write </dev/sdX>"
+    echo "Write steelsquid-kiss-os.img to drive."
+    echo  
+    echb "steelsquid archive"
+    echo "Create a steelsquid-kiss-os.gz file of the content in the folder this script is in."
+    echo "Will ignore .img, .iso and .gz files"
+    echo 
+    echb "steelsquid compress"
+    echo "Create a steelsquid-kiss-os.gz file of the steelsquid-kiss-os.img or steelsquid-kiss-os.iso files in the folder this script is in."
+    echo 
+    echb "steelsquid extract"
+    echo "Extract a steelsquid-kiss-os.gz file in the folder this script is in."
+    echo 
+    echb "steelsquid remote-restart"
+    echo "Restart steelsquid service on remote system."
+    echo "Set paramaters in this script:"
+    echo "  base_remote_server=192.168.0.199"
+    echo "  base_remote_port=22"
+    echo "  base_remote_user=steelsquid"
+    echo "Or add 4 rows to config.txt"    
+    echo "  ip"
+    echo "  port"
+    echo "  user"
+    echo "  password"
+    echo 
+    echb "steelsquid commit-git"
+    echo "Commit changes to the GIT and push to github"
+    echo 
+    echb "steelsquid commit-local"
+    echo "Commit changes to the local system (install on local system)"
+    echo "Will commit (install) the steelsquid script, python files and web files"
+    echo 
+    echb "steelsquid commit-remote"
+    echo "Commit changes to a nother system via ssh (install on remote system)"
+    echo "Will commit (install) the steelsquid script, python files and web files"
+    echo "Set paramaters in this script:"
+    echo " base_remote_server=192.168.0.199"
+    echo " base_remote_port=22"
+    echo " base_remote_user=steelsquid"
+    echo "Or add 4 rows to config.txt"    
+    echo "  ip"
+    echo "  port"
+    echo "  user"
+    echo "  password"
+    echo 
+    echb "steelsquid commit-remote-restart"
+    echo "Commit changes to a nother system via ssh (install on remote system)"
+    echo "Will commit (install) the steelsquid script, python files and web files"
+    echo "After installation is done the steelsquid service will restart."
+    echo "Set paramaters in this script:"
+    echo "  base_remote_server=192.168.0.199"
+    echo "  base_remote_port=22"
+    echo "  base_remote_user=steelsquid"
+    echo "Or add 4 rows to config.txt"    
+    echo "  ip"
+    echo "  port"
+    echo "  user"
+    echo "  password"
+    echo 
+    echb "steelsquid synchronize"
+    echo "Automatic listen for changes abd commit changes to a nother system via ssh (install on remote system)"
     echo 
     echb "gpio-get <gnd or 3v3> <gpio number>"
     echo "Get gpio pin status hight (on) or low (off)"
@@ -907,282 +1093,73 @@ function help_io()
     echb "sabertooth"
     echo "A simple serial interface for Sabertooth motor controller."
     echo 
+    echb "steelsquid log"
+    echo "Is logging enabled"
+    echo 
+    echb "steelsquid log-on"
+    echo "Enable logging"
+    echo "Will take effect on next reboot...."
+    echo 
+    echb "steelsquid log-off"
+    echo "Disable logging"
+    echo "Will take effect on next reboot...."
+    echo 
+    echb "list-flags"
+    echo "Set flag"
+    echo 
+    echb "set-flag <flagName>"
+    echo "Set flag"
+    echo 
+    echb "get-flag <flagName>"
+    echo "Has flag"
+    echo 
+    echb "del-flag <flagName>"
+    echo "Delete flag"
+    echo 
+    echb "list-parameters"
+    echo "Set flag"
+    echo 
+    echb "set-parameter <name> <value>"
+    echo "Set paramater value"
+    echo 
+    echb "get-parameter <name>"
+    echo "Get paramater value"
+    echo 
+    echb "has-parameter <name>"
+    echo "Has a paramater"
+    echo 
+    echb "del-parameter <name>"
+    echo "Delete a parameter"
+    echo 
+    echb "event <event>"
+    echo "Broadcast event without parameters"
+    echo 
+    echb "event <event> <parameter1> <parameter2>..."
+    echo "Broadcast event with paramaters"
+    echo 
+    echb "event start <name>"
+    echo "Start execute (loop) a function with name <name>"
+    echo 
+    echb "event stop"
+    echo "Stop execute (loop) all functions"
+    echo 
+    echb "event stop <name>"
+    echo "Stop execute (loop) a function with name <name>"
+    echo 
+    echb "steelsquid power"
+    echo "Is the power off functionality enabled"
+    echo "Connect a button to the raspberry to shut down cleanly"
+    echo 
+    echb "steelsquid power-on"
+    echo "Enable power off functionality"
+    echo 
+    echb "steelsquid power-off"
+    echo "Disable power off functionality"
+    echo 
     echb "io"
     echo "Comands for my Steelsquid IO board."
 }
-if [ "$in_parameter_1" == "help-io" ]; then
-    echo 
-    echb "DESCRIPTION"
-    echo "IO Command (GPIO)"
-    help_io
-    echo
-	exit 0
-fi
-##################################
-function help_files()
-{
-    echo 
-    echb "$steelsquid_folder/flags/"
-    echo "Configuration flags"
-    echo 
-    echb "$steelsquid_folder/lists/"
-    echo "Configuration lists"
-    echo 
-    echb "$steelsquid_folder/parameters/"
-    echo "Configuration parameters"
-    echo 
-    echb "$steelsquid_folder/pem/"
-    echo "HTTPS cerificate files"
-    echo "Will be created when https is enabled"
-    echo 
-    echb "$steelsquid_folder/web/"
-    echo "Web root"
-    echo 
-    echb "$steelsquid_folder/events/"
-    echo "If you create a executable file with the same name as the event under $steelsquid_folder/events that will also be excuted"
-    echo "The parametars will be arg to the file"
-    echo "See /opt/steelsquid/python/steelsquid_event.py"
-    echo 
-    echb "/root/Media"
-    echo "Link to /media"
-    echo 
-    echb "/media"
-    echo "USB disks will automatically be installed here."
-    echo 
-    echb "$steelsquid_folder/steelsquid-kiss-os.sh"
-    echo "The steelsquid install and update script"
-    echo 
-    echb "/etc/init.d/steelsquid"
-    echo "Init script for /usr/bin/steelsquid-boot"
-    echo 
-    echb "/etc/NetworkManager/dispatcher.d/99steelsquid.sh"
-    echo "Fire network status"
-    echo 
-    echb "/usr/bin/steelsquid -> $steelsquid_folder/steelsquid-kiss-os.sh"
-    echo "The steelsquid script"
-    echo 
-    echb "/opt/steelsquid/python"
-    echo "Home for all python files"
-    echo 
-    echb "/usr/bin/ads1015 -> /opt/steelsquid/python/steelsquid_ads1015.py"
-    echo "Read analog in from ADS1015 (0 to 5v)"
-    echo 
-    echb "/usr/bin/steelsquid-boot -> /opt/steelsquid/python/steelsquid_boot.py"
-    echo "Python script that execute on boot and shutdown"
-    echo 
-    echb "/opt/steelsquid/python/steelsquid_connection.py"
-    echo "A simple module that i use to sen async command to and from client/server."
-    echo 
-    echb "/usr/bin/mcp4725 -> /opt/steelsquid/python/steelsquid_mcp4725.py"
-    echo "Write analog out from MCP4725 (0 to 5v)"
-    echo 
-    echb "/usr/bin/mcp4728 -> /opt/steelsquid/python/steelsquid_mcp4728.py"
-    echo "Write analog out from MCP4728 (0 to 5v)"
-    echo 
-    echb "/usr/bin/distance -> /opt/steelsquid/python/steelsquid_distance.py"
-    echo "Measure_distance with a with HC-SR04"
-    echo 
-    echb "/usr/bin/steelsquid-events -> /opt/steelsquid/python/steelsquid_event.py"
-    echo "Broadcast and subscribe to events"
-    echo 
-    echb "/usr/bin/gpio-event -> /opt/steelsquid/python/steelsquid_gpio_event.py"
-    echo "Listen for signal on gpio pin"
-    echo 
-    echb "/usr/bin/gpio-get -> /opt/steelsquid/python/steelsquid_gpio_get.py"
-    echo "Get gpio pin status hight (on) or low (off)"
-    echo 
-    echb "/usr/bin/gpio-set -> /opt/steelsquid/python/steelsquid_gpio_set.py"
-    echo "Set gpio pin to hight (on) or low (off)"
-    echo 
-    echb "/opt/steelsquid/python/steelsquid_http_server.py"
-    echo "Python http server"
-    echo 
-    echb "/opt/steelsquid/python/steelsquid_io.py"
-    echo "Mostly wrapper functions for my steelsquid IO board"
-    echo 
-    echb "/opt/steelsquid/python/steelsquid_kiss_global.py"
-    echo "Global stuff for steelsquid kiss os"
-    echo 
-    echb "/opt/steelsquid/python/steelsquid_kiss_http_expand.py"
-    echo "Use this to implement HTTP stuff, will execute on boot"
-    echo 
-    echb "/opt/steelsquid/python/steelsquid_kiss_http_server.py"
-    echo "Control/Configure steelsquid-kiss-os from web browser"
-    echo 
-    echb "/opt/steelsquid/python/steelsquid_kiss_socket_connection.py"
-    echo "Controll steelsquid kiss os with simle socket commands"
-    echo 
-    echb "/opt/steelsquid/python/steelsquid_kiss_socket_expand.py"
-    echo "Use this to expand socket functionality"
-    echo 
-    echb "/opt/steelsquid/python/steelsquid_lcd_hdd44780.py"
-    echo "Print message to HDD44780 compatible LCD"
-    echo 
-    echb "/opt/steelsquid/python/steelsquid_oled_ssd1306.py"
-    echo "Print message to ssd1306 oled compatible LCD"
-    echo 
-    echb "/opt/steelsquid/python/steelsquid_lcd_nokia5110.py"
-    echo "Print message to nokia511 LCD"
-    echo 
-    echb "/usr/bin/lcd-message -> /opt/steelsquid/python/steelsquid_lcd_message.py"
-    echo "Exampel how to print message to HDD44780 compatible LCD or nokia5110"
-    echo 
-    echb "/usr/bin/mcp23017-get -> /opt/steelsquid/python/steelsquid_mcp23017_get"
-    echo "Contoll gpio on a  MCP230xx"
-    echo 
-    echb "/usr/bin/mcp23017-set -> /opt/steelsquid/python/steelsquid_mcp23017_set"
-    echo "Contoll gpio on a  MCP230xx"
-    echo 
-    echb "/usr/bin/mcp23017-event -> /opt/steelsquid/python/steelsquid_mcp23017_event"
-    echo "Contoll gpio on a  MCP230xx, Listen for button click"
-    echo 
-    echb "/usr/bin/steelsquid-nm -> /opt/steelsquid/python/steelsquid_nm.py"
-    echo "Python script that list and connect to wifi network"
-    echo 
-    echb "/opt/steelsquid/python/steelsquid_omx.py"
-    echo "Play movies on the raspberry pi usting the GPU"
-    echo 
-    echb "/opt/steelsquid/python/steelsquid_pi.py"
-    echo "Some useful stuff for Raspberry Pi"
-    echo 
-    echb "/usr/bin/steelsquid-sabertooth -> /opt/steelsquid/python/steelsquid_sabertooth.py"
-    echo "A simple serial interface for Sabertooth motor controller."
-    echo 
-    echb "/usr/bin/steelsquid -> /opt/steelsquid/python/ssteelsquid_synchronize.py"
-    echo "Automatic listen for changes abd commit changes to a nother system via ssh (install on remote system)"
-    echo 
-    echb "/opt/steelsquid/python/steelsquid_server.py"
-    echo "A python server (handle execute commands)"
-    echo 
-    echb "/usr/bin/servo -> /opt/steelsquid/python/steelsquid_servo.py"
-    echo "Controll Adafruit 16-Channel servo driver."
-    echo 
-    echb "/opt/steelsquid/python/steelsquid_socket_connection.py"
-    echo "Socket inplementation of steelsquid_connection"
-    echo 
-    echb "/opt/steelsquid/python/steelsquid_utils.py"
-    echo "Python utils"
-    echo 
-    echb "/opt/steelsquid/python/expand"
-    echo "All python scrips in this folder will be imported (executed) on boot."
-    echo "Use this to inmplement your own stuff."
-    echo 
-    echb "/usr/local/lib/python2.7/dist-packages"
-    echo "External python 2 libraries (Adafruit, RPi, picamera, wiringpi2)"
-    echo 
-    echb "/usr/lib/python3/dist-packages"
-    echo "External python 3 libraries (quick2wire)"
-    echo 
-    echb "/opt/steelsquid/events"
-    echo "If you create a executable file with the same name as the event under this folder that will be executed."
-    echo "The parametars will be arg to the file"
-    echo "If: broadcast_event(\"kalle\", (\"arg1\", \"arg2\"))"
-    echo "This will exucute: /opt/steelsquid/events/kalle \"arg1\" \"arg2\""
-}
-if [ "$in_parameter_1" == "help-files" ]; then
-    echo 
-    echb "DESCRIPTION"
-    echo "Description of some files and folders."
-    help_files
-    echo
-	exit 0
-fi
-##################################
-function help_develop()
-{
-    echo 
-    echb "steelsquid restart"
-    echo "Restart the steelsquid daemon"
-    echo 
-    echb "steelsquid dev"
-    echo "Is the system in development mode"
-    echo 
-    echb "steelsquid dev-on"
-    echo "Enable development mode"
-    echo 
-    echb "steelsquid dev-off"
-    echo "Disable development mode"
-    echo 
-    echb "set-flag expanded"
-    echo "It will tell the upgrade script not to overwrite:"
-    echo " - steelsquid_kiss_http_expand.py"
-    echo " - steelsquid_kiss_socket_expand.py"
-    echo " - steelsquid_kiss_global.py"
-    echo " - utils.html"
-    echo "This is useful if you have expanded functionality. otherwise, the changes will be overwritten when you execute upgrade."
-    echo 
-    echb "steelsquid download-imp"
-    echo "Download a steelsquid-kiss-os.img file."
-    echo 
-    echb "steelsquid read </dev/sdX>"
-    echo "Create a steelsquid-kiss-os.img from drive."
-    echo 
-    echb "steelsquid write </dev/sdX>"
-    echo "Write steelsquid-kiss-os.img to drive."
-    echo  
-    echb "steelsquid archive"
-    echo "Create a steelsquid-kiss-os.gz file of the content in the folder this script is in."
-    echo "Will ignore .img, .iso and .gz files"
-    echo 
-    echb "steelsquid compress"
-    echo "Create a steelsquid-kiss-os.gz file of the steelsquid-kiss-os.img or steelsquid-kiss-os.iso files in the folder this script is in."
-    echo 
-    echb "steelsquid extract"
-    echo "Extract a steelsquid-kiss-os.gz file in the folder this script is in."
-    echo 
-    echb "steelsquid remote-restart"
-    echo "Restart steelsquid service on remote system."
-    echo "Set paramaters in this script:"
-    echo "  base_remote_server=192.168.0.199"
-    echo "  base_remote_port=22"
-    echo "  base_remote_user=steelsquid"
-    echo "Or add 4 rows to config.txt"    
-    echo "  ip"
-    echo "  port"
-    echo "  user"
-    echo "  password"
-    echo 
-    echb "steelsquid commit-git"
-    echo "Commit changes to the GIT and push to google code"
-    echo 
-    echb "steelsquid commit-local"
-    echo "Commit changes to the local system (install on local system)"
-    echo "Will commit (install) the steelsquid script, python files and web files"
-    echo 
-    echb "steelsquid commit-remote"
-    echo "Commit changes to a nother system via ssh (install on remote system)"
-    echo "Will commit (install) the steelsquid script, python files and web files"
-    echo "Set paramaters in this script:"
-    echo " base_remote_server=192.168.0.199"
-    echo " base_remote_port=22"
-    echo " base_remote_user=steelsquid"
-    echo "Or add 4 rows to config.txt"    
-    echo "  ip"
-    echo "  port"
-    echo "  user"
-    echo "  password"
-    echo 
-    echb "steelsquid commit-remote-restart"
-    echo "Commit changes to a nother system via ssh (install on remote system)"
-    echo "Will commit (install) the steelsquid script, python files and web files"
-    echo "After installation is done the steelsquid service will restart."
-    echo "Set paramaters in this script:"
-    echo "  base_remote_server=192.168.0.199"
-    echo "  base_remote_port=22"
-    echo "  base_remote_user=steelsquid"
-    echo "Or add 4 rows to config.txt"    
-    echo "  ip"
-    echo "  port"
-    echo "  user"
-    echo "  password"
-    echo 
-    echb "steelsquid synchronize"
-    echo "Automatic listen for changes abd commit changes to a nother system via ssh (install on remote system)"
-}
 if [ "$in_parameter_1" == "help-dev" ]; then
-    echo 
-    echb "DESCRIPTION"
-    echo "Commands for development."
     help_develop
     echo
 	exit 0
@@ -1191,11 +1168,20 @@ fi
 function help_utils()
 {
     echo 
+    echo 
+    echo 
+    echb "############################################################################"
+    echb "Extra utils: stream USB camera..."
+    echb "############################################################################"
+    echo 
     echb "steelsquid stream"
     echo "Is camera streaming enabled."
     echo 
     echb "steelsquid stream-on"
-    echo "Enable http streaming of camera."
+    echo "Enable http streaming of USB camera."
+    echo 
+    echb "steelsquid stream-pi-on"
+    echo "Enable http streaming of Raspberry PI camera."
     echo 
     echb "steelsquid stream-off"
     echo "Disable streaming of camera."
@@ -1221,9 +1207,6 @@ function help_utils()
     fi
 }
 if [ "$in_parameter_1" == "help-utils" ]; then
-    echo 
-    echb "DESCRIPTION"
-    echo "Extra utils: stream USB camera..."
     help_utils
     echo
 	exit 0
@@ -1231,6 +1214,12 @@ fi
 ##################################
 function help_build()
 {
+    echo 
+    echo 
+    echo 
+    echb "############################################################################"
+    echb "How to build a steelsquid-kiss img (reminder for me)"
+    echb "############################################################################"
     echo 
     echb "1.  Download and extract the installer image"
     echo "wget https://github.com/debian-pi/raspbian-ua-netinst/releases/download/v1.0.5/raspbian-ua-netinst-v1.0.5.img.xz"
@@ -1305,25 +1294,22 @@ function help_build()
     echo "Upload steelsquid-kiss-os.sh to http://www.steelsquid.org"
     echo "Clear the ssh keys"
     echo 
-    echb "21. GIT and google code"
+    echb "21. GIT and github"
     echo "git init"
     echo "git add *.html"
     echo "git commit -m \"Initial commit\""
     echo "echo machine code.google.com > ~/.netrc"
-    echo "echo login steelsquid@gmail.com >> ~/.netrc"
+    echo "echo login steelsquid >> ~/.netrc"
     echo "echo password XXXXXXXX >> ~/.netrc"
     echo "echo machine code.google.com > /root/.netrc"
-    echo "echo login steelsquid@gmail.com >> root/.netrc"
+    echo "echo login steelsquid >> root/.netrc"
     echo "echo password XXXXXXXX >> /root/.netrc"
     echo "chmod go= ~/.netrc"
-    echo "git remote add googlecode https://code.google.com/p/steelsquid-kiss-os"
+    echo "git remote add steelsquidkissos https://github.com/steelsquid/steelsquid-kiss-os.git"
     echo "git commit -a -m \"-\""
-    echo "git push googlecode master"
+    echo "git push steelsquidkissos master"
 }
 if [ "$in_parameter_1" == "help-build" ]; then
-    echo 
-    echb "DESCRIPTION"
-    echo "How to build a steelsquid-kiss img (reminder for me)"
     help_build
     echo
 	exit 0
@@ -1332,9 +1318,11 @@ fi
 function help_top()
 {
     echo 
-    echb "DESCRIPTION"
-    echo "Create, upgrade, configure and develop steelsquid-kiss-os."
-    echo "http://www.steelsquid.org/steelsquid-kiss-os"
+    echo 
+    echb "############################################################################"
+    echb "Create, upgrade, configure and develop steelsquid-kiss-os."
+    echb "http://www.steelsquid.org/steelsquid-kiss-os"
+    echb "############################################################################"
     echo 
     echb "reboot"
     echo "Reboot the system"
@@ -1379,11 +1367,6 @@ function help_top()
     echo 
     echb "steelsquid help-other"
     echo "Show some other useful commands"
-    if [ $(is-raspberry-pi) == "true" ]; then
-        echo 
-        echb "steelsquid help-io"
-        echo "IO Command (GPIO)"
-    fi
     echo 
     echb "steelsquid help-files"
     echo "Description of some files and folders."
@@ -1403,9 +1386,6 @@ if [ "$in_parameter_1" == "help" ]; then
     help_upgrade
     help_utils
     help_other
-    if [ $(is-raspberry-pi) == "true" ]; then
-        help_io
-    fi
     help_files
     help_develop
     help_build
@@ -1789,6 +1769,79 @@ fi
 
 
 ##################################################################################
+# Camera info
+##################################################################################
+function camera_info()
+{
+    if [ $(get-flag "camera") == "true" ]; then
+        echo
+        echo "Camera enabled"
+        echo
+    else
+        echo
+        echo "camera disabled"
+        echo
+    fi
+}
+if [ "$in_parameter_1" == "camera" ]; then
+	camera_info
+	exit 0
+fi
+
+
+
+##################################################################################
+# Enable Camera
+##################################################################################
+function enable_camera()
+{
+	log "Enable camera"
+	set-flag "camera"
+    sed -i '/^gpu_mem/ d' /boot/config.txt
+    sed -i '/^start_x/ d' /boot/config.txt
+    sed -i '/^start_file/ d' /boot/config.txt
+    sed -i '/^fixup_file/ d' /boot/config.txt
+    sed -i '/^disable_camera_led/ d' /boot/config.txt
+    echo "gpu_mem=128" >> /boot/config.txt
+    echo "start_x=1" >> /boot/config.txt
+    echo "start_file=start_x.elf" >> /boot/config.txt
+    echo "fixup_file=fixup_x.dat" >> /boot/config.txt 
+    echo "disable_camera_led=1" >> /boot/config.txt 
+    set-parameter "gpu_mem" "128"
+    log-reboot
+}
+if [ "$in_parameter_1" == "camera-on" ]; then
+	enable_camera
+	exit 0
+fi
+
+
+
+
+##################################################################################
+# Disable Camera
+##################################################################################
+function disable_camera()
+{
+	log "Disable camera"
+	del-flag "camera"
+    sed -i '/^gpu_mem/ d' /boot/config.txt
+    sed -i '/^start_x/ d' /boot/config.txt
+    sed -i '/^start_file/ d' /boot/config.txt
+    sed -i '/^fixup_file/ d' /boot/config.txt
+    sed -i '/^disable_camera_led/ d' /boot/config.txt
+    echo "gpu_mem=64" >> /boot/config.txt
+    set-parameter "gpu_mem" "64"
+    log-reboot
+}
+if [ "$in_parameter_1" == "camera-off" ]; then
+	disable_camera
+	exit 0
+fi
+
+
+
+##################################################################################
 # Show status streaming of USB camera
 ##################################################################################
 function stream_info()
@@ -1799,9 +1852,15 @@ function stream_info()
         echo "WEB: http://xxx.xxx.xxx.xxx/utils"
         echo "The Stream: http://xxx.xxx.xxx.xxx:8080/?action=stream"
         echo
+    elif [ $(get-flag "stream-pi") == "true" ]; then
+        echo
+        echo "Raspberry PI camera streaming: Enabled"
+        echo "WEB: http://xxx.xxx.xxx.xxx/utils"
+        echo "The Stream: http://xxx.xxx.xxx.xxx:8080/?action=stream"
+        echo
     else
         echo
-        echo "USB camera streaming: Disabled"
+        echo "Camera streaming: Disabled"
         echo
     fi
 }
@@ -1818,6 +1877,9 @@ function stream_on()
 {
 	log "Enable streaming of USB camera"
     set-flag "stream"
+    del-flag "stream-pi"
+    systemctl stop mjpgstreamerpi
+    systemctl disable mjpgstreamerpi
 
     rm -r /opt/mjpg-streamer/mjpg-streamer/www
     echo "[Unit]" > /usr/local/lib/systemd/system/mjpgstreamer.service
@@ -1844,6 +1906,44 @@ if [ "$in_parameter_1" == "stream-on" ]; then
 fi
 
 
+
+##################################################################################
+# Enable streaming of USB camera
+##################################################################################
+function stream_on_pi()
+{
+	log "Enable streaming of Raspberry PI camera"
+    del-flag "stream"
+    set-flag "stream-pi"
+    systemctl stop mjpgstreamer
+    systemctl disable mjpgstreamer
+
+    enable_camera 
+    
+    rm -r /opt/mjpg-streamer-pi/mjpg-streamer/mjpg-streamer-experimental/www
+    echo "[Unit]" > /usr/local/lib/systemd/system/mjpgstreamerpi.service
+    echo "Description=Mjpg" >> /usr/local/lib/systemd/system/mjpgstreamerpi.service
+    echo "" >> /usr/local/lib/systemd/system/mjpgstreamerpi.service
+    echo "[Service]" >> /usr/local/lib/systemd/system/mjpgstreamerpi.service
+    echo "Environment=\"LD_LIBRARY_PATH=/opt/mjpg-streamer-pi/mjpg-streamer/mjpg-streamer-experimental\"" >> /usr/local/lib/systemd/system/mjpgstreamerpi.service
+    echo "ExecStart=/opt/mjpg-streamer-pi/mjpg-streamer/mjpg-streamer-experimental/mjpg_streamer -i \"/opt/mjpg-streamer-pi/mjpg-streamer/mjpg-streamer-experimental/input_raspicam.so -x 640 -y 480 -fps 15\" -o \"/opt/mjpg-streamer-pi/mjpg-streamer/mjpg-streamer-experimental/output_http.so -w www\"" >> /usr/local/lib/systemd/system/mjpgstreamerpi.service
+    echo "Restart=always" >> /usr/local/lib/systemd/system/mjpgstreamerpi.service
+    echo "RestartSec=5" >> /usr/local/lib/systemd/system/mjpgstreamerpi.service
+    echo "KillMode=process" >> /usr/local/lib/systemd/system/mjpgstreamerpi.service
+    echo "" >> /usr/local/lib/systemd/system/mjpgstreamerpi.service
+    echo "[Install]" >> /usr/local/lib/systemd/system/mjpgstreamerpi.service
+    echo "WantedBy=multi-user.target" >> /usr/local/lib/systemd/system/mjpgstreamerpi.service
+    systemctl --system daemon-reload
+    systemctl enable mjpgstreamerpi
+    systemctl start mjpgstreamerpi
+	systemctl restart steelsquid
+	log-ok    
+}
+if [ "$in_parameter_1" == "stream-pi-on" ]; then
+	stream_on_pi
+	exit 0
+fi
+
 ##################################################################################
 # Disable streaming of USB camera
 ##################################################################################
@@ -1851,8 +1951,11 @@ function stream_off()
 {
 	log "Disable streaming of USB camera"
     del-flag "stream"
+    del-flag "stream-pi"
     systemctl stop mjpgstreamer
     systemctl disable mjpgstreamer
+    systemctl stop mjpgstreamerpi
+    systemctl disable mjpgstreamerpi
 	systemctl restart steelsquid
 	log-ok
 }
@@ -1916,6 +2019,117 @@ fi
 
 
 ##################################################################################
+# Is bluetooth pairing enabled or disabled
+##################################################################################
+function bluetooth_info()
+{
+    if [ $(get-flag "bluetooth_pairing") == "true" ]; then
+        echo
+        echo "Bluetooth pairing: Enabled"
+        if [ $(get-flag "bluetooth_connection") == "true" ]; then
+            echo "Bluetooth connection: Enabled"
+        else
+            echo "Bluetooth connection: Disabled"
+        fi
+        echo
+    else
+        echo
+        echo "Bluetooth pairing: Disabled"
+        if [ $(get-flag "bluetooth_connection") == "true" ]; then
+            echo "Bluetooth connection: Enabled"
+        else
+            echo "Bluetooth connection: Disabled"
+        fi
+        echo
+    fi
+}
+if [ "$in_parameter_1" == "bluetooth" ]; then
+	bluetooth_info
+	exit 0
+fi
+
+
+##################################################################################
+# bluetooth pairing on
+##################################################################################
+function bluetooth_on()
+{
+	log "Enable bluetooth pairing"
+    set-flag "bluetooth_pairing"
+	systemctl restart steelsquid
+    log-ok
+}
+if [ "$in_parameter_1" == "bluetooth-on" ]; then
+	bluetooth_on
+	exit 0
+fi
+
+
+##################################################################################
+#  bluetooth pairing off
+##################################################################################
+function bluetooth_off()
+{
+	log "Disable bluetooth pairing"
+    del-flag "bluetooth_pairing"
+	systemctl restart steelsquid
+    log-ok
+}
+if [ "$in_parameter_1" == "bluetooth-off" ]; then
+	bluetooth_off
+	exit 0
+fi
+
+
+##################################################################################
+# Set bluetooth pairing PIN
+##################################################################################
+function bluetooth_pin()
+{
+	log "Set bluetooth pairing PIN"
+    set-parameter "bluetooth_pin" $in_parameter_2
+	systemctl restart steelsquid
+    log-ok
+}
+if [ "$in_parameter_1" == "bluetooth-pin" ]; then
+	bluetooth_pin
+	exit 0
+fi
+
+
+##################################################################################
+# bluetooth connection on
+##################################################################################
+function bluetooth_con_on()
+{
+	log "Enable bluetooth connection"
+    set-flag "bluetooth_connection"
+	systemctl restart steelsquid
+    log-ok
+}
+if [ "$in_parameter_1" == "bluetooth-con-on" ]; then
+	bluetooth_con_on
+	exit 0
+fi
+
+
+##################################################################################
+#  bluetooth connection off
+##################################################################################
+function bluetooth_con_off()
+{
+	log "Disable bluetooth connection"
+    del-flag "bluetooth_connection"
+	systemctl restart steelsquid
+    log-ok
+}
+if [ "$in_parameter_1" == "bluetooth-con-off" ]; then
+	bluetooth_con_off
+	exit 0
+fi
+
+
+##################################################################################
 # Is rover enabled or disabled
 ##################################################################################
 function rover_info()
@@ -1946,6 +2160,8 @@ function rover_on()
     set-flag "io"
     stream_on
     socket_on
+    bluetooth_on
+    bluetooth_con_on    
     enable_lcd_ssd
     log-ok
 }
@@ -2381,6 +2597,49 @@ if [ "$in_parameter_1" == "web-aut-off" ]; then
 	exit 0
 fi
 
+
+##################################################################################
+# List parameters and flags
+##################################################################################
+if [ "$in_parameter_1" == "list-flags" ]; then
+    echo "power                Clean power off"
+    echo "modem                USB 3g/4g modem"
+    echo "log                  Systemd logging"
+    echo "nokia                Print text to nokia5101 LCD"
+    echo "hdd                  Print text to HDD44780 LCD"
+    echo "sdd                  Print text to ssd1306 OLED LCD"
+    echo "auto                 Automtic select lcd display"
+    echo "camera               Raspberry PI camera enabled"
+    echo "stream               Stream USB camera"
+    echo "stream-pi            Stream the Raspberry PI camera"
+    echo "socket_connection    Listen for socket connection"
+    echo "bluetooth_pairing    Bluetooth pairing is enabled"
+    echo "bluetooth_connection Bluetooth socket connnection is enabled"
+    echo "rover                Rover functionality"
+    echo "io                   Steelsquid IO Board is enabled"
+    echo "ssh                  SSH server enabled"
+    echo "download             Download manager enabled"
+    echo "web                  WEB-interface enabled"
+    echo "web_https            Use HTTPS on the web server"
+    echo "web_authentication   Must login to WEB-server"
+    echo "web_local            Only listen on localhost"
+    echo "development          Is development mode enabled"
+    echo "disable_monitor      Disable the monitor"
+    echo "overclock            Is the system overclocked"
+    echo "underclock           Is the system underclocked"
+    exit 0
+fi
+if [ "$in_parameter_1" == "list-parameters" ]; then
+    echo "nokia_contrast  Nokia LCD contrast"
+    echo "gpu_mem         GPU mem"
+    echo "bluetooth_pin   PIN code for bluetooth pairing"
+    echo "download_dir    Download dir for download manager"
+    echo "mail_host       Mail server to send notifications"
+    echo "mail_username   Mail server username to send notifications"
+    echo "mail_password   Mail server password to send notifications"
+    echo "mail_mail       Notifications email"
+    exit 0
+fi
 
 
 ##################################################################################
@@ -2962,78 +3221,6 @@ fi
 
 
 ##################################################################################
-# Camera info
-##################################################################################
-function camera_info()
-{
-    if [ $(get-flag "camera") == "true" ]; then
-        echo
-        echo "Camera enabled"
-        echo
-    else
-        echo
-        echo "camera disabled"
-        echo
-    fi
-}
-if [ "$in_parameter_1" == "camera" ]; then
-	camera_info
-	exit 0
-fi
-
-
-
-##################################################################################
-# Enable Camera
-##################################################################################
-function enable_camera()
-{
-	log "Enable camera"
-	set-flag "camera"
-    sed -i '/^gpu_mem/ d' /boot/config.txt
-    sed -i '/^start_x/ d' /boot/config.txt
-    sed -i '/^start_file/ d' /boot/config.txt
-    sed -i '/^fixup_file/ d' /boot/config.txt
-    sed -i '/^disable_camera_led/ d' /boot/config.txt
-    echo "gpu_mem=128" >> /boot/config.txt
-    echo "start_x=1" >> /boot/config.txt
-    echo "start_file=start_x.elf" >> /boot/config.txt
-    echo "fixup_file=fixup_x.dat" >> /boot/config.txt 
-    echo "disable_camera_led=1" >> /boot/config.txt 
-    log-reboot
-}
-if [ "$in_parameter_1" == "camera-on" ]; then
-	enable_camera
-	exit 0
-fi
-
-
-
-
-##################################################################################
-# Disable Camera
-##################################################################################
-function disable_camera()
-{
-	log "Disable camera"
-	del-flag "camera"
-    sed -i '/^gpu_mem/ d' /boot/config.txt
-    sed -i '/^start_x/ d' /boot/config.txt
-    sed -i '/^start_file/ d' /boot/config.txt
-    sed -i '/^fixup_file/ d' /boot/config.txt
-    sed -i '/^disable_camera_led/ d' /boot/config.txt
-    echo "gpu_mem=64" >> /boot/config.txt
-    log-reboot
-}
-if [ "$in_parameter_1" == "camera-off" ]; then
-	disable_camera
-	exit 0
-fi
-
-
-
-
-##################################################################################
 # clocking info
 ##################################################################################
 function clocking_info()
@@ -3210,14 +3397,14 @@ if [ "$in_parameter_1" == "omxplayer-kill" ]; then
 fi
 
 ##################################################################################
-# Commit to GIT and push to google code
+# Commit to GIT and push to github
 ##################################################################################
 function git_commit()
 {
     git commit -a -m "-"
-    git push googlecode master
+    git push steelsquidkissos master
     git commit -a -m "-"
-    git push googlecode master
+    git push steelsquidkissos master
 }
 if [ "$in_parameter_1" == "commit-git" ]; then
     git_commit
@@ -3533,8 +3720,8 @@ if [ $(get_installed) == "false" ]; then
         aptitude -y purge cron ifupdown rsyslog vim-common vim-tiny hdparm keyboard-configuration console-setup console-setup-linux
         exit-check 
     else
-        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv linux-image-rpi-rpfv raspberrypi-bootloader-nokernel i2c-tools alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-ti-connectivity libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer zd1211-firmware libraspberrypi-bin fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw console-data
-        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv linux-image-rpi-rpfv raspberrypi-bootloader-nokernel i2c-tools alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-ti-connectivity libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer zd1211-firmware libraspberrypi-bin fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw console-data
+        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv linux-image-rpi-rpfv raspberrypi-bootloader-nokernel i2c-tools alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-ti-connectivity libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer zd1211-firmware libraspberrypi-bin fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw console-data bluetooth
+        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv linux-image-rpi-rpfv raspberrypi-bootloader-nokernel i2c-tools alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-ti-connectivity libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer zd1211-firmware libraspberrypi-bin fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw console-data bluetooth
         exit-check 
         aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install build-essential python-dbus python-pexpect python-dev python-setuptools python-pip python-pam python-smbus psmisc git libudev-dev libmount-dev python-imaging
         aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install build-essential python-dbus python-pexpect python-dev python-setuptools python-pip python-pam python-smbus psmisc git libudev-dev libmount-dev python-imaging
@@ -3615,9 +3802,17 @@ if [ $(is-raspberry-pi) == "true" ]; then
     log "Adafruit-Raspberry-Pi-Python-Code installed"
 fi
 
-self._gpio.setup(self._rst, GPIO.OUT)
-self.reset()
 
+##################################################################################
+# Install Piborg diable
+##################################################################################
+if [ $(is-raspberry-pi) == "true" ]; then
+    log "Install Piborg diable"
+    cd /usr/local/lib/python2.7/dist-packages
+    wget http://www.piborg.org/downloads/diablo/examples.zip
+    unzip examples.zip
+    log "Piborg diable installed"
+fi
 
 ##################################################################################
 # Install picamera
@@ -3750,22 +3945,28 @@ systemctl --system daemon-reload
 systemctl enable ldm
 echo "#"\!"/bin/bash" > /usr/bin/ldm-shout
 echo "if [ \"\$LDM_ACTION\" == \"mount\" ]; then" >> /usr/bin/ldm-shout
-echo "sudo steelsquid-event mount usb \"\$LDM_NODE\" \"\$LDM_MOUNTPOINT\"" >> /usr/bin/ldm-shout
+echo "sudo event mount usb \"\$LDM_NODE\" \"\$LDM_MOUNTPOINT\"" >> /usr/bin/ldm-shout
 echo "else" >> /usr/bin/ldm-shout
-echo "sudo steelsquid-event umount usb \"\$LDM_NODE\" \"\$LDM_MOUNTPOINT\"" >> /usr/bin/ldm-shout
+echo "sudo event umount usb \"\$LDM_NODE\" \"\$LDM_MOUNTPOINT\"" >> /usr/bin/ldm-shout
 echo "fi" >> /usr/bin/ldm-shout
 chmod +x /usr/bin/ldm-shout
 
 
 
 ##################################################################################
-# USB sreaming
+# Camera sreaming
 ##################################################################################
-log "Download and install usb streaming"
+log "Download and install camera streaming"
+rm -r mjpg-streamer*
 sudo ln -s /usr/include/linux/videodev2.h /usr/include/linux/videodev.h
 cd /opt
 svn co https://svn.code.sf.net/p/mjpg-streamer/code mjpg-streamer
 cd mjpg-streamer/mjpg-streamer
+make
+mkdir /opt/mjpg-streamer-pi
+cd /opt/mjpg-streamer-pi
+git clone https://github.com/jacksonliam/mjpg-streamer.git
+cd /opt/mjpg-streamer-pi/mjpg-streamer/mjpg-streamer-experimental
 make
 
 
@@ -3807,6 +4008,15 @@ echo "none   /var/log   tmpfs   noatime,nodiratime,rw,mode=1777,nodev,nosuid,noe
 echo "none   /tmp       tmpfs   noatime,nodiratime,rw,mode=1777,nodev,nosuid,size=256m   0   0" >> /etc/fstab
 echo "/tmp   /var/tmp   none    noatime,nodiratime,rw,mode=1777,nodev,nosuid,bind        0   0" >> /etc/fstab
 log "Fstab Optimized"
+
+
+
+##################################################################################
+# Fix bluetooth
+##################################################################################
+log "Fix bluetooth"
+sed -i 's/.*DiscoverableTimeout.*/DiscoverableTimeout = 0/g' /etc/bluetooth/main.conf
+sed -i 's/.*PairableTimeout.*/PairableTimeout = 0/g' /etc/bluetooth/main.conf
 
 
 
@@ -4161,16 +4371,16 @@ log "Networkmanager enabled"
 log "Configure network manager dispatch script"
 echo "#! /bin/sh" > /etc/NetworkManager/dispatcher.d/99steelsquid.sh
 echo "if [ \"\$2\" = \"up\" ]; then" >> /etc/NetworkManager/dispatcher.d/99steelsquid.sh
-echo "steelsquid-event network" >> /etc/NetworkManager/dispatcher.d/99steelsquid.sh
+echo "event network" >> /etc/NetworkManager/dispatcher.d/99steelsquid.sh
 echo "fi" >> /etc/NetworkManager/dispatcher.d/99steelsquid.sh
 echo "if [ \"\$2\" = \"down\" ]; then" >> /etc/NetworkManager/dispatcher.d/99steelsquid.sh
-echo "steelsquid-event network" >> /etc/NetworkManager/dispatcher.d/99steelsquid.sh
+echo "event network" >> /etc/NetworkManager/dispatcher.d/99steelsquid.sh
 echo "fi" >> /etc/NetworkManager/dispatcher.d/99steelsquid.sh
 echo "if [ \"\$2\" = \"vpn-up\" ]; then" >> /etc/NetworkManager/dispatcher.d/99steelsquid.sh
-echo "steelsquid-event vpn up" >> /etc/NetworkManager/dispatcher.d/99steelsquid.sh
+echo "event vpn up" >> /etc/NetworkManager/dispatcher.d/99steelsquid.sh
 echo "fi" >> /etc/NetworkManager/dispatcher.d/99steelsquid.sh
 echo "if [ \"\$2\" = \"vpn-down\" ]; then" >> /etc/NetworkManager/dispatcher.d/99steelsquid.sh
-echo "steelsquid-event vpn down" >> /etc/NetworkManager/dispatcher.d/99steelsquid.sh
+echo "event vpn down" >> /etc/NetworkManager/dispatcher.d/99steelsquid.sh
 echo "fi" >> /etc/NetworkManager/dispatcher.d/99steelsquid.sh
 chmod 755 /etc/NetworkManager/dispatcher.d/99steelsquid.sh
 
@@ -4287,7 +4497,7 @@ echo 'SUBSYSTEM=="vchiq",GROUP="video",MODE="0660"' > /etc/udev/rules.d/10-vchiq
 ##################################################################################
 log "Generate aria2 shout ok command"
 echo "#"\!"/bin/bash" > /usr/bin/aria2shoutok
-echo "steelsquid-event shout \"Download complete\\n\$3\"" >> /usr/bin/aria2shoutok
+echo "event shout \"Download complete\\n\$3\"" >> /usr/bin/aria2shoutok
 echo "exit 0" >> /usr/bin/aria2shoutok
 chmod +x /usr/bin/aria2shoutok
 
@@ -4297,7 +4507,7 @@ chmod +x /usr/bin/aria2shoutok
 ##################################################################################
 log "Generate aria2 shout err command"
 echo "#"\!"/bin/bash" > /usr/bin/aria2shouterr
-echo "steelsquid-event shout \"Download error\\n\$3\"" >> /usr/bin/aria2shouterr
+echo "event shout \"Download error\\n\$3\"" >> /usr/bin/aria2shouterr
 echo "exit 0" >> /usr/bin/aria2shouterr
 chmod +x /usr/bin/aria2shouterr
 
@@ -4441,6 +4651,17 @@ chmod +x /usr/bin/log
 
 
 ##################################################################################
+# Generate list-flags
+##################################################################################
+log "Generate list-flags command"
+echo "#"\!"/bin/bash" > /usr/bin/list-flags
+echo "steelsquid list-flags" >> /usr/bin/list-flags
+echo "exit 0" >> /usr/bin/list-flags
+chmod +x /usr/bin/list-flags
+
+
+
+##################################################################################
 # Generate set-flag
 ##################################################################################
 log "Generate set-flag command"
@@ -4452,7 +4673,7 @@ echo "    echo \"Set a system flag\"" >> /usr/bin/set-flag
 echo "    echo" >> /usr/bin/set-flag
 echo "    exit 0" >> /usr/bin/set-flag
 echo "fi" >> /usr/bin/set-flag
-echo "echo \"\" > $steelsquid_folder/flags/\$1" >> /usr/bin/set-flag
+echo "event flag set \$1" >> /usr/bin/set-flag
 echo "exit 0" >> /usr/bin/set-flag
 chmod +x /usr/bin/set-flag
 
@@ -4490,9 +4711,20 @@ echo "    echo \"Delete a flag\"" >> /usr/bin/del-flag
 echo "    echo" >> /usr/bin/del-flag
 echo "    exit 0" >> /usr/bin/del-flag
 echo "fi" >> /usr/bin/del-flag
-echo "rm -f $steelsquid_folder/flags/\$1 > /dev/null 2>\&1" >> /usr/bin/del-flag
+echo "event flag del \$1" >> /usr/bin/del-flag
 echo "exit 0" >> /usr/bin/del-flag
 chmod +x /usr/bin/del-flag
+
+
+##################################################################################
+# Generate list-parameters
+##################################################################################
+log "Generate list-parameters command"
+echo "#"\!"/bin/bash" > /usr/bin/list-parameters
+echo "steelsquid list-parameters" >> /usr/bin/list-parameters
+echo "exit 0" >> /usr/bin/list-parameters
+chmod +x /usr/bin/list-parameters
+
 
 
 ##################################################################################
@@ -4507,7 +4739,7 @@ echo "    echo \"Set a parameter\"" >> /usr/bin/set-parameter
 echo "    echo" >> /usr/bin/set-parameter
 echo "    exit 0" >> /usr/bin/set-parameter
 echo "fi" >> /usr/bin/set-parameter
-echo "echo \$2 > $steelsquid_folder/parameters/\$1" >> /usr/bin/set-parameter
+echo "event parameter set \$1 \$2" >> /usr/bin/set-parameter
 echo "exit 0" >> /usr/bin/set-parameter
 chmod +x /usr/bin/set-parameter
 
@@ -4526,6 +4758,7 @@ echo "    exit 0" >> /usr/bin/get-parameter
 echo "fi" >> /usr/bin/get-parameter
 echo "if [ -f \"$steelsquid_folder/parameters/\$1\" ]; then" >> /usr/bin/get-parameter
 echo "    cat $steelsquid_folder/parameters/\$1" >> /usr/bin/get-parameter
+echo "    echo \"\"" >> /usr/bin/get-parameter
 echo "else" >> /usr/bin/get-parameter
 echo "    echo \"\"" >> /usr/bin/get-parameter
 echo "fi" >> /usr/bin/get-parameter
@@ -4566,7 +4799,7 @@ echo "    echo \"Delete a parameter\"" >> /usr/bin/del-parameter
 echo "    echo" >> /usr/bin/del-parameter
 echo "    exit 0" >> /usr/bin/del-parameter
 echo "fi" >> /usr/bin/del-parameter
-echo "rm -f $steelsquid_folder/parameters/\$1 > /dev/null 2>\&1" >> /usr/bin/del-parameter
+echo "event parameter del \$1" >> /usr/bin/del-parameter
 echo "exit 0" >> /usr/bin/del-parameter
 chmod +x /usr/bin/del-parameter
 

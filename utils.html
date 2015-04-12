@@ -64,15 +64,25 @@
              * On stream
              */
             function on_stream(paramaters){
-                if(paramaters[0] == "True"){
-                    show('stream_enabled');
+                if(paramaters[0] == "usb"){
+                    show('stream_enabled_usb');
+                    hide('stream_enabled_pi');
                     hide('stream_disabled');
                     $("#stream_img").attr("src", "http://"+window.location.hostname+":8080/?action=stream");         
                     $("#video_link").attr("href", "http://"+window.location.hostname+":8080/?action=stream");         
                     $("#video_link").html("http://"+window.location.hostname+":8080/?action=stream");
                 }
+                else if(paramaters[0] == "pi"){
+                    show('stream_enabled_pi');
+                    hide('stream_enabled_usb');
+                    hide('stream_disabled');
+                    $("#stream_img_pi").attr("src", "http://"+window.location.hostname+":8080/?action=stream");         
+                    $("#video_link_pi").attr("href", "http://"+window.location.hostname+":8080/?action=stream");         
+                    $("#video_link_pi").html("http://"+window.location.hostname+":8080/?action=stream");
+                }
                 else{
-                    hide('stream_enabled');
+                    hide('stream_enabled-usb');
+                    hide('stream_enabled-pi');
                     show('stream_disabled');
                 }
             }
@@ -246,16 +256,17 @@
                     </tr>
                 </table>
                 <div id="stream_disabled" class="hide">
-                    The USB web camera streaming is not enabled on this system.<br/>
+                    The USB or Raspberry PI web camera streaming is not enabled on this system.<br/>
                     Enable streaming may take a minute to perform and you need to reload this page afterwards (you may get connection error).<br/>
                     <br/>
                     <table>
                         <tr>
-                            <td><button onclick="javascript:submitSyncConfirm('Are you sure you want to disable the streaming?', 'stream', 'True');">Enable Streaming</button></td>
+                            <td><button onclick="javascript:submitSyncConfirm('Are you sure you want to disable the streaming?', 'stream', 'usb');">Enable USB Streaming</button></td>
+                            <td><button onclick="javascript:submitSyncConfirm('Are you sure you want to disable the streaming?', 'stream', 'pi');">Enable Raspberry PI Streaming</button></td>
                         </tr>
                     </table>
                 </div>
-                <div id="stream_enabled" class="hide">
+                <div id="stream_enabled_usb" class="hide">
                     The USB web camera streaming is enabled on this system.<br/>
                     Below you should see the video from the USB camera.<br/>
                     If not, is it probably because your camera is not supported.<br/>
@@ -274,6 +285,29 @@
                     <table>
                         <tr>
                             <td><button onclick="javascript:submitSyncConfirm('Are you sure you want to disable the streaming?', 'stream', 'False');">Disable Streaming</button></td>
+                            <td><button onclick="javascript:submitSyncConfirm('Are you sure you want to disable the streaming?', 'stream', 'pi');">Enable Raspberry PI Streaming</button></td>
+                        </tr>
+                    </table>
+                </div>
+                <div id="stream_enabled_pi" class="hide">
+                    The Raspberry PI web camera streaming is enabled on this system.<br/>
+                    Below you should see the video from the Raspberry PI camera.<br/>
+                    This is the url to the video: <a id="video_link_pi" href=""></a><br>
+                    <br/>
+                    <img alt="The stream" id="stream_img_pi" src=""/>
+                    <br/>
+                    <table style="width:100%">
+                        <tr>
+                            <td style="width:50%"><button id="but_normal_pi" style="text-decoration: underline;" onclick="javascript:$('#stream_img_pi').removeClass('rotate-180');$('#but_normal').css({'text-decoration':'underline'});;$('#but_flip').css({'text-decoration':'none'});">Camera normal</button></td>
+                            <td style="width:50%"><button id="but_flip_pi" onclick="javascript:$('#stream_img_pi').removeClass('rotate-180').addClass('rotate-180');$('#but_normal').css({'text-decoration':'none'});;$('#but_flip').css({'text-decoration':'underline'});">Camera rotate</button></td>
+                        </tr>
+                    </table>
+                    <br/><br/>
+                    Disable streaming may take a minute to perform and you need to reload this page afterwards (you may get connection error).<br/>
+                    <table>
+                        <tr>
+                            <td><button onclick="javascript:submitSyncConfirm('Are you sure you want to disable the streaming?', 'stream', 'False');">Disable Streaming</button></td>
+                            <td><button onclick="javascript:submitSyncConfirm('Are you sure you want to disable the streaming?', 'stream', 'usb');">Enable USB Streaming</button></td>
                         </tr>
                     </table>
                 </div>

@@ -70,7 +70,7 @@ class SteelsquidSocketConnection(steelsquid_connection.SteelsquidConnection):
         @return: connection_object (the connection_object object)
         '''
         connection_object.connect((self.host, self.port))
-        steelsquid_utils.shout("Socket Connection: Connected to client", debug=True)
+        steelsquid_utils.shout("Socket Connection: Connected to server", debug=True)
         return connection_object
 
 

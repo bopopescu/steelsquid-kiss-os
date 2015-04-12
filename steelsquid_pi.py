@@ -13,6 +13,7 @@ Some useful stuff for Raspberry Pi
  - Analog input ADS1015
  - Controll Trex robot controller
  - Sabertooth motor controller
+ - Piborg diablo motor controller
 
 @organization: Steelsquid
 @author: Andreas Nilsson
@@ -43,6 +44,8 @@ from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
 from sets import Set
+import Diablo
+import steelsquid_event
 
 SETUP_NONE = 0
 SETUP_OUT = 1
@@ -109,6 +112,9 @@ draw = ImageDraw.Draw(image)
 lcd_auto = 0
 worker_commands = {}
 worker_thread_started = False
+diablo = None
+
+
 
 
 def worker_thread():
@@ -322,7 +328,10 @@ def gpio_get_3v3(gpio):
     global setup
     if not setup[int(gpio)] == SETUP_IN_3V3:
         gpio_setup_in_3v3(gpio)
-    return GPIO.input(int(gpio))
+    if GPIO.input(int(gpio)) == 1:
+        return True
+    else:
+        return False
 
 
 def gpio_get_gnd(gpio):
@@ -334,7 +343,10 @@ def gpio_get_gnd(gpio):
     global setup
     if not setup[int(gpio)] == SETUP_IN_GND:
         gpio_setup_in_gnd(gpio)
-    return not GPIO.input(int(gpio))
+    if GPIO.input(int(gpio)) == 1:
+        return False
+    else:
+        return True
 
 
 def gpio_toggle_3v3(gpio):
@@ -704,7 +716,7 @@ def mcp23017_setup_in(address, gpio):
         if mcp_setup_26[gpio] != SETUP_IN:
             mcp_setup_26[gpio] == SETUP_IN
             mcp_26.config(gpio, mcp_26.INPUT)
-            mcp_26.pullup(gpio, 1)
+            mcp_26.pullup(gpio, 1) 
         return mcp_26
     elif address == 27:
         global mcp_27
@@ -875,7 +887,22 @@ def ads1015(address, gpio, gain=GAIN_6_144_V):
     address = str(address)
     gpio = int(gpio)
     return __ads1015(address).readADCSingleEnded(gpio, gain, 250) / 1000
-        
+
+
+def ads1015_median(address, gpio, gain=GAIN_6_144_V, samples=16):
+    '''
+    Read analog in from ADS1015 (0 to 5 v)
+    Median of sumber of samples
+    address= 48, 49, 4A, 4B 
+    gpio = 0 to 3
+    '''
+    a_list=[]
+    for i in range(samples):
+        value = ads1015(address, gpio, gain=GAIN_6_144_V)
+        a_list.append(value)
+        time.sleep(0.01)
+    return steelsquid_utils.median(a_list)
+    
 
 def __ads1015(address):
     '''
@@ -954,7 +981,7 @@ def mcp4728(address, volt0, volt1, volt2, volt3):
     '''
     Write analog out from MCP4728 (0 to 5v)
     address = 61
-    volt1 to 3 = Voltage on pins (0 and 4095)
+    volt0 to3 = Voltage on pins (0 and 4095)
     '''
     global mcp4728_i2c
     address = int(address)
@@ -972,7 +999,7 @@ def mcp4728(address, volt0, volt1, volt2, volt3):
         mcp4728_i2c.writeList(0x50, the_bytes)
     
     
-def hdd44780_write(text, number_of_seconds = 0, force_setup = True, is_i2c=True):
+def hdd44780_write(text, number_of_seconds = 0, force_setup = False, is_i2c=True):
     '''
     Print text to HDD44780 compatible LCD
     @param text: Text to write (\n or \\ = new line)
@@ -1205,6 +1232,8 @@ def hcsr04_distance(trig_gpio, echo_gpio, force_setup = False):
     @return: The distance in cm (-1 = unable to mesure)
     '''
     with lock_hcsr04:
+        trig_gpio = int(trig_gpio)
+        echo_gpio = int(echo_gpio)
         global distance_created
         if not distance_created or force_setup:
             gpio_setup_out(trig_gpio)
@@ -1212,9 +1241,9 @@ def hcsr04_distance(trig_gpio, echo_gpio, force_setup = False):
             gpio_set(trig_gpio, False)
             distance_created = True
         gpio_set(trig_gpio, False)
-        time.sleep(0.00001)
+        time.sleep(0.001)
         gpio_set(trig_gpio, True)
-        time.sleep(0.00001)
+        time.sleep(0.001)
         gpio_set(trig_gpio, False)
         countdown = TIMEOUT
         while (gpio_get(echo_gpio) == False and countdown > 0):
@@ -1235,7 +1264,7 @@ def hcsr04_distance(trig_gpio, echo_gpio, force_setup = False):
             return -1
 
 
-def rbada70_move(servo, value):
+def pca9685_move(servo, value):
     '''
     Move Adafruit 16-channel I2c servo to position (pwm value)
     @param servo: 0 to 15
@@ -1249,13 +1278,15 @@ def rbada70_move(servo, value):
         pwm.setPWM(int(servo), 0, int(value))
 
 
-def sabertooth_motor_speed(left, right, the_port=None):
+def sabertooth_motor_speed(left, right, the_port="/dev/ttyAMA0"):
     '''
     Set the speed on a sabertooth dc motor controller.
-    from -100 to +100
-    -100 = 100% back speed
-    0 = no speed
-    100 = 100% forward speed
+    left and right:
+        from -100 to +100
+        -100 = 100% back speed
+        0 = no speed
+        100 = 100% forward speed
+    the_port: /dev/ttyAMA0, the_port=/dev/ttyUSB0...
     '''
     with lock_sabertooth:
         global sabertooth
@@ -1307,6 +1338,339 @@ def trex_status():
     return steelsquid_trex.trex_status()
 
 
+def diablo_motor_1(speed):
+    '''
+    Drive Piborg diablo motor 1
+    Speed -1000 to 1000
+    '''
+    global diablo
+    if diablo == None:
+        diablo = Diablo.Diablo()
+        diablo.Init()
+        diablo.ResetEpo()
+        diablo.SetMotor1(0)         
+        diablo.SetMotor2(0)         
+    speed = float(speed)/1000
+    diablo.SetMotor1(speed)         
+    
+    
+def diablo_motor_2(speed):
+    '''
+    Drive Pibor g diablo motor 2
+    Speed -1000 to 1000
+    '''
+    global diablo
+    if diablo == None:
+        diablo = Diablo.Diablo()
+        diablo.Init()
+        diablo.ResetEpo()
+        diablo.SetMotor1(0)         
+        diablo.SetMotor2(0)         
+    speed = float(speed)/1000
+    diablo.SetMotor2(speed)         
+
+
+def callback_method(gpio, status):
+    '''
+    On event
+    '''
+    if status:
+        print "GPIO " + str(gpio) + ": True" 
+    else:
+        print "GPIO " + str(gpio) + ": False"
+
+
 if __name__ == '__main__':
-    pass
+    import sys
+    if len(sys.argv)==1:
+        from steelsquid_utils import printb
+        printb("IO commands for SteelsquidKissOS. Commands to get/set gpio and other stuff...")
+        print("This is mostly for test purpuse, all logic should be made in the Steelsquid daemon")
+        print("(e.g. steelsquid_kiss_global.py, expand.py...)")
+        print("")
+        print("You can execute the commands in two ways: direct or event")
+        print("Direct execute the command in a own process outside of Steelsquid daemon, and may ")
+        print("interrupt for example the LCD, DAC, ADC or extra GPIO.")
+        print("Event send a command to the Steelsquid daemon witch in turn execute the command.")
+        print("")
+        print("Event is the preferred way if you want to make test from the command line.")
+        print("Results from a event will not be return from the command itself, will be shouted")
+        print("to all terminals... (events can only send command not receive answers.)")
+        print("This events is mostly ment for test purpuse, inside Steelsquid daemon")
+        print("you should use direct method.")
+        print("")
+        printb("d=direct")
+        printb("e=event")
+        print("")
+        printb("pi <d/e> gpio_get_3v3 <gpio>")
+        print("Get status of RaspberryPI GPIO")
+        print("GPIO is connectoed to 3v3 (using internal pull-down)")
+        print("gpio: 4-26")
+        print("")
+        printb("pi <d/e> gpio_set_3v3 <gpio> <true/false>")
+        print("Set status of RaspberryPI GPIO")
+        print("GPIO is connectoed to 3v3 (using internal pull-down)")
+        print("gpio: 4-26")
+        print("")
+        printb("pi <d/e> gpio_get_gnd <gpio>")
+        print("Get status of RaspberryPI GPIO")
+        print("GPIO is connectoed to gnd (using internal pull-up)")
+        print("gpio: 4-26")
+        print("")
+        printb("pi <d/e> gpio_set_gnd <gpio> <true/false>")
+        print("Set status of RaspberryPI GPIO")
+        print("GPIO is connectoed to gnd (using internal pull-up)")
+        print("gpio: 4-26")
+        print("")
+        printb("pi <d/e> mcp23017_get <address> <gpio>")
+        print("Get status gpio on a MCP23017")
+        print("Connect GPIO to gnd (using internal pull-up)")
+        print("address: 20-27")
+        print("gpio: 0-15")
+        print("")
+        printb("pi <d/e> mcp23017_set <address> <gpio> <true/false>")
+        print("Set a gpio hight or low on a MCP23017")
+        print("Connect GPIO to gnd (using internal pull-up)")
+        print("address: 20-27")
+        print("gpio: 0-15")
+        print("")
+        printb("pi <d/e> ads1015 <address> <gpio>")
+        print("Read analog in from ADS1015 (0 to 5 v)")
+        print("address: 48, 49, 4A, 4B ")
+        print("gpio: 0-3")
+        print("")
+        printb("pi <d/e> mcp4725 <address> <value>")
+        print("Write analog out from MCP4725")
+        print("address: 60 ")
+        print("value: 0 and 4095")
+        print("")
+        printb("pi <d/e> mcp4728 <address> <volt0> <volt1> <volt2> <volt3>")
+        print("Write analog out from MCP4728")
+        print("address: 61")
+        print("volt0-3: 0 and 4095")
+        print("")
+        printb("pi <d/e> hdd44780 <is_i2c> <text>")
+        print("Print text to HDD44780 compatible LCD (\n or \\ = new line)")
+        print("is_i2c: Is the LCD connected by I2C (true/false)")
+        print("")
+        printb("pi <d/e> nokia5110 <text>")
+        print("Print text to nokia5110  LCD (\n or \\ = new line)")
+        print("")
+        printb("pi <d/e> ssd1306 <text>")
+        print("Print text to ssd1306 oled LCD (\n or \\ = new line)")
+        print("")
+        printb("pi <d/e> hcsr04 <trig_gpio> <echo_gpio>")
+        print("Measure_distance with a with HC-SR04.")
+        print("trig_gpio: The trig gpio")
+        print("echo_gpio: The echo gpio")
+        print("")
+        printb("pi <d/e> pca9685 <servo> <value>")
+        print("Move Adafruit 16-channel I2c servo to position (pwm value).")
+        print("servo: 0 to 15")
+        print("value: min=150, max=600 (may differ between servos)")
+        print("")
+        printb("pi <d/e> sabertooth <port> <left> <right>")
+        print("Set the speed on a sabertooth dc motor controller..")
+        print("port: /dev/ttyAMA0, the_port=/dev/ttyUSB0")
+        print("left and right: -100% to +100%")
+        print("")
+        printb("pi <d/e> trex_motor <left> <right>")
+        print("Set TREX speed of the dc motors")
+        print("left and right: -255 to 255")
+        print("")
+        printb("pi <d/e> trex_servo <servo> <position>")
+        print("Set TREX servo position")
+        print("servo: 1 to 6")
+        print("Position: Typically the servo position should be a value between 1000 and 2000 although it will vary depending on the servos used")
+        print("")
+        printb("pi <d/e> trex_status")
+        print("Get status from trex")
+        print(" - Battery voltage:   An integer that is 100x the actual voltage")
+        print(" - Motor current:  Current drawn by the motor in mA")
+        print(" - Accelerometer")
+        print(" - Impact")
+        print("")
+        printb("pi <d/e> diablo <left> <right>")
+        print("Drive Piborg diablo motor board")
+        print("left and right: -1000 to 1000")
+    else:
+        manner = sys.argv[1]
+        command = sys.argv[2]
+        if len(sys.argv)>3:
+            para1 = sys.argv[3]
+        if len(sys.argv)>4:
+            para2 = sys.argv[4]
+        if len(sys.argv)>5:
+            para3 = sys.argv[5]
+        if len(sys.argv)>6:
+            para4 = sys.argv[6]
+        if len(sys.argv)>7:
+            para5 = sys.argv[7]
+        if command == "gpio_get_3v3":
+            if manner == "d" or manner == "direct":
+                print gpio_get_3v3(para1)
+            elif manner == "e" or manner == "event":
+                steelsquid_event.broadcast_event_external("pi_io_event", ["gpio_get_3v3", para1])
+            else:
+                print "Expected: direct (d), event (e)"
+        elif command == "gpio_get_gnd":
+            if manner == "d" or manner == "direct":
+                print gpio_get_gnd(para1) 
+            elif manner == "e" or manner == "event":
+                steelsquid_event.broadcast_event_external("pi_io_event", ["gpio_get_gnd", para1])
+            else:
+                print "Expected: direct (d), event (e)"
+        elif command == "gpio_set_3v3":
+            if manner == "d" or manner == "direct":
+                gpio_set_3v3(para1, steelsquid_utils.to_boolean(para2))
+            elif manner == "e" or manner == "event":
+                steelsquid_event.broadcast_event_external("pi_io_event", ["gpio_set_3v3", para1, para2])
+            else:
+                print "Expected: direct (d), event (e)"
+        elif command == "gpio_set_gnd":
+            if manner == "d" or manner == "direct":
+                gpio_set_gnd(para1, steelsquid_utils.to_boolean(para2))
+            elif manner == "e" or manner == "event":
+                steelsquid_event.broadcast_event_external("pi_io_event", ["gpio_set_gnd", para1, para2])
+            else:
+                print "Expected: direct (d), event (e)"
+        elif command == "mcp23017_get":
+            if manner == "d" or manner == "direct":
+                print mcp23017_get(para1, para2)
+            elif manner == "e" or manner == "event":
+                steelsquid_event.broadcast_event_external("pi_io_event", ["mcp23017_get", para1, para2])
+            else:
+                print "Expected: direct (d), event (e)"
+        elif command == "mcp23017_set":
+            if manner == "d" or manner == "direct":
+                mcp23017_set(para1, para2, steelsquid_utils.to_boolean(para3))
+            elif manner == "e" or manner == "event":
+                steelsquid_event.broadcast_event_external("pi_io_event", ["mcp23017_set", para1, para2, para3])
+            else:
+                print "Expected: direct (d), event (e)"
+        elif command == "ads1015":
+            if manner == "d" or manner == "direct":
+                print ads1015(para1, para2)
+            elif manner == "e" or manner == "event":
+                steelsquid_event.broadcast_event_external("pi_io_event", ["ads1015", para1, para2])
+            else:
+                print "Expected: direct (d), event (e)"
+        elif command == "mcp4725":
+            if manner == "d" or manner == "direct":
+                mcp4725(para1, para2)
+            elif manner == "e" or manner == "event":
+                steelsquid_event.broadcast_event_external("pi_io_event", ["mcp4725", para1, para2])
+            else:
+                print "Expected: direct (d), event (e)"
+        elif command == "mcp4728":
+            if manner == "d" or manner == "direct":
+                mcp4728(para1, para2, para3, para4, para5)
+            elif manner == "e" or manner == "event":
+                steelsquid_event.broadcast_event_external("pi_io_event", ["mcp4728", para1, para2, para3, para4, para5])
+            else:
+                print "Expected: direct (d), event (e)"
+        elif command == "hdd44780":
+            if manner == "d" or manner == "direct":
+                if steelsquid_utils.to_boolean(para1):
+                    hdd44780_write(para2, number_of_seconds = 10, is_i2c=True)
+                else:
+                    hdd44780_write(para2, number_of_seconds = 10, is_i2c=False)
+            elif manner == "e" or manner == "event":
+                steelsquid_event.broadcast_event_external("pi_io_event", ["hdd44780", para1, para2])
+            else:
+                print "Expected: direct (d), event (e)"
+        elif command == "nokia5110":
+            if manner == "d" or manner == "direct":
+                 nokia5110_write(para1, number_of_seconds = 10)
+            elif manner == "e" or manner == "event":
+                steelsquid_event.broadcast_event_external("pi_io_event", ["nokia5110", para1])
+            else:
+                print "Expected: direct (d), event (e)"
+        elif command == "ssd1306":
+            if manner == "d" or manner == "direct":
+                 ssd1306_write(para1, number_of_seconds = 10)
+            elif manner == "e" or manner == "event":
+                steelsquid_event.broadcast_event_external("pi_io_event", ["ssd1306", para1])
+            else:
+                print "Expected: direct (d), event (e)"
+        elif command == "hcsr04":
+            if manner == "d" or manner == "direct":
+                 print hcsr04_distance(para1, para2)
+            elif manner == "e" or manner == "event":
+                steelsquid_event.broadcast_event_external("pi_io_event", ["hcsr04", para1, para2])
+            else:
+                print "Expected: direct (d), event (e)"
+        elif command == "pca9685":
+            if manner == "d" or manner == "direct":
+                 pca9685_move(para1, para2)
+            elif manner == "e" or manner == "event":
+                steelsquid_event.broadcast_event_external("pi_io_event", ["pca9685", para1, para2])
+            else:
+                print "Expected: direct (d), event (e)"
+        elif command == "sabertooth":
+            if manner == "d" or manner == "direct":
+                 sabertooth_motor_speed(para2, para3, para1)
+            elif manner == "e" or manner == "event":
+                steelsquid_event.broadcast_event_external("pi_io_event", ["sabertooth", para1, para2, para3])
+            else:
+                print "Expected: direct (d), event (e)"
+        elif command == "trex_motor":
+            if manner == "d" or manner == "direct":
+                 trex_motor(para1, para2)
+            elif manner == "e" or manner == "event":
+                steelsquid_event.broadcast_event_external("pi_io_event", ["trex_motor", para1, para2])
+            else:
+                print "Expected: direct (d), event (e)"
+        elif command == "trex_servo":
+            if manner == "d" or manner == "direct":
+                 trex_servo(para1, para2)
+            elif manner == "e" or manner == "event":
+                steelsquid_event.broadcast_event_external("pi_io_event", ["trex_servo", para1, para2])
+            else:
+                print "Expected: direct (d), event (e)"
+        elif command == "trex_status":
+            if manner == "d" or manner == "direct":
+                battery_voltage, left_motor_current, right_motor_current, accelerometer_x, accelerometer_y, accelerometer_z, impact_x, impact_y, impact_z = trex_status()
+                answer = []
+                answer.append("battery_voltage: ")
+                answer.append(str(battery_voltage))
+                answer.append("\n")
+                answer.append("left_motor_current: ")
+                answer.append(str(left_motor_current))
+                answer.append("\n")
+                answer.append("right_motor_current: ")
+                answer.append(str(right_motor_current))
+                answer.append("\n")
+                answer.append("accelerometer_x: ")
+                answer.append(str(accelerometer_x))
+                answer.append("\n")
+                answer.append("accelerometer_y: ")
+                answer.append(str(accelerometer_y))
+                answer.append("\n")
+                answer.append("accelerometer_z: ")
+                answer.append(str(accelerometer_z))
+                answer.append("\n")
+                answer.append("impact_x: ")
+                answer.append(str(impact_x))
+                answer.append("\n")
+                answer.append("impact_y: ")
+                answer.append(str(impact_y))
+                answer.append("\n")
+                answer.append("impact_z: ")
+                answer.append(str(impact_z))
+                print "".join(answer)
+            elif manner == "e" or manner == "event":
+                steelsquid_event.broadcast_event_external("pi_io_event", ["trex_status"])
+            else:
+                print "Expected: direct (d), event (e)"
+        elif command == "diablo":
+            if manner == "d" or manner == "direct":
+                 diablo_motor_1(para1)
+                 diablo_motor_2(para2)
+            elif manner == "e" or manner == "event":
+                steelsquid_event.broadcast_event_external("pi_io_event", ["diablo", para1, para2])
+            else:
+                print "Expected: direct (d), event (e)"
+        else:
+            print "Unknown command!!!"
     

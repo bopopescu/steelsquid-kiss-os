@@ -33,7 +33,7 @@ http_server = None
 class Rover(object):
     '''
     Fuctionality for my rover controller
-    Also see steelquid_io.py
+    Also see utils.html, steelsquid_kiss_http_server.py, steelsquid_kiss_socket_connection.py
     '''
 
     # Is the rover functionality enabled
@@ -133,11 +133,17 @@ class Rover(object):
 class IO(object):
     '''
     Fuctionality for my Steelsquid IO board
-    Also see utils.html, steelsquid_kiss_http_server.py, steelsquid_socket_connection.py
+    Also see steelquid_io.py
     '''
 
     # Is the IO board functionality enabled
     is_enabled = False
+    
+    # Last voltage read
+    last_voltage = 0
+    
+    # Last voltage read
+    last_print_voltage = 0
 
     @classmethod
     def enable(cls):
@@ -147,59 +153,146 @@ class IO(object):
         '''    
         import steelsquid_io
         steelsquid_utils.shout("Steelsquid IO board enabled")
-        steelsquid_io.button_click(steelsquid_io.BUTTON_UP, cls.on_button_up)
-        steelsquid_io.button_click(steelsquid_io.BUTTON_DOWN, cls.on_button_down)
-        steelsquid_io.button_click(steelsquid_io.BUTTON_LEFT, cls.on_button_left)
-        steelsquid_io.button_click(steelsquid_io.BUTTON_RIGHT, cls.on_button_right)
-        steelsquid_io.button_click(steelsquid_io.BUTTON_SELECT, cls.on_button_select)
-        steelsquid_io.dip_event(1, cls.on_dip_1)
-        steelsquid_io.dip_event(2, cls.on_dip_2)
-        steelsquid_io.dip_event(3, cls.on_dip_3)
-        steelsquid_io.dip_event(4, cls.on_dip_4)
+        steelsquid_io.button(1, cls.on_button_1)
+        steelsquid_io.button(2, cls.on_button_2)
+        steelsquid_io.button(3, cls.on_button_3)
+        steelsquid_io.button(4, cls.on_button_4)
+        steelsquid_io.button(5, cls.on_button_5)
+        steelsquid_io.button(6, cls.on_button_6)
+        steelsquid_io.dip(1, cls.on_dip_1)
+        steelsquid_io.dip(2, cls.on_dip_2)
+        steelsquid_io.dip(3, cls.on_dip_3)
+        steelsquid_io.dip(4, cls.on_dip_4)
+        steelsquid_io.dip(5, cls.on_dip_5)
+        steelsquid_io.dip(6, cls.on_dip_6)
+        steelsquid_io.button_info(cls.on_button_info)
+        steelsquid_io.button_power_off(cls.on_button_power_off)
         if steelsquid_utils.get_flag("development"):
             steelsquid_event.subscribe_to_event("button", cls.dev_button, ())
             steelsquid_event.subscribe_to_event("dip", cls.dev_dip, ())
+        if not steelsquid_utils.get_flag("no_lcd_voltage"):
+            steelsquid_event.subscribe_to_event("seconds", cls.on_read_voltage, ())
+        steelsquid_event.subscribe_to_event("poweroff", cls.on_poweroff, ())
         cls.is_enabled=True
 
-    @classmethod
-    def on_button_up(cls, address, pin):
-        '''
-        If the UP button is pressed
-        '''    
-        import steelsquid_io
-        steelsquid_event.broadcast_event("button", [steelsquid_io.BUTTON_UP])
 
     @classmethod
-    def on_button_down(cls, address, pin):
+    def on_poweroff(cls, args, para):
         '''
-        If the DOWN button is pressed
-        '''    
+        Power off the system
+        '''
         import steelsquid_io
-        steelsquid_event.broadcast_event("button", [steelsquid_io.BUTTON_DOWN])
+        steelsquid_io.power_off()
 
     @classmethod
-    def on_button_left(cls, address, pin):
+    def on_read_voltage(cls, args, para):
         '''
-        If the LEFT button is pressed
+        Read voltage and display on LCD
+        '''
+        import steelsquid_io
+        import datetime
+        new_voltage = steelsquid_io.voltage()
+        if new_voltage != cls.last_voltage:
+            if abs(new_voltage - cls.last_print_voltage)>=0.1:
+                if cls.last_print_voltage == 0:
+                    steelsquid_utils.shout("Voltage is: " + str(new_voltage), to_lcd=False)
+                else:
+                    steelsquid_utils.shout("Voltage changed: " + str(new_voltage), to_lcd=False)
+                cls.last_print_voltage = new_voltage
+            cls.last_voltage = new_voltage
+            last = steelsquid_pi.lcd_last_text
+            if last != None and "VOLTAGE: " in last:
+                i1 = last.find("VOLTAGE: ", 0) + 9
+                if i1 != -1:
+                    i2 = last.find("\n", i1)
+                    if i2 == -1:
+                        news = last[:i1]+str(new_voltage)
+                    else:
+                        news = last[:i1]+str(new_voltage)+last[i2:]
+                    steelsquid_io.lcd_write(news, number_of_seconds = 0)
+                
+                    
+    @classmethod
+    def dev_button(cls, args, para):
+        '''
+        In development mode shout if the button is pressed
         '''    
         import steelsquid_io
-        steelsquid_event.broadcast_event("button", [steelsquid_io.BUTTON_LEFT])
+        bu = str(para[0])
+        steelsquid_utils.shout_time("Button " + bu + " pressed!")
 
     @classmethod
-    def on_button_right(cls, address, pin):
+    def dev_dip(cls, args, para):
         '''
-        If the RIGHT button is pressed
+        In development mode shout if the DIP is changed
         '''    
         import steelsquid_io
-        steelsquid_event.broadcast_event("button", [steelsquid_io.BUTTON_RIGHT])
+        steelsquid_utils.shout_time("DIP " + str(para[0]) +": "+ str(para[1]))
 
     @classmethod
-    def on_button_select(cls, address, pin):
+    def on_button_power_off(cls, address, pin):
         '''
-        If the SELECT button is pressed
+        If shutdown button is clicked
         '''    
         import steelsquid_io
-        steelsquid_event.broadcast_event("button", [steelsquid_io.BUTTON_SELECT])
+        steelsquid_io.power_off()
+
+    @classmethod
+    def on_button_info(cls, address, pin):
+        '''
+        If info button is clicked
+        '''    
+        import steelsquid_io
+        steelsquid_io.led_ok_flash(None)
+        steelsquid_event.broadcast_event("network")
+
+    @classmethod
+    def on_button_1(cls, address, pin):
+        '''
+        If the 1 button is pressed
+        '''    
+        import steelsquid_io
+        steelsquid_event.broadcast_event("button", [1])
+
+    @classmethod
+    def on_button_2(cls, address, pin):
+        '''
+        If the 2 button is pressed
+        '''    
+        import steelsquid_io
+        steelsquid_event.broadcast_event("button", [2])
+
+    @classmethod
+    def on_button_3(cls, address, pin):
+        '''
+        If the 3 button is pressed
+        '''    
+        import steelsquid_io
+        steelsquid_event.broadcast_event("button", [3])
+
+    @classmethod
+    def on_button_4(cls, address, pin):
+        '''
+        If the 4 button is pressed
+        '''    
+        import steelsquid_io
+        steelsquid_event.broadcast_event("button", [4])
+
+    @classmethod
+    def on_button_5(cls, address, pin):
+        '''
+        If the 5 button is pressed
+        '''    
+        import steelsquid_io
+        steelsquid_event.broadcast_event("button", [5])
+
+    @classmethod
+    def on_button_6(cls, address, pin):
+        '''
+        If the 6 button is pressed
+        '''    
+        import steelsquid_io
+        steelsquid_event.broadcast_event("button", [6])
 
     @classmethod
     def on_dip_1(cls, address, pin, status):
@@ -232,30 +325,20 @@ class IO(object):
         '''    
         import steelsquid_io
         steelsquid_event.broadcast_event("dip", [4, status])
-        
-    @classmethod
-    def dev_button(cls, args, para):
-        '''
-        In development mode shout if the button is pressed
-        '''    
-        import steelsquid_io
-        bu = int(para[0])
-        if bu == steelsquid_io.BUTTON_UP:
-            steelsquid_utils.shout_time("Button UP pressed!")
-        elif bu == steelsquid_io.BUTTON_DOWN:
-            steelsquid_utils.shout_time("Button DOWN pressed!")
-        elif bu == steelsquid_io.BUTTON_LEFT:
-            steelsquid_utils.shout_time("Button LEFT pressed!")
-        elif bu == steelsquid_io.BUTTON_RIGHT:
-            steelsquid_utils.shout_time("Button RIGHT pressed!")
-        elif bu == steelsquid_io.BUTTON_SELECT:
-            steelsquid_utils.shout_time("Button SELECT pressed!")
 
     @classmethod
-    def dev_dip(cls, args, para):
+    def on_dip_5(cls, address, pin, status):
         '''
-        In development mode shout if the DIP is changed
+        If DIP 5 changed
         '''    
         import steelsquid_io
-        steelsquid_utils.shout_time("DIP " + str(para[0]) +": "+ str(para[1]))
-        
+        steelsquid_event.broadcast_event("dip", [5, status])
+
+    @classmethod
+    def on_dip_6(cls, address, pin, status):
+        '''
+        If DIP 6 changed
+        '''    
+        import steelsquid_io
+        steelsquid_event.broadcast_event("dip", [6, status])
+

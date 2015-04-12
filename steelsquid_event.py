@@ -38,8 +38,16 @@ minutes     Execute every 10 minutes
 hourly      Execute hourly
 daily       Execute Daily
 shutdown    Stop this eventhandler
+poweroff    If it is a Steelsquid IO board this event will shutdown linux and power off the system
 shout       Will execute steelsquid_utils.shout()
             First paramater is the message
+flag        Set/Delete a flag
+            Parameter 1: set or del
+            Parameter 2: Flag name
+parameter   Set/Delete a paramater
+            Parameter 1: set or del
+            Parameter 2: Paramater name
+            Parameter 3: Paramater value
 network     Will fire on network upp and down
             Parameter 1: up/down
             if Parameter 1 = up:
@@ -60,9 +68,9 @@ umount      Will fire on umount
             Parameter 2: Remote host and directory
             Parameter 3: Local directory
 button      When button clicked on steelsquid_piio
-            Parameter 1: BUTTON_UP = 3, BUTTON_DOWN = 4, BUTTON_LEFT = 5, BUTTON_RIGHT = 1, BUTTON_SELECT = 2
+            Parameter 1: Button 1 to 6
 dip         When dip 1 to 4 i changed on steelsquid_piio
-            Parameter 1: DIP 1 to 4
+            Parameter 1: DIP 1 to 6
             Parameter 2: On/Off
 
 To subscribe to seconds (the method function_to_execute will execute every 10 seconds):
@@ -217,7 +225,7 @@ def check_it(subscribers, i, func, ev, is_str, function, event):
             return
 
 
-def broadcast_event(event, parameters):
+def broadcast_event(event, parameters=None):
     '''
     Broadcast a event
     See top of this file for example...
@@ -238,6 +246,28 @@ def broadcast_event(event, parameters):
                 broadcast_stop(parameters[0])
         else:
             queue.put((event, parameters))
+    
+    
+def broadcast_event_external(event, parameters=None):
+    '''
+    Broadcast a event outside Steelsquid daemon
+    See top of this file for example...
+    
+    @param event: The event name
+    @param parameters: List of parameters that accompany the event (None or 0 length list if no paramaters)
+    '''
+    steelsquid_utils.make_dirs(system_event_dir)
+    if parameters != None:
+        nl = []
+        for s in parameters:
+            nl.append("\"")
+            nl.append(s)
+            nl.append("\" ")
+        pa = os.path.join(system_event_dir, event)
+        steelsquid_utils.write_to_file(pa, "".join(nl))
+    else:
+        pa = os.path.join(system_event_dir, event)
+        steelsquid_utils.write_to_file(pa, "")
     
        
 def start_thread(obj, paramaters):
@@ -345,28 +375,10 @@ def event_executer(event, subs, parameters):
     Execute the events
     '''
     try:
+        do_fire = True
         if event=="network":
-            parameters = []
-            wired = steelsquid_utils.network_ip_wired()
-            wifi = steelsquid_utils.network_ip_wifi()
-            wan = "---"
-            if wired == "---" and wifi == "---":
-                net = "down"
-            else:
-                net = "up"
-                wan = steelsquid_utils.network_ip_wan()
-            parameters.append(net)
-            parameters.append(wired)
-            parameters.append(wifi)
-            if wifi == "---":
-                parameters.append("---")
-            else:
-                try:
-                    import steelsquid_nm
-                    parameters.append(steelsquid_nm.get_connected_access_point_name())
-                except:
-                    parameters.append("---")
-            parameters.append(wan)
+            thread.start_new_thread(__event_executer_network, (subs, parameters))
+            return
         elif event=="vpn":
             name = "unknown"
             try:
@@ -388,6 +400,36 @@ def event_executer(event, subs, parameters):
         if event != "shout":
             steelsquid_utils.shout()
                 
+                
+def __event_executer_network(subs, parameters):
+    '''
+    Execute network event in thread
+    '''
+    parameters = []
+    wired = steelsquid_utils.network_ip_wired()
+    wifi = steelsquid_utils.network_ip_wifi()
+    wan = "---"
+    if wired == "---" and wifi == "---":
+        net = "down"
+    else:
+        net = "up"
+        wan = steelsquid_utils.network_ip_wan()
+    parameters.append(net)
+    parameters.append(wired)
+    parameters.append(wifi)
+    if wifi == "---":
+        parameters.append("---")
+    else:
+        try:
+            import steelsquid_nm
+            parameters.append(steelsquid_nm.get_connected_access_point_name())
+        except:
+            parameters.append("---")
+    parameters.append(wan)
+    for e, function, args, long_running in subs:
+        if e == "network":
+            function(args, parameters)
+        
 
 def activate_event_handler(create_ner_thread=True):
     '''

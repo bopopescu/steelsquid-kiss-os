@@ -51,6 +51,7 @@ import os
 import steelsquid_utils
 import paramiko
 import select
+import readline
 from datetime import datetime
 
 steel_last = 0
@@ -66,6 +67,20 @@ sftp = None
 channel = None
 channel_f = None
 lock = threading.Lock()
+
+ 
+#addrs = ['angela@domain.com', 'michael@domain.com', 'david@test.com']
+ 
+#def completer(text, state):
+#    options = [x for x in addrs if x.startswith(text)]
+#    try:
+#        return options[state]
+#    except IndexError:
+#        return None
+ 
+#readline.set_completer(completer)
+#readline.parse_and_bind("tab: complete")
+
 
 def load_data():
     '''
@@ -219,6 +234,44 @@ def send_command(command):
             pass
 
 
+def send_command_read_answer(command):
+    '''
+    '''
+    try:
+        stdin, stdout, stderr = ssh.exec_command(command)
+        printempty = True
+        for line in stdout.readlines():
+            line = line.strip().replace("\n","").replace("\r","")
+            if len(line)>0:
+                printempty = True
+                print line
+            elif printempty:
+                printempty = False
+                print
+        printempty = True
+        for line in stderr.readlines():
+            if len(line)>0:
+                printempty = True
+                print line
+            elif printempty:
+                printempty = False
+                print
+    except:
+        try:
+            connect()
+            stdin, stdout, stderr = ssh.exec_command(command)
+            for line in stdout.readlines():
+                line = line.strip().replace("\n","").replace("\r","")
+                if len(line)>0:
+                    print line
+            for line in stderr.readlines():
+                line = line.strip().replace("\n","").replace("\r","")
+                if len(line)>0:
+                    print line
+        except:
+            pass
+
+
 def listen_for_std():
     '''
     '''
@@ -240,11 +293,13 @@ def listen_for_std():
                         if len(line)>0:
                             cur_time = time.time() * 1000
                             ms = cur_time - last_time
-                            if ms > 100:
-                                print ""
-                                steelsquid_utils.log("FROM REMOTE DEVICE:")
-                            print remove_timestamp(line)
-                            last_time = cur_time
+                            answer = remove_timestamp(line)
+                            if answer != None:
+                                if ms > 100:
+                                    print ""
+                                    steelsquid_utils.log("FROM REMOTE DEVICE:")
+                                print answer
+                                last_time = cur_time
         except:
             steelsquid_utils.shout()
             try:
@@ -252,11 +307,15 @@ def listen_for_std():
             except:
                 pass
         time.sleep(2)
+        
             
 def remove_timestamp(line): 
-    if len(line)>19:
-        if line[4]=='-' and line[7]=='-' and line[10]==' ' and line[13]==':' and line[16]==':' and line[19]==' ':
-            return line[20:]
+    if len(line)>18:
+        if line[4]=='-' and line[7]=='-' and line[10]==' ' and line[13]==':' and line[16]==':':
+            if len(line)>19:
+                return line[20:]
+            else:
+                return None
     return line
 
 
@@ -270,45 +329,57 @@ if __name__ == '__main__':
         pass
     thread.start_new_thread(listen_for_std, ()) 
     print ""
+    print "------------------------------------------------------------"
     print "Listen for changes and commit to " + base_remote_server
-    print " - 0, H: Show this help."
-    print " - 1, Q: This program will terminate."
-    print " - 2, C: Reload the custom modules."
-    print " - 3, E: Reload the HTTP and Socket expand server."
-    print " - 4, S: Restart steelsquid service."
-    print " - 5, K: Stop steelsquid service."
-    print " - 6, R: Reboot the remote machine."
+    print "------------------------------------------------------------"
+    print " H : help    : Show this help."
+    print " Q : quit    : This program will terminate."
+    print " C : custom  : Reload the custom modules."
+    print " E : expand  : Reload the HTTP and Socket expand server."
+    print " S : service : Restart steelsquid service."
+    print " K : kill    : Stop steelsquid service."
+    print " R : reboot  : Reboot the remote machine."
+    print "------------------------------------------------------------"
+    print "You can also send any other ordinary terminal line command"
+    print "------------------------------------------------------------"
     thread.start_new_thread(listener, ()) 
     answer = ""
     cont = True
     while cont:
-        answer = raw_input()
-        if answer == "0" or answer == "H" or answer == "h":
+        answer = raw_input("\n# ")
+        if answer == "H" or answer == "h" or answer == "help":
+            print "------------------------------------------------------------"
             print "Listen for changes and commit to " + base_remote_server
-            print " - 0, H: Show this help."
-            print " - 1, Q: This program will terminate."
-            print " - 2, C: Reload the custom modules."
-            print " - 3, E: Reload the HTTP and Socket expand server."
-            print " - 4, S: Restart steelsquid service."
-            print " - 5, K: Stop steelsquid service."
-            print " - 6, R: Reboot the remote machine."
-        elif answer == "1" or answer == "Q" or answer == "q":
+            print "------------------------------------------------------------"
+            print " H : help    : Show this help."
+            print " Q : quit    : This program will terminate."
+            print " C : custom  : Reload the custom modules."
+            print " E : expand  : Reload the HTTP and Socket expand server."
+            print " S : service : Restart steelsquid service."
+            print " K : kill    : Stop steelsquid service."
+            print " R : reboot  : Reboot the remote machine."
+            print "------------------------------------------------------------"
+            print "You can also send any other ordinary terminal line command"
+            print "------------------------------------------------------------"
+        elif answer == "Q" or answer == "q" or answer == "quit":
             cont = False
-        elif answer == "2" or answer == "C" or answer == "c":
+        elif answer == "C" or answer == "c" or answer == "custom":
             steelsquid_utils.log("Request reload of custom modules")
             send_command("steelsquid-event reload custom")
-        elif answer == "3" or answer == "E" or answer == "e":
+        elif answer == "E" or answer == "e" or answer == "expand":
             steelsquid_utils.log("Request reload of servers")
             send_command("steelsquid-event reload server")
-        elif answer == "4" or answer == "S" or answer == "s":
+        elif answer == "S" or answer == "s" or answer == "service":
             steelsquid_utils.log("Request service restart")
             send_command("steelsquid restart")
-        elif answer == "5" or answer == "K" or answer == "k":
+        elif answer == "K" or answer == "k" or answer == "kill":
             steelsquid_utils.log("Request roboot")
             send_command("systemctl stop steelsquid")
-        elif answer == "6" or answer == "R" or answer == "r":
+        elif answer == "R" or answer == "r" or answer == "reboot":
             steelsquid_utils.log("Request roboot")
             send_command("reboot &")
+        elif len(answer.strip())>0:
+            send_command_read_answer(answer)
     try:
         sftp.close()
     except:

@@ -77,6 +77,7 @@
                 $("#p_io").html(paramaters[39]);
                 $("#p_power").html(paramaters[40]);
                 $("#p_modem").html(paramaters[41]);
+                $("#p_io_voltage").html(paramaters[42]);
             }
 
             /**
@@ -125,6 +126,7 @@
                 $("#p_io").html("---");
                 $("#p_power").html("---");
                 $("#p_modem").html("---");
+                $("#p_io_voltage").html("---");
             }
 
             /**
@@ -656,23 +658,58 @@
             }
 
             /**
-             * Rover
+             * socket
              */
-            function on_rover_info(paramaters){
+            function on_socket_info(paramaters){
                 if(paramaters[0] == "True"){
-                    $("#rover_button").html("<button onclick=\"javascript:submitSyncFromPrompt('rover_disable', 'Please enter password for the user root?', '');\">Disable Rover</button>");
-                    $("#rover_info").html("The Rover Controller is enabled");
+                    $("#socket_button").html("<button onclick=\"javascript:submitSyncFromPrompt('socket_disable', 'Please enter password for the user root?', '');\">Disable socket connection</button>");
+                    $("#socket_info").html("The socket connection is enabled");
                 }
                 else{
-                    $("#rover_button").html("<button onclick=\"javascript:submitSyncFromPrompt('rover_enable', 'Please enter password for the user root?', '');\">Enable Rover</button>");
-                    $("#rover_info").html("The Rover Controller  disabled");
+                    $("#socket_button").html("<button onclick=\"javascript:submitSyncFromPrompt('socket_enable', 'Please enter password for the user root?', '');\">Enable socket connection</button>");
+                    $("#socket_info").html("The socket connection is disabled");
                 }
             }
-            function on_rover_enable(paramaters){
-                on_rover_info(paramaters);
+            function on_socket_enable(paramaters){
+                on_socket_info(paramaters);
             }
-            function on_rover_disable(paramaters){
-                on_rover_info(paramaters);
+            function on_socket_disable(paramaters){
+                on_socket_info(paramaters);
+            }
+            
+            
+            /**
+             * bluetooth
+             */
+            function on_bluetooth_info(paramaters){
+                if(paramaters[0] == "True"){
+                    $("#bluetooth_button").html("<button onclick=\"javascript:submitSyncFromPrompt('bluetooth_disable', 'Please enter password for the user root?', '');\">Disable bluetooth pairing</button>");
+                    $("#bluetooth_info").html("Bluetooth pairing is enabled");
+                }
+                else{
+                    $("#bluetooth_button").html("<button onclick=\"javascript:submitSyncFromPrompt('bluetooth_enable', 'Please enter password for the user root?', '');\">Enable bluetooth pairing</button>");
+                    $("#bluetooth_info").html("Bluetooth pairing is disabled");
+                }
+                if(paramaters[1] == "True"){
+                    $("#bluetooth_con_button").html("<button onclick=\"javascript:submitSyncFromPrompt('bluetooth_con_disable', 'Please enter password for the user root?', '');\">Disable bluetooth connection</button>");
+                    $("#bluetooth_con_info").html("Bluetooth connection is enabled");
+                }
+                else{
+                    $("#bluetooth_con_button").html("<button onclick=\"javascript:submitSyncFromPrompt('bluetooth_con_enable', 'Please enter password for the user root?', '');\">Enable bluetooth connection</button>");
+                    $("#bluetooth_con_info").html("Bluetooth connection is disabled");
+                }
+            }
+            function on_bluetooth_enable(paramaters){
+                on_bluetooth_info(paramaters);
+            }
+            function on_bluetooth_disable(paramaters){
+                on_bluetooth_info(paramaters);
+            }
+            function on_bluetooth_con_enable(paramaters){
+                on_bluetooth_info(paramaters);
+            }
+            function on_bluetooth_disable(paramaters){
+                on_bluetooth_con_info(paramaters);
             }
             
 
@@ -776,12 +813,19 @@
              * On stream
              */
             function on_stream(paramaters){
-                if(paramaters[0] == "True"){
-                    $("#stream_button").html("<button onclick=\"javascript:submitSyncConfirm('Are you sure you want to disable the streaming?', 'stream', 'False');\">Disable the Streaming</button>");
-                    $("#stream_info").html("Streaming enabled");
+                if(paramaters[0] == "usb"){
+                    $("#stream_button_1").html("<button onclick=\"javascript:submitSyncConfirm('Are you sure you want to disable the streaming?', 'stream', 'False');\">Disable the Streaming</button>");
+                    $("#stream_button_2").html("<button onclick=\"javascript:submitSyncConfirm('Are you sure you want to enable Raspberry PI streaming?', 'stream', 'pi');\">Enable Raspberry PI Streaming</button>");
+                    $("#stream_info").html("USB streaming enabled");
+                }
+                else if(paramaters[0] == "pi"){
+                    $("#stream_button_1").html("<button onclick=\"javascript:submitSyncConfirm('Are you sure you want to disable the streaming?', 'stream', 'False');\">Disable the Streaming</button>");
+                    $("#stream_button_2").html("<button onclick=\"javascript:submitSyncConfirm('Are you sure you want to enable USB streaming?', 'stream', 'usb');\">Enable USB Streaming</button>");
+                    $("#stream_info").html("Raspberry PI streaming enabled");
                 }
                 else{
-                    $("#stream_button").html("<button onclick=\"javascript:submitSyncConfirm('Are you sure you want to enable the streaming?', 'stream', 'True');\">Enable the Streaming</button>");
+                    $("#stream_button_1").html("<button onclick=\"javascript:submitSyncConfirm('Are you sure you want to enable USB streaming?', 'stream', 'usb');\">Enable USB Streaming</button>");
+                    $("#stream_button_2").html("<button onclick=\"javascript:submitSyncConfirm('Are you sure you want to enable Raspberry PI streaming?', 'stream', 'pi');\">Enable Raspberry PI Streaming</button>");
                     $("#stream_info").html("Streaming disabled");
                 }
             }
@@ -985,8 +1029,13 @@
                     submitSync('web_interface_https');
                     submitSync('web_interface_authentication');
                     submitSync('web_interface_share');
-                    submitSync('rover_info');
                     submitSync('downman');
+                }
+                else if(layer == "socket"){
+                    submitSync('socket_info');
+                }
+                else if(layer == "bluetooth"){
+                    submitSync('bluetooth_info');
                 }
                 else if(layer == "lcd"){
                     submitSync('lcd');
@@ -1238,22 +1287,6 @@
                                 Notification Email
                             </td>
                         </tr>
-                        <tr onclick="javascript:showLayer('monitor');">
-                            <td>
-                                <img alt="logo" src="img/display.png"></img>
-                            </td>
-                            <td>
-                                Display
-                            </td>
-                        </tr>
-                        <tr onclick="javascript:showLayer('camera');">
-                            <td>
-                                <img alt="logo" src="img/camera.png"></img>
-                            </td>
-                            <td>
-                                Camera
-                            </td>
-                        </tr>
                     </tbody>
                 </table>
                 <br />
@@ -1280,6 +1313,30 @@
                             </td>
                             <td>
                                 Administrator interface
+                            </td>
+                        </tr>
+                        <tr onclick="javascript:showLayer('socket');">
+                            <td>
+                                <img alt="logo" src="img/socket.png"></img>
+                            </td>
+                            <td>
+                                Socket connection
+                            </td>
+                        </tr>
+                        <tr onclick="javascript:showLayer('bluetooth');">
+                            <td>
+                                <img alt="logo" src="img/bluetooth.png"></img>
+                            </td>
+                            <td>
+                                Bluetooth
+                            </td>
+                        </tr>
+                        <tr onclick="javascript:showLayer('camera');">
+                            <td>
+                                <img alt="logo" src="img/camera.png"></img>
+                            </td>
+                            <td>
+                                Camera
                             </td>
                         </tr>
                     </tbody>
@@ -1332,6 +1389,14 @@
                             </td>
                             <td>
                                 LCD
+                            </td>
+                        </tr>
+                        <tr onclick="javascript:showLayer('monitor');">
+                            <td>
+                                <img alt="logo" src="img/display.png"></img>
+                            </td>
+                            <td>
+                                Display
                             </td>
                         </tr>
                     </tbody>
@@ -1489,6 +1554,30 @@
                                             Administrator interface
                                         </td>
                                     </tr>
+                                    <tr onclick="javascript:showLayer('socket');">
+                                        <td>
+                                            <img alt="logo" src="img/socket.png"></img>
+                                        </td>
+                                        <td>
+                                            Socket connection
+                                        </td>
+                                    </tr>
+                                    <tr onclick="javascript:showLayer('bluetooth');">
+                                        <td>
+                                            <img alt="logo" src="img/bluetooth.png"></img>
+                                        </td>
+                                        <td>
+                                            Bluetooth
+                                        </td>
+                                    </tr>
+                                    <tr onclick="javascript:showLayer('camera');">
+                                        <td>
+                                            <img alt="logo" src="img/camera.png"></img>
+                                        </td>
+                                        <td>
+                                            Camera
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </table>
                             <br/>
@@ -1539,6 +1628,14 @@
                                         </td>
                                         <td>
                                             LCD
+                                        </td>
+                                    </tr>
+                                    <tr onclick="javascript:showLayer('monitor');">
+                                        <td>
+                                            <img alt="logo" src="img/display.png"></img>
+                                        </td>
+                                        <td>
+                                            Display
                                         </td>
                                     </tr>
                                 </tbody>
@@ -1719,10 +1816,16 @@
                             <td>Download dir:</td><td id="p_download_dir">---</td>
                         </tr>
                         <tr>
+                            <td>Clean power off:</td><td id="p_power">---</td>
+                        </tr>
+                    </table>
+                    <br />
+                    <table class="keyvalue">
+                        <tr>
                             <td>Steelsquid IO Board:</td><td id="p_io">---</td>
                         </tr>
                         <tr>
-                            <td>Clean power off:</td><td id="p_power">---</td>
+                            <td>Voltage:</td><td id="p_io_voltage">---</td>
                         </tr>
                     </table>
                 </div>
@@ -2544,7 +2647,7 @@
                         <td>
                             If you must enter user/password to connect to the web interface from the network (internet).<br />
                             If you have a private LAN with trusted computers it can be nice to avoid having to enter the password.<br />
-                            If you make changes here you can get a temporary "Connection error", this is because the web server needs to reboot.<br/>
+                            If you make changes here you can get a temporary "Connection error", this is because the web server needs to reboot (refresh the browser).<br/>
                             I recommend having <span class="highlight">authentication enabled</span>.
                         </td>
                     </tr>
@@ -2573,7 +2676,7 @@
                             You can also listen on localhost or on all interfaces. <br />
                             Listening to localhost means that you can only access it from the local device.<br />
                             Otherwise you can connect from any computer on the network.<br/>
-                            If you make changes here you can get a temporary "Connection error", this is because the web server needs to reboot.<br/>
+                            If you make changes here you can get a temporary "Connection error", this is because the web server needs to reboot (refresh the browser).<br/>
                             I recommend to only listening on <span class="highlight">localhost</span>.
                         </td>
                     </tr>
@@ -2602,7 +2705,7 @@
                             Choose whether to use secure HTTPS or unsecure HTTP. <br />
                             If you select HTTPS, the browser may complain about unverified certificates (Press go ahead anyway).<br/>
                             This will reset the port number to default (HTTP: 80, HTTPS: 443).<br />
-                            If you make changes here you can get a temporary "Connection error", this is because the web server needs to reboot.<br/>
+                            If you make changes here you can get a temporary "Connection error", this is because the web server needs to reboot (refresh the browser).<br/>
                             I recommend <span class="highlight">HTTPS</span> if you selected "listen on all interfaces" above.<br/>
                             If you selected "listen on localhost" i recommend <span class="highlight">HTTP</span>.
                         </td>
@@ -2656,31 +2759,6 @@
                 <table>
                     <tr>
                         <td>
-                            Enable/disable the Rover Controller on this system
-                        </td>
-                    </tr>
-                </table>
-                <br/>
-                <table class="keyvalue">
-                    <tr>
-                        <td>
-                            Current status:
-                        </td>
-                        <td id="rover_info">
-                        </td>
-                    </tr>
-                </table>
-                <table>
-                    <tr>
-                        <td id="rover_button">
-                        </td>
-                    </tr>
-                </table>
-                <br/>
-                <br />
-                <table>
-                    <tr>
-                        <td>
                             Enable/disable the Download manager on this system
                         </td>
                     </tr>
@@ -2703,6 +2781,147 @@
                 </table>
                 <br />
                 <table class="footer">
+                    <tr onclick="javascript:onBack();">
+                        <td>
+                            <img alt="logo" src="img/back.png"></img>
+                        </td>
+                        <td>
+                            Back to main menu
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <!--####################################################################################################-->
+            <div class="layer" id="socket">
+                <table class="sheader">
+                    <tr onclick="javascript:onBack();">
+                        <th>
+                            <img alt="logo" src="img/socket.png"></img>
+                        </th>
+                        <th>
+                            Socket connection
+                        </th>
+                    </tr>
+                </table>
+                <table>
+                    <tr>
+                        <td>
+                            Socket connection is a simple socket protocol te sent and receive commands. <br />
+                            See <a href="http://www.steelsquid.org/steelsquid-kiss-os-development">http://www.steelsquid.org/steelsquid-kiss-os-development</a>.<br/>
+                            If you change this you will get "Connection error" while service restart...you need to refresh the browser.
+                        </td>
+                    </tr>
+                </table>
+                <br/>
+                <table class="keyvalue">
+                    <tr>
+                        <td>
+                            Current status:
+                        </td>
+                        <td id="socket_info">
+                        </td>
+                    </tr>
+                </table>
+                <table>
+                    <tr>
+                        <td id="socket_button">
+                        </td>
+                    </tr>
+                </table>
+                <br />
+                <table class="footer">
+                    <tr onclick="javascript:onBack();">
+                        <td>
+                            <img alt="logo" src="img/back.png"></img>
+                        </td>
+                        <td>
+                            Back to main menu
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <!--####################################################################################################-->
+            <div class="layer" id="bluetooth">
+                <table class="sheader">
+                    <tr onclick="javascript:onBack();">
+                        <th>
+                            <img alt="logo" src="img/bluetooth.png"></img>
+                        </th>
+                        <th>
+                            Bluetooth
+                        </th>
+                    </tr>
+                </table>
+                <table>
+                    <tr>
+                        <td>
+                            Enable or disable bluetooth pairing on this device. <br />
+                            If you enable this you can paire with this device by entering a PIN (Default 1234).<br />
+                            Obviously you must have a bluetooth usb dongle connected.<br />
+                            If you change this you will get "Connection error" while service restart...you need to refresh the browser.
+                        </td>
+                    </tr>
+                </table>
+                <br/>
+                <table class="keyvalue">
+                    <tr>
+                        <td>
+                            Current status:
+                        </td>
+                        <td id="bluetooth_info">
+                        </td>
+                    </tr>
+                </table>
+                <table>
+                    <tr>
+                        <td id="bluetooth_button">
+                        </td>
+                    </tr>
+                </table>
+                <br />
+                <table class="input">
+                    <tbody>
+                        <tr>
+                            <td>
+                                Bluetooth pairing PIN
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <input type="text" id="bluetooth_pin" name="bluetooth_pin" />
+                                <button onclick="javascript:submitSyncFromInputConfirm('Are you sure you want to change bluetooth pin?', 'bluetooth_pin', 'bluetooth_pin')">Change</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <br />
+                <table>
+                    <tr>
+                        <td>
+                            Enable or disable bluetooth connection on this device. <br />
+                            If you enable this you can send simple commands to the device via bluetooth.<br />
+                            If you change this you will get "Connection error" while service restart...you need to refresh the browser.
+                        </td>
+                    </tr>
+                </table>
+                <br/>
+                <table class="keyvalue">
+                    <tr>
+                        <td>
+                            Current status:
+                        </td>
+                        <td id="bluetooth_con_info">
+                        </td>
+                    </tr>
+                </table>
+                <table>
+                    <tr>
+                        <td id="bluetooth_con_button">
+                        </td>
+                    </tr>
+                </table>
+                <br />                <table class="footer">
                     <tr onclick="javascript:onBack();">
                         <td>
                             <img alt="logo" src="img/back.png"></img>
@@ -2921,8 +3140,7 @@
                     <tbody>
                         <tr>
                             <td colspan="2">
-                                Here you can enable or disable streaming of a usb camera. <br />
-                                This do not work with the Raspberry Pi camera.<br/>
+                                Here you can enable or disable streaming of a USB and Raspberry PI camera. <br />
                                 The stream can be reached from http://[ipToRaspberry]:8080/?action=stream<br/>
                                 e.g. &lt;img src="http://[ipToRaspberry]:8080/?action=stream"/&gt;<br/>
                                 You can see the result under 'Utils'.<br/>
@@ -2943,7 +3161,9 @@
                 </table>
                 <table>
                     <tr>
-                        <td id="stream_button">
+                        <td id="stream_button_1">
+                        </td>
+                        <td id="stream_button_2">
                         </td>
                         <td>
                             <button onclick="javascript:submitSyncConfirm('Are you sure you want to reboot?', 'reboot');">Reboot</button>
@@ -3106,7 +3326,7 @@
                                 See <a href="http://www.steelsquid.org/pi-io-example">http://www.steelsquid.org/pi-io-example</a><br/>
                                 The IP of the device will also be displayed on the LCD<br/>
                                 <br/>
-                                If you change this you will get "Connection error" while service restart...
+                                If you change this you will get "Connection error" while service restart...you need to refresh the browser.
                             </td>
                         </tr>
                     </tbody>
