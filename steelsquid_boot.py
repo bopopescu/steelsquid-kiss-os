@@ -521,6 +521,18 @@ def on_pi_io_event(args, para):
         steelsquid_pi.diablo_motor_1(para[1])
         steelsquid_pi.diablo_motor_2(para[2])
         steelsquid_utils.shout("diablo(" + para[1] + ", "+para[2] + "): OK", always_show=True)
+    elif para[0] == "servo12c":
+        steelsquid_pi.servo12c(para[1], para[2])
+        steelsquid_utils.shout("servo12c(" + para[1] + ", "+para[2] + "): OK", always_show=True)
+    elif para[0] == "mpu6050_gyro":
+        x, y, z = steelsquid_pi.mpu6050_gyro()
+        steelsquid_utils.shout("mpu6050_gyro(): "+str(x)+", "+str(y)+", "+str(z), always_show=True)
+    elif para[0] == "mpu6050_accel":
+        x, y, z = steelsquid_pi.mpu6050_accel()
+        steelsquid_utils.shout("mpu6050_accel(): "+str(x)+", "+str(y)+", "+str(z), always_show=True)
+    elif para[0] == "mpu6050_rotation":
+        x, y = steelsquid_pi.mpu6050_rotation()
+        steelsquid_utils.shout("mpu6050_rotation(): "+str(x)+", "+str(y), always_show=True)
 
 
 def main():

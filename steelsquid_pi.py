@@ -46,6 +46,8 @@ from PIL import ImageFont
 from sets import Set
 import Diablo
 import steelsquid_event
+import smbus
+import math
 
 SETUP_NONE = 0
 SETUP_OUT = 1
@@ -113,7 +115,8 @@ lcd_auto = 0
 worker_commands = {}
 worker_thread_started = False
 diablo = None
-
+i2c_servo12c = None
+i2c_mpu_6050 = None
 
 
 
@@ -1380,6 +1383,103 @@ def callback_method(gpio, status):
         print "GPIO " + str(gpio) + ": False"
 
 
+def servo12c(servo, position, address=0x28):
+    '''
+    Move servo on a 12 servos with I2C Servo Controller IC.
+    http://www.hobbytronics.co.uk/arduino-servo-controller
+    Servo: 0 to 11
+    Position: 0 to 255
+    '''
+    servo = int(servo)
+    position = int(position)
+    global i2c_servo12c
+    if i2c_servo12c == None:
+        i2c_servo12c = smbus.SMBus(1)
+    i2c_servo12c.write_byte_data(address, servo, position)
+
+
+def mpu6050_init(address=0x69):
+    '''
+    Init the mpu-6050 
+    SparkFun Triple Axis Accelerometer and Gyro Breakout - MPU-6050
+    https://www.sparkfun.com/products/11028
+    '''
+    global i2c_mpu_6050
+    if i2c_mpu_6050 == None:
+        i2c_mpu_6050 = smbus.SMBus(1)
+        i2c_mpu_6050.write_byte_data(address, 0x6b, 0)
+
+
+def mpu6050_gyro(address=0x69):
+    '''
+    Read mpu-6050 gyro data.
+    SparkFun Triple Axis Accelerometer and Gyro Breakout - MPU-6050
+    https://www.sparkfun.com/products/11028
+    Returns: (x, y, z)
+    '''
+    mpu6050_init(address)
+    gyro_xout = read_word_2c(i2c_mpu_6050, address, 0x43) / 131
+    gyro_xout = read_word_2c(i2c_mpu_6050, address, 0x45) / 131
+    gyro_zout = read_word_2c(i2c_mpu_6050, address, 0x47) / 131
+    return gyro_xout, gyro_xout, gyro_zout
+    
+
+def mpu6050_accel(address=0x69):
+    '''
+    Read mpu-6050 accelerometer data.
+    SparkFun Triple Axis Accelerometer and Gyro Breakout - MPU-6050
+    https://www.sparkfun.com/products/11028
+    Returns: (x, y, z)
+    '''
+    mpu6050_init(address)
+    accel_xout = read_word_2c(i2c_mpu_6050, address, 0x3b) / 16384.0
+    accel_yout = read_word_2c(i2c_mpu_6050, address, 0x3d) / 16384.0
+    accel_zout = read_word_2c(i2c_mpu_6050, address, 0x3f) / 16384.0
+    return accel_xout, accel_yout, accel_zout
+
+
+def mpu6050_rotation(address=0x69):
+    '''
+    Read mpu-6050 rotation angle in degrees for both the X & Y.
+    SparkFun Triple Axis Accelerometer and Gyro Breakout - MPU-6050
+    https://www.sparkfun.com/products/11028
+    Returns: (x, y)
+    '''
+    accel_xout, accel_yout, accel_zout = mpu6050_accel(address)
+    x = get_x_rotation(accel_xout, accel_yout, accel_zout)
+    y = get_y_rotation(accel_xout, accel_yout, accel_zout)    
+    return x, y
+
+
+def read_word(bus, address, adr):
+    high = bus.read_byte_data(address, adr)
+    low = bus.read_byte_data(address, adr+1)
+    val = (high << 8) + low
+    return val
+
+
+def read_word_2c(bus, address, adr):
+    val = read_word(bus, address, adr)
+    if (val >= 0x8000):
+        return -((65535 - val) + 1)
+    else:
+        return val
+    
+
+def dist(a,b):
+    return math.sqrt((a*a)+(b*b))
+
+
+def get_y_rotation(x,y,z):
+    radians = math.atan2(x, dist(y,z))
+    return -math.degrees(radians)
+
+
+def get_x_rotation(x,y,z):
+    radians = math.atan2(y, dist(x,z))
+    return math.degrees(radians)
+    
+
 if __name__ == '__main__':
     import sys
     if len(sys.argv)==1:
@@ -1493,6 +1593,27 @@ if __name__ == '__main__':
         printb("pi <d/e> diablo <left> <right>")
         print("Drive Piborg diablo motor board")
         print("left and right: -1000 to 1000")
+        print("")
+        printb("pi <d/e> servo12c <servo> <position>")
+        print("Move servo on a 12 servos with I2C Servo Controller IC.")
+        print("http://www.hobbytronics.co.uk/arduino-servo-controller")
+        print("Servo: 0 to 11")
+        print("Position: 0 to 255")
+        print("")
+        printb("pi <d/e> mpu6050_gyro")
+        print("Read mpu-6050 gyro data.")
+        print("SparkFun Triple Axis Accelerometer and Gyro Breakout - MPU-6050")
+        print("https://www.sparkfun.com/products/11028")
+        print("")
+        printb("pi <d/e> mpu6050_accel")
+        print("Read mpu-6050 accelerometer data.")
+        print("SparkFun Triple Axis Accelerometer and Gyro Breakout - MPU-6050")
+        print("https://www.sparkfun.com/products/11028")
+        print("")
+        printb("pi <d/e> mpu6050_rotation")
+        print("Read mpu-6050 rotation angle in degrees for both the X & Y.")
+        print("SparkFun Triple Axis Accelerometer and Gyro Breakout - MPU-6050")
+        print("https://www.sparkfun.com/products/11028")
     else:
         manner = sys.argv[1]
         command = sys.argv[2]
@@ -1669,6 +1790,34 @@ if __name__ == '__main__':
                  diablo_motor_2(para2)
             elif manner == "e" or manner == "event":
                 steelsquid_event.broadcast_event_external("pi_io_event", ["diablo", para1, para2])
+            else:
+                print "Expected: direct (d), event (e)"
+        elif command == "servo12c":
+            if manner == "d" or manner == "direct":
+                 servo12c(para1, para2)
+            elif manner == "e" or manner == "event":
+                steelsquid_event.broadcast_event_external("pi_io_event", ["servo12c", para1, para2])
+            else:
+                print "Expected: direct (d), event (e)"
+        elif command == "mpu6050_gyro":
+            if manner == "d" or manner == "direct":
+                 print mpu6050_gyro()
+            elif manner == "e" or manner == "event":
+                steelsquid_event.broadcast_event_external("pi_io_event", ["mpu6050_gyro"])
+            else:
+                print "Expected: direct (d), event (e)"
+        elif command == "mpu6050_accel":
+            if manner == "d" or manner == "direct":
+                 print mpu6050_accel()
+            elif manner == "e" or manner == "event":
+                steelsquid_event.broadcast_event_external("pi_io_event", ["mpu6050_accel"])
+            else:
+                print "Expected: direct (d), event (e)"
+        elif command == "mpu6050_rotation":
+            if manner == "d" or manner == "direct":
+                 print mpu6050_rotation()
+            elif manner == "e" or manner == "event":
+                steelsquid_event.broadcast_event_external("pi_io_event", ["mpu6050_rotation"])
             else:
                 print "Expected: direct (d), event (e)"
         else:
