@@ -1212,7 +1212,7 @@ if [ "$in_parameter_1" == "help-utils" ]; then
 	exit 0
 fi
 ##################################
-function help_build()Kontonummer
+function help_build()
 {
     echo 
     echo 
