@@ -679,7 +679,7 @@ def system_info():
     p_ip_wired = network_ip_wired()
     p_ip_wifi = network_ip_wifi()
     p_ip_wan = network_ip_wan()
-    net = execute_system_command(['steelsquid-nm', 'system-status'])
+    net = execute_system_command(['net', 'system-status'])
     if net[0] == 'None':
         p_access_point = "Not connected!"
     else:    
