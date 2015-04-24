@@ -477,19 +477,19 @@ def main():
                 else:
                     print_help()
         elif sys.argv[1] == "system-connect":
-            steelsquid_utilsshout( "###dfgdfgdfg")
+            steelsquid_utils.shout( "###dfgdfgdfg")
             acc_p_list = get_access_points(False)
             if len(sys.argv) == 3:
-                steelsquid_utilsshout( "###dfgdfgdfgsssss")
+                steelsquid_utils.shout( "###dfgdfgdfgsssss")
                 connect_to_wifi(sys.argv[2])
             else:
                 connected = False
                 for acc_p in acc_p_list:
                     if acc_p[1] == sys.argv[2]:
                         acc_t = acc_p[3]
-                        steelsquid_utilsshout( "###"+sys.argv[2]+":"+sys.argv[3])
+                        steelsquid_utils.shout( "###"+sys.argv[2]+":"+sys.argv[3])
                         if acc_t == WIRELESS_CAPABILITIES_WPA:
-                            steelsquid_utilsshout("kjjlkjlkjlkjl")
+                            steelsquid_utils.shout("kjjlkjlkjlkjl")
                             connect_to_wifi_wpa(sys.argv[2], sys.argv[3])
                             connected = True
                         elif acc_t == WIRELESS_CAPABILITIES_WEP:
