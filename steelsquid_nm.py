@@ -486,6 +486,7 @@ def main():
                     if acc_p[1] == sys.argv[2]:
                         acc_t = acc_p[3]
                         if acc_t == WIRELESS_CAPABILITIES_WPA:
+                            print "###"+sys.argv[2]+":"+sys.argv[3]
                             connect_to_wifi_wpa(sys.argv[2], sys.argv[3])
                             connected = True
                         elif acc_t == WIRELESS_CAPABILITIES_WEP:
