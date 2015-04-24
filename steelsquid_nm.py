@@ -477,8 +477,10 @@ def main():
                 else:
                     print_help()
         elif sys.argv[1] == "system-connect":
+            steelsquid_utilsshout( "###dfgdfgdfg")
             acc_p_list = get_access_points(False)
             if len(sys.argv) == 3:
+                steelsquid_utilsshout( "###dfgdfgdfgsssss")
                 connect_to_wifi(sys.argv[2])
             else:
                 connected = False
