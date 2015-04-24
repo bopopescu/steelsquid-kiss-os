@@ -53,7 +53,7 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         '''
         Where are you connected
         '''
-        answer = steelsquid_utils.execute_system_command(['steelsquid-nm', 'system-status'])
+        answer = steelsquid_utils.execute_system_command(['net', 'system-status'])
         if answer[0] == 'None':
             return ["Not connected!", "---", "---", "---"]
         else:
@@ -83,11 +83,11 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         '''
         import steelsquid_nm
         if parameters[1] == "Open":
-            steelsquid_utils.execute_system_command(['steelsquid-nm', 'system-connect', parameters[0]])
+            steelsquid_utils.execute_system_command(['net', 'system-connect', parameters[0]])
         elif parameters[1] == steelsquid_nm.WIRELESS_CAPABILITIES_WEP:
-            steelsquid_utils.execute_system_command(['steelsquid-nm', 'system-connect', parameters[0], parameters[2]])
+            steelsquid_utils.execute_system_command(['net', 'system-connect', parameters[0], parameters[2]])
         elif parameters[1] == steelsquid_nm.WIRELESS_CAPABILITIES_WPA:
-            steelsquid_utils.execute_system_command(['steelsquid-nm', 'system-connect', parameters[0], parameters[2]])
+            steelsquid_utils.execute_system_command(['net', 'system-connect', parameters[0], parameters[2]])
         else:
             raise Exception("Unknown WIFI type: " + parameters[1])
             
