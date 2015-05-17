@@ -3398,8 +3398,6 @@ function git_commit()
 {
     git commit -a -m "-"
     git push steelsquidkissos master
-    git commit -a -m "-"
-    git push steelsquidkissos master
 }
 if [ "$in_parameter_1" == "commit-git" ]; then
     git_commit
