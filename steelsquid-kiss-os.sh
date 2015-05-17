@@ -54,7 +54,7 @@ python_downloads[1]="$base/steelsquid_boot.py"
 python_downloads[2]="$base/steelsquid_event.py"
 python_downloads[3]="$base/steelsquid_nm.py"
 python_downloads[4]="$base/steelsquid_pi.py"
-python_downloads[5]="$base/steelsquid_io.py"
+python_downloads[5]="$base/steelsquid_piio.py"
 python_downloads[6]="$base/steelsquid_synchronize.py"
 python_downloads[7]="$base/steelsquid_utils.py"
 python_downloads[8]="$base/steelsquid_connection.py"
@@ -75,13 +75,11 @@ python_downloads[22]="$base/steelsquid_bluetooth_connection.py"
 
 # Links to python_downloads
 python_links[1]="/usr/bin/steelsquid-boot"
-python_links[4]="/usr/bin/event"
+python_links[2]="/usr/bin/event"
 python_links[3]="/usr/bin/net"
-python_links[14]="/usr/bin/pi"
-python_links[15]="/usr/bin/io"
-python_links[18]="/usr/bin/synchronize"
-python_links[5]="/usr/bin/dummy"
-python_links[6]="/usr/bin/dummy"
+python_links[4]="/usr/bin/pi"
+python_links[5]="/usr/bin/io"
+python_links[6]="/usr/bin/synchronize"
 python_links[7]="/usr/bin/dummy"
 python_links[8]="/usr/bin/dummy"
 python_links[9]="/usr/bin/dummy"
@@ -89,9 +87,15 @@ python_links[10]="/usr/bin/dummy"
 python_links[11]="/usr/bin/dummy"
 python_links[12]="/usr/bin/dummy"
 python_links[13]="/usr/bin/dummy"
+python_links[14]="/usr/bin/dummy"
+python_links[15]="/usr/bin/dummy"
 python_links[16]="/usr/bin/dummy"
 python_links[17]="/usr/bin/dummy"
+python_links[18]="/usr/bin/dummy"
 python_links[19]="/usr/bin/dummy"
+python_links[20]="/usr/bin/dummy"
+python_links[21]="/usr/bin/dummy"
+python_links[22]="/usr/bin/dummy"
 
 # Download to web root folder
 web_root_downloads[1]="$base/index.html"
@@ -816,7 +820,7 @@ function help_files()
     echb "/media"
     echo "USB disks will automatically be installed here."
     echo 
-    echb "$steelsquid_folder/steelsquid-kiss-os.sh"
+    echb "/opt/steelsquid/steelsquid-kiss-os.sh"
     echo "The steelsquid install and update script"
     echo 
     echb "/etc/init.d/steelsquid"
@@ -825,7 +829,7 @@ function help_files()
     echb "/etc/NetworkManager/dispatcher.d/99steelsquid.sh"
     echo "Fire network status"
     echo 
-    echb "/usr/bin/steelsquid -> $steelsquid_folder/steelsquid-kiss-os.sh"
+    echb "/usr/bin/steelsquid -> /opt/steelsquid/steelsquid-kiss-os.sh"
     echo "The steelsquid script"
     echo 
     echb "/opt/steelsquid/python"
@@ -833,66 +837,6 @@ function help_files()
     echo 
     echb "/usr/bin/steelsquid-boot -> /opt/steelsquid/python/steelsquid_boot.py"
     echo "Python script that execute on boot and shutdown"
-    echo 
-    echb "/opt/steelsquid/python/steelsquid_connection.py"
-    echo "A simple module that i use to sen async command to and from client/server."
-    echo 
-    echb "/usr/bin/events -> /opt/steelsquid/python/steelsquid_event.py"
-    echo "Broadcast and subscribe to events"
-    echo 
-    echb "/opt/steelsquid/python/steelsquid_http_server.py"
-    echo "Python http server"
-    echo 
-    echb "/usr/bin/io -> /opt/steelsquid/python/steelsquid_io.py"
-    echo "Mostly wrapper functions for my steelsquid IO board"
-    echo 
-    echb "/opt/steelsquid/python/steelsquid_kiss_global.py"
-    echo "Global stuff for steelsquid kiss os"
-    echo 
-    echb "/opt/steelsquid/python/steelsquid_kiss_http_expand.py"
-    echo "Use this to implement HTTP stuff, will execute on boot"
-    echo 
-    echb "/opt/steelsquid/python/steelsquid_kiss_http_server.py"
-    echo "Control/Configure steelsquid-kiss-os from web browser"
-    echo 
-    echb "/opt/steelsquid/python/steelsquid_kiss_socket_connection.py"
-    echo "Controll steelsquid kiss os with simle socket commands"
-    echo 
-    echb "/opt/steelsquid/python/steelsquid_kiss_socket_expand.py"
-    echo "Use this to expand socket functionality"
-    echo 
-    echb "/opt/steelsquid/python/steelsquid_lcd_hdd44780.py"
-    echo "Print message to HDD44780 compatible LCD"
-    echo 
-    echb "/opt/steelsquid/python/steelsquid_oled_ssd1306.py"
-    echo "Print message to ssd1306 oled compatible LCD"
-    echo 
-    echb "/opt/steelsquid/python/steelsquid_lcd_nokia5110.py"
-    echo "Print message to nokia511 LCD"
-    echo 
-    echb "/usr/bin/net -> /opt/steelsquid/python/steelsquid_nm.py"
-    echo "Python script that list and connect to wifi network"
-    echo 
-    echb "/opt/steelsquid/python/steelsquid_omx.py"
-    echo "Play movies on the raspberry pi usting the GPU"
-    echo 
-    echb "/usr/bin/pi -> /opt/steelsquid/python/steelsquid_pi.py"
-    echo "Some useful stuff for Raspberry Pi (connect diferent stuff)"
-    echo 
-    echb "/usr/bin/steelsquid-sabertooth -> /opt/steelsquid/python/steelsquid_sabertooth.py"
-    echo "A simple serial interface for Sabertooth motor controller."
-    echo 
-    echb "/usr/bin/steelsquid -> /opt/steelsquid/python/ssteelsquid_synchronize.py"
-    echo "Automatic listen for changes abd commit changes to a nother system via ssh (install on remote system)"
-    echo 
-    echb "/opt/steelsquid/python/steelsquid_server.py"
-    echo "A python server (handle execute commands)"
-    echo 
-    echb "/opt/steelsquid/python/steelsquid_socket_connection.py"
-    echo "Socket inplementation of steelsquid_connection"
-    echo 
-    echb "/opt/steelsquid/python/steelsquid_utils.py"
-    echo "Python utils"
     echo 
     echb "/opt/steelsquid/python/expand"
     echo "All python scrips in this folder will be imported (executed) on boot."
@@ -945,7 +889,7 @@ function help_develop()
     echo " - utils.html"
     echo "This is useful if you have expanded functionality. otherwise, the changes will be overwritten when you execute upgrade."
     echo 
-    echb "steelsquid download-imp"
+    echb "steelsquid download-img"
     echo "Download a steelsquid-kiss-os.img file."
     echo 
     echb "steelsquid read </dev/sdX>"
@@ -1013,35 +957,6 @@ function help_develop()
     echb "steelsquid synchronize"
     echo "Automatic listen for changes abd commit changes to a nother system via ssh (install on remote system)"
     echo 
-    echb "gpio-get <gnd or 3v3> <gpio number>"
-    echo "Get gpio pin status hight (on) or low (off)"
-    echo 
-    echb "gpio-set <gnd or 3v3> <gpio number> <on or off>"
-    echo "Set gpio pin status hight (on) or low (off)"
-    echo 
-    echb "gpio-event <gpio number>"
-    echo "Listen for signal on gpio pin and 3.3v"
-    echo 
-    echb "lcd-message hddd <message>"
-    echo "Print message to HDD44780 compatible LCD connected directly to GPIO."
-    echo "See http://www.steelsquid.org/pi-io-example"
-    echo 
-    echb "lcd-message hdd <message>"
-    echo "Print message to HDD44780 compatible LCD connected via i2c."
-    echo "See http://www.steelsquid.org/pi-io-example"
-    echo 
-    echb "lcd-message nokia <message>"
-    echo "Print message to nokia5110 LCD connected via spi."
-    echo "See http://www.steelsquid.org/pi-io-example"
-    echo 
-    echb "lcd-message ssd <message>"
-    echo "Print message to ssd1306 oled LCD connected via spi."
-    echo "See http://www.steelsquid.org/pi-io-example"
-    echo 
-    echb "distance <GPIO for Trig> <GPIO for Echo>"
-    echo "Measure_distance with a with HC-SR04"
-    echo "See http://www.steelsquid.org/pi-io-example"
-    echo 
     echb "is-raspberry-pi"
     echo "Is this device a raspberry pi"
     echo 
@@ -1068,30 +983,6 @@ function help_develop()
     echo 
     echb "lcd-contrast <value>"
     echo "Set contrast on nokia5110 LCD (0 to 100)."
-    echo 
-    echb "ads1015"
-    echo "Read analog out from ADS1015 (0 to 5v)"
-    echo 
-    echb "mcp4725"
-    echo "Write analog out from MCP4725 (0 to 5v)"
-    echo 
-    echb "mcp4728"
-    echo "Write analog out from MCP4728 (0 to 5v)"
-    echo 
-    echb "mcp23017-get"
-    echo "Get gpio pin status on MCP230xx"
-    echo 
-    echb "mcp23017-set"
-    echo "Set gpio pin status on MCP230xx"
-    echo 
-    echb "mcp23017-event"
-    echo "Listen for click on MCP230xx"
-    echo 
-    echb "ada-servo"
-    echo "Move Adafruit 16-channel I2c servo to position (pwm value)"
-    echo 
-    echb "sabertooth"
-    echo "A simple serial interface for Sabertooth motor controller."
     echo 
     echb "steelsquid log"
     echo "Is logging enabled"
@@ -1161,6 +1052,26 @@ function help_develop()
 }
 if [ "$in_parameter_1" == "help-dev" ]; then
     help_develop
+    echo
+	exit 0
+fi
+##################################
+function help_io()
+{
+    echo 
+    echo 
+    echo 
+    echb "############################################################################"
+    echb "Commands for I/O."
+    echb "############################################################################"
+    echo 
+    echb "steelsquid restart"
+    echo "Restart the steelsquid daemon"
+    echo 
+
+}
+if [ "$in_parameter_1" == "help-io" ]; then
+    help_io
     echo
 	exit 0
 fi
@@ -1383,6 +1294,7 @@ if [ "$in_parameter_1" == "help" ]; then
     help_other
     help_files
     help_develop
+    help_io
     help_build
     echo 
     exit 0

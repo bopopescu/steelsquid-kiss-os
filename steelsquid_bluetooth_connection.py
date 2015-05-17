@@ -3,6 +3,7 @@
 
 '''
 Bluetooth implementation of steelsquid_connection...
+UNDER CONSTRUCTION
 
 @organization: Steelsquid
 @author: Andreas Nilsson

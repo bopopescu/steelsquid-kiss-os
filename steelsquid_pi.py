@@ -4,7 +4,8 @@
 '''
 Some useful stuff for Raspberry Pi
  - Print text to HDD44780 compatible LCD
- - Print text to a nokia511 LCD
+ - Print text to a nokia5110 LCD
+ - Print text to ssd1306 oled  LCD
  - Read GPIO input.
  - Set GPIO output.
  - Measure_distance with a with HC-SR04.
@@ -14,6 +15,7 @@ Some useful stuff for Raspberry Pi
  - Controll Trex robot controller
  - Sabertooth motor controller
  - Piborg diablo motor controller
+ - mpu6050 Acc/Gyro board
 
 @organization: Steelsquid
 @author: Andreas Nilsson
