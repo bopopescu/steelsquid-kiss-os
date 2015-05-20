@@ -1062,11 +1062,7 @@ function help_io()
     echo 
     echo 
     echb "############################################################################"
-    echb "Commands for I/O."
-    echb "############################################################################"
-    echo 
-    echb "steelsquid restart"
-    echo "Restart the steelsquid daemon"
+    pi
     echo 
 
 }
