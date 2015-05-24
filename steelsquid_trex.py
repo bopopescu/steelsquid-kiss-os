@@ -61,14 +61,14 @@ sys.path.append("/usr/lib/python3/dist-packages")
 import threading
 import time
 import smbus
-import quick2wire.i2c as i2c
-from quick2wire.i2c import I2CMaster, writing_bytes, reading
+#import quick2wire.i2c as i2c
+#from quick2wire.i2c import I2CMaster, writing_bytes, reading
 
 
 TREX_ADDRESS = 0x07
 
-i2c_write_bus = smbus.SMBus(1)
-i2c_read_bus = i2c.I2CMaster()
+#i2c_write_bus = smbus.SMBus(1)
+#i2c_read_bus = i2c.I2CMaster()
 trex_lock = threading.Lock()
 trex_package = [None] * 26
 trex_voltage_f = 8
