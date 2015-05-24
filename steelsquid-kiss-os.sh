@@ -1066,6 +1066,7 @@ function help_io()
     echo 
 
 }
+
 if [ "$in_parameter_1" == "help-io" ]; then
     help_io
     echo
@@ -1129,11 +1130,11 @@ function help_build()
     echb "############################################################################"
     echo 
     echb "1.  Download and extract the installer image"
-    echo "wget https://github.com/debian-pi/raspbian-ua-netinst/releases/download/v1.0.6/raspbian-ua-netinst-v1.0.6.img.xz"
-    echo "unxz raspbian-ua-netinst-v1.0.6.img.xz"
+    echo "wget https://github.com/debian-pi/raspbian-ua-netinst/releases/download/v1.0.7/raspbian-ua-netinst-v1.0.7.img.xz"
+    echo "unxz raspbian-ua-netinst-v1.0.7.img.xz"
     echo 
     echb "2.  Copy to sdcard"
-    echo "dd bs=4M if=raspbian-ua-netinst-v1.0.6.img of=/dev/sdb"
+    echo "dd bs=4M if=raspbian-ua-netinst-v1.0.7.img of=/dev/sdb"
     echo 
     echb "3.  Insert sdcard into raspberry and boot"
     echo "Must have the networkcabel connected (internet access)"
