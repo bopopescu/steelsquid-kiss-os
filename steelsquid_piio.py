@@ -2,8 +2,8 @@
 
 
 '''
-Mostly wrapper functions (hard coded adresses and pins) for my steelsquid IO board
-http://www.steelsquid.org/steelsquid-io
+Mostly wrapper functions (hard coded adresses and pins) for my steelsquid PIIO board
+http://www.steelsquid.org/steelsquid-piio-board
 
 @organization: Steelsquid
 @author: Andreas Nilsson
