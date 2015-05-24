@@ -1148,17 +1148,23 @@ function help_build()
     echb "5.  Set password"
     echo "passwd  (raspberry)"
     echo 
-    echb "7.  Change to testing and uppgrade"
-    echo "echo \"deb http://mirrordirector.raspbian.org/raspbian testing main firmware contrib non-free rpi\" > /etc/apt/sources.list"
-    echo "echo \"deb http://archive.raspberrypi.org/debian wheezy main untested\" >> /etc/apt/sources.list"
+    echb "7.  Change to jessie and uppgrade"
+    echo "echo \"deb http://mirrordirector.raspbian.org/raspbian jessie main firmware contrib non-free rpi\" > /etc/apt/sources.list"
+    echo "echo \"deb http://archive.raspberrypi.org/debian jessie main untested staging\" >> /etc/apt/sources.list"
     echo "apt-get update"
-    echo "apt-get --no-install-recommends install sudo nano aptitude    "
+    echo "apt-get --no-install-recommends install sudo nano aptitude linux-image-rpi-rpfv linux-image-rpi2-rpfv"
     echo "aptitude update"
     echo "aptitude full-upgrade"
     echo "dpkg --configure -a"
-    echo "cp /vmlinuz /boot/kernel.img"
     echo 
-    echb "8.  Clean"
+    echb "8.  Fix kernal"
+    echb "echo \"[pi1]\" > /boot/config.txt"
+    echb "echo \"kernel=/vmlinuz-3.18.0-trunk-rpi\" >> /boot/config.txt"
+    echb "echo \"[pi2]\" >> /boot/config.txt"
+    echb "echo \"kernel=/vmlinuz-3.18.0-trunk-rpi2\" >> /boot/config.txt"
+    echb "echo \"[all]\" >> /boot/config.txt"
+    echo 
+    echb "9.  Clean"
     echo "aptitude autoclean"
     echo "aptitude clean"
     echo "apt-get clean"
@@ -1166,45 +1172,45 @@ function help_build()
     echo "rm /root/.bash_history"
     echo "rm /root/.nano_history"
     echo 
-    echb "9.  Shutdown and mount on computer"
+    echb "10. Shutdown and mount on computer"
     echo 
-    echb "10.  Resize to 3.4G with gparted"
+    echb "11. Resize to 3.4G with gparted"
     echo 
-    echb "11. Boot the raspberry pi again."
+    echb "12. Boot the raspberry pi again."
     echo 
-    echb "12. Download script"
+    echb "13. Download script"
     echo "wget --no-check-certificate http://www.steelsquid.org/steelsquid-kiss-os.sh"
     echo 
-    echb "13. Make executable"
+    echb "14. Make executable"
     echo "chmod +x steelsquid-kiss-os.sh"
     echo 
-    echb "14. Execute the stcript"
+    echb "15. Execute the stcript"
     echo "./steelsquid-kiss-os.sh upgrade"
     echo 
-    echb "15. Take a nap :-)"
+    echb "16. Take a nap :-)"
     echo "May have to answer some questions"
     echo 
-    echb "16. Remove script"
+    echb "17. Remove script"
     echo "rm steelsquid-kiss-os.sh"
     echo 
-    echb "17. Shutdown raspberry"
+    echb "18. Shutdown raspberry"
     echo 
-    echb "18. Insert sdcard in other computer and mount"
+    echb "19. Insert sdcard in other computer and mount"
     echo "rm -R var/log/*"
     echo "rm -R var/tmp/*"
     echo "rm -R tmp/*"
     echo 
-    echb "19. Make a img of it"
+    echb "20. Make a img of it"
     echo "./steelsquid-kiss-os.sh read /dev/sdb"
     echo 
-    echb "20. Compress image to gz"
+    echb "21. Compress image to gz"
     echo "./steelsquid-kiss-os.sh compress"
     echo 
-    echb "21. On new image remember to:"
+    echb "22. On new image remember to:"
     echo "Upload steelsquid-kiss-os.sh to http://www.steelsquid.org"
     echo "Clear the ssh keys"
     echo 
-    echb "22. GIT and github"
+    echb "23. GIT and github"
     echo "git init"
     echo "git add *.html"
     echo "git commit -m \"Initial commit\""
@@ -3760,22 +3766,6 @@ fi
 
 
 ##################################################################################
-# Download and install Quick2Wire
-##################################################################################
-if [ $(is-raspberry-pi) == "true" ]; then
-    log "Download and install Quick2Wire"
-    response=$(grep -lir "quick2wire" /etc/apt/sources.list)
-    if [ "$response" != "/etc/apt/sources.list" ]; then
-        echo "deb http://dist.quick2wire.com/raspbian wheezy main" >> /etc/apt/sources.list
-        echo "deb-src http://dist.quick2wire.com/raspbian wheezy main" >> /etc/apt/sources.list
-        aptitude update
-        aptitude -o Aptitude::Cmdline::ignore-trust-violations=true -y install quick2wire-gpio-admin quick2wire-python3-api
-        sed -i '/^assert sys.version_info.major/d' /usr/lib/python3/dist-packages/quick2wire/i2c.py
-    fi
-fi
-
-
-##################################################################################
 # Download and install WiringPi
 ##################################################################################
 if [ $(is-raspberry-pi) == "true" ]; then
@@ -4307,7 +4297,13 @@ echo "level=ERR" >> /etc/NetworkManager/NetworkManager.conf
 # Fix config.txt
 ##################################################################################
 log "Fix config.txt"
-echo "disable_overscan=1" > /boot/config.txt
+echo "[pi1]" > /boot/config.txt
+echo "kernel=/vmlinuz-3.18.0-trunk-rpi" >> /boot/config.txt
+echo "[pi2]" >> /boot/config.txt
+echo "kernel=/vmlinuz-3.18.0-trunk-rpi2" >> /boot/config.txt
+echo "[all]" >> /boot/config.txt
+
+echo "disable_overscan=1" >> /boot/config.txt
 echo "disable_splash=1" >> /boot/config.txt
 echo "boot_delay=0" >> /boot/config.txt
 
