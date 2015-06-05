@@ -61,7 +61,7 @@ def is_raspberry_pi():
     Is this a raspberry pi
     '''
     ans = read_from_file("/proc/cpuinfo")
-    if "BCM2708" in ans:
+    if "BCM270" in ans:
         return True
     else:
         return False
@@ -376,17 +376,17 @@ def shout(string=None, to_lcd=True, debug=False, is_error=False, always_show=Fal
             except:
                 pass
             if to_lcd and is_raspberry_pi():
-                if get_flag("io"):
-                    import steelsquid_io
+                if get_flag("piio"):
+                    import steelsquid_piio
                     if is_error:
                         try:
-                            steelsquid_io.led_err_flash(None)
-                            steelsquid_io.sum_flash(None)
+                            steelsquid_piio.led_err_flash(None)
+                            steelsquid_piio.sum_flash(None)
                         except:
                             pass
                     else:
                         try:
-                            steelsquid_io.led_ok_flash(None)
+                            steelsquid_piio.led_ok_flash(None)
                         except:
                             pass
                 if leave_on_lcd:
@@ -817,8 +817,8 @@ def system_info():
         p_download = "Disabled"
 
 
-    # IO Board
-    if get_flag("io"):
+    # PIIO Board
+    if get_flag("piio"):
         p_io = "Enabled"
     else:
         p_io = "Disabled"
@@ -836,9 +836,9 @@ def system_info():
         p_modem = "Disabled"
 
     #Voltage
-    if get_flag("io"):
-        import steelsquid_io
-        p_io_voltage = steelsquid_io.voltage()
+    if get_flag("piio"):
+        import steelsquid_piio
+        p_io_voltage = steelsquid_piio.voltage()
     else:
         p_io_voltage = "---"
         
@@ -913,7 +913,7 @@ def print_system_info():
     print("Download dir: %s" % p_download_dir)
     print("Clean power off: %s" % p_power)
     print
-    print("Steelsquid IO Board: %s" % p_io)
+    print("Steelsquid PIIO Board: %s" % p_io)
     print("Voltage: %s" % p_io_voltage)
 
 

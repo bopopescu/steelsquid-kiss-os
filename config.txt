@@ -1,6 +1,6 @@
-192.168.0.105
+192.168.0.102
 22
 root
 raspberry
 
-expand.py | /opt/steelsquid/python/expand/expand.py
+custom.py | /opt/steelsquid/python/expand/custom.py

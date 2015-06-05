@@ -68,19 +68,6 @@ channel = None
 channel_f = None
 lock = threading.Lock()
 
- 
-#addrs = ['angela@domain.com', 'michael@domain.com', 'david@test.com']
- 
-#def completer(text, state):
-#    options = [x for x in addrs if x.startswith(text)]
-#    try:
-#        return options[state]
-#    except IndexError:
-#        return None
- 
-#readline.set_completer(completer)
-#readline.parse_and_bind("tab: complete")
-
 
 def load_data():
     '''
@@ -319,6 +306,23 @@ def remove_timestamp(line):
     return line
 
 
+def print_menu(): 
+    print "------------------------------------------------------------------------------"
+    print "Listen for changes and commit to " + base_remote_server
+    print "------------------------------------------------------------------------------"
+    print " H : help   : Show this help"
+    print " Q : quit   : This program will terminate"
+    print " C : custom : Reload the custom modules (/opt/steelsquid/python/expand/...)"
+    print " E : expand : Reload steelsquid_kiss_expand.py"
+    print " S : server : Reload ...uid_kiss_http_expand.py, ...uid_kiss_socket_expand.py"
+    print " A : all    : Start/Restart steelsquid service (implememt all changes)"
+    print " K : kill   : Stop steelsquid service"
+    print " R : reboot : Reboot the remote machine"
+    print "------------------------------------------------------------------------------"
+    print "You can also send any other ordinary terminal line command (ls, mkdir...)"
+    print "------------------------------------------------------------------------------"
+
+
 if __name__ == '__main__':
     load_data()
     ssh = paramiko.SSHClient()
@@ -329,47 +333,26 @@ if __name__ == '__main__':
         pass
     thread.start_new_thread(listen_for_std, ()) 
     print ""
-    print "------------------------------------------------------------"
-    print "Listen for changes and commit to " + base_remote_server
-    print "------------------------------------------------------------"
-    print " H : help    : Show this help."
-    print " Q : quit    : This program will terminate."
-    print " C : custom  : Reload the custom modules."
-    print " E : expand  : Reload the HTTP and Socket expand server."
-    print " S : service : Restart steelsquid service."
-    print " K : kill    : Stop steelsquid service."
-    print " R : reboot  : Reboot the remote machine."
-    print "------------------------------------------------------------"
-    print "You can also send any other ordinary terminal line command"
-    print "------------------------------------------------------------"
+    print_menu()
     thread.start_new_thread(listener, ()) 
     answer = ""
     cont = True
     while cont:
         answer = raw_input("\n# ")
         if answer == "H" or answer == "h" or answer == "help":
-            print "------------------------------------------------------------"
-            print "Listen for changes and commit to " + base_remote_server
-            print "------------------------------------------------------------"
-            print " H : help    : Show this help."
-            print " Q : quit    : This program will terminate."
-            print " C : custom  : Reload the custom modules."
-            print " E : expand  : Reload the HTTP and Socket expand server."
-            print " S : service : Restart steelsquid service."
-            print " K : kill    : Stop steelsquid service."
-            print " R : reboot  : Reboot the remote machine."
-            print "------------------------------------------------------------"
-            print "You can also send any other ordinary terminal line command"
-            print "------------------------------------------------------------"
+            print_menu()
         elif answer == "Q" or answer == "q" or answer == "quit":
             cont = False
         elif answer == "C" or answer == "c" or answer == "custom":
             steelsquid_utils.log("Request reload of custom modules")
-            send_command("steelsquid-event reload custom")
+            send_command("event reload custom")
         elif answer == "E" or answer == "e" or answer == "expand":
-            steelsquid_utils.log("Request reload of servers")
-            send_command("steelsquid-event reload server")
-        elif answer == "S" or answer == "s" or answer == "service":
+            steelsquid_utils.log("Request reload of steelsquid_kiss_expand.py")
+            send_command("event reload expand")
+        elif answer == "S" or answer == "s" or answer == "server":
+            steelsquid_utils.log("Request reload of ...uid_kiss_http_expand.py, ...uid_kiss_socket_expand.py")
+            send_command("event reload server")
+        elif answer == "A" or answer == "a" or answer == "all":
             steelsquid_utils.log("Request service restart")
             send_command("steelsquid restart")
         elif answer == "K" or answer == "k" or answer == "kill":

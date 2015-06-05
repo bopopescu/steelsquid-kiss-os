@@ -395,7 +395,7 @@ def event_executer(event, subs, parameters):
                 else:
                     function(args, parameters)
         if event == "shutdown":
-            __deactivate_event_handle()
+            __deactivate_event_handler()
     except:
         if event != "shout":
             steelsquid_utils.shout()

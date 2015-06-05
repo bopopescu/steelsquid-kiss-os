@@ -50,6 +50,8 @@ import Diablo
 import steelsquid_event
 import smbus
 import math
+import p011A
+from sv3A import sv3Bus
 
 SETUP_NONE = 0
 SETUP_OUT = 1
@@ -110,16 +112,13 @@ RST = 7
 SPI_PORT = 0
 SPI_DEVICE = 0
 nokia_lcd = None
-font = ImageFont.truetype("/usr/share/fonts/truetype/anonymous-pro/Anonymous Pro.ttf", 10)
+font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 9)
 image = Image.new('1', (LCD.LCDWIDTH, LCD.LCDHEIGHT))
 draw = ImageDraw.Draw(image)
 lcd_auto = 0
 worker_commands = {}
 worker_thread_started = False
 diablo = None
-i2c_servo12c = None
-i2c_mpu_6050 = None
-
 
 
 def worker_thread():
@@ -1825,3 +1824,4 @@ if __name__ == '__main__':
         else:
             print "Unknown command!!!"
     
+

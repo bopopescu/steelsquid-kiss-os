@@ -7,6 +7,7 @@ Execute until system shutdown.
  - Mount and umount drives
  - Start web-server
  - Start event handler
+ - 
 @organization: Steelsquid
 @author: Andreas Nilsson
 @contact: steelsquid@gmail.com
@@ -54,11 +55,11 @@ if steelsquid_utils.is_raspberry_pi:
         steelsquid_utils.shout("Fatal error when import steelsquid_pi", is_error=True)
 
 
-if steelsquid_utils.get_flag("io"):
+if steelsquid_utils.get_flag("piio"):
     try:
-        import steelsquid_io
+        import steelsquid_piio
     except:
-        steelsquid_utils.shout("Fatal error when import steelsquid_io", is_error=True)
+        steelsquid_utils.shout("Fatal error when import steelsquid_piio", is_error=True)
 
 
 def signal_term_handler(signal, frame):
@@ -186,7 +187,7 @@ def on_network(args, para):
     access_point = para[3]
     wan = para[4]
     bluetooth = ""
-    if steelsquid_utils.get_flag("bluetooth_pairing") and steelsquid_utils.get_flag("io"):
+    if steelsquid_utils.get_flag("bluetooth_pairing") and steelsquid_utils.get_flag("piio"):
         answer = steelsquid_utils.execute_system_command(["hciconfig", "-a"])
         for line in answer:
             if "Name: " in line:
@@ -201,12 +202,12 @@ def on_network(args, para):
     if net == "up":
         try:
             shout_string = []
-            if steelsquid_utils.get_flag("io"):
-                import steelsquid_io
-                steelsquid_io.led_net(True)
+            if steelsquid_utils.get_flag("piio"):
+                import steelsquid_piio
+                steelsquid_piio.led_net(True)
                 if access_point != "---":
-                    shout_string.append("STEELSQUID IO V")
-                    shout_string.append(steelsquid_io.version)
+                    shout_string.append("STEELSQUID PIIO V")
+                    shout_string.append(steelsquid_piio.version)
                     shout_string.append("\nAP: ")
                     shout_string.append(access_point)
                     shout_string.append("\nWIFI: ")
@@ -215,8 +216,8 @@ def on_network(args, para):
                         shout_string.append("\nWAN: ")
                         shout_string.append(wan)
                 else:
-                    shout_string.append("STEELSQUID IO V")
-                    shout_string.append(steelsquid_io.version)
+                    shout_string.append("STEELSQUID PIIO V")
+                    shout_string.append(steelsquid_piio.version)
                     shout_string.append("\nWIRED: ")
                     shout_string.append(wired)
                     if wan != "---":
@@ -224,7 +225,7 @@ def on_network(args, para):
                         shout_string.append(wan)
                 shout_string.append(bluetooth)
                 shout_string.append("\nVOLTAGE: ")
-                shout_string.append(str(steelsquid_io.voltage()))
+                shout_string.append(str(steelsquid_piio.voltage()))
             else:
                 if access_point != "---":
                     shout_string.append("WIFI\n")
@@ -246,16 +247,16 @@ def on_network(args, para):
             steelsquid_utils.shout()
         do_mount()
     else:
-        if steelsquid_utils.get_flag("io"):
-            import steelsquid_io
-            steelsquid_io.led_net(False)
+        if steelsquid_utils.get_flag("piio"):
+            import steelsquid_piio
+            steelsquid_piio.led_net(False)
             shout_string = []
-            shout_string.append("STEELSQUID IO V")
-            shout_string.append(steelsquid_io.version)
+            shout_string.append("STEELSQUID PIIO V")
+            shout_string.append(steelsquid_piio.version)
             shout_string.append("\nNo network!")
             shout_string.append(bluetooth)
             shout_string.append("\nVOLTAGE: ")
-            shout_string.append(str(steelsquid_io.voltage()))
+            shout_string.append(str(steelsquid_piio.voltage()))
             steelsquid_utils.shout("".join(shout_string), leave_on_lcd = True)
         else:
             steelsquid_utils.shout("No network!", leave_on_lcd = True)
@@ -277,10 +278,10 @@ def on_shutdown(args, para):
             steelsquid_kiss_global.http_server.stop_server()
         except:
             pass
-    if steelsquid_utils.get_flag("io"):
-        import steelsquid_io
-        steelsquid_io.led_net(False)
-        steelsquid_io.led_bt(False)
+    if steelsquid_utils.get_flag("piio"):
+        import steelsquid_piio
+        steelsquid_piio.led_net(False)
+        steelsquid_piio.led_bt(False)
     steelsquid_utils.execute_system_command_blind(['killall', 'aria2c'])
 
 
@@ -329,6 +330,8 @@ def on_reload(args, para):
             try:
                 steelsquid_kiss_global.http_server.stop_server()
                 steelsquid_utils.shout("Restart steelsquid_kiss_http_expand", debug=True)
+                import steelsquid_kiss_http_server
+                reload(steelsquid_kiss_http_server)
                 reload(steelsquid_kiss_http_expand)
                 steelsquid_kiss_global.http_server = steelsquid_kiss_http_expand.SteelsquidKissExpandHttpServer(None, steelsquid_utils.STEELSQUID_FOLDER+"/web/", steelsquid_utils.get_flag("web_authentication"), steelsquid_utils.get_flag("web_local"), steelsquid_utils.get_flag("web_authentication"), steelsquid_utils.get_flag("web_https"))
                 steelsquid_kiss_global.http_server.start_server()
@@ -338,6 +341,8 @@ def on_reload(args, para):
             try:
                 steelsquid_kiss_global.socket_connection.stop()
                 steelsquid_utils.shout("Restart steelsquid_kiss_socket_expand", debug=True)
+                import steelsquid_kiss_socket_connection
+                reload(steelsquid_kiss_socket_connection)
                 reload(steelsquid_kiss_socket_expand)
                 steelsquid_kiss_global.socket_connection = steelsquid_kiss_socket_expand.SteelsquidKissSocketExpand(True)
                 steelsquid_kiss_global.socket_connection.start()
@@ -347,6 +352,8 @@ def on_reload(args, para):
         pkgpath = os.path.dirname(expand.__file__)
         for name in pkgutil.iter_modules([pkgpath]):
             thread.start_new_thread(reload_file_dyn, (name[1],))
+    elif para[0] == "expand":
+        thread.start_new_thread(import_expand, ()) 
 
 
 class Logger(object):
@@ -376,9 +383,9 @@ def bluetooth_agent():
         else:
             steelsquid_utils.shout("Start bluetooth: " + bluetooth)
             steelsquid_event.broadcast_event("network")
-            if steelsquid_utils.get_flag("io"):
-                import steelsquid_io
-                steelsquid_io.led_bt(True)
+            if steelsquid_utils.get_flag("piio"):
+                import steelsquid_piio
+                steelsquid_piio.led_bt(True)
             try:
                 proc=Popen("bluetoothctl", stdout=PIPE, stdin=PIPE, stderr=PIPE)
                 proc.stdin.write('power on\n')
@@ -403,10 +410,24 @@ def bluetooth_agent():
                             proc.stdin.flush()
             except:
                 steelsquid_utils.shout("Error on start bluetoothctl", is_error=True)
-        if steelsquid_utils.get_flag("io"):
-            import steelsquid_io
-            steelsquid_io.led_bt(False)
+        if steelsquid_utils.get_flag("piio"):
+            import steelsquid_piio
+            steelsquid_piio.led_bt(False)
         time.sleep(20)    
+
+
+def import_expand():
+    '''
+    Import the expand module
+    '''
+    try:
+        if 'steelsquid_kiss_expand' in sys.modules:
+            import steelsquid_kiss_expand
+            reload(steelsquid_kiss_expand)
+        else:
+            import steelsquid_kiss_expand
+    except:
+        steelsquid_utils.shout("Fatal error when import steelsquid_kiss_expand", is_error=True)
 
 
 def on_flag(args, para):
@@ -587,8 +608,8 @@ def main():
             steelsquid_event.subscribe_to_event("flag", on_flag, ())
             steelsquid_event.subscribe_to_event("parameter", on_parameter, ())
             steelsquid_event.subscribe_to_event("pi_io_event", on_pi_io_event, ())
-            if steelsquid_utils.get_flag("io"):
-                steelsquid_kiss_global.IO.enable()
+            if steelsquid_utils.get_flag("piio"):
+                steelsquid_kiss_global.PIIO.enable()
             if steelsquid_utils.get_flag("rover"):
                 steelsquid_kiss_global.Rover.enable()
             pkgpath = os.path.dirname(expand.__file__)
@@ -596,11 +617,12 @@ def main():
                 steelsquid_utils.shout("Load custom module: " + 'expand.'+name[1], debug=True)                
                 thread.start_new_thread(import_file_dyn, (name[1],)) 
             steelsquid_utils.shout("Listen for events", debug=True)
+            thread.start_new_thread(import_expand, ()) 
             steelsquid_event.broadcast_event("network")
             steelsquid_event.activate_event_handler(create_ner_thread=False)
         elif sys.argv[1] == "stop":
             steelsquid_utils.shout("Goodbye :-(")
-            steelsquid_utils.execute_system_command_blind(["steelsquid-event", "shutdown"])
+            steelsquid_utils.execute_system_command_blind(["event", "shutdown"])
     except:
         steelsquid_utils.shout("Fatal error when on boot steelsquid service", is_error=True)
         os._exit(0)

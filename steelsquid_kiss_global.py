@@ -45,14 +45,14 @@ class Rover(object):
         Enable the rover functionality (this is set by steelsquid_boot)
         Flag: rover
         '''    
-        import steelsquid_io
+        import steelsquid_piio
         steelsquid_utils.shout("Steelsquid Rover enabled")
-        steelsquid_io.servo_position = steelsquid_utils.get_parameter("servo_position", steelsquid_io.servo_position)
-        steelsquid_io.servo_position_max = steelsquid_utils.get_parameter("servo_position_max", steelsquid_io.servo_position_max)
-        steelsquid_io.servo_position_min = steelsquid_utils.get_parameter("servo_position_min", steelsquid_io.servo_position_min)
-        steelsquid_io.motor_forward = steelsquid_utils.get_parameter("motor_forward", steelsquid_io.motor_forward)
-        steelsquid_io.motor_backward = steelsquid_utils.get_parameter("motor_backward", steelsquid_io.motor_backward)
-        steelsquid_io.servo(1, steelsquid_io.servo_position)       
+        steelsquid_piio.servo_position = steelsquid_utils.get_parameter("servo_position", steelsquid_piio.servo_position)
+        steelsquid_piio.servo_position_max = steelsquid_utils.get_parameter("servo_position_max", steelsquid_piio.servo_position_max)
+        steelsquid_piio.servo_position_min = steelsquid_utils.get_parameter("servo_position_min", steelsquid_piio.servo_position_min)
+        steelsquid_piio.motor_forward = steelsquid_utils.get_parameter("motor_forward", steelsquid_piio.motor_forward)
+        steelsquid_piio.motor_backward = steelsquid_utils.get_parameter("motor_backward", steelsquid_piio.motor_backward)
+        steelsquid_piio.servo(1, steelsquid_piio.servo_position)       
         steelsquid_event.subscribe_to_event("second", cls.on_second, ())         
         cls.is_enabled=True
 
@@ -61,11 +61,11 @@ class Rover(object):
         '''
         If no signal after 1 second stop the rover. (connection lost!!!)
         '''
-        import steelsquid_io
+        import steelsquid_piio
         now = time.time()*1000
-        if now - steelsquid_io.trex_motor_last_change() > 1000:
+        if now - steelsquid_piio.trex_motor_last_change() > 1000:
             try:
-                steelsquid_io.trex_motor(0,0)
+                steelsquid_piio.trex_motor(0,0)
             except:
                 pass
                 
@@ -76,10 +76,10 @@ class Rover(object):
         '''
         enabled = steelsquid_utils.get_flag("rover")
         if enabled:
-            import steelsquid_io
-            battery_voltage, _, _, _, _, _, _, _, _ = steelsquid_io.trex_status()
+            import steelsquid_piio
+            battery_voltage, _, _, _, _, _, _, _, _ = steelsquid_piio.trex_status()
             battery_voltage = float(battery_voltage)/100
-            return [True, battery_voltage, steelsquid_io.gpio_22_xv_toggle_current(2), steelsquid_io.gpio_22_xv_toggle_current(1), steelsquid_io.servo_position, steelsquid_io.servo_position_min, steelsquid_io.servo_position_max, steelsquid_io.motor_backward, steelsquid_io.motor_forward]
+            return [True, battery_voltage, steelsquid_piio.gpio_22_xv_toggle_current(2), steelsquid_piio.gpio_22_xv_toggle_current(1), steelsquid_piio.servo_position, steelsquid_piio.servo_position_min, steelsquid_piio.servo_position_max, steelsquid_piio.motor_backward, steelsquid_piio.motor_forward]
         else:
             return False
 
@@ -89,9 +89,9 @@ class Rover(object):
         '''
         Light on and off (toggle)
         '''
-        import steelsquid_io
-        status = steelsquid_io.gpio_22_xv_toggle(2)
-        steelsquid_io.gpio_22_xv(3, status)
+        import steelsquid_piio
+        status = steelsquid_piio.gpio_22_xv_toggle(2)
+        steelsquid_piio.gpio_22_xv(3, status)
         return status
 
 
@@ -100,8 +100,8 @@ class Rover(object):
         '''
         Alarm on and off (toggle)
         '''
-        import steelsquid_io
-        return steelsquid_io.gpio_22_xv_toggle(1)
+        import steelsquid_piio
+        return steelsquid_piio.gpio_22_xv_toggle(1)
 
 
     @classmethod
@@ -109,14 +109,14 @@ class Rover(object):
         '''
         Tilt the camera
         '''
-        import steelsquid_io
+        import steelsquid_piio
         if value == True:
-            steelsquid_io.servo_move(1, 10)
+            steelsquid_piio.servo_move(1, 10)
         elif value == False:
-            steelsquid_io.servo_move(1, -10)
+            steelsquid_piio.servo_move(1, -10)
         else:
             value = int(value)
-            steelsquid_io.servo(1, value)
+            steelsquid_piio.servo(1, value)
 
 
     @classmethod
@@ -124,19 +124,19 @@ class Rover(object):
         '''
         Tilt the camera
         '''
-        import steelsquid_io
+        import steelsquid_piio
         left = int(left)
         right = int(right)
-        steelsquid_io.trex_motor(left, right)
+        steelsquid_piio.trex_motor(left, right)
 
 
-class IO(object):
+class PIIO(object):
     '''
-    Fuctionality for my Steelsquid IO board
+    Fuctionality for my Steelsquid PIIO board
     Also see steelquid_io.py
     '''
 
-    # Is the IO board functionality enabled
+    # Is the PIIO board functionality enabled
     is_enabled = False
     
     # Last voltage read
@@ -151,22 +151,22 @@ class IO(object):
         Enable the IO board functionality (this is done by steelsquid_boot)
         Flag: io
         '''    
-        import steelsquid_io
+        import steelsquid_piio
         steelsquid_utils.shout("Steelsquid IO board enabled")
-        steelsquid_io.button(1, cls.on_button_1)
-        steelsquid_io.button(2, cls.on_button_2)
-        steelsquid_io.button(3, cls.on_button_3)
-        steelsquid_io.button(4, cls.on_button_4)
-        steelsquid_io.button(5, cls.on_button_5)
-        steelsquid_io.button(6, cls.on_button_6)
-        steelsquid_io.dip(1, cls.on_dip_1)
-        steelsquid_io.dip(2, cls.on_dip_2)
-        steelsquid_io.dip(3, cls.on_dip_3)
-        steelsquid_io.dip(4, cls.on_dip_4)
-        steelsquid_io.dip(5, cls.on_dip_5)
-        steelsquid_io.dip(6, cls.on_dip_6)
-        steelsquid_io.button_info(cls.on_button_info)
-        steelsquid_io.button_power_off(cls.on_button_power_off)
+        steelsquid_piio.button(1, cls.on_button_1)
+        steelsquid_piio.button(2, cls.on_button_2)
+        steelsquid_piio.button(3, cls.on_button_3)
+        steelsquid_piio.button(4, cls.on_button_4)
+        steelsquid_piio.button(5, cls.on_button_5)
+        steelsquid_piio.button(6, cls.on_button_6)
+        steelsquid_piio.dip(1, cls.on_dip_1)
+        steelsquid_piio.dip(2, cls.on_dip_2)
+        steelsquid_piio.dip(3, cls.on_dip_3)
+        steelsquid_piio.dip(4, cls.on_dip_4)
+        steelsquid_piio.dip(5, cls.on_dip_5)
+        steelsquid_piio.dip(6, cls.on_dip_6)
+        steelsquid_piio.button_info(cls.on_button_info)
+        steelsquid_piio.button_power_off(cls.on_button_power_off)
         if steelsquid_utils.get_flag("development"):
             steelsquid_event.subscribe_to_event("button", cls.dev_button, ())
             steelsquid_event.subscribe_to_event("dip", cls.dev_dip, ())
@@ -181,17 +181,17 @@ class IO(object):
         '''
         Power off the system
         '''
-        import steelsquid_io
-        steelsquid_io.power_off()
+        import steelsquid_piio
+        steelsquid_piio.power_off()
 
     @classmethod
     def on_read_voltage(cls, args, para):
         '''
         Read voltage and display on LCD
         '''
-        import steelsquid_io
+        import steelsquid_piio
         import datetime
-        new_voltage = steelsquid_io.voltage()
+        new_voltage = steelsquid_piio.voltage()
         if new_voltage != cls.last_voltage:
             if abs(new_voltage - cls.last_print_voltage)>=0.1:
                 if cls.last_print_voltage == 0:
@@ -209,7 +209,7 @@ class IO(object):
                         news = last[:i1]+str(new_voltage)
                     else:
                         news = last[:i1]+str(new_voltage)+last[i2:]
-                    steelsquid_io.lcd_write(news, number_of_seconds = 0)
+                    steelsquid_piio.lcd_write(news, number_of_seconds = 0)
                 
                     
     @classmethod
@@ -217,7 +217,7 @@ class IO(object):
         '''
         In development mode shout if the button is pressed
         '''    
-        import steelsquid_io
+        import steelsquid_piio
         bu = str(para[0])
         steelsquid_utils.shout_time("Button " + bu + " pressed!")
 
@@ -226,7 +226,7 @@ class IO(object):
         '''
         In development mode shout if the DIP is changed
         '''    
-        import steelsquid_io
+        import steelsquid_piio
         steelsquid_utils.shout_time("DIP " + str(para[0]) +": "+ str(para[1]))
 
     @classmethod
@@ -234,16 +234,16 @@ class IO(object):
         '''
         If shutdown button is clicked
         '''    
-        import steelsquid_io
-        steelsquid_io.power_off()
+        import steelsquid_piio
+        steelsquid_piio.power_off()
 
     @classmethod
     def on_button_info(cls, address, pin):
         '''
         If info button is clicked
         '''    
-        import steelsquid_io
-        steelsquid_io.led_ok_flash(None)
+        import steelsquid_piio
+        steelsquid_piio.led_ok_flash(None)
         steelsquid_event.broadcast_event("network")
 
     @classmethod
@@ -251,7 +251,7 @@ class IO(object):
         '''
         If the 1 button is pressed
         '''    
-        import steelsquid_io
+        import steelsquid_piio
         steelsquid_event.broadcast_event("button", [1])
 
     @classmethod
@@ -259,7 +259,7 @@ class IO(object):
         '''
         If the 2 button is pressed
         '''    
-        import steelsquid_io
+        import steelsquid_piio
         steelsquid_event.broadcast_event("button", [2])
 
     @classmethod
@@ -267,7 +267,7 @@ class IO(object):
         '''
         If the 3 button is pressed
         '''    
-        import steelsquid_io
+        import steelsquid_piio
         steelsquid_event.broadcast_event("button", [3])
 
     @classmethod
@@ -275,7 +275,7 @@ class IO(object):
         '''
         If the 4 button is pressed
         '''    
-        import steelsquid_io
+        import steelsquid_piio
         steelsquid_event.broadcast_event("button", [4])
 
     @classmethod
@@ -283,7 +283,7 @@ class IO(object):
         '''
         If the 5 button is pressed
         '''    
-        import steelsquid_io
+        import steelsquid_piio
         steelsquid_event.broadcast_event("button", [5])
 
     @classmethod
@@ -291,7 +291,7 @@ class IO(object):
         '''
         If the 6 button is pressed
         '''    
-        import steelsquid_io
+        import steelsquid_piio
         steelsquid_event.broadcast_event("button", [6])
 
     @classmethod
@@ -299,7 +299,7 @@ class IO(object):
         '''
         If DIP 1 changed
         '''    
-        import steelsquid_io
+        import steelsquid_piio
         steelsquid_event.broadcast_event("dip", [1, status])
 
     @classmethod
@@ -307,7 +307,7 @@ class IO(object):
         '''
         If DIP 2 changed
         '''    
-        import steelsquid_io
+        import steelsquid_piio
         steelsquid_event.broadcast_event("dip", [2, status])
 
     @classmethod
@@ -315,7 +315,7 @@ class IO(object):
         '''
         If DIP 3 changed
         '''    
-        import steelsquid_io
+        import steelsquid_piio
         steelsquid_event.broadcast_event("dip", [3, status])
 
     @classmethod
@@ -323,7 +323,7 @@ class IO(object):
         '''
         If DIP 4 changed
         '''    
-        import steelsquid_io
+        import steelsquid_piio
         steelsquid_event.broadcast_event("dip", [4, status])
 
     @classmethod
@@ -331,7 +331,7 @@ class IO(object):
         '''
         If DIP 5 changed
         '''    
-        import steelsquid_io
+        import steelsquid_piio
         steelsquid_event.broadcast_event("dip", [5, status])
 
     @classmethod
@@ -339,6 +339,6 @@ class IO(object):
         '''
         If DIP 6 changed
         '''    
-        import steelsquid_io
+        import steelsquid_piio
         steelsquid_event.broadcast_event("dip", [6, status])
 

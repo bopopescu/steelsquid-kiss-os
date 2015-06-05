@@ -81,7 +81,7 @@ def init():
         command(SSD1306_DISPLAYON)
         image = Image.new('1', (WIDTH, HEIGHT))
         draw = ImageDraw.Draw(image)        
-        font = ImageFont.truetype("/usr/share/fonts/truetype/anonymous-pro/Anonymous Pro.ttf", 10)
+        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 9)
     draw.rectangle((0, 0, WIDTH, HEIGHT), outline=0, fill=0)
     
     

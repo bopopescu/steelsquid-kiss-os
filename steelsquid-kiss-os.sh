@@ -62,16 +62,17 @@ python_downloads[9]="$base/steelsquid_socket_connection.py"
 python_downloads[10]="$base/steelsquid_server.py"
 python_downloads[11]="$base/steelsquid_http_server.py"
 python_downloads[12]="$base/steelsquid_kiss_global.py"
-python_downloads[13]="$base/steelsquid_kiss_http_server.py"
-python_downloads[14]="$base/steelsquid_kiss_http_expand.py"
-python_downloads[15]="$base/steelsquid_kiss_socket_connection.py"
-python_downloads[16]="$base/steelsquid_kiss_socket_expand.py"
-python_downloads[17]="$base/steelsquid_lcd_hdd44780.py"
-python_downloads[18]="$base/steelsquid_omx.py"
-python_downloads[19]="$base/steelsquid_sabertooth.py"
-python_downloads[20]="$base/steelsquid_trex.py"
-python_downloads[21]="$base/steelsquid_oled_ssd1306.py"
-python_downloads[22]="$base/steelsquid_bluetooth_connection.py"
+python_downloads[13]="$base/steelsquid_kiss_expand.py"
+python_downloads[14]="$base/steelsquid_kiss_http_server.py"
+python_downloads[15]="$base/steelsquid_kiss_http_expand.py"
+python_downloads[16]="$base/steelsquid_kiss_socket_connection.py"
+python_downloads[17]="$base/steelsquid_kiss_socket_expand.py"
+python_downloads[18]="$base/steelsquid_lcd_hdd44780.py"
+python_downloads[19]="$base/steelsquid_omx.py"
+python_downloads[20]="$base/steelsquid_sabertooth.py"
+python_downloads[21]="$base/steelsquid_trex.py"
+python_downloads[22]="$base/steelsquid_oled_ssd1306.py"
+python_downloads[23]="$base/steelsquid_bluetooth_connection.py"
 
 # Links to python_downloads
 python_links[1]="/usr/bin/steelsquid-boot"
@@ -96,6 +97,7 @@ python_links[19]="/usr/bin/dummy"
 python_links[20]="/usr/bin/dummy"
 python_links[21]="/usr/bin/dummy"
 python_links[22]="/usr/bin/dummy"
+python_links[23]="/usr/bin/dummy"
 
 # Download to web root folder
 web_root_downloads[1]="$base/index.html"
@@ -104,6 +106,7 @@ web_root_downloads[3]="$base/play.html"
 web_root_downloads[4]="$base/download.html"
 web_root_downloads[5]="$base/file.html"
 web_root_downloads[6]="$base/utils.html"
+web_root_downloads[7]="$base/expand.html"
 
 # Download to web img folder
 web_img_downloads[1]="$base/img/autologin.png"
@@ -343,7 +346,7 @@ function del-parameter()
 # Is this a raspberry pi
 function is-raspberry-pi()
 {
-    response=$(cat /proc/cpuinfo | grep BCM2708)
+    response=$(cat /proc/cpuinfo | grep BCM270)
     if [ "$response" == "" ]; then
 		echo "false"
 	else
@@ -883,10 +886,10 @@ function help_develop()
     echo 
     echb "set-flag expanded"
     echo "It will tell the upgrade script not to overwrite:"
+    echo " - steelsquid_kiss_expand.py"
     echo " - steelsquid_kiss_http_expand.py"
     echo " - steelsquid_kiss_socket_expand.py"
-    echo " - steelsquid_kiss_global.py"
-    echo " - utils.html"
+    echo " - expand.html"
     echo "This is useful if you have expanded functionality. otherwise, the changes will be overwritten when you execute upgrade."
     echo 
     echb "steelsquid download-img"
@@ -1047,8 +1050,8 @@ function help_develop()
     echb "steelsquid power-off"
     echo "Disable power off functionality"
     echo 
-    echb "io"
-    echo "Comands for my Steelsquid IO board."
+    echb "piio"
+    echo "Comands for my Steelsquid PIIO board."
 }
 if [ "$in_parameter_1" == "help-dev" ]; then
     help_develop
@@ -1095,14 +1098,14 @@ function help_utils()
     echo "Disable streaming of camera."
     if [ $(is-raspberry-pi) == "true" ]; then
         echo 
-        echb "steelsquid io"
-        echo "Is this a Steelsquid IO Board."
+        echb "steelsquid piio"
+        echo "Is this a Steelsquid PIIO Board."
         echo 
-        echb "steelsquid io-on"
-        echo "Enable Steelsquid IO Board."
+        echb "steelsquid piio-on"
+        echo "Enable Steelsquid PIIO Board."
         echo 
-        echb "steelsquid io-off"
-        echo "Disable Steelsquid IO Board."
+        echb "steelsquid piio-off"
+        echo "Disable Steelsquid PIIO Board."
         echo 
         echb "steelsquid rover"
         echo "Is rover functionality enabled."
@@ -2067,7 +2070,7 @@ function rover_on()
 {
 	log "Enable rover"
     set-flag "rover"
-    set-flag "io"
+    set-flag "piio"
     stream_on
     socket_on
     bluetooth_on
@@ -2098,55 +2101,55 @@ fi
 
 
 ##################################################################################
-# Is Steelsquid IO Board enabled or disabled
+# Is Steelsquid PIIO Board enabled or disabled
 ##################################################################################
-function io_info()
+function piio_info()
 {
-    if [ $(get-flag "io") == "true" ]; then
+    if [ $(get-flag "piio") == "true" ]; then
         echo
-        echo "Steelsquid IO Board: Enabled"
+        echo "Steelsquid PIIO Board: Enabled"
         echo
     else
         echo
-        echo "Steelsquid IO Board: Disabled"
+        echo "Steelsquid PIIO Board: Disabled"
         echo
     fi
 }
-if [ "$in_parameter_1" == "io" ]; then
-	io_info
+if [ "$in_parameter_1" == "piio" ]; then
+	piio_info
 	exit 0
 fi
 
 
 ##################################################################################
-# Steelsquid IO Board on
+# Steelsquid PIIO Board on
 ##################################################################################
-function io_on()
+function piio_on()
 {
-	log "Enable Steelsquid IO Board"
-    set-flag "io"
+	log "Enable Steelsquid PIIO Board"
+    set-flag "piio"
     enable_lcd_ssd
 	systemctl restart steelsquid
     log-ok
 }
-if [ "$in_parameter_1" == "io-on" ]; then
-	io_on
+if [ "$in_parameter_1" == "piio-on" ]; then
+	piio_on
 	exit 0
 fi
 
 
 ##################################################################################
-# Steelsquid IO Board off
+# Steelsquid PIIO Board off
 ##################################################################################
-function io_off()
+function piio_off()
 {
-	log "Disable Steelsquid IO Board"
-    del-flag "io"
+	log "Disable Steelsquid PIIO Board"
+    del-flag "piio"
 	systemctl restart steelsquid
     log-ok
 }
-if [ "$in_parameter_1" == "io-off" ]; then
-	io_off
+if [ "$in_parameter_1" == "piio-off" ]; then
+	piio_off
 	exit 0
 fi
 
@@ -2662,18 +2665,16 @@ function install_steelsquid_python()
 	do
         if [ $(get-flag "expanded") == "true" ]; then
             if [[ $var != *_expand* ]]; then
-                if [[ $var != *_global* ]]; then
-                    sudo wget --progress=dot:giga --no-check-certificate -O /opt/steelsquid/python/$(basename $var) $var
-                    if [ $? -ne 0 ]; then
-                        do-err-exit "Unable to download from $var"
-                    else
-                        sudo chmod 755 /opt/steelsquid/python/$(basename $var)
-                        rm ${python_links[$index]} > /dev/null 2>&1
-                        sudo ln -s /opt/steelsquid/python/$(basename $var) ${python_links[$index]}
-                        index=$[$index +1]
-                        log "$var downloaded and installed"
-                    fi
-                fi        
+                sudo wget --progress=dot:giga --no-check-certificate -O /opt/steelsquid/python/$(basename $var) $var
+                if [ $? -ne 0 ]; then
+                    do-err-exit "Unable to download from $var"
+                else
+                    sudo chmod 755 /opt/steelsquid/python/$(basename $var)
+                    rm ${python_links[$index]} > /dev/null 2>&1
+                    sudo ln -s /opt/steelsquid/python/$(basename $var) ${python_links[$index]}
+                    index=$[$index +1]
+                    log "$var downloaded and installed"
+                fi
             fi        
         else
             sudo wget --progress=dot:giga --no-check-certificate -O /opt/steelsquid/python/$(basename $var) $var
@@ -2732,7 +2733,7 @@ function install_web_files()
 	for var in "${web_root_downloads[@]}"
 	do
         if [ $(get-flag "expanded") == "true" ]; then
-            if [[ $var != *utils.html* ]]; then
+            if [[ $var != *expand.html* ]]; then
                 sudo wget --progress=dot:giga --no-check-certificate -O $steelsquid_folder/web/$(basename $var) $var
                 index=$[$index +1]
                 if [ $? -ne 0 ]; then
@@ -4231,7 +4232,7 @@ echo "Description=Steelsquid" >> /etc/systemd/system/steelsquid.service
 echo "" >> /etc/systemd/system/steelsquid.service
 echo "[Service]" >> /etc/systemd/system/steelsquid.service
 echo "ExecStart=/usr/bin/steelsquid-boot start" >> /etc/systemd/system/steelsquid.service
-echo "ExecStop=/usr/bin/shout \"Steelsquid service closed.\nIf you shutdown the computer or restart the service this is OK.\nIf this is a error it is probably in steelsquid-boot.py\nYou can enable logging for more info: steelsquid log-on\"" >> /etc/systemd/system/steelsquid.service
+echo "ExecStop=/usr/bin/shout \"Steelsquid service closed.\nIf you shutdown the computer or restart the steelsquid service this is OK.\nIf this is a error (nothing more happens) it is probably in steelsquid-boot.py\nYou can enable logging for more info: steelsquid log-on\nAlso sheck if steelsquid-boot proces is running: ps -ef|grep steelsquid-boot\nIf not try: steelsquid-boot start\nAnd check for errors...\"" >> /etc/systemd/system/steelsquid.service
 echo "TimeoutStopSec=2" >> /etc/systemd/system/steelsquid.service
 echo "" >> /etc/systemd/system/steelsquid.service
 echo "[Install]" >> /etc/systemd/system/steelsquid.service
@@ -4712,7 +4713,7 @@ chmod +x /usr/bin/del-parameter
 ##################################################################################
 log "Generate is-raspberry-pi command"
 echo "#"\!"/bin/bash" > /usr/bin/is-raspberry-pi
-echo "response=\$(cat /proc/cpuinfo | grep BCM2708)" >> /usr/bin/is-raspberry-pi
+echo "response=\$(cat /proc/cpuinfo | grep BCM270)" >> /usr/bin/is-raspberry-pi
 echo "if [ \"\$response\" != \"\" ]; then" >> /usr/bin/is-raspberry-pi
 echo "    echo \"true\"" >> /usr/bin/is-raspberry-pi
 echo "else" >> /usr/bin/is-raspberry-pi
