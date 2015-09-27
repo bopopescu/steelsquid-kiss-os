@@ -1775,6 +1775,7 @@ def to_boolean(value):
     elif value == 1:
         return True
     else:
+        value = str(value)
         value = value.lower()
         if value == "false" or value == "off" or value == "no" or value == "n" or value == "0":
             return False
@@ -1787,3 +1788,35 @@ def to_boolean(value):
 if is_raspberry_pi():
     import steelsquid_pi
 
+
+def get_hight_byte(integer):
+    '''
+    Get the hight byte from a int
+    '''
+    return integer >> 8
+
+
+def get_low_byte(integer):
+    '''
+    Get the low byte from a int
+    '''
+    return integer & 0xFF
+
+
+def hight_low_byte_to_int(hight_byte, low_byte):
+    '''
+    Convert low and hight byte to int
+    '''
+    return (hight_byte << 8) + low_byte
+
+
+def reverse_byte_order(data):
+    '''
+    Reverses the byte order of an int (16-bit) or long (32-bit) value
+    '''
+    byteCount = len(hex(data)[2:].replace('L','')[::2])
+    val = 0
+    for i in range(byteCount):
+        val    = (val << 8) | (data & 0xff)
+        data >>= 8
+    return val

@@ -73,6 +73,8 @@ python_downloads[20]="$base/steelsquid_sabertooth.py"
 python_downloads[21]="$base/steelsquid_trex.py"
 python_downloads[22]="$base/steelsquid_oled_ssd1306.py"
 python_downloads[23]="$base/steelsquid_bluetooth_connection.py"
+python_downloads[24]="$base/steelsquid_i2c.py"
+python_downloads[25]="$base/MCP23017.py"
 
 # Links to python_downloads
 python_links[1]="/usr/bin/steelsquid-boot"
@@ -98,6 +100,8 @@ python_links[20]="/usr/bin/dummy"
 python_links[21]="/usr/bin/dummy"
 python_links[22]="/usr/bin/dummy"
 python_links[23]="/usr/bin/dummy"
+python_links[24]="/usr/bin/dummy"
+python_links[25]="/usr/bin/dummy"
 
 # Download to web root folder
 web_root_downloads[1]="$base/index.html"
@@ -1049,6 +1053,18 @@ function help_develop()
     echo 
     echb "steelsquid power-off"
     echo "Disable power off functionality"
+    echo 
+    echb "steelsquid i2c-lock"
+    echo "Is i2c lock/syncronization enabled"
+    echo "If many devices and strange errors from I2C, try to enabler this."
+    echo 
+    echb "steelsquid i2c-lock-on"
+    echo "Enable i2c lock/syncronization"
+    echo "If many devices and strange errors from I2C, try to enabler this."
+    echo 
+    echb "steelsquid i2c-lock-off"
+    echo "Disable i2c lock/syncronization"
+    echo "If many devices and strange errors from I2C, try to enabler this."
     echo 
     echb "piio"
     echo "Comands for my Steelsquid PIIO board."
@@ -3075,6 +3091,59 @@ fi
 
 
 ##################################################################################
+# i2c-lock
+##################################################################################
+function i2c_lock()
+{
+    if [ $(get-flag "i2c_lock") == "true" ]; then
+        echo
+        echo "I2C lock on"
+        echo
+    else
+        echo
+        echo "I2C lock off"
+        echo
+    fi
+}
+if [ "$in_parameter_1" == "i2c-lock" ]; then
+	i2c_lock
+	exit 0
+fi
+
+
+##################################################################################
+# i2c-lock
+##################################################################################
+function i2c_lock_on()
+{
+    set-flag "i2c_lock"
+    systemctl restart steelsquid
+    log-ok
+}
+if [ "$in_parameter_1" == "i2c-lock-on" ]; then
+	i2c_lock_on
+	exit 0
+fi
+
+
+##################################################################################
+# i2c-lock
+##################################################################################
+function i2c_lock_off()
+{
+    del-flag "i2c_lock"
+    systemctl restart steelsquid
+    log-ok
+}
+if [ "$in_parameter_1" == "i2c-lock-off" ]; then
+	i2c_lock_off
+	exit 0
+fi
+
+
+
+
+##################################################################################
 # monitor info
 ##################################################################################
 function monitor_info()
@@ -4369,7 +4438,6 @@ usermod -a -G plugdev root
 usermod -a -G fuse root
 usermod -a -G sudo root
 usermod -a -G video root
-
 
 
 ##################################################################################

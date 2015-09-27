@@ -7,6 +7,7 @@ import Adafruit_GPIO.I2C as I2C
 import Image
 import ImageDraw
 import ImageFont
+import steelsquid_i2c
 
 # Constants
 SSD1306_I2C_ADDRESS = 0x3C  # 011110+SA0+RW - 0x3C or 0x3D
@@ -108,14 +109,16 @@ def command(c):
     Send command byte to display.
     '''
     control = 0x00   # Co = 0, DC = 0
-    i2c_bus.write8(control, c)
+    with steelsquid_i2c.Lock():
+        i2c_bus.write8(control, c)
 
 def data(c):
     '''
     Send byte of data to display.
     '''
     control = 0x40   # Co = 0, DC = 0
-    i2c_bus.write8(control, c)
+    with steelsquid_i2c.Lock():
+        i2c_bus.write8(control, c)
 
 def display():
     '''
@@ -129,7 +132,8 @@ def display():
     command(PAGES-1)  # Page end address.
     for i in range(0, len(buffer), 16):
         control = 0x40   # Co = 0, DC = 0
-        i2c_bus.writeList(control, buffer[i:i+16])
+        with steelsquid_i2c.Lock():
+            i2c_bus.writeList(control, buffer[i:i+16])
 
 def img_to_buf(image):
     '''

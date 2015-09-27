@@ -17,6 +17,7 @@ Execute until system shutdown.
 import sys
 import steelsquid_event
 import steelsquid_utils
+import steelsquid_i2c
 import os
 import time
 import thread    
@@ -454,18 +455,12 @@ def on_pi_io_event(args, para):
     '''
     Execute io event from the command line
     '''
-    if para[0] == "gpio_get_3v3":
-        answer = steelsquid_pi.gpio_get_3v3(int(para[1]))
-        steelsquid_utils.shout("gpio_get_3v3(" + para[1] + "): " + str(answer), always_show=True)
-    elif para[0] == "gpio_set_3v3":
-        steelsquid_pi.gpio_set_3v3(int(para[1]), steelsquid_utils.to_boolean(para[2]))
-        steelsquid_utils.shout("gpio_set_3v3(" + para[1] + ", " + para[2] + "): OK", always_show=True)
-    elif para[0] == "gpio_get_gnd":
-        answer = steelsquid_pi.gpio_get_gnd(int(para[1]))
-        steelsquid_utils.shout("gpio_get_gnd(" + para[1] + "): " + str(answer), always_show=True)
-    elif para[0] == "gpio_set_gnd":
-        steelsquid_pi.gpio_set_gnd(int(para[1]), steelsquid_utils.to_boolean(para[2]))
-        steelsquid_utils.shout("gpio_set_gnd(" + para[1] + ", " + para[2] + "): OK", always_show=True)
+    if para[0] == "gpio_get":
+        answer = steelsquid_pi.gpio_get(int(para[1]))
+        steelsquid_utils.shout("gpio_get(" + para[1] + "): " + str(answer), always_show=True)
+    elif para[0] == "gpio_set":
+        steelsquid_pi.gpio_set(int(para[1]), steelsquid_utils.to_boolean(para[2]))
+        steelsquid_utils.shout("gpio_set(" + para[1] + ", " + para[2] + "): OK", always_show=True)
     elif para[0] == "mcp23017_get":
         answer = steelsquid_pi.mcp23017_get(int(para[1]), int(para[2]))
         steelsquid_utils.shout("mcp23017_get(" + para[1] + ", " + para[2] + "): "+ str(answer), always_show=True)
@@ -554,6 +549,33 @@ def on_pi_io_event(args, para):
     elif para[0] == "mpu6050_rotation":
         x, y = steelsquid_pi.mpu6050_rotation()
         steelsquid_utils.shout("mpu6050_rotation(): "+str(x)+", "+str(y), always_show=True)
+    elif para[0] == "po12_digital_out":
+        steelsquid_pi.po12_digital_out(para[1], para[2])
+        steelsquid_utils.shout("po12_digital_out(" + para[1] + ", "+para[2] + "): OK", always_show=True)
+    elif para[0] == "po12_adc_pullup":
+        steelsquid_pi.po12_adc_pullup(para[1])
+        steelsquid_utils.shout("po12_adc_pullup(" + para[1]+ "): OK", always_show=True)
+    elif para[0] == "po12_adc_vref":
+        steelsquid_pi.po12_adc_vref(para[1])
+        steelsquid_utils.shout("po12_adc_vref(" + para[1]+ "): OK", always_show=True)
+    elif para[0] == "po12_adc":
+        value = steelsquid_pi.po12_adc(para[1])
+        steelsquid_utils.shout("po12_adc(" + para[1] + "): "+str(value), always_show=True)
+    elif para[0] == "po12_adc_volt":
+        value = steelsquid_pi.po12_adc_volt(para[1])
+        steelsquid_utils.shout("po12_adc_volt(" + para[1] + "): "+str(value), always_show=True)
+    elif para[0] == "po16_gpio_pullup":
+        steelsquid_pi.po16_gpio_pullup(para[1], para[2])
+        steelsquid_utils.shout("po16_gpio_pullup(" + para[1]  + ", "+para[2] + "): OK", always_show=True)
+    elif para[0] == "po16_gpio_get":
+        value = steelsquid_pi.po16_gpio_get(para[1])
+        steelsquid_utils.shout("po16_gpio_get(" + para[1] + "): "+str(value), always_show=True)
+    elif para[0] == "po16_gpio_set":
+        steelsquid_pi.po16_gpio_set(para[1], para[2])
+        steelsquid_utils.shout("po16_gpio_set(" + para[1]  + ", "+para[2] + "): OK", always_show=True)
+    elif para[0] == "po16_pwm":
+        steelsquid_pi.po16_pwm(para[1], para[2])
+        steelsquid_utils.shout("po16_pwm(" + para[1]  + ", "+para[2] + "): OK", always_show=True)
 
 
 def main():
@@ -565,6 +587,10 @@ def main():
             print_help()
         elif sys.argv[1] == "start":
             sys.stdout = Logger()
+            if steelsquid_utils.get_flag("i2c_lock"):
+                steelsquid_i2c.enable_locking(True)
+            else:
+                steelsquid_i2c.enable_locking(False)
             steelsquid_utils.execute_system_command_blind(["steelsquid", "keyboard", steelsquid_utils.get_parameter("keyboard")], wait_for_finish=False)
             steelsquid_utils.shout("Steelsquid Kiss OS "+steelsquid_utils.steelsquid_kiss_os_version()[1], False)
             if steelsquid_utils.get_flag("bluetooth_pairing"):
@@ -591,8 +617,8 @@ def main():
                     steelsquid_utils.execute_system_command_blind(["/opt/vc/bin/tvservice", "-o"])
                 if steelsquid_utils.get_flag("power"):
                     steelsquid_utils.shout("Listen for clean shutdown", debug=True)
-                    steelsquid_pi.gpio_set_gnd(24, True)
-                    steelsquid_pi.gpio_click_gnd(23, on_shutdown_button)
+                    steelsquid_pi.gpio_set(24, True)
+                    steelsquid_pi.gpio_click(23, on_shutdown_button, steelsquid_pi.PULL_UP)
             if steelsquid_utils.get_flag("download"):
                 if steelsquid_utils.get_parameter("download_dir") == "":
                     steelsquid_utils.set_parameter("download_dir", "/home/steelsquid")

@@ -25,47 +25,50 @@ Some useful stuff for Raspberry Pi
 '''
 
 
+import steelsquid_i2c
+import steelsquid_utils
+import steelsquid_trex
+import steelsquid_event
 import sys
-import RPi.GPIO as GPIO
 import time
 import os
-import steelsquid_utils
 import threading
 import thread
-from Adafruit_PWM_Servo_Driver import PWM
-import Adafruit_MCP230xx
 import thread
 import signal
-from Adafruit_ADS1x15 import ADS1x15
-from Adafruit_MCP4725 import MCP4725
-from Adafruit_I2C import Adafruit_I2C
-import steelsquid_trex
-import Adafruit_Nokia_LCD as LCD
-import Adafruit_GPIO.SPI as SPI
+import smbus
+import math
+import RPi.GPIO as GPIO
 from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
 from sets import Set
+from Adafruit_PWM_Servo_Driver import PWM
+from MCP23017 import MCP23017
+from Adafruit_ADS1x15 import ADS1x15
+from Adafruit_MCP4725 import MCP4725
+from Adafruit_I2C import Adafruit_I2C
+import Adafruit_Nokia_LCD as LCD
+import Adafruit_GPIO.SPI as SPI
 import Diablo
-import steelsquid_event
-import smbus
-import math
-import p011A
-from sv3A import sv3Bus
 
+EDGE_RISING = GPIO.RISING
+EDGE_FALLING = GPIO.FALLING
+EDGE_BOTH = GPIO.BOTH
+PULL_UP = GPIO.PUD_UP
+PULL_DOWN = GPIO.PUD_DOWN
+PULL_NONE = GPIO.PUD_OFF
 SETUP_NONE = 0
 SETUP_OUT = 1
 SETUP_IN = 2
-SETUP_IN_3V3 = 3
-SETUP_IN_GND = 4
 TIMEOUT = 2100
 setup = [SETUP_NONE] * 32
 lcd = None
-toggle = [False] * 32
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 lcd_last_text = ""
 lock = threading.Lock()
+lock_mcp = threading.Lock()
 distance_created = False
 pwm = None
 ads_48 = None
@@ -94,135 +97,26 @@ mcp_24 = None
 mcp_25 = None
 mcp_26 = None
 mcp_27 = None
-toggle_mcp = []
 sabertooth = None
 dac = None
-mcp4728_i2c = None
-lock_rbada = threading.Lock()
-lock_sabertooth = threading.Lock()
 lock_hcsr04 = threading.Lock()
-lock_ads1015_48 = threading.Lock()
-lock_ads1015_49 = threading.Lock()
-lock_ads1015_4A = threading.Lock()
-lock_ads1015_4B = threading.Lock()
-lock_mcp4725 = threading.Lock()
-lock_mcp4728 = threading.Lock()
-DC = 9
-RST = 7
-SPI_PORT = 0
-SPI_DEVICE = 0
 nokia_lcd = None
 font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 9)
 image = Image.new('1', (LCD.LCDWIDTH, LCD.LCDHEIGHT))
 draw = ImageDraw.Draw(image)
 lcd_auto = 0
-worker_commands = {}
-worker_thread_started = False
+mcp23017_events = {}
+mcp23017_events[20] = []
+mcp23017_events[21] = []
+mcp23017_events[22] = []
+mcp23017_events[23] = []
+mcp23017_events[24] = []
+mcp23017_events[25] = []
+mcp23017_events[26] = []
+mcp23017_events[27] = []
 diablo = None
-
-
-def worker_thread():
-    global worker_commands
-    try:
-        while True:
-            for work_key in worker_commands.keys():
-                try:
-                    work = worker_commands[work_key]
-                    command = work[0]
-                    if command == "gpio_flash_3v3":
-                        only_one = work[1]
-                        gpio = work[2]
-                        if only_one == None:
-                            gpio_toggle_3v3(gpio)
-                        elif only_one:
-                            gpio_set_3v3(gpio, True)
-                            work[1] = False
-                        else:
-                            gpio_set_3v3(gpio, False)
-                            worker_commands.pop(work_key, None)
-                    elif command == "gpio_flash_gnd":
-                        only_one = work[1]
-                        gpio = work[2]
-                        if only_one == None:
-                            gpio_toggle_gnd(gpio)
-                        elif only_one:
-                            gpio_set_gnd(gpio, True)
-                            work[1] = False
-                        else:
-                            gpio_set_gnd(gpio, False)
-                            worker_commands.pop(work_key, None)
-                    elif command == "mcp23017_flash":
-                        only_one = work[1]
-                        address = work[2]
-                        gpio = work[3]
-                        if only_one == None:
-                            mcp23017_toggle(address, gpio)
-                        elif only_one:
-                            mcp23017_set(address, gpio, True)
-                            work[1] = False
-                        else:
-                            mcp23017_set(address, gpio, False)
-                            worker_commands.pop(work_key, None)
-                    elif command == "mcp23017_click":
-                        address = work[1]
-                        gpio = work[2]
-                        mcp = work[3]
-                        cal_m = work[4]
-                        #last = work[5]
-                        if(mcp.input(gpio) >> gpio)==0:
-                            work[5] = True
-                        else:
-                            if work[5] == True:
-                                try:
-                                    cal_m(address, gpio)
-                                except:
-                                    steelsquid_utils.shout("Error: mcp23017_click", is_error=True, always_show=True)
-                                work[5] = False
-                    elif command == "mcp23017_event":
-                        address = work[1]
-                        gpio = work[2]
-                        mcp = work[3]
-                        cal_m = work[4]
-                        #last = work[5]
-                        if(mcp.input(gpio) >> gpio)==0:
-                            if work[5] == False:
-                                try:
-                                    cal_m(address, gpio, True)
-                                except:
-                                    steelsquid_utils.shout("Error: mcp23017_event", is_error=True, always_show=True)
-                            work[5] = True
-                        else:
-                            if work[5] == True:
-                                try:
-                                    cal_m(address, gpio, False)
-                                except:
-                                    steelsquid_utils.shout("Error: mcp23017_event", is_error=True, always_show=True)
-                            work[5] = False
-                    elif command == "ads1015_event":
-                        address = work[1]
-                        gpio = work[2]
-                        ads = work[3]
-                        cal_m = work[4]
-                        #last = work[5]
-                        gain = work[6]
-                        newv = ads.readADCSingleEnded(gpio, gain, 250) / 1000
-                        if newv != work[5]:
-                            try:
-                                cal_m(address, gpio, newv)
-                            except:
-                                steelsquid_utils.shout("Error: ads1015_event", is_error=True, always_show=True)
-                            work[5] = newv
-                except:
-                    worker_commands.pop(work_key, None)
-                    steelsquid_utils.shout("Fatal error in steelsquid_pi worker thread: " +work_key, is_error=True)
-            time.sleep(0.3)
-    except AttributeError:
-        pass
-            
-
-if worker_thread_started == False:
-    worker_thread_started = True
-    thread.start_new_thread(worker_thread, ())
+po16_setup = [SETUP_NONE] * 8
+vref_voltage = 4.096
 
 
 def cleanup():
@@ -230,7 +124,6 @@ def cleanup():
     Clean all event detection (click, blink...)
     '''
     gpio_cleanup()
-    worker_thread.clear()
     
 
 def gpio_event_remove(gpio):
@@ -246,7 +139,6 @@ def gpio_cleanup():
     cleanup
     '''
     global setup
-    GPIO.remove_event_detect(channel)
     setup = [SETUP_NONE] * 32    
     GPIO.cleanup()
 
@@ -257,63 +149,24 @@ def gpio_setup_out(gpio):
     @param gpio: GPIO number
     '''
     global setup
-    GPIO.setup(int(gpio), GPIO.OUT)
+    GPIO.setup(int(gpio), GPIO.OUT, pull_up_down=GPIO.PUD_OFF)
     setup[int(gpio)] == SETUP_OUT
 
 
-def gpio_setup_in_3v3(gpio):
+def gpio_setup_in(gpio, resistor=PULL_DOWN):
     '''
     set gpio pin to input mode (connect gpio to 3.3v)
     @param gpio: GPIO number
+    @resistor: PULL_UP, PULL_DOWN, PULL_NONE
     '''
     global setup
-    GPIO.setup(int(gpio), GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-    setup[int(gpio)] == SETUP_IN_3V3
-
-
-def gpio_setup_in_gnd(gpio):
-    '''
-    set gpio pin to input mode (connect gpio to ground)
-    @param gpio: GPIO number
-    '''
-    global setup
-    GPIO.setup(int(gpio), GPIO.IN, pull_up_down=GPIO.PUD_UP)
-    setup[int(gpio)] == SETUP_IN_GND
+    GPIO.setup(int(gpio), GPIO.IN, pull_up_down=resistor)
+    setup[int(gpio)] == SETUP_IN
 
 
 def gpio_set(gpio, state):
     '''
-    set gpio pin to already configured pin
-    @param gpio: GPIO number
-    @param state: 0 / GPIO.LOW / False or 1 / GPIO.HIGH / True
-    '''
-    GPIO.output(int(gpio), state)
-
-
-def gpio_get(gpio):
-    '''
-    Get gpio pin state from already configured pin
-    @param gpio: GPIO number
-    @return: 0 / GPIO.LOW / False or 1 / GPIO.HIGH / True
-    '''
-    return GPIO.input(int(gpio))
-
-
-def gpio_set_3v3(gpio, state):
-    '''
-    set gpio pin to hight (true) or low (false) on a pin connecte to 3.3v
-    @param gpio: GPIO number
-    @param state: True/False
-    '''
-    global setup
-    if not setup[int(gpio)] == SETUP_OUT:
-        gpio_setup_out(gpio)
-    GPIO.output(int(gpio), not state)
-
-
-def gpio_set_gnd(gpio, state):
-    '''
-    set gpio pin to hight (true) or low (false) on a pin connecte to ground
+    set gpio pin to hight (true) or low (false) on a pin
     @param gpio: GPIO number
     @param state: True/False
     '''
@@ -323,137 +176,74 @@ def gpio_set_gnd(gpio, state):
     GPIO.output(int(gpio), state)
 
 
-def gpio_get_3v3(gpio):
-    '''
-    Get gpio pin state (connect gpio to 3.3v)
-    @param gpio: GPIO number
-    @return: True/False
-    '''
-    global setup
-    if not setup[int(gpio)] == SETUP_IN_3V3:
-        gpio_setup_in_3v3(gpio)
-    if GPIO.input(int(gpio)) == 1:
-        return True
-    else:
-        return False
-
-
-def gpio_get_gnd(gpio):
+def gpio_get(gpio, resistor=PULL_DOWN):
     '''
     Get gpio pin state
     @param gpio: GPIO number
-    @return: 0 / GPIO.LOW / False or 1 / GPIO.HIGH / True
+    @resistor: PULL_UP, PULL_DOWN, PULL_NONE
+    @return: True/False
     '''
     global setup
-    if not setup[int(gpio)] == SETUP_IN_GND:
-        gpio_setup_in_gnd(gpio)
+    if not setup[int(gpio)] == SETUP_IN:
+        gpio_setup_in(gpio, resistor)
     if GPIO.input(int(gpio)) == 1:
-        return False
-    else:
         return True
-
-
-def gpio_toggle_3v3(gpio):
-    '''
-    Toggle gpio pin to hight/low on a pin connecte to 3.3v
-    @param gpio: GPIO number
-    '''
-    global toggle
-    if toggle[gpio] == True:
-        toggle[gpio] = False
-        gpio_set_3v3(gpio, False)
-        return False
     else:
-        toggle[gpio] = True
-        gpio_set_3v3(gpio, True)
-        return True
-
-
-def gpio_toggle_current_3v3(gpio):
-    '''
-    Get current togle status
-    '''
-    global toggle
-    return toggle[gpio]
-
-
-def gpio_toggle_gnd(gpio):
-    '''
-    Toggle gpio pin to hight/low on a pin connecte to gnd
-    @param gpio: GPIO number
-    '''
-    global toggle
-    if toggle[gpio] == True:
-        toggle[gpio] = False
-        gpio_set_gnd(gpio, False)
         return False
-    else:
-        toggle[gpio] = True
-        gpio_set_gnd(gpio, True)
-        return True
 
 
-def gpio_toggle_current_gnd(gpio):
+def gpio_event_remove(gpio):
     '''
-    Get current togle status
+    Remove event and clock on raspberry GPIO
     '''
-    global toggle
-    return toggle[gpio]
+    GPIO.remove_event_detect(gpio)
 
 
-def gpio_event_3v3(gpio, callback_method):
+def gpio_event(gpio, callback_method, bouncetime_ms=100, resistor=PULL_DOWN, edge=EDGE_BOTH):
     '''
-    Listen for events on gpio pin and 3.3v
+    Listen for events on gpio pin
     @param gpio: GPIO number
     @param callback_method: execute this method on event (paramater is the gpio and status (True/False))
                             callback_method(pin, status)
+    @resistor: PULL_UP, PULL_DOWN, PULL_NONE
+    @edge: EDGE_BOTH, EDGE_FALLING, EDGE_RISING
     '''
     global setup
-    if not setup[int(gpio)] == SETUP_IN_3V3:
-        gpio_setup_in_3v3(gpio)
+    if not setup[int(gpio)] == SETUP_IN:
+        gpio_setup_in(gpio, resistor)
     def call_met(para):
-        status = gpio_get_3v3(para)
+        status = False
+        if GPIO.input(int(para)) == 1:
+            status = True
         try:
             callback_method(para, status)          
         except:
             steelsquid_utils.shout()
-    GPIO.add_event_detect(int(gpio), GPIO.BOTH, callback=call_met, bouncetime=100)
+    if bouncetime_ms!=0:
+        GPIO.add_event_detect(int(gpio), edge, callback=call_met, bouncetime=bouncetime_ms)
+    else:
+        GPIO.add_event_detect(int(gpio), edge, callback=call_met)
 
 
-def gpio_event_gnd(gpio, callback_method):
+def gpio_click(gpio, callback_method, bouncetime_ms=100, resistor=PULL_DOWN, edge=EDGE_BOTH):
     '''
-    Listen for events on gpio pin and ground
-    @param gpio: GPIO number
-    @param callback_method: execute this method on event (paramater is the gpio and status (True/False))
-                            callback_method(pin, status)
-    '''
-    global setup
-    if not setup[int(gpio)] == SETUP_IN_GND:
-        gpio_setup_in_gnd(gpio)
-    def call_met(para):
-        status = gpio_get_gnd(para)
-        try:
-            callback_method(para, status)          
-        except:
-            steelsquid_utils.shout()
-    GPIO.add_event_detect(int(gpio), GPIO.BOTH, callback=call_met, bouncetime=100)
-
-
-def gpio_click_3v3(gpio, callback_method):
-    '''
-    Connect a button to gpio pin and 3.3v
+    Connect a button to gpio pin
     Will fire when button is released. If press more than 1s it will be ignore
     @param gpio: GPIO number
     @param callback_method: execute this method on event (paramater is the gpio)
                             callback_method(pin)
+    @resistor: PULL_UP, PULL_DOWN, PULL_NONE
+    @edge: EDGE_BOTH, EDGE_FALLING, EDGE_RISING
     '''
     global setup
-    if not setup[int(gpio)] == SETUP_IN_3V3:
-        gpio_setup_in_3v3(gpio)
+    if not setup[int(gpio)] == SETUP_IN:
+        gpio_setup_in(gpio, resistor)
     def call_met(para):
         global down
         global up
-        status = gpio_get_3v3(para)
+        status = False
+        if GPIO.input(int(para)) == 1:
+            status = True
         if status == True:
             up = -1
             down = time.time()            
@@ -475,96 +265,10 @@ def gpio_click_3v3(gpio, callback_method):
     global up
     down = -1
     up = -1
-    GPIO.add_event_detect(int(gpio), GPIO.BOTH, callback=call_met, bouncetime=100)
-
-
-def gpio_click_gnd(gpio, callback_method):
-    '''
-    Connect a button to gpio pin and ground
-    Will fire when button is released. If press more than 1s it will be ignore
-    @param gpio: GPIO number
-    @param callback_method: execute this method on event (paramater is the gpio)
-                            callback_method(pin)
-    '''
-    global setup
-    if not setup[int(gpio)] == SETUP_IN_GND:
-        gpio_setup_in_gnd(gpio)
-    def call_met(para):
-        global down
-        global up
-        status = gpio_get_gnd(para)
-        if status == True:
-            up = -1
-            down = time.time()            
-        else:
-            if down != -1:
-                up = time.time()        
-                delta = up - down        
-                down = -1
-                up = -1
-                delta =  int(delta * 1000)
-                if delta > 100 and delta < 1000:
-                    try:
-                        callback_method(para)
-                    except:
-                        steelsquid_utils.shout()                        
-            else:
-                up = -1
-    global down
-    global up
-    down = -1
-    up = -1
-    GPIO.add_event_detect(int(gpio), GPIO.BOTH, callback=call_met, bouncetime=100)
-
-
-def gpio_flash_3v3(gpio, enable):
-    '''
-    Flash a gpio on and off connected to 3.3v
-
-    @param gpio: The gpio to flash
-    @param enable: Strart or stop the flashing (True/False)
-                   None = only flash once
-    '''
-    command = "gpio_flash_3v3"
-    key = command + str(gpio)
-    if enable == None or enable:
-        post = [None] * 3
-        post[0] = command
-        if enable:
-            post[1] = False
-        else:
-            post[1] = True
-        post[2] = gpio
-        worker_commands[key] = post
+    if bouncetime_ms!=0:
+        GPIO.add_event_detect(int(gpio), edge, callback=call_met, bouncetime=bouncetime_ms)
     else:
-        worker_commands.pop(key, None)
-        toggle[gpio] = False
-        gpio_set_3v3(gpio, False)
-    
-    
-def gpio_flash_gnd(gpio, enable):
-    '''
-    Flash a gpio on and off connected to ground
-
-    @param gpio: The gpio to flash
-    @param enable: Strart or stop the flashing (True/False)
-                   None = only flash once
-    '''
-    command = "gpio_flash_gnd"
-    key = command + str(gpio)
-    if enable == None or enable:
-        post = [None] * 3
-        post[0] = command
-        if enable:
-            post[1] = False
-        else:
-            post[1] = True
-        post[2] = gpio
-        worker_commands[key] = post
-    else:
-        worker_commands.pop(key, None)
-        toggle[gpio] = False
-        gpio_set_gnd(gpio, False)
+        GPIO.add_event_detect(int(gpio), edge, callback=call_met)
 
 
 def mcp23017_setup_out(address, gpio):
@@ -579,157 +283,202 @@ def mcp23017_setup_out(address, gpio):
     if address == 20:
         global mcp_20
         if mcp_20 == None:
-            mcp_20 = Adafruit_MCP230xx.Adafruit_MCP230XX(busnum = 1, address = 0x20, num_gpios = 16)
+            with steelsquid_i2c.Lock():
+                mcp_20 = MCP23017(busnum = 1, address = 0x20, num_gpios = 16)
         if mcp_setup_20[gpio] != SETUP_OUT:
             mcp_setup_20[gpio] == SETUP_OUT
-            mcp_20.pullup(gpio, 0)
-            mcp_20.config(gpio, mcp_20.OUTPUT)
+            with steelsquid_i2c.Lock():
+                mcp_20.pullUp(gpio, 0)
+                mcp_20.pinMode(gpio, mcp_20.OUTPUT)
         return mcp_20
     elif address == 21:
         global mcp_21
         if mcp_21 == None:
-            mcp_21 = Adafruit_MCP230xx.Adafruit_MCP230XX(busnum = 1, address = 0x21, num_gpios = 16)
+            with steelsquid_i2c.Lock():
+                mcp_21 = MCP23017(busnum = 1, address = 0x21, num_gpios = 16)
         if mcp_setup_21[gpio] != SETUP_OUT:
             mcp_setup_21[gpio] == SETUP_OUT
-            mcp_21.pullup(gpio, 0)
-            mcp_21.config(gpio, mcp_21.OUTPUT)
+            with steelsquid_i2c.Lock():
+                mcp_21.pullUp(gpio, 0)
+                mcp_21.pinMode(gpio, mcp_21.OUTPUT)
         return mcp_21
     elif address == 22:
         global mcp_22
         if mcp_22 == None:
-            mcp_22 = Adafruit_MCP230xx.Adafruit_MCP230XX(busnum = 1, address = 0x22, num_gpios = 16)
+            with steelsquid_i2c.Lock():
+                mcp_22 = MCP23017(busnum = 1, address = 0x22, num_gpios = 16)
         if mcp_setup_22[gpio] != SETUP_OUT:
             mcp_setup_22[gpio] == SETUP_OUT
-            mcp_22.pullup(gpio, 0)
-            mcp_22.config(gpio, mcp_22.OUTPUT)
+            with steelsquid_i2c.Lock():
+                mcp_22.pullUp(gpio, 0)
+                mcp_22.pinMode(gpio, mcp_22.OUTPUT)
         return mcp_22
     elif address == 23:
         global mcp_23
         if mcp_23 == None:
-            mcp_23 = Adafruit_MCP230xx.Adafruit_MCP230XX(busnum = 1, address = 0x23, num_gpios = 16)
+            with steelsquid_i2c.Lock():
+                mcp_23 = MCP23017(busnum = 1, address = 0x23, num_gpios = 16)
         if mcp_setup_23[gpio] != SETUP_OUT:
             mcp_setup_23[gpio] == SETUP_OUT
-            mcp_23.pullup(gpio, 0)
-            mcp_23.config(gpio, mcp_23.OUTPUT)
+            with steelsquid_i2c.Lock():
+                mcp_23.pullUp(gpio, 0)
+                mcp_23.pinMode(gpio, mcp_23.OUTPUT)
         return mcp_23
     elif address == 24:
         global mcp_24
         if mcp_24 == None:
-            mcp_24 = Adafruit_MCP230xx.Adafruit_MCP230XX(busnum = 1, address = 0x24, num_gpios = 16)
+            with steelsquid_i2c.Lock():
+                mcp_24 = MCP23017(busnum = 1, address = 0x24, num_gpios = 16)
         if mcp_setup_24[gpio] != SETUP_OUT:
             mcp_setup_24[gpio] == SETUP_OUT
-            mcp_24.pullup(gpio, 0)
-            mcp_24.config(gpio, mcp_24.OUTPUT)
+            with steelsquid_i2c.Lock():
+                mcp_24.pullUp(gpio, 0)
+                mcp_24.pinMode(gpio, mcp_24.OUTPUT)
         return mcp_24
     elif address == 25:
         global mcp_25
         if mcp_25 == None:
-            mcp_25 = Adafruit_MCP230xx.Adafruit_MCP230XX(busnum = 1, address = 0x25, num_gpios = 16)
+            with steelsquid_i2c.Lock():
+                mcp_25 = MCP23017(busnum = 1, address = 0x25, num_gpios = 16)
         if mcp_setup_25[gpio] != SETUP_OUT:
             mcp_setup_25[gpio] == SETUP_OUT
-            mcp_25.pullup(gpio, 0)
-            mcp_25.config(gpio, mcp_25.OUTPUT)
+            with steelsquid_i2c.Lock():
+                mcp_25.pullUp(gpio, 0)
+                mcp_25.pinMode(gpio, mcp_25.OUTPUT)
         return mcp_25
     elif address == 26:
         global mcp_26
         if mcp_26 == None:
-            mcp_26 = Adafruit_MCP230xx.Adafruit_MCP230XX(busnum = 1, address = 0x26, num_gpios = 16)
+            with steelsquid_i2c.Lock():
+                mcp_26 = MCP23017(busnum = 1, address = 0x26, num_gpios = 16)
         if mcp_setup_26[gpio] != SETUP_OUT:
             mcp_setup_26[gpio] == SETUP_OUT
-            mcp_26.pullup(gpio, 0)
-            mcp_26.config(gpio, mcp_26.OUTPUT)
+            with steelsquid_i2c.Lock():
+                mcp_26.pullUp(gpio, 0)
+                mcp_26.pinMode(gpio, mcp_26.OUTPUT)
         return mcp_26
     elif address == 27:
         global mcp_27
         if mcp_27 == None:
-            mcp_27 = Adafruit_MCP230xx.Adafruit_MCP230XX(busnum = 1, address = 0x27, num_gpios = 16)
+            with steelsquid_i2c.Lock():
+                mcp_27 = MCP23017(busnum = 1, address = 0x27, num_gpios = 16)
         if mcp_setup_27[gpio] != SETUP_OUT:
             mcp_setup_27[gpio] == SETUP_OUT
-            mcp_27.pullup(gpio, 0)
-            mcp_27.config(gpio, mcp_27.OUTPUT)
+            with steelsquid_i2c.Lock():
+                mcp_27.pullUp(gpio, 0)
+                mcp_27.pinMode(gpio, mcp_27.OUTPUT)
         return mcp_27
 
 
-def mcp23017_setup_in(address, gpio):
+def mcp23017_setup_in(address, gpio, pullup=True):
     '''
     Set MCP23017 as input
     Address: 20, 21, 22, 23, 24, 25, 26, 27
     @param gpio: 0 to 15
+    @param pullup: use pullup resistor
     The MCP23017 h7as 16 pins - A0 thru A7 + B0 thru B7. A0 is called 0 in the library, and A7 is called 7, then B0 continues from there as is called 8 and finally B7 is pin 15
     '''
     gpio = int(gpio)
     address = int(address)
+    if pullup==True:
+        pullup = 1
+    else:
+        pullup = 0
     if address == 20:
         global mcp_20
         if mcp_20 == None:
-            mcp_20 = Adafruit_MCP230xx.Adafruit_MCP230XX(busnum = 1, address = 0x20, num_gpios = 16)
+            with steelsquid_i2c.Lock():
+                mcp_20 = MCP23017(busnum = 1, address = 0x20, num_gpios = 16)
+                mcp_20.configSystemInterrupt(mcp_20.INTMIRRORON, mcp_20.INTPOLACTIVEHIGH)
         if mcp_setup_20[gpio] != SETUP_IN:
             mcp_setup_20[gpio] == SETUP_IN
-            mcp_20.config(gpio, mcp_20.INPUT)
-            mcp_20.pullup(gpio, 1)
+            with steelsquid_i2c.Lock():
+                mcp_20.pinMode(gpio, mcp_20.INPUT)
+                mcp_20.pullUp(gpio, pullup)
         return mcp_20
     elif address == 21:
         global mcp_21
         if mcp_21 == None:
-            mcp_21 = Adafruit_MCP230xx.Adafruit_MCP230XX(busnum = 1, address = 0x21, num_gpios = 16)
+            with steelsquid_i2c.Lock():
+                mcp_21 = MCP23017(busnum = 1, address = 0x21, num_gpios = 16)
+                mcp_21.configSystemInterrupt(mcp_21.INTMIRRORON, mcp_21.INTPOLACTIVEHIGH)
         if mcp_setup_21[gpio] != SETUP_IN:
             mcp_setup_21[gpio] == SETUP_IN
-            mcp_21.config(gpio, mcp_21.INPUT)
-            mcp_21.pullup(gpio, 1)
+            with steelsquid_i2c.Lock():
+                mcp_21.pinMode(gpio, mcp_21.INPUT)
+                mcp_21.pullUp(gpio, pullup)
         return mcp_21
     elif address == 22:
         global mcp_22
         if mcp_22 == None:
-            mcp_22 = Adafruit_MCP230xx.Adafruit_MCP230XX(busnum = 1, address = 0x22, num_gpios = 16)
+            with steelsquid_i2c.Lock():
+                mcp_22 = MCP23017(busnum = 1, address = 0x22, num_gpios = 16)
+                mcp_22.configSystemInterrupt(mcp_22.INTMIRRORON, mcp_22.INTPOLACTIVEHIGH)
         if mcp_setup_22[gpio] != SETUP_IN:
             mcp_setup_22[gpio] == SETUP_IN
-            mcp_22.config(gpio, mcp_22.INPUT)
-            mcp_22.pullup(gpio, 1)
+            with steelsquid_i2c.Lock():
+                mcp_22.pinMode(gpio, mcp_22.INPUT)
+                mcp_22.pullUp(gpio, pullup)
         return mcp_22
     elif address == 23:
         global mcp_23
         if mcp_23 == None:
-            mcp_23 = Adafruit_MCP230xx.Adafruit_MCP230XX(busnum = 1, address = 0x23, num_gpios = 16)
+            with steelsquid_i2c.Lock():
+                mcp_23 = MCP23017(busnum = 1, address = 0x23, num_gpios = 16)
+                mcp_23.configSystemInterrupt(mcp_23.INTMIRRORON, mcp_23.INTPOLACTIVEHIGH)
         if mcp_setup_23[gpio] != SETUP_IN:
             mcp_setup_23[gpio] == SETUP_IN
-            mcp_23.config(gpio, mcp_23.INPUT)
-            mcp_23.pullup(gpio, 1)
+            with steelsquid_i2c.Lock():
+                mcp_23.pinMode(gpio, mcp_23.INPUT)
+                mcp_23.pullUp(gpio, pullup)
         return mcp_23
     elif address == 24:
         global mcp_24
         if mcp_24 == None:
-            mcp_24 = Adafruit_MCP230xx.Adafruit_MCP230XX(busnum = 1, address = 0x24, num_gpios = 16)
+            with steelsquid_i2c.Lock():
+                mcp_24 = MCP23017(busnum = 1, address = 0x24, num_gpios = 16)
+                mcp_24.configSystemInterrupt(mcp_24.INTMIRRORON, mcp_24.INTPOLACTIVEHIGH)
         if mcp_setup_24[gpio] != SETUP_IN:
             mcp_setup_24[gpio] == SETUP_IN
-            mcp_24.config(gpio, mcp_24.INPUT)
-            mcp_24.pullup(gpio, 1)
+            with steelsquid_i2c.Lock():
+                mcp_24.pinMode(gpio, mcp_24.INPUT)
+                mcp_24.pullUp(gpio, pullup)
         return mcp_24
     elif address == 25:
         global mcp_25
         if mcp_25 == None:
-            mcp_25 = Adafruit_MCP230xx.Adafruit_MCP230XX(busnum = 1, address = 0x25, num_gpios = 16)
+            with steelsquid_i2c.Lock():
+                mcp_25 = MCP23017(busnum = 1, address = 0x25, num_gpios = 16)
+                mcp_25.configSystemInterrupt(mcp_25.INTMIRRORON, mcp_25.INTPOLACTIVEHIGH)
         if mcp_setup_25[gpio] != SETUP_IN:
             mcp_setup_25[gpio] == SETUP_IN
-            mcp_25.config(gpio, mcp_25.INPUT)
-            mcp_25.pullup(gpio, 1)
+            with steelsquid_i2c.Lock():
+                mcp_25.pinMode(gpio, mcp_25.INPUT)
+                mcp_25.pullUp(gpio, pullup)
         return mcp_25
     elif address == 26:
         global mcp_26
         if mcp_26 == None:
-            mcp_26 = Adafruit_MCP230xx.Adafruit_MCP230XX(busnum = 1, address = 0x26, num_gpios = 16)
+            with steelsquid_i2c.Lock():
+                mcp_26 = MCP23017(busnum = 1, address = 0x26, num_gpios = 16)
+                mcp_26.configSystemInterrupt(mcp_26.INTMIRRORON, mcp_26.INTPOLACTIVEHIGH)
         if mcp_setup_26[gpio] != SETUP_IN:
             mcp_setup_26[gpio] == SETUP_IN
-            mcp_26.config(gpio, mcp_26.INPUT)
-            mcp_26.pullup(gpio, 1) 
+            with steelsquid_i2c.Lock():
+                mcp_26.pinMode(gpio, mcp_26.INPUT)
+                mcp_26.pullUp(gpio, pullup) 
         return mcp_26
     elif address == 27:
         global mcp_27
         if mcp_27 == None:
-            mcp_27 = Adafruit_MCP230xx.Adafruit_MCP230XX(busnum = 1, address = 0x27, num_gpios = 16)
+            with steelsquid_i2c.Lock():
+                mcp_27 = MCP23017(busnum = 1, address = 0x27, num_gpios = 16)
+                mcp_27.configSystemInterrupt(mcp_27.INTMIRRORON, mcp_27.INTPOLACTIVEHIGH)
         if mcp_setup_27[gpio] != SETUP_IN:
             mcp_setup_27[gpio] == SETUP_IN
-            mcp_27.config(gpio, mcp_27.INPUT)
-            mcp_27.pullup(gpio, 1)
+            with steelsquid_i2c.Lock():
+                mcp_27.pinMode(gpio, mcp_27.INPUT)
+                mcp_27.pullUp(gpio, pullup)
         return mcp_27
 
 
@@ -745,141 +494,109 @@ def mcp23017_set(address, gpio, value):
     gpio = int(gpio)
     address = int(address)
     mcp = mcp23017_setup_out(address, gpio)
-    if value == True:
-        mcp.output(gpio, 1) 
-    else:
-        mcp.output(gpio, 0) 
+    with steelsquid_i2c.Lock():
+        if value == True:
+            mcp.output(gpio, 1) 
+        else:
+            mcp.output(gpio, 0) 
         
         
-def mcp23017_get(address, gpio):
+def mcp23017_get(address, gpio, pullup=True):
     '''
-    Is a gpio connected to earth or not
+    Get status on pin
     Address: 20, 21, 22, 23, 24, 25, 26, 27
     @param gpio: 0 to 15
     The MCP23017 has 16 pins - A0 thru A7 + B0 thru B7. A0 is called 0 in the library, and A7 is called 7, then B0 continues from there as is called 8 and finally B7 is pin 15
     @return: True/False
-    True = Connected to earth
-    False = Not connecte dto earth
+    True = Hight (1)
+    False = Low (0)
     '''
     gpio = int(gpio)
     address = int(address)
-    mcp = mcp23017_setup_in(address, gpio)
-    if(mcp.input(gpio) >> gpio)==0:
-        return True
-    else:
-        return False
-
-        
-def mcp23017_toggle(address, gpio):
-    '''
-    Toggle gpio pin to hight/low on a mcp
-    '''
-    gpio = int(gpio)
-    address = int(address)
-    mcp = mcp23017_setup_out(address, gpio)
-    global toggle_mcp
-    if [address, gpio] in toggle_mcp:
-        mcp.output(gpio, 0)
-        try:
-            toggle_mcp.remove([address, gpio])
-        except:
-            pass
-        return False
-    else:
-        mcp.output(gpio, 1)
-        toggle_mcp.append([address, gpio])
-        return True
-
-
-def mcp23017_toggle_current(address, gpio):
-    '''
-    Get current toggle status
-    '''
-    gpio = int(gpio)
-    address = int(address)
-    mcp = mcp23017_setup_out(address, gpio)
-    global toggle_mcp
-    if [address, gpio] in toggle_mcp:
-        return True
-    else:
-        return False
-
-
-def mcp23017_flash(address, gpio, status):
-    '''
-    Toggle gpio pin to hight/low on a mcp
-    @param status: Strart or stop the flashing (True/False)
-                   None = only flash once
-    '''
-    gpio = int(gpio)
-    address = int(address)
-    command = "mcp23017_flash"
-    key = command + str(address) + str(gpio)
-    if status == None or status:
-        post = [None] * 4
-        post[0] = command
-        if status:
-            post[1] = False
+    mcp = mcp23017_setup_in(address, gpio, pullup)
+    with steelsquid_i2c.Lock():
+        if mcp.input(gpio)==1:
+            return True
         else:
-            post[1] = True
-        post[2] = address
-        post[3] = gpio
-        worker_commands[key] = post
-    else:
-        worker_commands.pop(key, None)
-        mcp.output(gpio, 0)
-        try:
-            toggle_mcp.remove([address, gpio])
-        except:
-            pass
+            return False
 
 
-def mcp23017_click(address, gpio, callback_method):
+def mcp23017_event(address, gpio, callback_method, pullup=True, debouncetime_ms=0, rpi_gpio=26): 
+    ''' 
+    Listen for event
+    If this is to work one of the trigger pin needs to be connected to raspberry Pi pin 26 (you can change this with paramater rpi_gpio)
+    The MCP23017 has 16 pins - A0 thru A7 + B0 thru B7. A0 is called 0 in the library, and A7 is called 7, then B0 continues from there as is called 8 and finally B7 is pin 15
+    @address: 20, 21, 22, 23, 24, 25, 26, 27
+    @param gpio: 0 to 15
+    @param callback_method: execute this method on event (paramater is the address, gpio and status (True/False))
+                            callback_method(address, pin, status)
+    @param pullup: Use internal pululp
+    @param bouncetime__ms: Set the debounstime in ms (Will be same on every pin on one mcp23017, the first execution with sertant adress will set the debouns on that adress)
+    @param rpi_gpio: Raspberry pi glio number to use for the interruppt (Can not use the same gpio for mutipple mcp23017)
+    '''
+    global mcp23017_events
+    gpio = int(gpio)
+    address = int(address)
+    mcp = mcp23017_setup_in(address, gpio, pullup)
+    mcp.configPinInterrupt(gpio, mcp.INTERRUPTON, mcp.INTERRUPTCOMPAREPREVIOUS)
+    post = [None] * 4
+    post[0] = 0
+    post[1] = gpio
+    post[2] = callback_method
+    post[3] = True
+    with(lock_mcp):
+        if len(mcp23017_events[address]) == 0: 
+            mcp23017_events[address].append(post)
+            def call_met(para, status):
+                for p in mcp23017_events[address]:
+                    if p[0]==0:
+                        gpio = p[1]
+                        callback_method = p[2]
+                        old_v = p[3]
+                        #steelsquid_utils.shout_time("INNAN lOCK")
+                        with steelsquid_i2c.Lock():
+                            new_v = mcp.input(gpio)==1
+                            #steelsquid_utils.shout_time(":::" + str(new_v))
+                            if new_v != old_v:
+                                p[3] = new_v
+                                callback_method(address, gpio, new_v)
+                mcp.clearInterrupts()
+            gpio_event(rpi_gpio, call_met, bouncetime_ms=debouncetime_ms, resistor=PULL_DOWN, edge=EDGE_RISING)
+        else: 
+            mcp23017_events[address].append(post)
+            
+
+def mcp23017_click(address, gpio, callback_method, pullup=True):
     '''
     Listen for click
+    If this is to work one of the trigger pin needs to be connected to raspberry Pi pin 26
     Address: 20, 21, 22, 23, 24, 25, 26, 27
     @param gpio: 0 to 15
     @param callback_method: execute this method on event (paramater is the address and gpio)
                             callback_method(address, pin)
     The MCP23017 has 16 pins - A0 thru A7 + B0 thru B7. A0 is called 0 in the library, and A7 is called 7, then B0 continues from there as is called 8 and finally B7 is pin 15
     '''
+    global mcp23017_events
     gpio = int(gpio)
     address = int(address)
-    mcp = mcp23017_setup_in(address, gpio)
-    command = "mcp23017_click"
-    key = command + str(address) + str(gpio)
-    post = [None] * 6
-    post[0] = command
-    post[1] = address
-    post[2] = gpio
-    post[3] = mcp
-    post[4] = callback_method
-    post[5] = False
-    worker_commands[key] = post
-        
-        
-def mcp23017_event(address, gpio, callback_method):
-    '''
-    Listen for event
-    @address: 20, 21, 22, 23, 24, 25, 26, 27
-    @param gpio: 0 to 15
-    @param callback_method: execute this method on event (paramater is the address, gpio and status (True/False))
-                            callback_method(address, pin, status)
-    The MCP23017 has 16 pins - A0 thru A7 + B0 thru B7. A0 is called 0 in the library, and A7 is called 7, then B0 continues from there as is called 8 and finally B7 is pin 15
-    '''
-    gpio = int(gpio)
-    address = int(address)
-    mcp = mcp23017_setup_in(address, gpio)
-    command = "mcp23017_event"
-    key = command + str(address) + str(gpio)
-    post = [None] * 6
-    post[0] = command
-    post[1] = address
-    post[2] = gpio
-    post[3] = mcp
-    post[4] = callback_method
-    post[5] = False
-    worker_commands[key] = post
+    mcp = mcp23017_setup_in(address, gpio, pullup)
+    post = [None] * 5
+    post[0] = "click"
+    post[1] = gpio
+    post[2] = mcp
+    post[3] = callback_method
+    post[4] = False
+    if len(mcp23017_events[address]) == 0:
+        with(lock_mcp):
+            if len(mcp23017_events[address]) == 0:
+                mcp23017_events[address].append(post)
+                def call_met(para):
+                    pass
+                gpio_event(26, call_met, bouncetime_ms=0, resistor=PULL_DOWN, edge=EDGE_RISING)
+            else:
+                mcp23017_events[address].append(post)
+    else:
+        mcp23017_events[address].append(post)
 
 
 def ads1015(address, gpio, gain=GAIN_6_144_V):
@@ -890,7 +607,8 @@ def ads1015(address, gpio, gain=GAIN_6_144_V):
     '''
     address = str(address)
     gpio = int(gpio)
-    return __ads1015(address).readADCSingleEnded(gpio, gain, 250) / 1000
+    with steelsquid_i2c.Lock():
+        return __ads1015(address).readADCSingleEnded(gpio, gain, 250) / 1000
 
 
 def ads1015_median(address, gpio, gain=GAIN_6_144_V, samples=16):
@@ -916,53 +634,25 @@ def __ads1015(address):
     '''
     address = str(address)
     if address == "48":
-        with lock_ads1015_48:
-            global ads_48
-            if ads_48==None:
-                ads_48 = ADS1x15(address = 0x48, ic=0x00)
-            return ads_48
+        global ads_48
+        if ads_48==None:
+            ads_48 = ADS1x15(address = 0x48, ic=0x00)
+        return ads_48
     elif address == "49":
-        with lock_ads1015_49:
-            global ads_49
-            if ads_49==None:
-                ads_49 = ADS1x15(address = 0x49, ic=0x00)
-            return ads_49
+        global ads_49
+        if ads_49==None:
+            ads_49 = ADS1x15(address = 0x49, ic=0x00)
+        return ads_49
     elif address == "4A":
-        with lock_ads1015_4A:
-            global ads_4A
-            if ads_4A==None:
-                ads_4A = ADS1x15(address = 0x4A, ic=0x00)
-            return ads_4A
+        global ads_4A
+        if ads_4A==None:
+            ads_4A = ADS1x15(address = 0x4A, ic=0x00)
+        return ads_4A
     elif address == "4B":
-        with lock_ads1015_4B:
-            global ads_4B
-            if ads_4B==None:
-                ads_4B = ADS1x15(address = 0x4B, ic=0x00)
-            return ads_4B
-
-
-def ads1015_event(address, gpio, callback_method, gain=GAIN_6_144_V):
-    '''
-    Listen for changes on analog in from ADS1015
-    address= 48, 48, 4A, 4B 
-    gpio = 0 to 3
-    @param callback_method: execute this method on event (paramater is the gpio and status (True/False))
-                            callback_method(address, pin, value)
-    '''
-    gpio = int(gpio)
-    address = int(address)
-    ads = __ads1015(address)
-    command = "ads1015_event"
-    key = command + str(address) + str(gpio)
-    post = [None] * 7
-    post[0] = command
-    post[1] = address
-    post[2] = gpio
-    post[3] = ads
-    post[4] = callback_method
-    post[5] = -1
-    post[6] = gain
-    worker_commands[key] = post
+        global ads_4B
+        if ads_4B==None:
+            ads_4B = ADS1x15(address = 0x4B, ic=0x00)
+        return ads_4B
 
 
 def mcp4725(address, value):
@@ -975,10 +665,9 @@ def mcp4725(address, value):
     address = str(address)
     value = int(value)
     if address == "60":
-        with lock_mcp4725:
-            if dac==None:
-                dac = MCP4725(0x60)
-            dac.setVoltage(value)
+        if dac==None:
+            dac = MCP4725(0x60)
+        dac.setVoltage(value)
 
 
 def mcp4728(address, volt0, volt1, volt2, volt3):
@@ -987,7 +676,6 @@ def mcp4728(address, volt0, volt1, volt2, volt3):
     address = 61
     volt0 to3 = Voltage on pins (0 and 4095)
     '''
-    global mcp4728_i2c
     address = int(address)
     if address == 61:
         address = 0x61
@@ -995,12 +683,9 @@ def mcp4728(address, volt0, volt1, volt2, volt3):
     volt1 = int(volt1)
     volt2 = int(volt2)
     volt3 = int(volt3)
-    with lock_mcp4728:
-        if mcp4728_i2c == None:
-            mcp4728_i2c = Adafruit_I2C(address)
-        the_bytes = [(volt0 >> 8) & 0xFF, (volt0) & 0xFF, (volt1 >> 8) & 0xFF, (volt1) & 0xFF,
-                 (volt2 >> 8) & 0xFF, (volt2) & 0xFF, (volt3 >> 8) & 0xFF, (volt3) & 0xFF]    
-        mcp4728_i2c.writeList(0x50, the_bytes)
+    the_bytes = [(volt0 >> 8) & 0xFF, (volt0) & 0xFF, (volt1 >> 8) & 0xFF, (volt1) & 0xFF,
+             (volt2 >> 8) & 0xFF, (volt2) & 0xFF, (volt3 >> 8) & 0xFF, (volt3) & 0xFF]    
+    steelsquid_i2c.write_bytes(address, 0x50, the_bytes)
     
     
 def hdd44780_write(text, number_of_seconds = 0, force_setup = False, is_i2c=True):
@@ -1103,6 +788,10 @@ def nokia5110_write(text, number_of_seconds = 0, force_setup = False):
     '''
     global nokia_lcd
     global lcd_last_text
+    DC = 9
+    RST = 7
+    SPI_PORT = 0
+    SPI_DEVICE = 0
     if number_of_seconds > 0 and len(lcd_last_text) > 0:
         steelsquid_utils.execute_delay(number_of_seconds, nokia5110_write, (None))
         nokia5110_write(text, -111, force_setup)
@@ -1241,7 +930,7 @@ def hcsr04_distance(trig_gpio, echo_gpio, force_setup = False):
         global distance_created
         if not distance_created or force_setup:
             gpio_setup_out(trig_gpio)
-            gpio_setup_in_gnd(echo_gpio)
+            gpio_setup_in(echo_gpio, resistor=PULL_UP)
             gpio_set(trig_gpio, False)
             distance_created = True
         gpio_set(trig_gpio, False)
@@ -1274,7 +963,7 @@ def pca9685_move(servo, value):
     @param servo: 0 to 15
     @param value: min=150, max=600 (may differ between servos)
     '''
-    with lock_rbada:
+    with steelsquid_i2c.Lock():
         global pwm
         if pwm == None:
             pwm = PWM(0x40, debug=False)
@@ -1292,7 +981,7 @@ def sabertooth_motor_speed(left, right, the_port="/dev/ttyAMA0"):
         100 = 100% forward speed
     the_port: /dev/ttyAMA0, the_port=/dev/ttyUSB0...
     '''
-    with lock_sabertooth:
+    with steelsquid_i2c.Lock():
         global sabertooth
         if sabertooth==None:
             import steelsquid_sabertooth
@@ -1348,14 +1037,15 @@ def diablo_motor_1(speed):
     Speed -1000 to 1000
     '''
     global diablo
-    if diablo == None:
-        diablo = Diablo.Diablo()
-        diablo.Init()
-        diablo.ResetEpo()
-        diablo.SetMotor1(0)         
-        diablo.SetMotor2(0)         
-    speed = float(speed)/1000
-    diablo.SetMotor1(speed)         
+    with steelsquid_i2c.Lock():
+        if diablo == None:
+            diablo = Diablo.Diablo()
+            diablo.Init()
+            diablo.ResetEpo()
+            diablo.SetMotor1(0)         
+            diablo.SetMotor2(0)         
+        speed = float(speed)/1000
+        diablo.SetMotor1(speed)         
     
     
 def diablo_motor_2(speed):
@@ -1364,14 +1054,15 @@ def diablo_motor_2(speed):
     Speed -1000 to 1000
     '''
     global diablo
-    if diablo == None:
-        diablo = Diablo.Diablo()
-        diablo.Init()
-        diablo.ResetEpo()
-        diablo.SetMotor1(0)         
-        diablo.SetMotor2(0)         
-    speed = float(speed)/1000
-    diablo.SetMotor2(speed)         
+    with steelsquid_i2c.Lock():
+        if diablo == None:
+            diablo = Diablo.Diablo()
+            diablo.Init()
+            diablo.ResetEpo()
+            diablo.SetMotor1(0)         
+            diablo.SetMotor2(0)         
+        speed = float(speed)/1000
+        diablo.SetMotor2(speed)         
 
 
 def callback_method(gpio, status):
@@ -1393,10 +1084,7 @@ def servo12c(servo, position, address=0x28):
     '''
     servo = int(servo)
     position = int(position)
-    global i2c_servo12c
-    if i2c_servo12c == None:
-        i2c_servo12c = smbus.SMBus(1)
-    i2c_servo12c.write_byte_data(address, servo, position)
+    steelsquid_i2c.write_8_bit(address, servo, position)
 
 
 def mpu6050_init(address=0x69):
@@ -1405,10 +1093,7 @@ def mpu6050_init(address=0x69):
     SparkFun Triple Axis Accelerometer and Gyro Breakout - MPU-6050
     https://www.sparkfun.com/products/11028
     '''
-    global i2c_mpu_6050
-    if i2c_mpu_6050 == None:
-        i2c_mpu_6050 = smbus.SMBus(1)
-        i2c_mpu_6050.write_byte_data(address, 0x6b, 0)
+    steelsquid_i2c.write_8_bit(address, 0x6b, 0)
 
 
 def mpu6050_gyro(address=0x69):
@@ -1419,9 +1104,9 @@ def mpu6050_gyro(address=0x69):
     Returns: (x, y, z)
     '''
     mpu6050_init(address)
-    gyro_xout = read_word_2c(i2c_mpu_6050, address, 0x43) / 131
-    gyro_xout = read_word_2c(i2c_mpu_6050, address, 0x45) / 131
-    gyro_zout = read_word_2c(i2c_mpu_6050, address, 0x47) / 131
+    gyro_xout = read_word_2c(address, 0x43) / 131
+    gyro_xout = read_word_2c(address, 0x45) / 131
+    gyro_zout = read_word_2c(address, 0x47) / 131
     return gyro_xout, gyro_xout, gyro_zout
     
 
@@ -1433,9 +1118,9 @@ def mpu6050_accel(address=0x69):
     Returns: (x, y, z)
     '''
     mpu6050_init(address)
-    accel_xout = read_word_2c(i2c_mpu_6050, address, 0x3b) / 16384.0
-    accel_yout = read_word_2c(i2c_mpu_6050, address, 0x3d) / 16384.0
-    accel_zout = read_word_2c(i2c_mpu_6050, address, 0x3f) / 16384.0
+    accel_xout = read_word_2c(address, 0x3b) / 16384.0
+    accel_yout = read_word_2c(address, 0x3d) / 16384.0
+    accel_zout = read_word_2c(address, 0x3f) / 16384.0
     return accel_xout, accel_yout, accel_zout
 
 
@@ -1452,15 +1137,15 @@ def mpu6050_rotation(address=0x69):
     return x, y
 
 
-def read_word(bus, address, adr):
-    high = bus.read_byte_data(address, adr)
-    low = bus.read_byte_data(address, adr+1)
+def read_word(address, adr):
+    high = steelsquid_i2c.read_8_bit(address, adr)
+    low = steelsquid_i2c.read_8_bit(address, adr+1)
     val = (high << 8) + low
     return val
 
 
-def read_word_2c(bus, address, adr):
-    val = read_word(bus, address, adr)
+def read_word_2c(address, adr):
+    val = read_word(address, adr)
     if (val >= 0x8000):
         return -((65535 - val) + 1)
     else:
@@ -1480,6 +1165,141 @@ def get_x_rotation(x,y,z):
     radians = math.atan2(y, dist(x,z))
     return math.degrees(radians)
     
+
+def po12_digital_out(channel, status): 
+    '''
+    Set the digital out channel to hight or low on the P011/12 ADC
+    http://www.pichips.co.uk/index.php/P011_ADC#rpii2c
+    channel = 1 to 3
+    status = True/False
+    '''
+    channel = int(channel)
+    if steelsquid_utils.to_boolean(status):
+        steelsquid_i2c.write_bytes(0x34, 2, [channel, 1])
+    else:
+        steelsquid_i2c.write_bytes(0x34, 2, [channel, 0])
+
+
+def po12_adc_pullup(use_pullup): 
+    '''
+    By default there are weak pull up resistors internally attached to the ADC lines
+    http://www.pichips.co.uk/index.php/P011_ADC#rpii2c
+    use_pullup = True/False
+    '''
+    if steelsquid_utils.to_boolean(use_pullup):
+        steelsquid_i2c.write_bytes(0x34, 4, [1])
+    else:
+        steelsquid_i2c.write_bytes(0x34, 4, [0])
+
+
+def po12_adc_vref(vref): 
+    '''
+    Set Reference Voltage
+    http://www.pichips.co.uk/index.php/P011_ADC#rpii2c
+    vref: 
+        1.024
+        2.048 
+        4.096 
+        Voltage on the +V pin
+    '''
+    global vref_voltage
+    vref = float(vref)
+    vref_voltage = vref
+    if vref == 1.024:
+        cmd = 1
+    elif vref == 2.048:
+        cmd = 2
+    elif vref == 4.096:
+        cmd = 3
+    else:
+        cmd = 4
+    steelsquid_i2c.write_bytes(0x34, 3, [cmd])
+    
+
+def po12_adc(channel):
+    '''
+    Read the analog value in on the P011/12 ADC
+    http://www.pichips.co.uk/index.php/P011_ADC#rpii2c
+    channel = 1 to 8
+    Return 0 to 1023
+    '''
+    channel = int(channel)
+    return steelsquid_i2c.read_16_bit_command(0x34, 1, [channel], little_endian=False)
+
+
+def po12_adc_volt(channel):
+    '''
+    Read the analog voltage in on the P011/12 ADC
+    http://www.pichips.co.uk/index.php/P011_ADC#rpii2c
+    channel = 1 to 8
+    Return 0V to vref
+    '''
+    value = po12_adc(channel)
+    calc = value/float(1023)
+    return vref_voltage * calc
+
+
+def po16_gpio_pullup(gpio, use_pullup): 
+    '''
+    Sets a weak pull up on the specified pin on the PO16
+    http://www.pichips.co.uk/index.php/P015_GPIO_with_PWM
+    gpio 0 t to 8
+    '''
+    gpio = int(gpio)
+    use_pullup = steelsquid_utils.to_boolean(use_pullup)
+    if use_pullup:
+        steelsquid_i2c.write_bytes(0x36, 2, [gpio, 1])
+    else:
+        steelsquid_i2c.write_bytes(0x36, 2, [gpio, 1])
+
+
+def po16_gpio_get(gpio): 
+    '''
+    Read the state of gpio pin on the PO16
+    This will return true if the gpio is connectid to ground
+    http://www.pichips.co.uk/index.php/P015_GPIO_with_PWM
+    gpio 0 t to 8
+    '''
+    gpio = int(gpio)
+    if not po16_setup[int(gpio-1)] == SETUP_IN:
+        po16_setup[int(gpio-1)] = SETUP_IN
+        steelsquid_i2c.write_bytes(0x36, 1, [gpio, 1])
+    by = steelsquid_i2c.read_bytes_command(0x36, 6, [gpio], 1)
+    if by[0]==1:
+        return True
+    else:
+        return False
+    
+
+def po16_gpio_set(gpio, status): 
+    '''
+    Set the state of gpio pin on the PO16
+    http://www.pichips.co.uk/index.php/P015_GPIO_with_PWM
+    gpio = 0 t to 8
+    status = Treu/False
+    '''
+    gpio = int(gpio)
+    status = steelsquid_utils.to_boolean(status)
+    if not po16_setup[int(gpio-1)] == SETUP_OUT:
+        po16_setup[int(gpio-1)] = SETUP_OUT
+        steelsquid_i2c.write_bytes(0x36, 1, [gpio, 0])
+    if steelsquid_utils.to_boolean(status):
+        steelsquid_i2c.write_bytes(0x36, 5, [gpio, 1])
+    else:
+        steelsquid_i2c.write_bytes(0x36, 5, [gpio, 0])
+
+
+def po16_pwm(channel, value): 
+    '''
+    Set PWM value on channel on the PO16
+    http://www.pichips.co.uk/index.php/P015_GPIO_with_PWM
+    channel = 1 to 4
+    value = 0 to 1023
+    '''
+    channel = int(channel)
+    value = int(value)
+    steelsquid_i2c.write_bytes(0x36, 7, [channel, steelsquid_utils.get_hight_byte(value), steelsquid_utils.get_low_byte(value)])
+
 
 if __name__ == '__main__':
     import sys
@@ -1503,24 +1323,12 @@ if __name__ == '__main__':
         printb("d=direct")
         printb("e=event")
         print("")
-        printb("pi <d/e> gpio_get_3v3 <gpio>")
+        printb("pi <d/e> gpio_get <gpio>")
         print("Get status of RaspberryPI GPIO")
-        print("GPIO is connectoed to 3v3 (using internal pull-down)")
         print("gpio: 4-26")
         print("")
-        printb("pi <d/e> gpio_set_3v3 <gpio> <true/false>")
+        printb("pi <d/e> gpio_set <gpio> <true/false>")
         print("Set status of RaspberryPI GPIO")
-        print("GPIO is connectoed to 3v3 (using internal pull-down)")
-        print("gpio: 4-26")
-        print("")
-        printb("pi <d/e> gpio_get_gnd <gpio>")
-        print("Get status of RaspberryPI GPIO")
-        print("GPIO is connectoed to gnd (using internal pull-up)")
-        print("gpio: 4-26")
-        print("")
-        printb("pi <d/e> gpio_set_gnd <gpio> <true/false>")
-        print("Set status of RaspberryPI GPIO")
-        print("GPIO is connectoed to gnd (using internal pull-up)")
         print("gpio: 4-26")
         print("")
         printb("pi <d/e> mcp23017_get <address> <gpio>")
@@ -1615,6 +1423,74 @@ if __name__ == '__main__':
         print("Read mpu-6050 rotation angle in degrees for both the X & Y.")
         print("SparkFun Triple Axis Accelerometer and Gyro Breakout - MPU-6050")
         print("https://www.sparkfun.com/products/11028")
+        print("")
+        printb("pi <d/e> po12_digital_out <channel> <status>")
+        print("Set the digital out channel to hight or low on the P011/12 ADC")
+        print("http://www.pichips.co.uk/index.php/P011_ADC#rpii2c")
+        print("channel = 1 to 3")
+        print("status = True/False")
+        print("")
+        printb("pi <d/e> po12_adc_pullup <enable>")
+        print("By default there are weak pull up resistors internally attached to the ADC lines")
+        print("http://www.pichips.co.uk/index.php/P011_ADC#rpii2c")
+        print("enable = true/false")
+        print("")
+        printb("pi <d/e> po12_adc_vref <vref>")
+        print("Set Reference Voltage")
+        print("http://www.pichips.co.uk/index.php/P011_ADC#rpii2c")
+        print("vref = 1.024")
+        print("       2.048")
+        print("       4.096")
+        print("       Voltage on the +V pin")
+        print("")
+        printb("pi <d/e> po12_adc <channel>")
+        print("Read the analog value in on the P011/12 ADC")
+        print("http://www.pichips.co.uk/index.php/P011_ADC#rpii2c")
+        print("channel = 1 to 8")
+        print("Return: 0 to 1023")
+        print("")
+        printb("pi <d/e> po12_adc_volt <channel>")
+        print("Read the analog voltage in on the P011/12 ADC")
+        print("http://www.pichips.co.uk/index.php/P011_ADC#rpii2c")
+        print("channel = 1 to 8")
+        print("Return: 0V to vref")
+        print("")
+        printb("pi <d/e> po16_gpio_pullup <gpio> <use_pullup>")
+        print("Sets a weak pull up on the specified pin on the PO16")
+        print("http://www.pichips.co.uk/index.php/P015_GPIO_with_PWM")
+        print("gpio = 1 to 8")
+        print("use_pullup: True/False")
+        print("")
+        printb("pi <d/e> po16_gpio_get <gpio>")
+        print("Read the state of gpio pin on the PO16")
+        print("This will return true if the gpio is connectid to ground")
+        print("http://www.pichips.co.uk/index.php/P015_GPIO_with_PWM")
+        print("gpio = 1 to 8")
+        print("Return: True/False")
+        print("")
+        printb("pi <d/e> po16_gpio_set <gpio> <status>")
+        print("Set the state of gpio pin on the PO16")
+        print("http://www.pichips.co.uk/index.php/P015_GPIO_with_PWM")
+        print("gpio = 1 to 8")
+        print("status = True/False")
+        print("")
+        printb("pi <d/e> po16_pwm <channel> <value>")
+        print("Set PWM value on channel on the PO16")
+        print("http://www.pichips.co.uk/index.php/P015_GPIO_with_PWM")
+        print("channel = 1 to 4")
+        print("value = 0 to 1023")
+
+        def testar(address, gpio, status):
+            steelsquid_utils.shout_time(str(address) +":"+ str(gpio) +":"+ str(status))
+
+        mcp23017_event(20, 7, testar, rpi_gpio=19)
+        mcp23017_event(20, 8, testar, rpi_gpio=19) 
+        #mcp23017_event(21, 0, testar)
+        #mcp23017_event(21, 1, testar)
+
+        raw_input()        
+
+
     else:
         manner = sys.argv[1]
         command = sys.argv[2]
@@ -1628,32 +1504,18 @@ if __name__ == '__main__':
             para4 = sys.argv[6]
         if len(sys.argv)>7:
             para5 = sys.argv[7]
-        if command == "gpio_get_3v3":
+        if command == "gpio_get":
             if manner == "d" or manner == "direct":
-                print gpio_get_3v3(para1)
+                print gpio_get(para1)
             elif manner == "e" or manner == "event":
-                steelsquid_event.broadcast_event_external("pi_io_event", ["gpio_get_3v3", para1])
+                steelsquid_event.broadcast_event_external("pi_io_event", ["gpio_get", para1])
             else:
                 print "Expected: direct (d), event (e)"
-        elif command == "gpio_get_gnd":
+        elif command == "gpio_set":
             if manner == "d" or manner == "direct":
-                print gpio_get_gnd(para1) 
+                gpio_set(para1, steelsquid_utils.to_boolean(para2))
             elif manner == "e" or manner == "event":
-                steelsquid_event.broadcast_event_external("pi_io_event", ["gpio_get_gnd", para1])
-            else:
-                print "Expected: direct (d), event (e)"
-        elif command == "gpio_set_3v3":
-            if manner == "d" or manner == "direct":
-                gpio_set_3v3(para1, steelsquid_utils.to_boolean(para2))
-            elif manner == "e" or manner == "event":
-                steelsquid_event.broadcast_event_external("pi_io_event", ["gpio_set_3v3", para1, para2])
-            else:
-                print "Expected: direct (d), event (e)"
-        elif command == "gpio_set_gnd":
-            if manner == "d" or manner == "direct":
-                gpio_set_gnd(para1, steelsquid_utils.to_boolean(para2))
-            elif manner == "e" or manner == "event":
-                steelsquid_event.broadcast_event_external("pi_io_event", ["gpio_set_gnd", para1, para2])
+                steelsquid_event.broadcast_event_external("pi_io_event", ["gpio_set", para1, para2])
             else:
                 print "Expected: direct (d), event (e)"
         elif command == "mcp23017_get":
@@ -1821,7 +1683,71 @@ if __name__ == '__main__':
                 steelsquid_event.broadcast_event_external("pi_io_event", ["mpu6050_rotation"])
             else:
                 print "Expected: direct (d), event (e)"
+        elif command == "po12_digital_out":
+            if manner == "d" or manner == "direct":
+                 po12_digital_out(para1, para2)
+            elif manner == "e" or manner == "event":
+                steelsquid_event.broadcast_event_external("pi_io_event", ["po12_digital_out", para1, para2])
+            else:
+                print "Expected: direct (d), event (e)"
+        elif command == "po12_adc_pullup":
+            if manner == "d" or manner == "direct":
+                 po12_adc_pullup(para1)
+            elif manner == "e" or manner == "event":
+                steelsquid_event.broadcast_event_external("pi_io_event", ["po12_adc_pullup", para1])
+            else:
+                print "Expected: direct (d), event (e)"
+        elif command == "po12_adc_vref":
+            if manner == "d" or manner == "direct":
+                 po12_adc_vref(para1)
+            elif manner == "e" or manner == "event":
+                steelsquid_event.broadcast_event_external("pi_io_event", ["po12_adc_vref", para1])
+            else:
+                print "Expected: direct (d), event (e)"
+        elif command == "po12_adc":
+            if manner == "d" or manner == "direct":
+                 print po12_adc(para1)
+            elif manner == "e" or manner == "event":
+                steelsquid_event.broadcast_event_external("pi_io_event", ["po12_adc", para1])
+            else:
+                print "Expected: direct (d), event (e)"
+        elif command == "po12_adc_volt":
+            if manner == "d" or manner == "direct":
+                 print po12_adc_volt(para1)
+            elif manner == "e" or manner == "event":
+                steelsquid_event.broadcast_event_external("pi_io_event", ["po12_adc_volt", para1])
+            else:
+                print "Expected: direct (d), event (e)"
+        elif command == "po16_gpio_pullup":
+            if manner == "d" or manner == "direct":
+                 po16_gpio_pullup(para1, para2)
+            elif manner == "e" or manner == "event":
+                steelsquid_event.broadcast_event_external("pi_io_event", ["po16_gpio_pullup", para1, para2])
+            else:
+                print "Expected: direct (d), event (e)"
+        elif command == "po16_gpio_get":
+            if manner == "d" or manner == "direct":
+                 print po16_gpio_get(para1)
+            elif manner == "e" or manner == "event":
+                steelsquid_event.broadcast_event_external("pi_io_event", ["po16_gpio_get", para1])
+            else:
+                print "Expected: direct (d), event (e)"
+        elif command == "po16_gpio_set":
+            if manner == "d" or manner == "direct":
+                 po16_gpio_set(para1, para2)
+            elif manner == "e" or manner == "event":
+                steelsquid_event.broadcast_event_external("pi_io_event", ["po16_gpio_set", para1, para2])
+            else:
+                print "Expected: direct (d), event (e)"
+        elif command == "po16_pwm":
+            if manner == "d" or manner == "direct":
+                 po16_pwm(para1, para2)
+            elif manner == "e" or manner == "event":
+                steelsquid_event.broadcast_event_external("pi_io_event", ["po16_pwm", para1, para2])
+            else:
+                print "Expected: direct (d), event (e)"
         else:
             print "Unknown command!!!"
+            
     
 

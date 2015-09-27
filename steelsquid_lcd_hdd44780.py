@@ -84,6 +84,8 @@ LCD_5x8DOTS = 0x00
 
 
 import time
+import steelsquid_i2c
+
 
 
 class CharLCD(object):
@@ -287,12 +289,14 @@ class CharLCDIcc(object):
       
     def display_on(self):
         if self.backlight >= 0:
-            self.bus.write_byte(self.addr, self._pinInterpret(self.backlight, 0x00, 0b1))
+            with steelsquid_i2c.Lock():
+                self.bus.write_byte(self.addr, self._pinInterpret(self.backlight, 0x00, 0b1))
             self.backlight_state = True
 
     def display_off(self):
         if self.backlight >= 0: 
-            self.bus.write_byte(self.addr, self._pinInterpret(self.backlight, 0x00, 0b0))   
+            with steelsquid_i2c.Lock():
+                self.bus.write_byte(self.addr, self._pinInterpret(self.backlight, 0x00, 0b0))   
             self.backlight_state = False
 
     def command(self, data):
@@ -353,6 +357,7 @@ class CharLCDIcc(object):
         else:
             data = self._pinInterpret(self.backlight, data, 0b0)
         
-        self.bus.write_byte(self.addr, data)
-        self.bus.write_byte(self.addr, self._pinInterpret(self.en, data, 0b1))
-        self.bus.write_byte(self.addr, data)
+        with steelsquid_i2c.Lock():
+            self.bus.write_byte(self.addr, data)
+            self.bus.write_byte(self.addr, self._pinInterpret(self.en, data, 0b1))
+            self.bus.write_byte(self.addr, data)

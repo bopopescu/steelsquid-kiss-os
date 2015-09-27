@@ -67,7 +67,7 @@ import smbus
 
 TREX_ADDRESS = 0x07
 
-#i2c_write_bus = smbus.SMBus(1)
+i2c_write_bus = smbus.SMBus(1)
 #i2c_read_bus = i2c.I2CMaster()
 trex_lock = threading.Lock()
 trex_package = [None] * 26
