@@ -110,7 +110,6 @@ web_root_downloads[3]="$base/play.html"
 web_root_downloads[4]="$base/download.html"
 web_root_downloads[5]="$base/file.html"
 web_root_downloads[6]="$base/utils.html"
-web_root_downloads[7]="$base/expand.html"
 
 # Download to web img folder
 web_img_downloads[1]="$base/img/autologin.png"
@@ -129,35 +128,34 @@ web_img_downloads[13]="$base/img/clear.png"
 web_img_downloads[14]="$base/img/display.png"
 web_img_downloads[15]="$base/img/electronics.png"
 web_img_downloads[16]="$base/img/encrypted.png"
-web_img_downloads[17]="$base/img/expand.png"
-web_img_downloads[18]="$base/img/folder_remote.png"
-web_img_downloads[19]="$base/img/fonts.png"
-web_img_downloads[20]="$base/img/help.png"
-web_img_downloads[21]="$base/img/hostname.png"
-web_img_downloads[22]="$base/img/html.png"
-web_img_downloads[23]="$base/img/keyboard.png"
-web_img_downloads[24]="$base/img/lcd.png"
-web_img_downloads[25]="$base/img/mail.png"
-web_img_downloads[26]="$base/img/mouse.png"
-web_img_downloads[27]="$base/img/network_wireless.png"
-web_img_downloads[28]="$base/img/password.png"
-web_img_downloads[29]="$base/img/reboot.png"
-web_img_downloads[30]="$base/img/root.png"
-web_img_downloads[31]="$base/img/samba.png"
-web_img_downloads[32]="$base/img/shutdown.png"
-web_img_downloads[33]="$base/img/status.png"
-web_img_downloads[34]="$base/img/swap.png"
-web_img_downloads[35]="$base/img/terminal.png"
-web_img_downloads[36]="$base/img/time.png"
-web_img_downloads[37]="$base/img/upgrade.png"
-web_img_downloads[38]="$base/img/download.png"
-web_img_downloads[39]="$base/img/bar_file.png"
-web_img_downloads[40]="$base/img/gpu.png"
-web_img_downloads[41]="$base/img/camera.png"
-web_img_downloads[42]="$base/img/bar_utils.png" 
-web_img_downloads[43]="$base/img/rover.png" 
-web_img_downloads[44]="$base/img/socket.png" 
-web_img_downloads[45]="$base/img/bluetooth.png" 
+web_img_downloads[17]="$base/img/folder_remote.png"
+web_img_downloads[18]="$base/img/fonts.png"
+web_img_downloads[19]="$base/img/help.png"
+web_img_downloads[20]="$base/img/hostname.png"
+web_img_downloads[21]="$base/img/html.png"
+web_img_downloads[22]="$base/img/keyboard.png"
+web_img_downloads[23]="$base/img/lcd.png"
+web_img_downloads[24]="$base/img/mail.png"
+web_img_downloads[25]="$base/img/mouse.png"
+web_img_downloads[26]="$base/img/network_wireless.png"
+web_img_downloads[27]="$base/img/password.png"
+web_img_downloads[28]="$base/img/reboot.png"
+web_img_downloads[29]="$base/img/root.png"
+web_img_downloads[30]="$base/img/samba.png"
+web_img_downloads[31]="$base/img/shutdown.png"
+web_img_downloads[32]="$base/img/status.png"
+web_img_downloads[33]="$base/img/swap.png"
+web_img_downloads[34]="$base/img/terminal.png"
+web_img_downloads[35]="$base/img/time.png"
+web_img_downloads[36]="$base/img/upgrade.png"
+web_img_downloads[37]="$base/img/download.png"
+web_img_downloads[38]="$base/img/bar_file.png"
+web_img_downloads[39]="$base/img/gpu.png"
+web_img_downloads[40]="$base/img/camera.png"
+web_img_downloads[41]="$base/img/bar_utils.png" 
+web_img_downloads[42]="$base/img/rover.png" 
+web_img_downloads[43]="$base/img/socket.png" 
+web_img_downloads[44]="$base/img/bluetooth.png" 
 
 # Must have packages will install if necessary
 packages=( wget iputils-ping aptitude tar gzip sed )
@@ -621,12 +619,6 @@ function help_system()
     echb "System and hardware."
     echb "############################################################################"
     if [ $(is-raspberry-pi) == "true" ]; then
-        echo 
-        echb "steelsquid expand"
-        echo "Expand Filesystem."
-        echo "Ensures that all of the SD card storage is available to the OS."
-        echo "This is only for raspberry-pi"
-        echo "Will take effect on next reboot...."
         echo 
         echb "steelsquid display"
         echo "Is the display enabled"
@@ -3030,17 +3022,6 @@ fi
 
 
 ##################################################################################
-# Expand the filesystem
-##################################################################################
-if [ "$in_parameter_1" == "expand" ]; then
-	log "Expand Filesystem."
-	raspi-expand-rootfs.sh
-	do-ok-exit "Root partition has been resized.\nThe filesystem will be enlarged upon the next reboot"
-fi
-
-
-
-##################################################################################
 # development
 ##################################################################################
 function development()
@@ -3873,22 +3854,6 @@ mkdir /root/Music
 mkdir /root/Pictures
 mkdir /root/Videos
 ln -s /media /root/Media
-
-
-
-##################################################################################
-# Download the expand filesystem command
-##################################################################################
-if [ $(is-raspberry-pi) == "true" ]; then
-    log "Create the expand filesystem command"
-    wget --progress=dot:giga --no-check-certificate -O /usr/bin/raspi-expand-rootfs.sh $base/raspi-expand-rootfs.sh
-    if [ $? -ne 0 ]; then
-        do-err-exit "Unable to download raspi-expand-rootfs.sh"
-    fi
-    chmod +x /usr/bin/raspi-expand-rootfs.sh
-    log "Expand filesystem command installed"
-fi
-
 
 
 ##################################################################################

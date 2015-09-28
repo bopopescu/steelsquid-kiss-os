@@ -1479,18 +1479,6 @@ if __name__ == '__main__':
         print("http://www.pichips.co.uk/index.php/P015_GPIO_with_PWM")
         print("channel = 1 to 4")
         print("value = 0 to 1023")
-
-        def testar(address, gpio, status):
-            steelsquid_utils.shout_time(str(address) +":"+ str(gpio) +":"+ str(status))
-
-        mcp23017_event(20, 7, testar, rpi_gpio=19)
-        mcp23017_event(20, 8, testar, rpi_gpio=19) 
-        #mcp23017_event(21, 0, testar)
-        #mcp23017_event(21, 1, testar)
-
-        raw_input()        
-
-
     else:
         manner = sys.argv[1]
         command = sys.argv[2]
