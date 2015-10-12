@@ -62,6 +62,7 @@ base_remote_password=""
 python_files = []
 web_files = []
 extra_files = []
+img_files = []
 ssh = None
 sftp = None
 channel = None
@@ -79,6 +80,7 @@ def load_data():
     global python_files
     global web_files
     global extra_files
+    global img_files
     print ""
     steelsquid_utils.log("Load settings from steelsquid-kiss-os.sh")
     with open("steelsquid-kiss-os.sh") as f:
@@ -102,6 +104,11 @@ def load_data():
                 line = line.replace("$base/","")
                 line = line.replace("\"","")
                 web_files.append([line, 0])
+            elif line.startswith("web_img_downloads["):
+                line = line.split("=")[1]
+                line = line.replace("$base/","")
+                line = line.replace("\"","")
+                img_files.append([line, 0])
     if os.path.isfile("config.txt"):
         print ""
         steelsquid_utils.log("Load settings from config.txt")
@@ -144,6 +151,13 @@ def listener():
                 o[1] = file_change
                 transmit(file_name, "/opt/steelsquid/python/"+file_name)
         for o in web_files:
+            file_name = o[0]
+            file_last = o[1]
+            file_change = os.path.getmtime(file_name)
+            if file_change != file_last:
+                o[1] = file_change
+                transmit(file_name, "/opt/steelsquid/web/"+file_name)
+        for o in img_files:
             file_name = o[0]
             file_last = o[1]
             file_change = os.path.getmtime(file_name)

@@ -56,28 +56,27 @@
                 $("#p_disk_size").html(paramaters[18]);
                 $("#p_disk_used").html(paramaters[19]);
                 $("#p_disk_aval").html(paramaters[20]);
-                $("#p_overclock").html(paramaters[21]);
-                $("#p_gpu_mem").html(paramaters[22]);
-                $("#p_log").html(paramaters[23]);
-                $("#p_disable_monitor").html(paramaters[24]);
-                $("#p_camera").html(paramaters[25]);
-                $("#p_timezone").html(paramaters[26]);
-                $("#p_keyb").html(paramaters[27]);
-                $("#p_web").html(paramaters[28]);
-                $("#p_web_local").html(paramaters[29]);
-                $("#p_web_https").html(paramaters[30]);
-                $("#p_web_aut").html(paramaters[31]);
-                $("#p_ssh").html(paramaters[32]);
-                $("#p_has_lcd").html(paramaters[33]);
-                $("#p_stream").html(paramaters[34]);
-                $("#p_socket").html(paramaters[35]);
-                $("#p_rover").html(paramaters[36]);
-                $("#p_download").html(paramaters[37]);
-                $("#p_download_dir").html(paramaters[38]);
-                $("#p_io").html(paramaters[39]);
-                $("#p_power").html(paramaters[40]);
-                $("#p_modem").html(paramaters[41]);
-                $("#p_io_voltage").html(paramaters[42]);
+                $("#p_gpu_mem").html(paramaters[21]);
+                $("#p_log").html(paramaters[22]);
+                $("#p_disable_monitor").html(paramaters[23]);
+                $("#p_camera").html(paramaters[24]);
+                $("#p_timezone").html(paramaters[25]);
+                $("#p_keyb").html(paramaters[26]);
+                $("#p_web").html(paramaters[27]);
+                $("#p_web_local").html(paramaters[28]);
+                $("#p_web_https").html(paramaters[29]);
+                $("#p_web_aut").html(paramaters[30]);
+                $("#p_ssh").html(paramaters[31]);
+                $("#p_has_lcd").html(paramaters[32]);
+                $("#p_stream").html(paramaters[33]);
+                $("#p_socket").html(paramaters[34]);
+                $("#p_rover").html(paramaters[35]);
+                $("#p_download").html(paramaters[36]);
+                $("#p_download_dir").html(paramaters[37]);
+                $("#p_io").html(paramaters[38]);
+                $("#p_power").html(paramaters[39]);
+                $("#p_modem").html(paramaters[40]);
+                $("#p_io_voltage").html(paramaters[41]);
             }
 
             /**
@@ -105,7 +104,6 @@
                 $("#p_disk_size").html("---");
                 $("#p_disk_used").html("---");
                 $("#p_disk_aval").html("---");
-                $("#p_overclock").html("---");
                 $("#p_gpu_mem").html("---");
                 $("#p_log").html("---");
                 $("#p_disable_monitor").html("---");
@@ -661,20 +659,24 @@
              * socket
              */
             function on_socket_info(paramaters){
-                if(paramaters[0] == "True"){
-                    $("#socket_button").html("<button onclick=\"javascript:submitSyncFromPrompt('socket_disable', 'Please enter password for the user root?', '');\">Disable socket connection</button>");
-                    $("#socket_info").html("The socket connection is enabled");
+                if(paramaters[0]=="server"){
+                    disable("socket_button_server");
+                    enable("socket_button_client");
+                    enable("socket_button_disable");
+                }
+                else if(paramaters[0]=="client"){
+                    enable("socket_button_server");
+                    enable("socket_button_client");
+                    enable("socket_button_disable");
+                    $("#socket_client_host").val(paramaters[3])
                 }
                 else{
-                    $("#socket_button").html("<button onclick=\"javascript:submitSyncFromPrompt('socket_enable', 'Please enter password for the user root?', '');\">Enable socket connection</button>");
-                    $("#socket_info").html("The socket connection is disabled");
+                    enable("socket_button_server");
+                    enable("socket_button_client");
+                    disable("socket_button_disable");
                 }
-            }
-            function on_socket_enable(paramaters){
-                on_socket_info(paramaters);
-            }
-            function on_socket_disable(paramaters){
-                on_socket_info(paramaters);
+                $("#socket_server_info").html(paramaters[1]);
+                $("#socket_client_info").html(paramaters[2]);
             }
             
             
@@ -690,14 +692,7 @@
                     $("#bluetooth_button").html("<button onclick=\"javascript:submitSyncFromPrompt('bluetooth_enable', 'Please enter password for the user root?', '');\">Enable bluetooth pairing</button>");
                     $("#bluetooth_info").html("Bluetooth pairing is disabled");
                 }
-                if(paramaters[1] == "True"){
-                    $("#bluetooth_con_button").html("<button onclick=\"javascript:submitSyncFromPrompt('bluetooth_con_disable', 'Please enter password for the user root?', '');\">Disable bluetooth connection</button>");
-                    $("#bluetooth_con_info").html("Bluetooth connection is enabled");
-                }
-                else{
-                    $("#bluetooth_con_button").html("<button onclick=\"javascript:submitSyncFromPrompt('bluetooth_con_enable', 'Please enter password for the user root?', '');\">Enable bluetooth connection</button>");
-                    $("#bluetooth_con_info").html("Bluetooth connection is disabled");
-                }
+                $("#bluetooth_pin").val(paramaters[1]);
             }
             function on_bluetooth_enable(paramaters){
                 on_bluetooth_info(paramaters);
@@ -705,11 +700,9 @@
             function on_bluetooth_disable(paramaters){
                 on_bluetooth_info(paramaters);
             }
-            function on_bluetooth_con_enable(paramaters){
-                on_bluetooth_info(paramaters);
-            }
-            function on_bluetooth_disable(paramaters){
-                on_bluetooth_con_info(paramaters);
+            function on_bluetooth_pin(paramaters){
+                $("#bluetooth_pin").val(paramaters[1]);
+                showAlertMedium("Bluetooth PIN changed", false);
             }
             
 
@@ -773,13 +766,6 @@
                 scrollToBottomIfChanged("upgrade_log");
             }
 
-            /**
-             * On expand filesystem
-             */
-            function on_expand(paramaters){
-                status_ok("expand_status", paramaters[0]);
-                show("expand_reboot");
-            }
             
             /**
              * On monitor disabled
@@ -832,28 +818,27 @@
 
 
             /**
-             * On overclock
+             * stream port
              */
-            function on_overclock(paramaters){
-                if(paramaters[0] == "over"){
-                    $("#overclock_button_under").html("<button onclick=\"javascript:submitSyncConfirm('Are you sure you want to underclock the device?', 'overclock', 'under');\">Underclock</button>");
-                    $("#overclock_button_default").html("<button onclick=\"javascript:submitSyncConfirm('Are you sure you want to set default clocking on the device?', 'overclock', 'default');\">Default</button>");
-                    $("#overclock_button_over").html("<button disabled=\"disabled\" onclick=\"javascript:submitSyncConfirm('Are you sure you want to overclock the device?', 'overclock', 'over');\">Overclock</button>");
-                    $("#overclock_button_info").html("Overclocking enabled");
-                }
-                else if(paramaters[0] == "under"){
-                    $("#overclock_button_under").html("<button disabled=\"disabled\"  onclick=\"javascript:submitSyncConfirm('Are you sure you want to underclock the device?', 'overclock', 'under');\">Underclock</button>");
-                    $("#overclock_button_default").html("<button onclick=\"javascript:submitSyncConfirm('Are you sure you want to set default clocking on the device?', 'overclock', 'default');\">Default</button>");
-                    $("#overclock_button_over").html("<button onclick=\"javascript:submitSyncConfirm('Are you sure you want to overclock the device?', 'overclock', 'over');\">Overclock</button>");
-                    $("#overclock_button_info").html("Underclocking enabled");
-                }
-                else{
-                    $("#overclock_button_under").html("<button onclick=\"javascript:submitSyncConfirm('Are you sure you want to underclock the device?', 'overclock', 'under');\">Underclock</button>");
-                    $("#overclock_button_default").html("<button disabled=\"disabled\" onclick=\"javascript:submitSyncConfirm('Are you sure you want to set default clocking on the device?', 'overclock', 'default');\">Default</button>");
-                    $("#overclock_button_over").html("<button onclick=\"javascript:submitSyncConfirm('Are you sure you want to overclock the device?', 'overclock', 'over');\">Overclock</button>");
-                    $("#overclock_button_info").html("Default clocking");
+            function on_stream_port(paramaters){
+                $("#stream_port_1").html(paramaters[0]);
+                $("#stream_port_2").html(paramaters[0]);
+                $("#stream_port_3").html(paramaters[0]);
+                $("#stream_port_4").html(paramaters[0]);
+            }
+
+
+            /**
+             * stream frames
+             */
+            function on_stream_frames(paramaters){
+                $("#stream_frames").val(paramaters[0]);
+                if(paramaters[1]!=""){
+                    showAlertMedium(paramaters[1], false);
                 }
             }
+
+
 
             /**
              * gpu mem
@@ -1040,9 +1025,6 @@
                 else if(layer == "lcd"){
                     submitSync('lcd');
                 }
-                else if(layer == "overclock"){
-                    submitSync('overclock');
-                }
                 else if(layer == "keyboard"){
                     submitSync('keyboard_get');
                     submitSync('keyboard_list');
@@ -1064,6 +1046,8 @@
                 else if(layer == "camera"){
                     submitSync('camera');
                     submitSync('stream');
+                    submitSync('stream_frames');
+                    submitSync('stream_port');
                 }
                 else if(layer == "hostname"){
                     submitSync('hostname_get');
@@ -1367,22 +1351,6 @@
                                 Upgrade
                             </td>
                         </tr>
-                        <tr onclick="javascript:showLayer('expand');">
-                            <td>
-                                <img alt="logo" src="img/expand.png"></img>
-                            </td>
-                            <td>
-                                Expand Filesystem
-                            </td>
-                        </tr>
-                        <tr onclick="javascript:showLayer('overclock');">
-                            <td>
-                                <img alt="logo" src="img/electronics.png"></img>
-                            </td>
-                            <td>
-                                Overclock/Underclock
-                            </td>
-                        </tr>
                         <tr onclick="javascript:showLayer('gpu');">
                             <td>
                                 <img alt="logo" src="img/gpu.png"></img>
@@ -1405,6 +1373,14 @@
                             </td>
                             <td>
                                 Display
+                            </td>
+                        </tr>
+                        <tr onclick="javascript:showLayer('camera');">
+                            <td>
+                                <img alt="logo" src="img/camera.png"></img>
+                            </td>
+                            <td>
+                                Camera
                             </td>
                         </tr>
                     </tbody>
@@ -1517,22 +1493,6 @@
                                             Notification Email
                                         </td>
                                     </tr>
-                                    <tr onclick="javascript:showLayer('monitor');">
-                                        <td>
-                                            <img alt="logo" src="img/display.png"></img>
-                                        </td>
-                                        <td>
-                                            Display
-                                        </td>
-                                    </tr>
-                                    <tr onclick="javascript:showLayer('camera');">
-                                        <td>
-                                            <img alt="logo" src="img/camera.png"></img>
-                                        </td>
-                                        <td>
-                                            Camera
-                                        </td>
-                                    </tr>
                                 </tbody>
                             </table>
                         </td>
@@ -1606,22 +1566,6 @@
                                             Upgrade
                                         </td>
                                     </tr>
-                                    <tr onclick="javascript:showLayer('expand');">
-                                        <td>
-                                            <img alt="logo" src="img/expand.png"></img>
-                                        </td>
-                                        <td>
-                                            Expand Filesystem
-                                        </td>
-                                    </tr>
-                                    <tr onclick="javascript:showLayer('overclock');">
-                                        <td>
-                                            <img alt="logo" src="img/electronics.png"></img>
-                                        </td>
-                                        <td>
-                                            Overclock/Underclock
-                                        </td>
-                                    </tr>
                                     <tr onclick="javascript:showLayer('gpu');">
                                         <td>
                                             <img alt="logo" src="img/gpu.png"></img>
@@ -1644,6 +1588,14 @@
                                         </td>
                                         <td>
                                             Display
+                                        </td>
+                                    </tr>
+                                    <tr onclick="javascript:showLayer('camera');">
+                                        <td>
+                                            <img alt="logo" src="img/camera.png"></img>
+                                        </td>
+                                        <td>
+                                            Camera
                                         </td>
                                     </tr>
                                 </tbody>
@@ -1754,9 +1706,6 @@
                 <br />
                 <div id="info_2">
                     <table class="keyvalue">
-                        <tr>
-                            <td>Overclock:</td><td id="p_overclock">---</td>
-                        </tr>
                         <tr>
                             <td>GPU Mem:</td><td id="p_gpu_mem">---</td>
                         </tr>
@@ -2415,10 +2364,12 @@
                                 Fill this out if you want an email from the system on certain events.<br />
                                 <br/>
                                 Contact your ISP for this information.<br/>
+                                <br>
                                 It is also possible to use a gmail account.<br/>
                                 SMTP server: <span class="highlight">smtp.gmail.com:587</span><br/>
                                 Username: Your gmail user (without @gmail.com)<br/>
-                                Password: Your gmail password
+                                Password: Your gmail password<br>
+                                You must do this: <a href="https://support.google.com/accounts/answer/6010255?vid=1-635790602759465538-2791292056">https://support.google.com/accounts/answer/6010255?vid=1-635790602759465538-2791292056</a>
                             </td>
                         </tr>
                     </tbody>
@@ -2815,25 +2766,79 @@
                 <table>
                     <tr>
                         <td>
-                            Socket connection is a simple socket protocol te sent and receive commands. <br />
-                            See <a href="http://www.steelsquid.org/steelsquid-kiss-os-development">http://www.steelsquid.org/steelsquid-kiss-os-development</a>.<br/>
+                            Socket connection is a simple socket protocol to sent and receive commands. <br />
+                            See <a href="http://www.steelsquid.org/extend">http://www.steelsquid.org/extend</a> and <a href="http://www.steelsquid.org/advance-example">http://www.steelsquid.org/advance-example</a>.<br/>
                             If you change this you will get "Connection error" while service restart...you need to refresh the browser.
-                        </td>
-                    </tr>
-                </table>
-                <br/>
-                <table class="keyvalue">
-                    <tr>
-                        <td>
-                            Current status:
-                        </td>
-                        <td id="socket_info">
                         </td>
                     </tr>
                 </table>
                 <table>
                     <tr>
-                        <td id="socket_button">
+                        <td>
+                            <button id="socket_button_disable" onclick="javascript:submitSync('socket_disable');">Disable socket connection</button>
+                        </td>
+                    </tr>
+                </table>
+                <br/>
+                <table>
+                    <tr>
+                        <td>
+                            Enable socket connection as server.
+                        </td>
+                    </tr>
+                </table>
+                <table class="keyvalue">
+                    <tr>
+                        <td>
+                            Current status:
+                        </td>
+                        <td id="socket_server_info">
+                        </td>
+                    </tr>
+                </table>
+                <table>
+                    <tr>
+                        <td>
+                            <button id="socket_button_server" onclick="javascript:submitSync('socket_server');">Enable as server</button>
+                        </td>
+                    </tr>
+                </table>
+                <br />
+                <br/>
+                <table>
+                    <tr>
+                        <td>
+                            Enable socket connection as client.
+                        </td>
+                    </tr>
+                </table>
+                <table class="keyvalue">
+                    <tr>
+                        <td>
+                            Current status:
+                        </td>
+                        <td id="socket_client_info">
+                        </td>
+                    </tr>
+                </table>
+                <table class="input">
+                    <tbody>
+                        <tr>
+                            <td>
+                                Address to server:
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <input type="text" id="socket_client_host"></input>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <table>
+                    <tr>
+                        <td>
+                            <button id="socket_button_client" onclick="javascript:submitSyncFromInput('socket_client', 'socket_client_host');">Enable as client / Change address</button>
                         </td>
                     </tr>
                 </table>
@@ -2904,32 +2909,7 @@
                     </tbody>
                 </table>
                 <br />
-                <table>
-                    <tr>
-                        <td>
-                            Enable or disable bluetooth connection on this device. <br />
-                            If you enable this you can send simple commands to the device via bluetooth.<br />
-                            If you change this you will get "Connection error" while service restart...you need to refresh the browser.
-                        </td>
-                    </tr>
-                </table>
-                <br/>
-                <table class="keyvalue">
-                    <tr>
-                        <td>
-                            Current status:
-                        </td>
-                        <td id="bluetooth_con_info">
-                        </td>
-                    </tr>
-                </table>
-                <table>
-                    <tr>
-                        <td id="bluetooth_con_button">
-                        </td>
-                    </tr>
-                </table>
-                <br />                <table class="footer">
+                <table class="footer">
                     <tr onclick="javascript:onBack();">
                         <td>
                             <img alt="logo" src="img/back.png"></img>
@@ -2996,48 +2976,6 @@
                     </tr>
                 </table>
                 <br/>
-                <table class="footer">
-                    <tr onclick="javascript:onBack();">
-                        <td>
-                            <img alt="logo" src="img/back.png"></img>
-                        </td>
-                        <td>
-                            Back to main menu
-                        </td>
-                    </tr>
-                </table>
-            </div>
-            <!--####################################################################################################-->
-            <div class="layer" id="expand">
-                <table class="header">
-                    <thead>
-                        <tr onclick="javascript:onBack();">
-                            <th>
-                                <img alt="logo" src="img/expand.png"></img>
-                            </th>
-                            <th>
-                                Expand Filesystem
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td colspan="2">
-                                Ensures that all of the SD card storage is available to the OS.<br />
-                                Will take effect on next reboot...
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                <br />
-                <button onclick="javascript:submitSyncConfirm('Are you sure you want to expand the filesystem?', 'expand')">Expand filesystem</button>
-                <br /><br />
-                <div id="expand_status">
-                </div>
-                <div class="hide" id="expand_reboot">
-                    <button onclick="javascript:submitSyncConfirm('Are you sure you want to reboot?', 'reboot');">Reboot</button> 
-                    <br /><br />
-                </div>
                 <table class="footer">
                     <tr onclick="javascript:onBack();">
                         <td>
@@ -3148,11 +3086,29 @@
                     <tbody>
                         <tr>
                             <td colspan="2">
-                                Here you can enable or disable streaming of a USB and Raspberry PI camera. <br />
-                                The stream can be reached from http://[ipToRaspberry]:8080/?action=stream<br/>
-                                e.g. &lt;img src="http://[ipToRaspberry]:8080/?action=stream"/&gt;<br/>
+                                Here you can enable or disable streaming of a USB or Raspberry PI camera. <br />
+                                The stream can be reached from http://[ipToRaspberry]:<span id="stream_port_1"></span>/?action=stream<br/>
+                                e.g. &lt;img src="http://[ipToRaspberry]:<span id="stream_port_2"></span>/?action=stream"/&gt;<br/>
+                                And a still image at: http://[ipToRaspberry]:<span id="stream_port_3"></span>/?action=snapshot<br/>
+                                e.g. &lt;img src="http://[ipToRaspberry]:<span id="stream_port_4"></span>/?action=snapshot"/&gt;<br/>
                                 You can see the result under 'Utils'.<br/>
                                 You need to <span class="highlight">reboot</span> the device for any changes to take effect.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <br/>
+                <table class="input">
+                    <tbody>
+                        <tr>
+                            <td>
+                                Frames per second (enable stream below after you change this value)
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <input type="text" id="stream_frames" />
+                                <button onclick="javascript:submitSyncFromInput('stream_frames', 'stream_frames')">Change</button>
                             </td>
                         </tr>
                     </tbody>
@@ -3173,74 +3129,6 @@
                         </td>
                         <td id="stream_button_2">
                         </td>
-                        <td>
-                            <button onclick="javascript:submitSyncConfirm('Are you sure you want to reboot?', 'reboot');">Reboot</button>
-                        </td>
-                    </tr>
-                </table>
-                <br />
-                <table class="footer">
-                    <tr onclick="javascript:onBack();">
-                        <td>
-                            <img alt="logo" src="img/back.png"></img>
-                        </td>
-                        <td>
-                            Back to main menu
-                        </td>
-                    </tr>
-                </table>
-            </div>
-            <!--####################################################################################################-->
-            <div class="layer" id="overclock">
-                <table class="header">
-                    <thead>
-                        <tr onclick="javascript:onBack();">
-                            <th>
-                                <img alt="logo" src="img/electronics.png"></img>
-                            </th>
-                            <th>
-                                Overclock/Underclock
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td colspan="2">
-                                Overclock will increase the cpu speed to 1000MHz (May set the warranty bit and shorten the life of the device).<br />
-                                Underclocking will decrease the cpu speed to 140MHz (will reduce power consumption slightly, but will make the system very slow).<br />
-                                Will take effect on <span class="highlight">next reboot</span>...
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                <br />
-                <table class="keyvalue">
-                    <tr>
-                        <td>
-                            Current status:
-                        </td>
-                        <td id="overclock_button_info">
-                        </td>
-                    </tr>
-                </table>
-                <table>
-                    <tr>
-                        <td id="overclock_button_under">
-                        </td>
-                        <td id="overclock_button_default">
-                        </td>
-                        <td id="overclock_button_over">
-                        </td>
-                    </tr>
-                </table>
-                <br />
-                <table class="input">
-                    <tr>
-                        <td>
-                            You need to <span class="highlight">reboot</span> the device for any changes to take effect.
-                        </td>
-                    </tr>
-                    <tr>
                         <td>
                             <button onclick="javascript:submitSyncConfirm('Are you sure you want to reboot?', 'reboot');">Reboot</button>
                         </td>
@@ -3331,7 +3219,7 @@
                                 You can print text on a <a href="http://tronixlabs.com/news/tutorial-serial-i2c-backpack-for-hd44780compatible-lcd-modules-with-arduino/">HDD44780</a> compatible LCD via <span class="highlight">I2C</span>.<br/>
                                 You can also connect a <a href="https://www.sparkfun.com/products/10168">nokia5110</a> LCD.<br/>
                                 Automatic will try both nokia5110, HDD44780 or ssd1306 (oled).<br/>
-                                See <a href="http://www.steelsquid.org/pi-io-example">http://www.steelsquid.org/pi-io-example</a><br/>
+                                See <a href="http://www.steelsquid.org/simple-examples">http://www.steelsquid.org/simple-examples</a><br/>
                                 The IP of the device will also be displayed on the LCD<br/>
                                 <br/>
                                 If you change this you will get "Connection error" while service restart...you need to refresh the browser.

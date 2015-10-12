@@ -4,7 +4,9 @@
 '''
 Global stuff for steelsquid kiss os
 Reach the http server and Socket connection.
-I also add some extra stuff here like Rover and IO
+I also add some extra stuff here like Rover, IO and alarm
+
+Use this to add functionality that my be used from different part of the system... example http server and socket server...
 
 @organization: Steelsquid
 @author: Andreas Nilsson
@@ -18,6 +20,11 @@ import steelsquid_utils
 import steelsquid_event
 import steelsquid_pi
 import time
+from datetime import datetime
+from datetime import timedelta
+import os
+import urllib
+import thread
 
 
 # The socket connection, if enabled (not enabled = None)
@@ -28,6 +35,155 @@ socket_connection = None
 # The http webserver, if enabled (not enabled = None)
 # Flag: web
 http_server = None
+
+
+class Alarm(object):
+    '''
+    Fuctionality for my rover controller
+    Also see utils.html, steelsquid_kiss_http_server.py, steelsquid_kiss_socket_connection.py
+    '''
+    
+    # Is the alarm functionality enabled
+    is_enabled = False
+    
+    # Is siren on
+    is_siren_on = False
+
+    # Is lamp on
+    is_lamp_on = False
+
+    # Motion detected
+    motion_detected = False
+    
+    # Alarm is triggered
+    alarm_triggered = False
+    
+    # Calculate when alarm should go off
+    counter=0
+    last_move = 0
+    last_trigger = datetime.now() - timedelta(days =1 )
+    
+    
+    @classmethod
+    def enable(cls):
+        '''
+        Enable the alarm functionality (this is set by steelsquid_boot)
+        Flag: alarm
+        '''    
+        steelsquid_utils.shout("Steelsquid Alarm/Surveillance enabled")
+        steelsquid_pi.gpio_event(4, cls.on_motion)
+        
+        if not steelsquid_utils.has_parameter("alarm_security_movments"):
+            steelsquid_utils.set_parameter("alarm_security_movments", "3");
+        if not steelsquid_utils.has_parameter("alarm_security_movments_seconds"):
+            steelsquid_utils.set_parameter("alarm_security_movments_seconds", "20");
+        if not steelsquid_utils.has_parameter("alarm_security_seconds"):
+            steelsquid_utils.set_parameter("alarm_security_seconds", "10");
+        if not steelsquid_utils.has_parameter("alarm_security_wait"):
+            steelsquid_utils.set_parameter("alarm_security_wait", "120");
+
+    @classmethod
+    def on_motion(cls, pin, status):
+        '''
+        Execute on motion
+        '''
+        cls.motion_detected = status
+        if steelsquid_utils.get_flag("alarm_security"):
+            nr_of_movments = int(steelsquid_utils.get_parameter("alarm_security_movments"))
+            movments_under_time = int(steelsquid_utils.get_parameter("alarm_security_movments_seconds"))
+            alarm_for_seconds = int(steelsquid_utils.get_parameter("alarm_security_seconds"))
+            alarm_security_wait = int(steelsquid_utils.get_parameter("alarm_security_wait"))
+            activate_siren = steelsquid_utils.get_flag("alarm_security_activate_siren")
+            alarm_security_send_mail = steelsquid_utils.get_flag("alarm_security_send_mail")
+            flash_light = steelsquid_utils.get_flag("alarm_flash_light")
+            if status==True and cls.alarm_triggered==False:
+                now = datetime.now()
+                delta = now - cls.last_trigger
+                if delta.total_seconds() > alarm_security_wait:
+                    if cls.last_move == 0:
+                        cls.last_move = datetime.now()                
+                    delta = now - cls.last_move
+                    if delta.total_seconds()<movments_under_time:
+                        cls.counter=cls.counter+1
+                    else:
+                        cls.counter=0
+                        cls.last_move = 0
+                    if cls.counter>=nr_of_movments:
+                        cls.alarm_triggered=True
+                        cls.last_trigger=datetime.now() 
+                        if activate_siren:
+                            cls.siren(True)
+                        if flash_light:
+                            thread.start_new_thread(cls.flash_l, ()) 
+                        if alarm_security_send_mail:
+                            cls.send_mail()
+                        steelsquid_utils.execute_delay(alarm_for_seconds, cls.turn_off_alarm, None)
+
+    @classmethod
+    def flash_l(cls):
+        '''
+        flash light
+        '''
+        while cls.alarm_triggered:
+            cls.lamp(True)
+            time.sleep(0.3)
+            cls.lamp(False)
+            time.sleep(0.3)
+        cls.lamp(False)
+                    
+    @classmethod
+    def send_mail(cls):
+        '''
+        Send alarm mail
+        '''
+        try:
+            urllib.urlretrieve("http://localhost:8080/?action=snapshot", "/tmp/snapshot.jpg")
+            ip = steelsquid_utils.network_ip_test_all()
+            if steelsquid_utils.get_flag("web_https"):
+                link = 'https://'+ip+'/utils?alarm'
+            else:
+                link = 'http://'+ip+'/utils?alarm'
+            steelsquid_utils.notify("Security alarm from: " + os.popen("hostname").read()+"\n"+link, "/tmp/snapshot.jpg")
+        except:
+            steelsquid_utils.shout()
+
+    @classmethod
+    def turn_off_alarm(cls):
+        '''
+        Turn off a activated alarm
+        '''
+        cls.siren(False)
+        cls.alarm_triggered=False
+        cls.counter=0
+        cls.last_move = 0
+
+    @classmethod
+    def siren(cls, activate=None):
+        '''
+        Aktivate the siren and get if it is activated
+        '''    
+        if activate!=None:
+            if activate:
+                steelsquid_pi.gpio_set(17, True);
+            else:
+                steelsquid_pi.gpio_set(17, False);
+            cls.is_siren_on=activate
+        return cls.is_siren_on
+
+    @classmethod
+    def lamp(cls, activate=None):
+        '''
+        Aktivate the lamp and get if it is activated
+        '''    
+        if activate!=None:
+            if activate:
+                steelsquid_pi.gpio_set(22, True);
+                steelsquid_pi.gpio_set(27, True);
+            else:
+                steelsquid_pi.gpio_set(22, False);
+                steelsquid_pi.gpio_set(27, False);
+            cls.is_lamp_on=activate
+        return cls.is_lamp_on
 
 
 class Rover(object):
@@ -341,4 +497,3 @@ class PIIO(object):
         '''    
         import steelsquid_piio
         steelsquid_event.broadcast_event("dip", [6, status])
-

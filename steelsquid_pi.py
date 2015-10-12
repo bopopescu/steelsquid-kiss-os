@@ -887,19 +887,19 @@ def lcd_auto_write(text, number_of_seconds = 0, force_setup = False):
     global lcd_auto
     if lcd_auto == 0:
         try:
-            ssd1306_write(text, number_of_seconds)
+            ssd1306_write(" ", 0)
             lcd_auto = 1
         except:
             try:
-                nokia5110_write(text, number_of_seconds, force_setup)
+                nokia5110_write(" ", 0, force_setup)
                 lcd_auto = 2
             except:
                 try:
-                    hdd44780_write(text, number_of_seconds, force_setup, True)
+                    hdd44780_write(" ", 0, force_setup, True)
                     lcd_auto = 3
                 except:
                     lcd_auto = 4
-    elif lcd_auto == 1:
+    if lcd_auto == 1:
         try:
             ssd1306_write(text, number_of_seconds)
         except:
@@ -1301,6 +1301,13 @@ def po16_pwm(channel, value):
     steelsquid_i2c.write_bytes(0x36, 7, [channel, steelsquid_utils.get_hight_byte(value), steelsquid_utils.get_low_byte(value)])
 
 
+def gpio_event_callback_method(pin, status): 
+    '''
+    To test the gpio event handler
+    '''
+    steelsquid_utils.log("PIN: " + str(pin) + "=" + str(status))
+
+
 if __name__ == '__main__':
     import sys
     if len(sys.argv)==1:
@@ -1329,6 +1336,10 @@ if __name__ == '__main__':
         print("")
         printb("pi <d/e> gpio_set <gpio> <true/false>")
         print("Set status of RaspberryPI GPIO")
+        print("gpio: 4-26")
+        print("")
+        printb("pi d gpio_event <gpio>")
+        print("Listen for changes on RaspberryPI GPIO")
         print("gpio: 4-26")
         print("")
         printb("pi <d/e> mcp23017_get <address> <gpio>")
@@ -1506,6 +1517,12 @@ if __name__ == '__main__':
                 steelsquid_event.broadcast_event_external("pi_io_event", ["gpio_set", para1, para2])
             else:
                 print "Expected: direct (d), event (e)"
+        elif command == "gpio_event":
+            if manner == "d" or manner == "direct":
+                gpio_event(para1, gpio_event_callback_method)
+                raw_input("Press any key to exit!")
+            else:
+                print "Expected: direct (d)"
         elif command == "mcp23017_get":
             if manner == "d" or manner == "direct":
                 print mcp23017_get(para1, para2)

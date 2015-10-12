@@ -7,8 +7,8 @@ Do not execute long running stuff or the system won't start properly.
 This will always execute with root privilege.
 
 Use this to expand the capabilities of the webserver.
-The web-server will be started by steelsquid_boot.py
-See steelsquid-kiss-http-server.py for example
+Handle stuff in expand.html
+- Your stuff....
 
 @organization: Steelsquid
 @author: Andreas Nilsson
@@ -19,16 +19,18 @@ See steelsquid-kiss-http-server.py for example
 
 
 import sys
-import steelsquid_kiss_http_server
+import steelsquid_kiss_http_utils
 import steelsquid_utils
 import steelsquid_event
+import steelsquid_kiss_global
+import steelsquid_kiss_expand
 
 
-class SteelsquidKissExpandHttpServer(steelsquid_kiss_http_server.SteelsquidKissHttpServer):
+class SteelsquidKissHttpServerExpand(steelsquid_kiss_http_utils.SteelsquidKissHttpServerUtils):
     
     __slots__ = []
 
     def __init__(self, port, root, authorization, only_localhost, local_web_password, use_https):
-        super(SteelsquidKissExpandHttpServer, self).__init__(port, root, authorization, only_localhost, local_web_password, use_https)
+        super(SteelsquidKissHttpServerExpand, self).__init__(port, root, authorization, only_localhost, local_web_password, use_https)
 
 

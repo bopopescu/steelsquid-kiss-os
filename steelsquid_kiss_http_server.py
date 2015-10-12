@@ -2,7 +2,17 @@
 
 
 '''
-Control/Configure steelsquid-kiss-os from web browser
+Use this to implement HTTP stuff, will execute on boot
+Do not execute long running stuff or the system won't start properly.
+This will always execute with root privilege.
+The web-server will be started by steelsquid_boot.py
+
+Use this to expand the capabilities of the webserver.
+Handle stuff in index.html
+-Administartot
+-Download manager
+-Mediaplayer
+-Filemanager
 
 @organization: Steelsquid
 @author: Andreas Nilsson
@@ -513,11 +523,14 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         '''
         if len(parameters)==1:
             if parameters[0]=="True":
+                steelsquid_utils.set_flag("download")
                 steelsquid_utils.execute_system_command(['steelsquid', 'download-on'])
             elif parameters[0]=="False":
+                steelsquid_utils.del_flag("download")
                 steelsquid_utils.execute_system_command(['steelsquid', 'download-off'])
             else:
                 if steelsquid_utils.is_file_ok(parameters[0], ALLOWED, check_if_exist=False):
+                    steelsquid_utils.set_parameter("download_dir", parameters[0])
                     steelsquid_utils.execute_system_command(['steelsquid', 'download-dir', parameters[0]])
                     steelsquid_utils.execute_system_command(['steelsquid', 'download-on'])
                 else:
@@ -576,6 +589,7 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         '''
         if len(parameters) > 0:
             steelsquid_utils.execute_system_command(['steelsquid', 'keyboard', parameters[0]])
+            steelsquid_utils.set_parameter("keyboard", parameters[0])
         return steelsquid_utils.get_parameter("keyboard")
 
     def keyboard_list(self, session_id, parameters):
@@ -697,8 +711,6 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
             raise Exception("You entered wrong current password")
         else:
             proc=Popen(['passwd', 'root'], stdin=PIPE, stdout=PIPE, stderr=PIPE)
-            if not steelsquid_utils.is_root():
-                proc.stdin.write(parameters[2] + '\n')
             proc.stdin.write(parameters[0] + '\n')
             proc.stdin.write(parameters[0])  
             proc.stdin.flush()  
@@ -739,9 +751,11 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
             if parameters[0] == "True":
                 proc=Popen(['steelsquid', 'web-off'], stdout = PIPE, stderr = STDOUT)  
                 proc.wait()
+                steelsquid_utils.del_flag("web")
             else:
                 proc=Popen(['steelsquid', 'web-on'], stdout = PIPE, stderr = STDOUT)  
                 proc.wait()
+                steelsquid_utils.set_flag("web")
         return not steelsquid_utils.get_flag("web")
 
     def web_interface_share(self, session_id, parameters):
@@ -778,9 +792,11 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
             if parameters[0] == "True":
                 proc=Popen(['steelsquid', 'web-local-on'], stdout = PIPE, stderr = STDOUT)  
                 proc.wait()
+                steelsquid_utils.set_flag("web_local")
             else:
                 proc=Popen(['steelsquid', 'web-local-off'], stdout = PIPE, stderr = STDOUT)  
                 proc.wait()
+                steelsquid_utils.del_flag("web_local")
         return steelsquid_utils.get_flag("local_web")
 
     def web_interface_https(self, session_id, parameters):
@@ -791,9 +807,11 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
             if parameters[0] == "True":
                 proc=Popen(['steelsquid', 'web-https'], stdout = PIPE, stderr = STDOUT)  
                 proc.wait()
+                steelsquid_utils.set_flag("use_https")
             else:
                 proc=Popen(['steelsquid', 'web-http'], stdout = PIPE, stderr = STDOUT)  
                 proc.wait()
+                steelsquid_utils.del_flag("use_https")
         return [steelsquid_utils.get_flag("use_https")]
 
     def web_interface_authentication(self, session_id, parameters):
@@ -811,6 +829,7 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         else:
             proc=Popen(['steelsquid', 'web-aut-on'], stdout = PIPE, stderr = STDOUT)  
             proc.wait()
+            steelsquid_utils.set_flag("web_authentication")
             return [steelsquid_utils.get_flag("web_authentication")]
 
     def web_interface_authentication_off(self, session_id, parameters):
@@ -822,6 +841,7 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         else:
             proc=Popen(['steelsquid', 'web-aut-off'], stdout = PIPE, stderr = STDOUT)  
             proc.wait()
+            steelsquid_utils.del_flag("web_authentication")
             return [steelsquid_utils.get_flag("web_authentication")]
 
     def shutdown(self, session_id, parameters):
@@ -862,13 +882,6 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         elif parameters[0] == 'full':
             self.execute_system_command(['steelsquid', 'upgrade'], "upgrade")
 
-    def expand(self, session_id, parameters):
-        '''
-        Expand-rootfs
-        '''
-        steelsquid_utils.execute_system_command(['steelsquid', 'expand']) 
-        return "Root partition has been resized.<br />The filesystem will be enlarged upon the next reboot."
-
     def monitor_disable(self, session_id, parameters):
         '''
         Enable or disable monitor
@@ -899,55 +912,6 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
                 steelsquid_utils.del_flag("camera")
         return steelsquid_utils.get_flag("camera")
 
-    def stream(self, session_id, parameters):
-        '''
-        Enable or disable streamimg
-        '''
-        if len(parameters) > 0:
-            if parameters[0] == "usb":
-                proc=Popen(['steelsquid', 'stream-on'], stdout = PIPE, stderr = STDOUT)  
-                proc.wait()
-                steelsquid_utils.set_flag("stream")
-                steelsquid_utils.del_flag("stream-pi")
-            elif parameters[0] == "pi":
-                proc=Popen(['steelsquid', 'stream-pi-on'], stdout = PIPE, stderr = STDOUT)  
-                proc.wait()
-                steelsquid_utils.del_flag("stream")
-                steelsquid_utils.set_flag("stream-pi")
-                steelsquid_utils.set_flag("camera")
-            else:
-                proc=Popen(['steelsquid', 'stream-off'], stdout = PIPE, stderr = STDOUT)  
-                proc.wait()
-                steelsquid_utils.del_flag("stream")
-                steelsquid_utils.del_flag("stream-pi")
-        if steelsquid_utils.get_flag("stream"):
-            return "usb"
-        elif steelsquid_utils.get_flag("stream-pi"):
-            return "pi"
-        else:
-            return "false"
-
-
-    def overclock(self, session_id, parameters):
-        '''
-        Set and get overklock
-        '''
-        if len(parameters) > 0:
-            if parameters[0] == "over":
-                proc=Popen(['steelsquid', 'overclock'], stdout = PIPE, stderr = STDOUT)  
-                proc.wait()
-            elif parameters[0] == "under":
-                proc=Popen(['steelsquid', 'underclock'], stdout = PIPE, stderr = STDOUT)  
-                proc.wait()
-            else:
-                proc=Popen(['steelsquid', 'defaultclock'], stdout = PIPE, stderr = STDOUT)  
-                proc.wait()
-        if steelsquid_utils.get_flag("overclock"):
-            return "over"
-        elif steelsquid_utils.get_flag("underclock"):
-            return "under"
-        else:
-            return "default"
 
     def lcd(self, session_id, parameters):
         '''
@@ -1105,6 +1069,7 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         '''
         Add a download link
         '''
+        steelsquid_utils.set_flag("download")
         steelsquid_utils.execute_system_command(['steelsquid', 'download-on'])
 
     def download_active(self, session_id, parameters):
@@ -1743,36 +1708,44 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         '''
         
         '''
-        return steelsquid_utils.get_flag("socket_connection")
+        if steelsquid_utils.get_flag("socket_server"):
+            return ["server", "Socket connection as server enabled on port 22222", "Disabled"]
+        elif steelsquid_utils.has_parameter("socket_client"):
+            return ["client", "Disabled", "Socket connection as client enabled ("+steelsquid_utils.get_parameter("socket_client")+":22222)", steelsquid_utils.get_parameter("socket_client")]
+        else:
+            return ["disabled", "Disabled", "Disabled"]
 
-
-    def socket_enable(self, session_id, parameters):
+    def socket_server(self, session_id, parameters):
         '''
         
         '''
-        if not steelsquid_utils.authenticate("root", parameters[0]):
-            raise Exception("Incorrect password for user root!")
-        else:
-            steelsquid_utils.execute_system_command(['steelsquid', 'socket-on']) 
-        return steelsquid_utils.get_flag("socket_connection")
+        steelsquid_utils.execute_system_command(['steelsquid', 'socket-server']) 
+        return "Socket connection as server enabled"
+
+
+    def socket_client(self, session_id, parameters):
+        '''
+        
+        '''
+        if len(parameters[0])<2:
+            raise Exception("Server adress can not be empty")
+        steelsquid_utils.execute_system_command(['steelsquid', 'socket-client', parameters[0]]) 
+        return "Socket connection as client enabled"
 
 
     def socket_disable(self, session_id, parameters):
         '''
         
         '''
-        if not steelsquid_utils.authenticate("root", parameters[0]):
-            raise Exception("Incorrect password for user root!")
-        else:
-            steelsquid_utils.execute_system_command(['steelsquid', 'socket-off']) 
-        return steelsquid_utils.get_flag("socket_connection")
+        steelsquid_utils.execute_system_command(['steelsquid', 'socket-off']) 
+        return "Socket connection disabled"
              
 
     def bluetooth_info(self, session_id, parameters):
         '''
         
         '''
-        return [steelsquid_utils.get_flag("bluetooth_pairing"), steelsquid_utils.get_flag("bluetooth_connection")]
+        return [steelsquid_utils.get_flag("bluetooth_pairing"), steelsquid_utils.get_parameter("bluetooth_pin")]
 
 
     def bluetooth_enable(self, session_id, parameters):
@@ -1783,7 +1756,7 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
             raise Exception("Incorrect password for user root!")
         else:
             steelsquid_utils.execute_system_command(['steelsquid', 'bluetooth-on']) 
-        return [steelsquid_utils.get_flag("bluetooth_pairing"), steelsquid_utils.get_flag("bluetooth_connection")]
+        return [steelsquid_utils.get_flag("bluetooth_pairing"), steelsquid_utils.get_parameter("bluetooth_pin")]
 
 
     def bluetooth_disable(self, session_id, parameters):
@@ -1794,7 +1767,7 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
             raise Exception("Incorrect password for user root!")
         else:
             steelsquid_utils.execute_system_command(['steelsquid', 'bluetooth-off']) 
-        return [steelsquid_utils.get_flag("bluetooth_pairing"), steelsquid_utils.get_flag("bluetooth_connection")]
+        return [steelsquid_utils.get_flag("bluetooth_pairing"), steelsquid_utils.get_parameter("bluetooth_pin")]
 
 
     def bluetooth_pin(self, session_id, parameters):
@@ -1804,118 +1777,31 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         if not parameters[0].isdigit():
             raise Exception("PIN must be digits")
         steelsquid_utils.execute_system_command(['steelsquid', 'bluetooth-pin', parameters[0]]) 
-        return "Bluetooth PIN changed"             
+        return [steelsquid_utils.get_parameter("bluetooth_pin")]             
 
 
-    def bluetooth_con_enable(self, session_id, parameters):
+    def web_port(self, session_id, parameters):
         '''
-        
+        Get and set web server port
         '''
-        if not steelsquid_utils.authenticate("root", parameters[0]):
-            raise Exception("Incorrect password for user root!")
-        else:
-            steelsquid_utils.execute_system_command(['steelsquid', 'bluetooth-con-on']) 
-        return [steelsquid_utils.get_flag("bluetooth_pairing"), steelsquid_utils.get_flag("bluetooth_connection")]
+        if len(parameters)>0:
+            steelsquid_utils.execute_system_command(['steelsquid', 'web-port', parameters[0]]) 
+        if not steelsquid_utils.has_parameter("web-port"):
+            if steelsquid_utils.get_flag("web-https"):
+                steelsquid_utils.set_parameter("web-port", "443")
+            else:
+                steelsquid_utils.set_parameter("web-port", "80")
+        return steelsquid_utils.get_parameter("web-port")
 
 
-    def bluetooth_con_disable(self, session_id, parameters):
+    def stream_port(self, session_id, parameters):
         '''
-        
+        Get and set stream server port
         '''
-        if not steelsquid_utils.authenticate("root", parameters[0]):
-            raise Exception("Incorrect password for user root!")
-        else:
-            steelsquid_utils.execute_system_command(['steelsquid', 'bluetooth-con-off']) 
-        return [steelsquid_utils.get_flag("bluetooth_pairing"), steelsquid_utils.get_flag("bluetooth_connection")]
-
-
-    def rover_info(self, session_id, parameters):
-        '''
-        
-        '''
-        return steelsquid_kiss_global.Rover.info()
-
-
-    def rover_enable(self, session_id, parameters):
-        '''
-        
-        '''
-        if not steelsquid_utils.authenticate("root", parameters[0]):
-            raise Exception("Incorrect password for user root!")
-        else:
-            steelsquid_utils.execute_system_command(['steelsquid', 'rover-on']) 
-        return steelsquid_utils.get_flag("rover")
-
-
-    def rover_disable(self, session_id, parameters):
-        '''
-        
-        '''
-        if not steelsquid_utils.authenticate("root", parameters[0]):
-            raise Exception("Incorrect password for user root!")
-        else:
-            steelsquid_utils.execute_system_command(['steelsquid', 'rover-off']) 
-        return steelsquid_utils.get_flag("rover")
-
-    def rover_light(self, session_id, parameters):
-        '''
-        
-        '''
-        return steelsquid_kiss_global.Rover.light()
-
-
-    def rover_alarm(self, session_id, parameters):
-        '''
-        
-        '''
-        return steelsquid_kiss_global.Rover.alarm()
-
-
-    def rover_tilt(self, session_id, parameters):
-        '''
-        
-        '''
-        import steelsquid_io
-        if parameters[0]=="True":
-            steelsquid_kiss_global.Rover.tilt(True)
-        else:
-            steelsquid_kiss_global.Rover.tilt(False)
-            
-
-    def rover_stop(self, session_id, parameters):
-        '''
-        
-        '''
-        steelsquid_kiss_global.Rover.drive(0, 0)
-
-
-    def rover_left(self, session_id, parameters):
-        '''
-        
-        '''
-        steelsquid_kiss_global.Rover.drive(-40, 40)
-
-
-    def rover_right(self, session_id, parameters):
-        '''
-        
-        '''
-        steelsquid_kiss_global.Rover.drive(40, -40)
-
-
-    def rover_forward(self, session_id, parameters):
-        '''
-        
-        '''
-        steelsquid_kiss_global.Rover.drive(40, 40)
-
-
-    def rover_backward(self, session_id, parameters):
-        '''
-        
-        '''
-        steelsquid_kiss_global.Rover.drive(-40, -40)
-
-
+        if len(parameters)>0:
+            steelsquid_utils.execute_system_command(['steelsquid', 'stream-port', parameters[0]]) 
+        if not steelsquid_utils.has_parameter("stream-port"):
+            steelsquid_utils.set_parameter("stream-port", "8080")
+        return steelsquid_utils.get_parameter("stream-port")
 
 

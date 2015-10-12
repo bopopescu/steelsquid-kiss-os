@@ -31,24 +31,6 @@ import signal
 from io import TextIOWrapper, BytesIO
 
 
-try:
-    import steelsquid_kiss_global
-except:
-    steelsquid_utils.shout("Fatal error when import steelsquid_kiss_global", is_error=True)
-
-
-try:
-    import steelsquid_kiss_socket_expand
-except:
-    steelsquid_utils.shout("Fatal error when import steelsquid_kiss_socket_expand", is_error=True)
-
-
-try:
-    import steelsquid_kiss_http_expand
-except:
-    steelsquid_utils.shout("Fatal error when import steelsquid_kiss_http_expand", is_error=True)
-
-
 if steelsquid_utils.is_raspberry_pi:
     try:
         import steelsquid_pi
@@ -330,7 +312,7 @@ def on_reload(args, para):
         if steelsquid_utils.get_flag("web"):
             try:
                 steelsquid_kiss_global.http_server.stop_server()
-                steelsquid_utils.shout("Restart steelsquid_kiss_http_expand", debug=True)
+                steelsquid_utils.shout("Restart steelsquid_kiss_http_expand", debug=False)
                 import steelsquid_kiss_http_server
                 reload(steelsquid_kiss_http_server)
                 reload(steelsquid_kiss_http_expand)
@@ -341,7 +323,7 @@ def on_reload(args, para):
         if steelsquid_utils.get_flag("socket_connection"):
             try:
                 steelsquid_kiss_global.socket_connection.stop()
-                steelsquid_utils.shout("Restart steelsquid_kiss_socket_expand", debug=True)
+                steelsquid_utils.shout("Restart steelsquid_kiss_socket_expand", debug=False)
                 import steelsquid_kiss_socket_connection
                 reload(steelsquid_kiss_socket_connection)
                 reload(steelsquid_kiss_socket_expand)
@@ -362,8 +344,9 @@ class Logger(object):
         '''
         Redirect sys.stdout to shout
         '''
-        if len(message)>1:
-            steelsquid_utils.shout(message, always_show=True)
+        if message != None:
+            if len(str(message).strip())>0:
+                steelsquid_utils.shout(message, always_show=True)
 
 
 def bluetooth_agent():
@@ -598,20 +581,6 @@ def main():
                 if not steelsquid_utils.has_parameter("bluetooth_pin"):
                     steelsquid_utils.set_parameter("bluetooth_pin", "1234")
                 thread.start_new_thread(bluetooth_agent, ()) 
-            if steelsquid_utils.get_flag("web"):
-                try:
-                    steelsquid_utils.shout("Start steelsquid_kiss_http_expand", debug=True)
-                    steelsquid_kiss_global.http_server = steelsquid_kiss_http_expand.SteelsquidKissExpandHttpServer(None, steelsquid_utils.STEELSQUID_FOLDER+"/web/", steelsquid_utils.get_flag("web_authentication"), steelsquid_utils.get_flag("web_local"), steelsquid_utils.get_flag("web_authentication"), steelsquid_utils.get_flag("web_https"))
-                    steelsquid_kiss_global.http_server.start_server()
-                except:
-                    steelsquid_utils.shout("Fatal error when start steelsquid_kiss_http_expand", is_error=True)
-            if steelsquid_utils.get_flag("socket_connection"):
-                try:
-                    steelsquid_utils.shout("Start steelsquid_kiss_socket_expand", debug=True)
-                    steelsquid_kiss_global.socket_connection = steelsquid_kiss_socket_expand.SteelsquidKissSocketExpand(True)
-                    steelsquid_kiss_global.socket_connection.start()
-                except:
-                    steelsquid_utils.shout("Fatal error when start steelsquid_kiss_socket_expand", is_error=True)
             if steelsquid_utils.is_raspberry_pi():
                 if steelsquid_utils.get_flag("disable_monitor"):
                     steelsquid_utils.execute_system_command_blind(["/opt/vc/bin/tvservice", "-o"])
@@ -621,7 +590,7 @@ def main():
                     steelsquid_pi.gpio_click(23, on_shutdown_button, steelsquid_pi.PULL_UP)
             if steelsquid_utils.get_flag("download"):
                 if steelsquid_utils.get_parameter("download_dir") == "":
-                    steelsquid_utils.set_parameter("download_dir", "/home/steelsquid")
+                    steelsquid_utils.set_parameter("download_dir", "/root")
                 steelsquid_utils.execute_system_command_blind(['steelsquid', 'download-on'], wait_for_finish=False)
             steelsquid_utils.shout("Subscribe to events", debug=True)
             steelsquid_event.subscribe_to_event("shutdown", on_shutdown, ())
@@ -634,16 +603,51 @@ def main():
             steelsquid_event.subscribe_to_event("flag", on_flag, ())
             steelsquid_event.subscribe_to_event("parameter", on_parameter, ())
             steelsquid_event.subscribe_to_event("pi_io_event", on_pi_io_event, ())
+            try:
+                import steelsquid_kiss_global
+            except:
+                steelsquid_utils.shout("Fatal error when import steelsquid_kiss_global", is_error=True)
+            try:
+                import steelsquid_kiss_socket_expand
+            except:
+                steelsquid_utils.shout("Fatal error when import steelsquid_kiss_socket_expand", is_error=True)
+            try:
+                import steelsquid_kiss_http_expand
+            except:
+                steelsquid_utils.shout("Fatal error when import steelsquid_kiss_http_expand", is_error=True)
+            if steelsquid_utils.get_flag("web"):
+                try:
+                    port = None
+                    if steelsquid_utils.has_parameter("web_port"):
+                        port = steelsquid_utils.get_parameter("web_port")
+                    steelsquid_kiss_global.http_server = steelsquid_kiss_http_expand.SteelsquidKissHttpServerExpand(port, steelsquid_utils.STEELSQUID_FOLDER+"/web/", steelsquid_utils.get_flag("web_authentication"), steelsquid_utils.get_flag("web_local"), steelsquid_utils.get_flag("web_authentication"), steelsquid_utils.get_flag("web_https"))
+                    steelsquid_kiss_global.http_server.start_server()
+                except:
+                    steelsquid_utils.shout("Fatal error when start steelsquid_kiss_http_expand", is_error=True)
+            if steelsquid_utils.get_flag("socket_server"):
+                try:
+                    steelsquid_kiss_global.socket_connection = steelsquid_kiss_socket_expand.SteelsquidKissSocketExpand(True)
+                    steelsquid_kiss_global.socket_connection.start()
+                except:
+                    steelsquid_utils.shout("Fatal error when start steelsquid_kiss_socket_expand as server", is_error=True)
+            elif steelsquid_utils.has_parameter("socket_client"):
+                try:
+                    steelsquid_kiss_global.socket_connection = steelsquid_kiss_socket_expand.SteelsquidKissSocketExpand(False, steelsquid_utils.get_parameter("socket_client"))
+                    steelsquid_kiss_global.socket_connection.start()
+                except:
+                    steelsquid_utils.shout("Fatal error when start steelsquid_kiss_socket_expand as server", is_error=True)            
             if steelsquid_utils.get_flag("piio"):
                 steelsquid_kiss_global.PIIO.enable()
             if steelsquid_utils.get_flag("rover"):
                 steelsquid_kiss_global.Rover.enable()
+            if steelsquid_utils.get_flag("alarm"):
+                steelsquid_kiss_global.Alarm.enable()                
             pkgpath = os.path.dirname(expand.__file__)
             for name in pkgutil.iter_modules([pkgpath]):
                 steelsquid_utils.shout("Load custom module: " + 'expand.'+name[1], debug=True)                
                 thread.start_new_thread(import_file_dyn, (name[1],)) 
-            steelsquid_utils.shout("Listen for events", debug=True)
             thread.start_new_thread(import_expand, ()) 
+            steelsquid_utils.shout("Listen for events", debug=True)
             steelsquid_event.broadcast_event("network")
             steelsquid_event.activate_event_handler(create_ner_thread=False)
         elif sys.argv[1] == "stop":

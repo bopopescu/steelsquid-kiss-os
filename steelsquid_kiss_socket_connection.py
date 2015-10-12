@@ -26,11 +26,11 @@ import time
 class SteelsquidKissSocketServer(steelsquid_socket_connection.SteelsquidSocketConnection):
 
 
-    def __init__(self, is_server, port=22222):
+    def __init__(self, is_server, host='localhost', port=22222):
         '''
         Constructor
         '''
-        super(SteelsquidKissSocketServer, self).__init__(is_server, port=port)
+        super(SteelsquidKissSocketServer, self).__init__(is_server, host, port=port)
 
     def on_setup_server(self):
         '''

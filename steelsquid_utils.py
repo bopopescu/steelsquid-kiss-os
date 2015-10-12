@@ -25,11 +25,14 @@ import threading
 import thread
 import time
 import urllib2
-import PAM
 import hashlib
 import datetime
 import traceback
 import smtplib
+from email.MIMEMultipart import MIMEMultipart
+from email.MIMEBase import MIMEBase
+from email.mime.text import MIMEText
+from email import Encoders
 import re
 from sets import Set
 
@@ -48,6 +51,30 @@ in_dev = None
 VALID_CHARS = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','0','1','2','3','4','5','6','7','8','9','_','/','.','-']
 cache_flag = {}
 cache_para = {}
+
+
+def get_pi_revision():
+    '''
+    Gets the version number of the Raspberry Pi board
+    '''
+    try:
+        with open('/proc/cpuinfo', 'r') as infile:
+            for line in infile:
+                match = re.match('Revision\s+:\s+.*(\w{4})$', line)
+                if match and match.group(1) in ['0000', '0002', '0003']:
+                    return 1
+                elif match:
+                    return 2
+            return 0
+    except:
+        return 0
+
+
+def get_pi_i2c_bus_number():
+    '''
+    Gets the I2C bus number /dev/i2c
+    '''
+    return 1 if get_pi_revision() > 1 else 0
 
 
 def steelsquid_kiss_os_version():
@@ -342,7 +369,7 @@ def shout(string=None, to_lcd=True, debug=False, is_error=False, always_show=Fal
     @param leave_on_lcd: Leave the message on the LCD
                          If False the message will disepare after 10 seconds (last permanent message shows) 
     '''
-    if debug==False or development():
+    if debug==False or development() or always_show:
         global last_shout_message
         global last_shout_time
         if string == None or is_error==True:
@@ -412,26 +439,31 @@ def shout(string=None, to_lcd=True, debug=False, is_error=False, always_show=Fal
                     steelsquid_pi.lcd_auto_write(string, mestime, force_setup = False)
 
 
-def notify(string):
+def notify(string, attachment=None):
     '''
-    Same as shout but also try to send mail
+    Same as shout but also try to send mail with attachment
     '''
     shout(string)
-    mail(string)
+    mail(string, attachment)
 
 
-def mail(string):
+def mail(string, attachment=None):
     '''
     Try to send mail message to configured mail
+    Also with a file
     '''
     try:
         mail_host = get_parameter("mail_host")
         mail_username = get_parameter("mail_username")
         mail_password = get_parameter("mail_password")
         mail_mail = get_parameter("mail_mail")
-        send_mail(mail_host, mail_username, mail_password, "do-not-reply@steelsquid.org", mail_mail, os.popen("hostname").read(), string)
+        if attachment==None:
+            send_mail(mail_host, mail_username, mail_password, "do-not-reply@steelsquid.org", mail_mail, os.popen("hostname").read(), string)
+        else:
+            send_mail_attachment(mail_host, mail_username, mail_password, "do-not-reply@steelsquid.org", mail_mail, os.popen("hostname").read(), string, attachment)        
     except:
         pass
+        
         
 
 def valid_get_string(string):
@@ -593,6 +625,16 @@ def network_ip_wan(timeout = 4):
     except:
         return "---"
 
+def network_ip_test_all(timeout = 4):
+    """
+    Get wan/lan/wifi ip 
+    @return: the ip
+    """
+    ip = network_ip_wan(timeout)
+    if ip == "---":
+        ip = network_ip()
+    return ip
+        
 
 def send_mail(smtp_host, from_mail, to_mail, subject, message):
     '''
@@ -629,7 +671,38 @@ def send_mail(smtp_host, username, password, from_mail, to_mail, subject, messag
             server.quit()
         except:
             pass
-    
+
+def send_mail_attachment(smtp_host, username, password, from_mail, to_mail, subject, message, attachment):
+    '''
+    Send mail with attachment
+    '''
+    msg = MIMEMultipart()
+    msg['Subject'] = subject 
+    msg['From'] = from_mail
+    msg['To'] = to_mail
+    msg.attach(MIMEText(message))
+
+    part = MIMEBase('application', "octet-stream")
+    part.set_payload(open(attachment, "rb").read())
+    Encoders.encode_base64(part)
+
+    part.add_header('Content-Disposition', 'attachment; filename="'+os.path.basename(attachment)+'"')
+
+    msg.attach(part)
+
+    server = None
+    try:
+        server = smtplib.SMTP(smtp_host)
+        server.starttls()
+        if username != None and username != "":
+            server.login(username, password)
+        server.sendmail(from_mail, to_mail, msg.as_string())    
+    finally:
+        try:
+            server.quit()
+        except:
+            pass
+
 
 def cpu_freq():
     """
@@ -711,16 +784,6 @@ def system_info():
     p_disk_used = disk[2]
     p_disk_aval = disk[3]
     
-    # Overclock
-    overclock = "None"
-    if is_raspberry_pi():
-        if get_flag("overclock"):
-            overclock = "Overclocked"
-        elif get_flag("underclock"):
-            overclock = "Underclocked"
-        else:
-            overclock = "Default"
-
     # GPU
     p_gpu_mem = str(execute_system_command(['steelsquid', 'gpu-mem'])[0]).replace('\n', '').replace('\r', '')
 
@@ -798,8 +861,10 @@ def system_info():
         p_stream = "Disabled"
 
     # Socket
-    if get_flag("socket_connection"):
-        p_socket = "Enabled"
+    if get_flag("socket_server"):
+        p_socket = "Server"
+    elif has_parameter("socket_client"):
+        p_socket = "Client ("+get_parameter("socket_client")+")"
     else:
         p_socket = "Disabled"
 
@@ -842,22 +907,22 @@ def system_info():
     else:
         p_io_voltage = "---"
         
-    return (p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_disk_size, p_disk_used, p_disk_aval, overclock, p_gpu_mem, p_log, p_disable_monitor, p_camera, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir, p_io, p_power, p_modem, p_io_voltage)
+    return (p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_disk_size, p_disk_used, p_disk_aval, p_gpu_mem, p_log, p_disable_monitor, p_camera, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir, p_io, p_power, p_modem, p_io_voltage)
 
 
 def system_info_array():
     '''
     Return system info array
     '''
-    p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_disk_size, p_disk_used, p_disk_aval, overclock, p_gpu_mem, p_log, p_disable_monitor, p_camera, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir, p_io, p_power, p_modem, p_io_voltage = system_info()
-    return [p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_disk_size, p_disk_used, p_disk_aval, overclock, p_gpu_mem, p_log, p_disable_monitor, p_camera, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir, p_io, p_power, p_modem, p_io_voltage]
+    p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_disk_size, p_disk_used, p_disk_aval, p_gpu_mem, p_log, p_disable_monitor, p_camera, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir, p_io, p_power, p_modem, p_io_voltage = system_info()
+    return [p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_disk_size, p_disk_used, p_disk_aval, p_gpu_mem, p_log, p_disable_monitor, p_camera, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir, p_io, p_power, p_modem, p_io_voltage]
 
 
 def print_system_info():
     '''
     Print system info to screen
     '''
-    p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_disk_size, p_disk_used, p_disk_aval, overclock, p_gpu_mem, p_log, p_disable_monitor, p_camera, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir, p_io, p_power, p_modem, p_io_voltage = system_info()
+    p_date, p_hostname, p_development, p_boot, p_up, p_users, p_load, p_ip_wired, p_ip_wifi, p_ip_wan, p_access_point, p_cpu, p_cpu_f, p_count, p_temp, p_ram_total, p_ram_free, p_ram_used, p_disk_size, p_disk_used, p_disk_aval, p_gpu_mem, p_log, p_disable_monitor, p_camera, p_timezone, p_keyb, p_web, p_web_local, p_web_https, p_web_aut, p_ssh, p_has_lcd, p_stream, p_socket, p_rover, p_download, p_download_dir, p_io, p_power, p_modem, p_io_voltage = system_info()
     print
     printb("Device information (%s)" % p_date)
     print
@@ -887,7 +952,6 @@ def print_system_info():
     print("Used root: %s" % p_disk_used)
     print("Free root: %s" % p_disk_aval)
     print
-    print("Overclock: %s" % overclock)
     print("GPU Mem: %s" % p_gpu_mem)
     print
     print("Logging: %s" % p_log)
@@ -938,7 +1002,9 @@ def clear_authenticate_cache():
 
 def authenticate(user, password):
     '''
-    Check user and password with PAM
+    Check user and password.
+    Im using this bash script instead of PAM.
+    If i use python-pam the GPIO.add_event_detect stop working for some reason...
     '''
     global cach_credentionals
     global salt
@@ -949,19 +1015,12 @@ def authenticate(user, password):
         return True
     else:
         cach_credentionals = []
-        def pam_conv(auth, query_list, userData):
-            return [(password, 0)]
-        auth = PAM.pam()
-        auth.start("passwd")
-        auth.set_item(PAM.PAM_USER, user)
-        auth.set_item(PAM.PAM_CONV, pam_conv)
-        try:
-            auth.authenticate()
+        if execute_system_command(["checkuser", user, password]) == ["true"]:
             user=""
             password=""
             cach_credentionals.append(hash_string)
             return True
-        except:
+        else:
             user=""
             password=""
             return False
@@ -1583,11 +1642,14 @@ def execute_delay(seconds, function, paramters, dummy=False):
     try:
         if dummy:
             time.sleep(seconds)
-            function(paramters)
+            if isinstance(paramters, tuple):
+                function(paramters)
+            else:
+                function()
         else:
             thread.start_new_thread(execute_delay, (seconds, function, paramters, True)) 
     except:
-        pass
+        shout()
         
 
 def is_ip(string):

@@ -13,8 +13,68 @@
         <link rel="stylesheet" type="text/css" href="steelsquid.css"/>
         <script type="text/javascript" src="jquery.js"></script>
         <script type="text/javascript" src="steelsquid.js"></script>     
+        <style>
+            a.toggler {
+                background: green;
+                cursor: pointer;
+                border: 2px solid black;
+                border-right-width: 15px;
+                padding: 0 5px;
+                border-radius: 5px;
+                text-decoration: none;
+                transition: all .5s ease;
+            }
+
+            a.toggler.arm {
+                background: red;
+                border-right-width: 2px;
+                border-left-width: 15px;
+            }
+        </style>
         <script type="text/javascript">
             //<![CDATA[ 
+            
+            var stream_port="8080";
+            
+            $(document).ready(function(){
+                $('a.toggler').click(function(){
+                    $(this).toggleClass('arm');
+                    if($(this).hasClass('arm')){
+                        $("#toggler_text").html("<span  class='error'>Security alarm armed!</span>");
+                        submitNoPW('alarm_arm', 'true');
+                    }
+                    else{
+                        $("#toggler_text").html("<span  class='ok'>Security alarm disarmed!</span>");
+                        submitNoPW('alarm_arm', 'false');
+                    }
+                });
+            });            
+
+            /**
+             * When the page is in front
+             */
+            function onVisible(){
+                if (isLayerShowing('stream') || isLayerShowing('rover')){
+                    $("#stream_img").attr("src", "http://"+window.location.hostname+":"+stream_port+"/?action=stream");         
+                }
+                else if (isLayerShowing('alarm')){
+                    $("#alarm_img").attr("src", "http://"+window.location.hostname+":"+stream_port+"/?action=stream");         
+                }
+            }
+
+            /**
+             * When the page is in background
+             */
+            function onHidden(){
+                if (isLayerShowing('stream') || isLayerShowing('rover')){
+                    $("#stream_img").attr("src", "");         
+                }
+                else if (isLayerShowing('alarm')){
+                    $("#alarm_img").attr("src", "");         
+                }
+            }
+                    
+
             /**
              * When the page is loaded
              */
@@ -28,13 +88,27 @@
             function onBack(){
                 showLayer('main');
             }
-            
+
             /**
-             * This will execute every 10 second
+             * This will execute every 1 second
+             */
+            function onEvery01s(){
+                if (isVisible() && isLayerShowing('alarm')){
+                    submitNoPW('alarm_status');
+                }
+            }
+
+            /**
+             * This will execute every 5 second
              */
             function onEvery05s(){
-                if (isLayerShowing('stream') || isLayerShowing('rover')){
-                    $("#stream_img").attr("src", "http://"+window.location.hostname+":8080/?action=stream");         
+                if(isVisible()){
+                    if (isLayerShowing('stream') || isLayerShowing('rover')){
+                        $("#stream_img").attr("src", "http://"+window.location.hostname+":"+stream_port+"/?action=stream");         
+                    }
+                    else if (isLayerShowing('alarm')){
+                        $("#alarm_img").attr("src", "http://"+window.location.hostname+":"+stream_port+"/?action=stream");         
+                    }
                 }
             }
 
@@ -42,8 +116,10 @@
              * This will execute every 30 second
              */
             function onEvery30s(){
-                if (isLayerShowing('rover')){
-                    submitNoPW('rover_info');
+                if(isVisible()){
+                    if (isLayerShowing('rover')){
+                        submitNoPW('rover_info');
+                    }
                 }
             }
 
@@ -52,11 +128,24 @@
              */
             function onLayerShown(layer){
                 if(layer == "stream"){
+                    submitNoPW('stream_port');
                     submitNoPW('stream');
                 }
-                if(layer == "rover"){
+                else if(layer == "rover"){
+                    submitNoPW('stream_port');
                     submitNoPW('rover_info');
-                    $("#rover_img").attr("src", "http://"+window.location.hostname+":8080/?action=stream");       
+                    $("#rover_img").attr("src", "http://"+window.location.hostname+":"+stream_port+"/?action=stream");       
+                }
+                else if(layer == "alarm"){
+                    submitNoPW('stream_port');
+                    submitNoPW('alarm');
+                    submitNoPW('alarm_status');
+                    submitNoPW('hostname_get');
+                    submitNoPW('alarm_settings');
+                    $("#alarm_img").attr("src", "http://"+window.location.hostname+":"+stream_port+"/?action=stream");         
+                }
+                else if(layer == "mail"){
+                    submitSync('mail_get');
                 }
             }           
 
@@ -68,24 +157,165 @@
                     show('stream_enabled_usb');
                     hide('stream_enabled_pi');
                     hide('stream_disabled');
-                    $("#stream_img").attr("src", "http://"+window.location.hostname+":8080/?action=stream");         
-                    $("#video_link").attr("href", "http://"+window.location.hostname+":8080/?action=stream");         
-                    $("#video_link").html("http://"+window.location.hostname+":8080/?action=stream");
+                    $("#stream_img").attr("src", "http://"+window.location.hostname+":"+stream_port+"/?action=stream");         
+                    $("#video_link").attr("href", "http://"+window.location.hostname+":"+stream_port+"/?action=stream");         
+                    $("#video_link").html("http://"+window.location.hostname+":"+stream_port+"/?action=stream");
+                    $("#picture_link").attr("href", "http://"+window.location.hostname+":"+stream_port+"/?action=snapshot");         
+                    $("#picture_link").html("http://"+window.location.hostname+":"+stream_port+"/?action=snapshot");
                 }
                 else if(paramaters[0] == "pi"){
                     show('stream_enabled_pi');
                     hide('stream_enabled_usb');
                     hide('stream_disabled');
-                    $("#stream_img_pi").attr("src", "http://"+window.location.hostname+":8080/?action=stream");         
-                    $("#video_link_pi").attr("href", "http://"+window.location.hostname+":8080/?action=stream");         
-                    $("#video_link_pi").html("http://"+window.location.hostname+":8080/?action=stream");
+                    $("#stream_img_pi").attr("src", "http://"+window.location.hostname+":"+stream_port+"/?action=stream");         
+                    $("#video_link_pi").attr("href", "http://"+window.location.hostname+":"+stream_port+"/?action=stream");         
+                    $("#video_link_pi").html("http://"+window.location.hostname+":"+stream_port+"/?action=stream");
+                    $("#picture_link_pi").attr("href", "http://"+window.location.hostname+":"+stream_port+"/?action=snapshot");         
+                    $("#picture_link_pi").html("http://"+window.location.hostname+":"+stream_port+"/?action=snapshot");
                 }
                 else{
-                    hide('stream_enabled-usb');
-                    hide('stream_enabled-pi');
+                    hide('stream_enabled_usb');
+                    hide('stream_enabled_pi');
                     show('stream_disabled');
                 }
             }
+            
+            /**
+             * stream port
+             */
+            function on_stream_port(paramaters){
+                stream_port=paramaters[0];
+            }
+            
+            
+            /**
+             * On alarm
+             */
+            function on_alarm(paramaters){
+                if(paramaters[0] == "true"){
+                    show('alarm_enabled');
+                    hide('alarm_disabled');
+                    $("#alarm_img").attr("src", "http://"+window.location.hostname+":"+stream_port+"/?action=stream");         
+                }
+                else{
+                    hide('alarm_enabled');
+                    show('alarm_disabled');
+                }
+            }
+
+
+            /**
+             * On alarm
+             */
+            function on_alarm_status(paramaters){
+                if(paramaters[0] == "true"){
+                    $("#alarm_motion").html("<span class='error'>Motion detected!!!</span>");
+                }
+                else{
+                    $("#alarm_motion").html("No motion detected");
+                }
+                if(paramaters[1] == "true"){
+                    $("#alarm_siren").html("<span class='error'>Activated!!!</span>");
+                    $("#alarm_siren_button").html("<button onclick=\"javascript:submitSync('alarm_siren', 'false')\">Deactivate siren</button>");
+                }
+                else{
+                    $("#alarm_siren").html("Silent");
+                    $("#alarm_siren_button").html("<button onclick=\"javascript:submitSync('alarm_siren', 'true')\">Activate siren</button>");
+                }
+                if(paramaters[2] == "true"){
+                    $("#alarm_lamp").html("<span class='error'>Lit!!!</span>");
+                    $("#alarm_lamp_button").html("<button onclick=\"javascript:submitSync('alarm_lamp', 'false')\">Turn off the lamp</button>");
+                }
+                else{
+                    $("#alarm_lamp").html("Off");
+                    $("#alarm_lamp_button").html("<button onclick=\"javascript:submitSync('alarm_lamp', 'true')\">Turn on the lamp</button>");
+                }
+                if(paramaters[3] == "true"){
+                    $("#alarm_triggered").html("<span class='error' style='font-size:10pt'><b>Alarm is triggered!!!</b></span>");
+                    $("#toggler").addClass('arm');
+                    $("#toggler_text").html("<span  class='error'>Security alarm armed!</span>");
+                }
+                else if(paramaters[4] == "false"){
+                    $("#alarm_triggered").html("<span class='ok' style='font-size:10pt'><b>Security alarm not activated (Disarmed)</b></span>");
+                    $("#toggler").removeClass('arm');
+                    $("#toggler_text").html("<span  class='ok'>Security alarm disarmed!</span>");
+                }
+                else{
+                    $("#alarm_triggered").html("<span class='ok' style='font-size:10pt'><b>Security alarm activated (Armed)</b></span>");
+                    $("#toggler").addClass('arm');
+                    $("#toggler_text").html("<span  class='error'>Security alarm armed!</span>");
+                }
+            }
+
+
+            function on_alarm_arm(paramaters){
+                if(paramaters[0] == "True"){
+                    $("#alarm_triggered").html("<span class='ok' style='font-size:10pt'><b>Security alarm activated (Armed)</b></span>");
+                    $("#toggler").addClass('arm');
+                    $("#toggler_text").html("<span  class='error'>Security alarm armed!</span>");
+                }
+                else{
+                    $("#alarm_triggered").html("<span class='ok' style='font-size:10pt'><b>Security alarm not activated (Disarmed)</b></span>");
+                    $("#toggler").removeClass('arm');
+                    $("#toggler_text").html("<span  class='ok'>Security alarm disarmed!</span>");
+                }
+            }
+
+
+            /**
+             * On alarm
+             */
+            function on_alarm_settings(paramaters){
+                if(paramaters[0]=="True"){
+                    showAlertMedium("Settings saved", false);
+                }
+                $("#alarm_movments").val(paramaters[1]);
+                $("#alarm_movments_seconds").val(paramaters[2]);
+                $("#alarm_seconds").val(paramaters[3]);
+                $("#alarm_wait").val(paramaters[4]);
+                if(paramaters[5]=="True"){
+                    $("#alarm_activate_siren").prop("checked", true)
+                }    
+                if(paramaters[6]=="True"){
+                    $("#alarm_mail").prop("checked", true)
+                }    
+                if(paramaters[7]=="True"){
+                    $("#alarm_flash").prop("checked", true)
+                }    
+            }
+
+
+            /**
+             * Hostname
+             */
+            function on_hostname_get(paramaters){
+                setValue("hostname_name", paramaters[0]);
+            }
+
+
+            /**
+             * Get mail 
+             */
+            function on_mail_get(paramaters){
+                $("#mail_host").val(paramaters[0]);
+                $("#mail_username").val(paramaters[1]);
+                $("#mail_mail").val(paramaters[2]);
+            }
+            
+            /**
+             * Set mail 
+             */
+            function on_mail_set(paramaters){
+                showAlertMedium("Settings saved", false);
+            }
+            
+            /**
+             * Test mail 
+             */
+            function on_mail_test(paramaters){
+                showAlertMedium("A test mail is sent, check you mailbox", false);
+            }
+
             
             /**
              * On rover
@@ -151,7 +381,7 @@
             function on_rover_disable(paramaters){
                 on_rover(paramaters);
             }
-            
+
             //]]>
         </script>
         
@@ -186,6 +416,14 @@
                     </td>
                     <td colspan="2" >
                         Administrator
+                    </td>
+                </tr>
+                <tr onclick="javascript:window.location = '/file';">
+                    <td>
+                        <img alt="logo" src="img/bar_file.png"></img>
+                    </td>
+                    <td colspan="2" >
+                        File Manager
                     </td>
                 </tr>
                 <tr onclick="javascript:window.location = '/download';">
@@ -242,6 +480,14 @@
                                 Camera streaming
                             </td>
                         </tr>
+                        <tr onclick="javascript:showLayer('alarm');">
+                            <td>
+                                <img alt="logo" src="img/alarm.png"></img>
+                            </td>
+                            <td>
+                                Alarm/Surveillance
+                            </td>
+                        </tr>
                         <tr onclick="javascript:showLayer('rover');">
                             <td>
                                 <img alt="logo" src="img/rover.png"></img>
@@ -279,8 +525,9 @@
                     Below you should see the video from the USB camera.<br/>
                     If not, is it probably because your camera is not supported.<br/>
                     This is the url to the video: <a id="video_link" href=""></a><br>
+                    This is the url to the still image: <a id="picture_link" href=""></a><br>
                     <br/>
-                    <img alt="The stream" id="stream_img" src=""/>
+                    <img alt="The stream" style="max-width: 100%; min-width: 100%" id="stream_img" src=""/>
                     <br/>
                     <table style="width:100%">
                         <tr>
@@ -301,8 +548,9 @@
                     The Raspberry PI web camera streaming is enabled on this system.<br/>
                     Below you should see the video from the Raspberry PI camera.<br/>
                     This is the url to the video: <a id="video_link_pi" href=""></a><br>
+                    This is the url to the still image: <a id="picture_link_pi" href=""></a><br>
                     <br/>
-                    <img alt="The stream" id="stream_img_pi" src=""/>
+                    <img alt="The stream" id="stream_img_pi" style="max-width: 100%; min-width: 100%" src=""/>
                     <br/>
                     <table style="width:100%">
                         <tr>
@@ -327,6 +575,294 @@
                         </td>
                         <td>
                             Back to main menu
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <!--####################################################################################################-->
+            <div class="layer" id="alarm">
+                <table class="sheader">
+                    <tr onclick="javascript:onBack();">
+                        <th>
+                            <img alt="logo" src="img/alarm.png"></img>
+                        </th>
+                        <th>Alarm/Surveillance</th>
+                    </tr>
+                </table>
+                <div id="alarm_disabled" class="hide">
+                    The Alarm/Surveillance functionality is not enabled on this system.<br/>
+                    For this to work you need a Raspberry PI camera connected. <br/>
+                    Also a PIR sensor connected to GPIO04 and a siren connected to GPIO17.<br/>
+                    If you enable the alarm you will get "Connection error" while service restart...you need to refresh the browser.<br/>
+                    See <a href="http://www.steelsquid.org/alarm">http://www.steelsquid.org/alarm</a>
+                    <br/><br/>
+                    <table>
+                        <tr>
+                            <td><button onclick="javascript:submitSync('alarm', 'true');">Enable Alarm/Surveillance</button></td>
+                        </tr>
+                    </table>
+                </div>
+                <div id="alarm_enabled" class="hide">
+                    The Alarm/Surveillance functionality is enabled on this system.<br/>
+                    For this to work you need a Raspberry PI camera connected. <br/>
+                    Also a PIR sensor conneted to GPIO04 and a siren conencted to GPIO17.<br/>
+                    And GPIO27 and GPIO22 to the lamps.<br/>
+                    See <a href="http://www.steelsquid.org/alarm">http://www.steelsquid.org/alarm</a>
+                    <br/><br/>
+                    Push to Arm/Disarm: <a href="#" id="toggler" class="toggler">&nbsp;</a>&nbsp;&nbsp;<span id="toggler_text"></span>
+                    <br/><br/>
+                    <b>Camera and sensors</b>
+                    <img alt="The stream" style="max-width: 100%; min-width: 100%" id="alarm_img" src=""/>
+                    <br/>
+                    <table class="keyvalue">
+                        <tr>
+                            <td>
+                                Security alarm
+                            </td>
+                            <td id="alarm_triggered">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Motion detector
+                            </td>
+                            <td id="alarm_motion">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Siren
+                            </td>
+                            <td id="alarm_siren">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Lamp
+                            </td>
+                            <td id="alarm_lamp">
+                            </td>
+                        </tr>
+                    </table>
+                    <table class="grid">
+                        <tr>
+                            <td><div id="alarm_siren_button"></div></td>
+                            <td><div id="alarm_lamp_button"></div></td>
+                        </tr>
+                    </table>
+                    <br/><br/>
+                    <b>Security Alarm settings</b>
+                    <table class="input">
+                        <tbody>
+                            <tr>
+                                <td>
+                                    The number of detected movements
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <input type="text" id="alarm_movments" name="alarm_movments" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    Within this number of seconds
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <input type="text" id="alarm_movments_seconds" name="alarm_movments_seconds" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    Will lead to an alarm for this number of seconds
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <input type="text" id="alarm_seconds" name="alarm_seconds" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    Wait this long after an alarm has occurred until a new can fire
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <input type="text" id="alarm_wait" name="alarm_wait" />
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <table style="margin-top:3px;margin-bottom:4px">
+                        <tbody>
+                            <tr>
+                                <td style="width:25px">
+                                    <input type="checkbox" id="alarm_activate_siren" name="alarm_activate_siren" value="True">
+                                </td>
+                                <td>
+                                    <label for="alarm_activate_siren">Aktivate the siren on alarm</label>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <table style="margin-top:3px;margin-bottom:4px">
+                        <tbody>
+                            <tr>
+                                <td style="width:25px">
+                                    <input type="checkbox" id="alarm_flash" name="alarm_flash" value="True">
+                                </td>
+                                <td>
+                                    <label for="alarm_flash">Flash lamp on alarm</label>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <table style="margin-top:3px;margin-bottom:4px">
+                        <tbody>
+                            <tr>
+                                <td style="width:25px">
+                                    <input type="checkbox" id="alarm_mail" name="alarm_mail" value="True">
+                                </td>
+                                <td>
+                                    <label for="alarm_mail">Send mail on alarm</label> (You must <a href="#" onclick="javascript:showLayer('mail');">configure mail notification</a> for this to work)
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <button onclick="javascript:submitSyncFromInput('alarm_settings', 'alarm_movments', 'alarm_movments_seconds', 'alarm_seconds', 'alarm_wait', 'alarm_activate_siren', 'alarm_mail', 'alarm_flash')">Save</button>
+                    <br/><br/><br/>
+                    <table class="input">
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <b>Name of device</b> (Will take effect after next reboot)
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <input type="text" id="hostname_name" name="hostname_name" />
+                                    <button onclick="javascript:submitSyncFromInputConfirm('Are you sure you want to change hostname?', 'hostname_set', 'hostname_name')">Change name of device</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <br/><br/>
+                    <b>Disable the alarm functionality</b>
+                    <table>
+                        <tr>
+                            <td>If you disable the alarm you may get "Connection error" while service restart...you need to refresh the browser.</td>
+                        </tr>
+                        <tr>
+                            <td><button onclick="javascript:submitSync('alarm', 'false');">Disable Alarm/Surveillance</button></td>
+                        </tr>
+                    </table>
+                </div>
+                <br/><br/>
+                <table class="footer">
+                    <tr onclick="javascript:onBack();">
+                        <td>
+                            <img alt="logo" src="img/back.png"></img>
+                        </td>
+                        <td>
+                            Back to main menu
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <!--####################################################################################################-->
+            <div class="layer" id="mail">
+                <table class="header">
+                    <thead>
+                        <tr onclick="javascript:showLayer('alarm');">
+                            <th>
+                                <img alt="logo" src="img/mail.png"></img>
+                            </th>
+                            <th>
+                                Alarm/Surveillance Email
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="2">
+                                Fill this out if you want an email on security alarm.<br />
+                                <br/>
+                                Contact your ISP for this information.<br/>
+                                <br>
+                                It is also possible to use a gmail account.<br/>
+                                SMTP server: <span class="highlight">smtp.gmail.com:587</span><br/>
+                                Username: Your gmail user (without @gmail.com)<br/>
+                                Password: Your gmail password<br>
+                                You must do this: <a href="https://support.google.com/accounts/answer/6010255?vid=1-635790602759465538-2791292056">https://support.google.com/accounts/answer/6010255?vid=1-635790602759465538-2791292056</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <table class="input">
+                    <tbody>
+                        <tr>
+                            <td>
+                                SMTP server
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <input type="text" id="mail_host"></input>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Username (If not required leave blank)
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <input type="text" id="mail_username"></input>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Password (If not required leave blank)
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <input type="password" id="mail_password"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Email that you want notification sent to
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <input type="text" id="mail_mail"/>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <table class="input">
+                    <tr>
+                        <td>
+                            <button onclick="javascript:submitSyncFromInput('mail_set', 'mail_host', 'mail_username', 'mail_password', 'mail_mail')">Save</button>
+                        </td>
+                        <td>
+                            <button onclick="javascript:submitSyncFromInput('mail_test', 'mail_host', 'mail_username', 'mail_password', 'mail_mail')">Test settings</button>
+                        </td>
+                    </tr>
+                </table>
+                <br/>
+                <table class="footer">
+                    <tr onclick="javascript:showLayer('alarm');">
+                        <td>
+                            <img alt="logo" src="img/back.png"></img>
+                        </td>
+                        <td>
+                            Back to Alarm/Surveillance
                         </td>
                     </tr>
                 </table>
@@ -374,7 +910,7 @@
                     <br/>
                     Below you should see the video from the USB camera.
                     <br/>
-                    <img alt="The stream" id="rover_img" src="" class="rotate-180"/>
+                    <img alt="The stream" id="rover_img" style="max-width: 100%; min-width: 100%" src="" class="rotate-180"/>
                     <br/><br/>
                     <table style="width:100%">
                         <tr>

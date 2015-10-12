@@ -29,7 +29,7 @@ import re
 
 # Lock the bus when in use
 mutex = RLock()
-bus = smbus.SMBus(1)
+bus = smbus.SMBus(steelsquid_utils.get_pi_i2c_bus_number())
 use_lock = False
 
 

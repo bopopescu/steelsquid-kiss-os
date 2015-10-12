@@ -65,16 +65,17 @@ python_downloads[12]="$base/steelsquid_kiss_global.py"
 python_downloads[13]="$base/steelsquid_kiss_expand.py"
 python_downloads[14]="$base/steelsquid_kiss_http_server.py"
 python_downloads[15]="$base/steelsquid_kiss_http_expand.py"
-python_downloads[16]="$base/steelsquid_kiss_socket_connection.py"
-python_downloads[17]="$base/steelsquid_kiss_socket_expand.py"
-python_downloads[18]="$base/steelsquid_lcd_hdd44780.py"
-python_downloads[19]="$base/steelsquid_omx.py"
-python_downloads[20]="$base/steelsquid_sabertooth.py"
-python_downloads[21]="$base/steelsquid_trex.py"
-python_downloads[22]="$base/steelsquid_oled_ssd1306.py"
-python_downloads[23]="$base/steelsquid_bluetooth_connection.py"
-python_downloads[24]="$base/steelsquid_i2c.py"
-python_downloads[25]="$base/MCP23017.py"
+python_downloads[16]="$base/steelsquid_kiss_http_utils.py"
+python_downloads[17]="$base/steelsquid_kiss_socket_connection.py"
+python_downloads[18]="$base/steelsquid_kiss_socket_expand.py"
+python_downloads[19]="$base/steelsquid_lcd_hdd44780.py"
+python_downloads[20]="$base/steelsquid_omx.py"
+python_downloads[21]="$base/steelsquid_sabertooth.py"
+python_downloads[22]="$base/steelsquid_trex.py"
+python_downloads[23]="$base/steelsquid_oled_ssd1306.py"
+python_downloads[24]="$base/steelsquid_bluetooth_connection.py"
+python_downloads[25]="$base/steelsquid_i2c.py"
+python_downloads[26]="$base/MCP23017.py"
 
 # Links to python_downloads
 python_links[1]="/usr/bin/steelsquid-boot"
@@ -110,52 +111,46 @@ web_root_downloads[3]="$base/play.html"
 web_root_downloads[4]="$base/download.html"
 web_root_downloads[5]="$base/file.html"
 web_root_downloads[6]="$base/utils.html"
+web_root_downloads[7]="$base/expand.html"
 
 # Download to web img folder
-web_img_downloads[1]="$base/img/autologin.png"
-web_img_downloads[2]="$base/img/back.png"
-web_img_downloads[3]="$base/img/bar_admin.png"
-web_img_downloads[4]="$base/img/bar_download.png"
-web_img_downloads[5]="$base/img/bar_help.png"
-web_img_downloads[6]="$base/img/bar_menu.png"
-web_img_downloads[7]="$base/img/bar_play.png"
-web_img_downloads[8]="$base/img/bar_power.png"
-web_img_downloads[9]="$base/img/bar_reboot.png"
-web_img_downloads[10]="$base/img/bar_shutdown.png"
-web_img_downloads[11]="$base/img/bar_steelsquid.png"
-web_img_downloads[12]="$base/img/cancel.png"
-web_img_downloads[13]="$base/img/clear.png"
-web_img_downloads[14]="$base/img/display.png"
-web_img_downloads[15]="$base/img/electronics.png"
-web_img_downloads[16]="$base/img/encrypted.png"
-web_img_downloads[17]="$base/img/folder_remote.png"
-web_img_downloads[18]="$base/img/fonts.png"
-web_img_downloads[19]="$base/img/help.png"
-web_img_downloads[20]="$base/img/hostname.png"
-web_img_downloads[21]="$base/img/html.png"
-web_img_downloads[22]="$base/img/keyboard.png"
-web_img_downloads[23]="$base/img/lcd.png"
-web_img_downloads[24]="$base/img/mail.png"
-web_img_downloads[25]="$base/img/mouse.png"
-web_img_downloads[26]="$base/img/network_wireless.png"
-web_img_downloads[27]="$base/img/password.png"
-web_img_downloads[28]="$base/img/reboot.png"
-web_img_downloads[29]="$base/img/root.png"
+web_img_downloads[1]="$base/img/back.png"
+web_img_downloads[2]="$base/img/bar_admin.png"
+web_img_downloads[3]="$base/img/bar_download.png"
+web_img_downloads[4]="$base/img/bar_expand.png"
+web_img_downloads[5]="$base/img/bar_file.png"
+web_img_downloads[6]="$base/img/bar_help.png"
+web_img_downloads[7]="$base/img/bar_menu.png"
+web_img_downloads[8]="$base/img/bar_play.png"
+web_img_downloads[9]="$base/img/bar_power.png"
+web_img_downloads[10]="$base/img/bar_reboot.png"
+web_img_downloads[11]="$base/img/bar_shutdown.png"
+web_img_downloads[12]="$base/img/bar_steelsquid.png"
+web_img_downloads[13]="$base/img/bar_utils.png"
+web_img_downloads[14]="$base/img/bar_web.png"
+web_img_downloads[15]="$base/img/bluetooth.png"
+web_img_downloads[16]="$base/img/camera.png"
+web_img_downloads[17]="$base/img/display.png"
+web_img_downloads[18]="$base/img/download.png"
+web_img_downloads[19]="$base/img/electronics.png"
+web_img_downloads[20]="$base/img/folder_remote.png"
+web_img_downloads[21]="$base/img/gpu.png"
+web_img_downloads[22]="$base/img/hostname.png"
+web_img_downloads[23]="$base/img/html.png"
+web_img_downloads[24]="$base/img/keyboard.png"
+web_img_downloads[25]="$base/img/lcd.png"
+web_img_downloads[26]="$base/img/mail.png"
+web_img_downloads[27]="$base/img/network_wireless.png"
+web_img_downloads[28]="$base/img/password.png"
+web_img_downloads[29]="$base/img/rover.png"
 web_img_downloads[30]="$base/img/samba.png"
-web_img_downloads[31]="$base/img/shutdown.png"
+web_img_downloads[31]="$base/img/socket.png"
 web_img_downloads[32]="$base/img/status.png"
-web_img_downloads[33]="$base/img/swap.png"
-web_img_downloads[34]="$base/img/terminal.png"
-web_img_downloads[35]="$base/img/time.png"
-web_img_downloads[36]="$base/img/upgrade.png"
-web_img_downloads[37]="$base/img/download.png"
-web_img_downloads[38]="$base/img/bar_file.png"
-web_img_downloads[39]="$base/img/gpu.png"
-web_img_downloads[40]="$base/img/camera.png"
-web_img_downloads[41]="$base/img/bar_utils.png" 
-web_img_downloads[42]="$base/img/rover.png" 
-web_img_downloads[43]="$base/img/socket.png" 
-web_img_downloads[44]="$base/img/bluetooth.png" 
+web_img_downloads[33]="$base/img/terminal.png"
+web_img_downloads[34]="$base/img/time.png"
+web_img_downloads[35]="$base/img/upgrade.png"
+web_img_downloads[36]="$base/img/alarm.png"
+
 
 # Must have packages will install if necessary
 packages=( wget iputils-ping aptitude tar gzip sed )
@@ -178,6 +173,7 @@ if [ -f config.txt ]; then
         COUNTER=$((COUNTER + 1))
     done <config.txt   
 fi
+
 
 ##################################################################################
 # Functions (Utils)
@@ -577,14 +573,20 @@ function help_servers()
     echb "steelsquid web-https"
     echo "Use encrypted https in the administrator interface"
     echo 
-    echb "steelsquid socket"
-    echo "Id socket connection protocol enabled"
+    echb "steelsquid web-port <port>"
+    echo "Set the web server port"
     echo 
-    echb "steelsquid socket-on"
-    echo "Enable socket connection protocol"
+    echb "steelsquid socket"
+    echo "Is socket connection protocol enabled"
+    echo 
+    echb "steelsquid socket-server"
+    echo "Enable socket connection as server"
+    echo 
+    echb "steelsquid socket-client <addressToServer>"
+    echo "Enable socket connection as client"
     echo 
     echb "steelsquid socket-off"
-    echo "Disable socket connection protocol"
+    echo "Disable socket connection"
     echo 
     echb "steelsquid bluetooth"
     echo "Is bluetooth pairing enabled."
@@ -597,12 +599,6 @@ function help_servers()
     echo 
     echb "steelsquid bluetooth-pin <pin>"
     echo "Set the bluetooth pairing PIN (default 1234)."
-    echo 
-    echb "steelsquid bluetooth-con-on"
-    echo "Enable bluetooth connection."
-    echo 
-    echb "steelsquid bluetooth-con-off"
-    echo "Disable bluetooth connection."
 }
 if [ "$in_parameter_1" == "help-servers" ]; then
     help_servers
@@ -619,6 +615,12 @@ function help_system()
     echb "System and hardware."
     echb "############################################################################"
     if [ $(is-raspberry-pi) == "true" ]; then
+        echo 
+        echb "steelsquid expand"
+        echo "Expand Filesystem."
+        echo "Ensures that all of the SD card storage is available to the OS."
+        echo "This is only for raspberry-pi"
+        echo "Will take effect on next reboot...."
         echo 
         echb "steelsquid display"
         echo "Is the display enabled"
@@ -643,21 +645,6 @@ function help_system()
     echo "Disable the raspberry pi camera."
     echo "Will take effect on next reboot...."
     if [ $(is-raspberry-pi) == "true" ]; then
-        echo 
-        echb "steelsquid clocking"
-        echo "Is the device underclock, defaultclock or overclock"
-        echo 
-        echb "steelsquid underclock"
-        echo "Underclocking will decrease the cpu speed to 140MHz (will reduce power consumption slightly, but will make the system very slow)."
-        echo "Will take effect on next reboot...."
-        echo 
-        echb "steelsquid defaultclock"
-        echo "Set default clocking."
-        echo "Will take effect on next reboot...."
-        echo 
-        echb "steelsquid overclock"
-        echo "Overclock will increase the cpu speed to 1000MHz (May set the warranty bit and shorten the life of the device)."
-        echo "Will take effect on next reboot...."
         echo 
         echb "steelsquid gpu-mem"
         echo "Get the GPU memory (16 to 448) default 64"
@@ -1090,11 +1077,17 @@ function help_utils()
     echo 
     echo 
     echb "############################################################################"
-    echb "Extra utils: stream USB camera..."
+    echb "Extra utils: stream USB camera, Alarm/Surveillance..."
     echb "############################################################################"
     echo 
     echb "steelsquid stream"
     echo "Is camera streaming enabled."
+    echo 
+    echb "steelsquid stream-frames <frames>"
+    echo "Set Frames per second."
+    echo 
+    echb "steelsquid stream-port <port>"
+    echo "Set port to listen for connections on."
     echo 
     echb "steelsquid stream-on"
     echo "Enable http streaming of USB camera."
@@ -1104,6 +1097,21 @@ function help_utils()
     echo 
     echb "steelsquid stream-off"
     echo "Disable streaming of camera."
+    echo 
+    echb "steelsquid alarm"
+    echo "Is the Alarm/Surveillance functionality enabled."
+    echo "For this to work you need a Raspberry PI camera connected."
+    echo "Also a PIR sensor conneted to GPIO04 and a siren conencted to GPIO17."
+    echo "See http://www.steelsquid.org/alarm"
+    echo 
+    echb "steelsquid alarm-on"
+    echo "Enable the Alarm/Surveillance functionality."
+    echo "For this to work you need a Raspberry PI camera connected."
+    echo "Also a PIR sensor conneted to GPIO04 and a siren conencted to GPIO17."
+    echo "See http://www.steelsquid.org/alarm"
+    echo 
+    echb "steelsquid alarm-off"
+    echo "Disable the Alarm/Surveillance functionality."
     if [ $(is-raspberry-pi) == "true" ]; then
         echo 
         echb "steelsquid piio"
@@ -1160,8 +1168,8 @@ function help_build()
     echo "passwd  (raspberry)"
     echo 
     echb "7.  Change to jessie and uppgrade"
-    echo "echo \"deb http://mirrordirector.raspbian.org/raspbian jessie main firmware contrib non-free rpi\" > /etc/apt/sources.list"
-    echo "echo \"deb http://archive.raspberrypi.org/debian jessie main untested staging\" >> /etc/apt/sources.list"
+    echo "echo \"deb http://archive.raspbian.org/raspbian jessie main contrib non-free firmware rpi\" > /etc/apt/sources.list"
+    echo "echo \"deb http://archive.raspberrypi.org/debian jessie main untested staging ui\" >> /etc/apt/sources.list"
     echo "apt-get update"
     echo "apt-get --no-install-recommends install sudo nano aptitude linux-image-rpi-rpfv linux-image-rpi2-rpfv"
     echo "aptitude update"
@@ -1264,7 +1272,13 @@ function help_top()
     echo "Print information about the device."
     echo "CPU, MEM, IP, Temp, Settings..."
     echo 
+    echb "steelsquid search <text>"
+    echo "Search for a text in all help."
+    echo 
     echb "steelsquid help"
+    echo "Display this help."
+    echo 
+    echb "steelsquid help-all"
     echo "Display help from all help categories."
     echo 
     echb "steelsquid help-network"
@@ -1297,7 +1311,7 @@ function help_top()
     echb "steelsquid help-build"
     echo "How to build a steelsquid-kiss img (reminder for me)."
 }
-if [ "$in_parameter_1" == "help" ]; then
+if [ "$in_parameter_1" == "help-all" ]; then
     help_top
     help_network
     help_settings
@@ -1310,6 +1324,18 @@ if [ "$in_parameter_1" == "help" ]; then
     help_develop
     help_io
     help_build
+    echo 
+    exit 0
+fi
+if [ "$in_parameter_1" == "help" ]; then
+    help_top
+    echo 
+    exit 0
+fi
+
+if [ "$in_parameter_1" == "search" ]; then
+    echo
+    steelsquid help-all | grep -A 4 -B 1 $in_parameter_2
     echo 
     exit 0
 fi
@@ -1792,29 +1818,69 @@ fi
 
 
 ##################################################################################
+# Set stream frame rate
+##################################################################################
+function stream_frames()
+{
+    set-parameter "stream_frames" $in_parameter_2
+    if [ $(get-flag "stream") == "true" ]; then
+        stream_on
+    fi
+    if [ $(get-flag "stream-pi") == "true" ]; then
+        stream_on_pi
+    fi
+}
+if [ "$in_parameter_1" == "stream-frames" ]; then
+	stream_frames
+	exit 0
+fi
+
+
+##################################################################################
+# Set stream port
+##################################################################################
+function stream_port()
+{
+    set-parameter "stream_port" $in_parameter_2
+    if [ $(get-flag "stream") == "true" ]; then
+        stream_on
+    fi
+    if [ $(get-flag "stream-pi") == "true" ]; then
+        stream_on_pi
+    fi
+}
+if [ "$in_parameter_1" == "stream-port" ]; then
+	stream_port
+	exit 0
+fi
+
+
+##################################################################################
 # Enable streaming of USB camera
 ##################################################################################
 function stream_on()
 {
 	log "Enable streaming of USB camera"
+    dat=$(get-parameter "stream_frames")
+        
     set-flag "stream"
     del-flag "stream-pi"
     systemctl stop mjpgstreamerpi
     systemctl disable mjpgstreamerpi
 
     rm -r /opt/mjpg-streamer/mjpg-streamer/www
-    echo "[Unit]" > /usr/local/lib/systemd/system/mjpgstreamer.service
-    echo "Description=Mjpg" >> /usr/local/lib/systemd/system/mjpgstreamer.service
-    echo "" >> /usr/local/lib/systemd/system/mjpgstreamer.service
-    echo "[Service]" >> /usr/local/lib/systemd/system/mjpgstreamer.service
-    echo "Environment=\"LD_LIBRARY_PATH=/opt/mjpg-streamer/mjpg-streamer\"" >> /usr/local/lib/systemd/system/mjpgstreamer.service
-    echo "ExecStart=/opt/mjpg-streamer/mjpg-streamer/mjpg_streamer -i \"input_uvc.so -f 15 -r 640x480 --led off\" -o \"output_http.so -w www\"" >> /usr/local/lib/systemd/system/mjpgstreamer.service
-    echo "Restart=always" >> /usr/local/lib/systemd/system/mjpgstreamer.service
-    echo "RestartSec=5" >> /usr/local/lib/systemd/system/mjpgstreamer.service
-    echo "KillMode=process" >> /usr/local/lib/systemd/system/mjpgstreamer.service
-    echo "" >> /usr/local/lib/systemd/system/mjpgstreamer.service
-    echo "[Install]" >> /usr/local/lib/systemd/system/mjpgstreamer.service
-    echo "WantedBy=multi-user.target" >> /usr/local/lib/systemd/system/mjpgstreamer.service
+    echo "[Unit]" > /etc/systemd/system/mjpgstreamer.service
+    echo "Description=Mjpg" >> /etc/systemd/system/mjpgstreamer.service
+    echo "" >> /etc/systemd/system/mjpgstreamer.service
+    echo "[Service]" >> /etc/systemd/system/mjpgstreamer.service
+    echo "Environment=\"LD_LIBRARY_PATH=/opt/mjpg-streamer/mjpg-streamer\"" >> /etc/systemd/system/mjpgstreamer.service
+    echo "ExecStart=/opt/mjpg-streamer/mjpg-streamer/mjpg_streamer -i \"input_uvc.so -f ${dat} -r 640x480 --led off\" -o \"output_http.so -w www\"" >> /etc/systemd/system/mjpgstreamer.service
+    echo "Restart=always" >> /etc/systemd/system/mjpgstreamer.service
+    echo "RestartSec=5" >> /etc/systemd/system/mjpgstreamer.service
+    echo "KillMode=process" >> /etc/systemd/system/mjpgstreamer.service
+    echo "" >> /etc/systemd/system/mjpgstreamer.service
+    echo "[Install]" >> /etc/systemd/system/mjpgstreamer.service
+    echo "WantedBy=multi-user.target" >> /etc/systemd/system/mjpgstreamer.service
     systemctl --system daemon-reload
     systemctl enable mjpgstreamer
     systemctl start mjpgstreamer
@@ -1834,6 +1900,7 @@ fi
 function stream_on_pi()
 {
 	log "Enable streaming of Raspberry PI camera"
+    dat=$(get-parameter "stream_frames")
     del-flag "stream"
     set-flag "stream-pi"
     systemctl stop mjpgstreamer
@@ -1842,18 +1909,18 @@ function stream_on_pi()
     enable_camera 
     
     rm -r /opt/mjpg-streamer-pi/mjpg-streamer/mjpg-streamer-experimental/www
-    echo "[Unit]" > /usr/local/lib/systemd/system/mjpgstreamerpi.service
-    echo "Description=Mjpg" >> /usr/local/lib/systemd/system/mjpgstreamerpi.service
-    echo "" >> /usr/local/lib/systemd/system/mjpgstreamerpi.service
-    echo "[Service]" >> /usr/local/lib/systemd/system/mjpgstreamerpi.service
-    echo "Environment=\"LD_LIBRARY_PATH=/opt/mjpg-streamer-pi/mjpg-streamer/mjpg-streamer-experimental\"" >> /usr/local/lib/systemd/system/mjpgstreamerpi.service
-    echo "ExecStart=/opt/mjpg-streamer-pi/mjpg-streamer/mjpg-streamer-experimental/mjpg_streamer -i \"/opt/mjpg-streamer-pi/mjpg-streamer/mjpg-streamer-experimental/input_raspicam.so -x 640 -y 480 -fps 15\" -o \"/opt/mjpg-streamer-pi/mjpg-streamer/mjpg-streamer-experimental/output_http.so -w www\"" >> /usr/local/lib/systemd/system/mjpgstreamerpi.service
-    echo "Restart=always" >> /usr/local/lib/systemd/system/mjpgstreamerpi.service
-    echo "RestartSec=5" >> /usr/local/lib/systemd/system/mjpgstreamerpi.service
-    echo "KillMode=process" >> /usr/local/lib/systemd/system/mjpgstreamerpi.service
-    echo "" >> /usr/local/lib/systemd/system/mjpgstreamerpi.service
-    echo "[Install]" >> /usr/local/lib/systemd/system/mjpgstreamerpi.service
-    echo "WantedBy=multi-user.target" >> /usr/local/lib/systemd/system/mjpgstreamerpi.service
+    echo "[Unit]" > /etc/systemd/system/mjpgstreamerpi.service
+    echo "Description=Mjpg" >> /etc/systemd/system/mjpgstreamerpi.service
+    echo "" >> /etc/systemd/system/mjpgstreamerpi.service
+    echo "[Service]" >> /etc/systemd/system/mjpgstreamerpi.service
+    echo "Environment=\"LD_LIBRARY_PATH=/opt/mjpg-streamer-pi/mjpg-streamer/mjpg-streamer-experimental\"" >> /etc/systemd/system/mjpgstreamerpi.service
+    echo "ExecStart=/opt/mjpg-streamer-pi/mjpg-streamer/mjpg-streamer-experimental/mjpg_streamer -i \"/opt/mjpg-streamer-pi/mjpg-streamer/mjpg-streamer-experimental/input_raspicam.so -x 640 -y 480 -fps ${dat}\" -o \"/opt/mjpg-streamer-pi/mjpg-streamer/mjpg-streamer-experimental/output_http.so -w www\"" >> /etc/systemd/system/mjpgstreamerpi.service
+    echo "Restart=always" >> /etc/systemd/system/mjpgstreamerpi.service
+    echo "RestartSec=5" >> /etc/systemd/system/mjpgstreamerpi.service
+    echo "KillMode=process" >> /etc/systemd/system/mjpgstreamerpi.service
+    echo "" >> /etc/systemd/system/mjpgstreamerpi.service
+    echo "[Install]" >> /etc/systemd/system/mjpgstreamerpi.service
+    echo "WantedBy=multi-user.target" >> /etc/systemd/system/mjpgstreamerpi.service
     systemctl --system daemon-reload
     systemctl enable mjpgstreamerpi
     systemctl start mjpgstreamerpi
@@ -1887,13 +1954,74 @@ fi
 
 
 ##################################################################################
+# Show status Alarm/Surveillance
+##################################################################################
+function alarm_info()
+{
+    if [ $(get-flag "alarm") == "true" ]; then
+        echo
+        echo "Alarm/Surveillance: Enabled"
+        echo "For this to work you need a Raspberry PI camera connected."
+        echo "Also a PIR sensor conneted to GPIO04 and a siren conencted to GPIO17."
+        echo "WEB: http://xxx.xxx.xxx.xxx/utils"
+        echo
+    else
+        echo
+        echo "Alarm/Surveillance: Disabled"
+        echo
+    fi
+}
+if [ "$in_parameter_1" == "alarm" ]; then
+	alarm_info
+	exit 0
+fi
+
+
+##################################################################################
+# Enable Alarm/Surveillance
+##################################################################################
+function alarm_on()
+{
+	log "Enable Alarm/Surveillance"
+    set-flag "alarm"
+	systemctl restart steelsquid
+	log-ok
+}
+if [ "$in_parameter_1" == "alarm-on" ]; then
+	alarm_on
+	exit 0
+fi
+
+
+##################################################################################
+# Disable Alarm/Surveillance
+##################################################################################
+function alarm_ff()
+{
+	log "Disable Alarm/Surveillance"
+    del-flag "alarm"
+	systemctl restart steelsquid
+	log-ok
+}
+if [ "$in_parameter_1" == "alarm-off" ]; then
+	alarm_off
+	exit 0
+fi
+
+
+##################################################################################
 # Is socket connection enabled or disabled
 ##################################################################################
 function socket_info()
 {
-    if [ $(get-flag "socket_connection") == "true" ]; then
+    if [ $(get-flag "socket_server") == "true" ]; then
         echo
-        echo "Socket connection: Enabled"
+        echo "Socket connection as server enabled (Port=22222)"
+        echo
+    elif [ $(get-parameter "socket_client") != "" ]; then
+        dat=$(get-parameter "socket_client")
+        echo
+        echo "Socket connection as client enabled (Adress to server=${dat}:22222)"
         echo
     else
         echo
@@ -1908,17 +2036,36 @@ fi
 
 
 ##################################################################################
-# Socket connection on
+# Socket connection server
 ##################################################################################
-function socket_on()
+function socket_server()
 {
-	log "Enable socket connection"
-    set-flag "socket_connection"
+	log "Enable socket connection as server"
+    set-flag "socket_server"
+    del-parameter "socket_client"
 	systemctl restart steelsquid
     log-ok
 }
-if [ "$in_parameter_1" == "socket-on" ]; then
-	socket_on
+if [ "$in_parameter_1" == "socket-server" ]; then
+	socket_server
+	exit 0
+fi
+
+
+
+##################################################################################
+# Socket connection client
+##################################################################################
+function socket_client()
+{
+	log "Enable socket connection as client"
+    del-flag "socket_server"
+    set-parameter "socket_client" $in_parameter_2
+	systemctl restart steelsquid
+    log-ok
+}
+if [ "$in_parameter_1" == "socket-client" ]; then
+	socket_client
 	exit 0
 fi
 
@@ -1929,7 +2076,8 @@ fi
 function socket_off()
 {
 	log "Disable socket connection"
-    del-flag "socket_connection"
+    del-flag "socket_server"
+    del-parameter "socket_client"
 	systemctl restart steelsquid
     log-ok
 }
@@ -1947,20 +2095,10 @@ function bluetooth_info()
     if [ $(get-flag "bluetooth_pairing") == "true" ]; then
         echo
         echo "Bluetooth pairing: Enabled"
-        if [ $(get-flag "bluetooth_connection") == "true" ]; then
-            echo "Bluetooth connection: Enabled"
-        else
-            echo "Bluetooth connection: Disabled"
-        fi
         echo
     else
         echo
         echo "Bluetooth pairing: Disabled"
-        if [ $(get-flag "bluetooth_connection") == "true" ]; then
-            echo "Bluetooth connection: Enabled"
-        else
-            echo "Bluetooth connection: Disabled"
-        fi
         echo
     fi
 }
@@ -2019,38 +2157,6 @@ fi
 
 
 ##################################################################################
-# bluetooth connection on
-##################################################################################
-function bluetooth_con_on()
-{
-	log "Enable bluetooth connection"
-    set-flag "bluetooth_connection"
-	systemctl restart steelsquid
-    log-ok
-}
-if [ "$in_parameter_1" == "bluetooth-con-on" ]; then
-	bluetooth_con_on
-	exit 0
-fi
-
-
-##################################################################################
-#  bluetooth connection off
-##################################################################################
-function bluetooth_con_off()
-{
-	log "Disable bluetooth connection"
-    del-flag "bluetooth_connection"
-	systemctl restart steelsquid
-    log-ok
-}
-if [ "$in_parameter_1" == "bluetooth-con-off" ]; then
-	bluetooth_con_off
-	exit 0
-fi
-
-
-##################################################################################
 # Is rover enabled or disabled
 ##################################################################################
 function rover_info()
@@ -2082,7 +2188,6 @@ function rover_on()
     stream_on
     socket_on
     bluetooth_on
-    bluetooth_con_on    
     enable_lcd_ssd
     log-ok
 }
@@ -2308,7 +2413,6 @@ function download_on()
     fi
 	set-flag "download"
     download_start
-    systemctl restart steelsquid
 }
 if [ "$in_parameter_1" == "download-on" ]; then
 	download_on
@@ -2325,7 +2429,6 @@ function download_off()
 	log "Disable download server"
     killall aria2c > /dev/null 2>&1
 	del-flag "download"
-    systemctl restart steelsquid
     log-ok
 }
 if [ "$in_parameter_1" == "download-off" ]; then
@@ -2384,6 +2487,22 @@ function web_info()
 
 if [ "$in_parameter_1" == "web" ]; then
 	web_info
+	exit 0
+fi
+
+
+##################################################################################
+# set web server port
+##################################################################################
+function web_port()
+{
+	log "Set webserver port"
+	$(set-parameter "web_port" $in_parameter_2)
+    systemctl restart steelsquid
+	log-ok
+}
+if [ "$in_parameter_1" == "web-port" ]; then
+	web_port
 	exit 0
 fi
 
@@ -2533,9 +2652,8 @@ if [ "$in_parameter_1" == "list-flags" ]; then
     echo "camera               Raspberry PI camera enabled"
     echo "stream               Stream USB camera"
     echo "stream-pi            Stream the Raspberry PI camera"
-    echo "socket_connection    Listen for socket connection"
+    echo "socket_server        Socket connection as server enabled"
     echo "bluetooth_pairing    Bluetooth pairing is enabled"
-    echo "bluetooth_connection Bluetooth socket connnection is enabled"
     echo "rover                Rover functionality"
     echo "io                   Steelsquid IO Board is enabled"
     echo "ssh                  SSH server enabled"
@@ -2546,8 +2664,6 @@ if [ "$in_parameter_1" == "list-flags" ]; then
     echo "web_local            Only listen on localhost"
     echo "development          Is development mode enabled"
     echo "disable_monitor      Disable the monitor"
-    echo "overclock            Is the system overclocked"
-    echo "underclock           Is the system underclocked"
     exit 0
 fi
 if [ "$in_parameter_1" == "list-parameters" ]; then
@@ -2559,6 +2675,7 @@ if [ "$in_parameter_1" == "list-parameters" ]; then
     echo "mail_username   Mail server username to send notifications"
     echo "mail_password   Mail server password to send notifications"
     echo "mail_mail       Notifications email"
+    echo "socket_client   Socket connection as client enabled (this is the address to the server)"
     exit 0
 fi
 
@@ -3182,132 +3299,6 @@ fi
 
 
 ##################################################################################
-# clocking info
-##################################################################################
-function clocking_info()
-{
-    if [ $(get-flag "overclock") == "true" ]; then
-        echo
-        echo "System is overclocked"
-        echo
-    elif [ $(get-flag "underclock") == "true" ]; then
-        echo
-        echo "System is underclocked"
-        echo
-    else
-        echo
-        echo "System has default clocking"
-        echo
-    fi
-}
-if [ "$in_parameter_1" == "clocking" ]; then
-	clocking_info
-	exit 0
-fi
-
-
-##################################################################################
-# Enable overclock
-##################################################################################
-function overclock()
-{
-	log "Enable overclocking"
-	set-flag "overclock"
-	del-flag "underclock"
-    sed -i '/^arm_freq/ d' /boot/config.txt
-    sed -i '/^core_freq/ d' /boot/config.txt
-    sed -i '/^sdram_freq/ d' /boot/config.txt
-    sed -i '/^gpu_freq/ d' /boot/config.txt
-    sed -i '/^arm_freq_min/ d' /boot/config.txt
-    sed -i '/^core_freq_min/ d' /boot/config.txt
-    sed -i '/^sdram_freq_min/ d' /boot/config.txt
-    sed -i '/^over_voltage/ d' /boot/config.txt
-    sed -i '/^over_voltage_sdram/ d' /boot/config.txt
-    sed -i '/^force_turbo/ d' /boot/config.txt
-    sed -i '/^initial_turbo/ d' /boot/config.txt
-    echo "arm_freq=1000" >> /boot/config.txt
-    echo "core_freq=500" >> /boot/config.txt
-    echo "sdram_freq=500" >> /boot/config.txt
-    echo "over_voltage=6" >> /boot/config.txt
-    echo "over_voltage_sdram=6" >> /boot/config.txt
-    echo "force_turbo=1" >> /boot/config.txt
-    echo "initial_turbo=30" >> /boot/config.txt
-    systemctl restart steelsquid
-	log "Overclocking enabled (Changes will be implemented at the next reboot)"
-}
-if [ "$in_parameter_1" == "overclock" ]; then
-	overclock
-	exit 0
-fi
-
-
-
-##################################################################################
-# Normal clocking
-##################################################################################
-function defaultclock()
-{
-	log "Normal clocking"
-	del-flag "overclock"
-	del-flag "underclock"
-    sed -i '/^arm_freq/ d' /boot/config.txt
-    sed -i '/^core_freq/ d' /boot/config.txt
-    sed -i '/^sdram_freq/ d' /boot/config.txt
-    sed -i '/^gpu_freq/ d' /boot/config.txt
-    sed -i '/^arm_freq_min/ d' /boot/config.txt
-    sed -i '/^core_freq_min/ d' /boot/config.txt
-    sed -i '/^sdram_freq_min/ d' /boot/config.txt
-    sed -i '/^over_voltage/ d' /boot/config.txt
-    sed -i '/^over_voltage_sdram/ d' /boot/config.txt
-    sed -i '/^force_turbo/ d' /boot/config.txt
-    echo "force_turbo=1" >> /boot/config.txt
-    systemctl restart steelsquid
-	log "Normal clocking (Changes will be implemented at the next reboot)"
-}
-if [ "$in_parameter_1" == "defaultclock" ]; then
-	defaultclock
-	exit 0
-fi
-
-
-##################################################################################
-# underclicking
-##################################################################################
-function underclock()
-{
-	log "Underclock"
-	del-flag "overclock"
-	set-flag "underclock"
-    sed -i '/^arm_freq/ d' /boot/config.txt
-    sed -i '/^core_freq/ d' /boot/config.txt
-    sed -i '/^sdram_freq/ d' /boot/config.txt
-    sed -i '/^gpu_freq/ d' /boot/config.txt
-    sed -i '/^arm_freq_min/ d' /boot/config.txt
-    sed -i '/^core_freq_min/ d' /boot/config.txt
-    sed -i '/^sdram_freq_min/ d' /boot/config.txt
-    sed -i '/^over_voltage/ d' /boot/config.txt
-    sed -i '/^over_voltage_sdram/ d' /boot/config.txt
-    sed -i '/^force_turbo/ d' /boot/config.txt
-    echo "arm_freq=140" >> /boot/config.txt
-    echo "core_freq=140" >> /boot/config.txt
-    echo "sdram_freq=140" >> /boot/config.txt
-    echo "gpu_freq=10" >> /boot/config.txt
-    echo "arm_freq_min=0" >> /boot/config.txt
-    echo "core_freq_min=140" >> /boot/config.txt
-    echo "sdram_freq_min=140" >> /boot/config.txt
-    echo "gpu_freq_min=10" >> /boot/config.txt
-    echo "force_turbo=0" >> /boot/config.txt
-    systemctl restart steelsquid
-	log "Underclocking enabled (Changes will be implemented at the next reboot)"
-}
-if [ "$in_parameter_1" == "underclock" ]; then
-	underclock
-	exit 0
-fi
-
-
-
-##################################################################################
 # Set/get gpu mem
 ##################################################################################
 function gpu_mem()
@@ -3662,39 +3653,21 @@ log "Repository updated"
 ##################################################################################
 if [ $(get_installed) == "false" ]; then
 	log "Remove and install packages"
-    if [ $(is-raspberry-pi) == "true" ]; then
-        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv linux-image-rpi-rpfv raspberrypi-bootloader-nokernel i2c-tools alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-ti-connectivity libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer zd1211-firmware libraspberrypi-bin fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw console-data read-edid
-        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv linux-image-rpi-rpfv raspberrypi-bootloader-nokernel i2c-tools alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-ti-connectivity libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer zd1211-firmware libraspberrypi-bin fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw console-data read-edid
-        exit-check 
-        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install build-essential python-dbus python-pexpect python-dev python-setuptools python-pip python-pam python-smbus psmisc git libudev-dev libmount-dev python-imaging
-        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install build-essential python-dbus python-pexpect python-dev python-setuptools python-pip python-pam python-smbus psmisc git libudev-dev libmount-dev python-imaging
-        exit-check 
-        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install deborphan network-manager dash nano sudo aptitude udev ntfs-3g console-setup beep ecryptfs-utils alsa-utils alsa-base va-driver-all vdpau-va-driver
-        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install deborphan network-manager dash nano sudo aptitude udev ntfs-3g console-setup beep ecryptfs-utils alsa-utils alsa-base va-driver-all vdpau-va-driver
-        exit-check 
-        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install telnet secure-delete beep sysstat openssh-client cifs-utils smbclient keyutils sshfs curl samba-common lsof mc fgetty ftp htop elinks screenie nload mtr-tiny lzma zip unzip unrar-free p7zip-full bzip2 whiptail parted lua5.1 aria2 python-serial python-numpy python-paramiko zlib1g zlib1g-dev libfreetype6-dev ttf-anonymous-pro
-        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install telnet secure-delete beep sysstat openssh-client cifs-utils smbclient keyutils sshfs curl samba-common lsof mc fgetty ftp htop elinks screenie nload mtr-tiny lzma zip unzip unrar-free p7zip-full bzip2 whiptail parted lua5.1 aria2 python-serial python-numpy python-paramiko zlib1g zlib1g-dev libfreetype6-dev ttf-anonymous-pro
-        exit-check 
-        aptitude -y purge cron ifupdown rsyslog vim-common vim-tiny hdparm keyboard-configuration console-setup console-setup-linux
-        aptitude -y purge cron ifupdown rsyslog vim-common vim-tiny hdparm keyboard-configuration console-setup console-setup-linux
-        exit-check 
-    else
-        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv linux-image-rpi-rpfv raspberrypi-bootloader-nokernel i2c-tools alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-ti-connectivity libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer zd1211-firmware libraspberrypi-bin fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw console-data bluetooth
-        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv linux-image-rpi-rpfv raspberrypi-bootloader-nokernel i2c-tools alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-ti-connectivity libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer zd1211-firmware libraspberrypi-bin fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw console-data bluetooth
-        exit-check 
-        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install build-essential python-dbus python-pexpect python-dev python-setuptools python-pip python-pam python-smbus psmisc git libudev-dev libmount-dev python-imaging
-        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install build-essential python-dbus python-pexpect python-dev python-setuptools python-pip python-pam python-smbus psmisc git libudev-dev libmount-dev python-imaging
-        exit-check 
-        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install deborphan network-manager dash nano sudo aptitude udev ntfs-3g console-setup beep ecryptfs-utils alsa-utils alsa-base va-driver-all vdpau-va-driver
-        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install deborphan network-manager dash nano sudo aptitude udev ntfs-3g console-setup beep ecryptfs-utils alsa-utils alsa-base va-driver-all vdpau-va-driver
-        exit-check 
-        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install telnet secure-delete beep sysstat openssh-client cifs-utils smbclient keyutils sshfs curl samba-common lsof mc fgetty ftp htop elinks screenie nload mtr-tiny lzma zip unzip unrar-free p7zip-full bzip2 whiptail parted lua5.1 aria2 python-serial python2.7-numpy numpy python-paramiko zlib1g zlib1g-dev libfreetype6-dev ttf-anonymous-pro
-        aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install telnet secure-delete beep sysstat openssh-client cifs-utils smbclient keyutils sshfs curl samba-common lsof mc fgetty ftp htop elinks screenie nload mtr-tiny lzma zip unzip unrar-free p7zip-full bzip2 whiptail parted lua5.1 aria2 python-serial python2.7-numpy numpy python-paramiko zlib1g zlib1g-dev libfreetype6-dev ttf-anonymous-pro
-        exit-check 
-        aptitude -y purge cron ifupdown rsyslog vim-common vim-tiny hdparm keyboard-configuration console-setup console-setup-linux
-        aptitude -y purge cron ifupdown rsyslog vim-common vim-tiny hdparm keyboard-configuration console-setup console-setup-linux
-        exit-check 
-    fi
+    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv linux-image-rpi-rpfv raspberrypi-bootloader-nokernel i2c-tools alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-ti-connectivity libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer zd1211-firmware libraspberrypi-bin fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw console-data read-edid bluetooth
+    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv linux-image-rpi-rpfv raspberrypi-bootloader-nokernel i2c-tools alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-ti-connectivity libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer zd1211-firmware libraspberrypi-bin fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw console-data read-edid bluetooth
+    exit-check 
+    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install build-essential python-dbus python-pexpect python-dev python-setuptools python-pip python-pam python-smbus psmisc git libudev-dev libmount-dev python-imaging pkg-config libglib2.0-dev whois
+    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install build-essential python-dbus python-pexpect python-dev python-setuptools python-pip python-pam python-smbus psmisc git libudev-dev libmount-dev python-imaging pkg-config libglib2.0-dev whois
+    exit-check 
+    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install deborphan network-manager dash nano sudo aptitude udev ntfs-3g console-setup beep ecryptfs-utils alsa-utils alsa-base va-driver-all vdpau-va-driver
+    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install deborphan network-manager dash nano sudo aptitude udev ntfs-3g console-setup beep ecryptfs-utils alsa-utils alsa-base va-driver-all vdpau-va-driver
+    exit-check 
+    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install telnet secure-delete beep sysstat openssh-client cifs-utils smbclient keyutils sshfs curl samba-common lsof mc fgetty ftp htop elinks screenie nload mtr-tiny lzma zip unzip unrar-free p7zip-full bzip2 whiptail parted lua5.1 aria2 python-serial python-numpy python2.7-numpy python-paramiko zlib1g zlib1g-dev libfreetype6-dev ttf-anonymous-pro
+    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install telnet secure-delete beep sysstat openssh-client cifs-utils smbclient keyutils sshfs curl samba-common lsof mc fgetty ftp htop elinks screenie nload mtr-tiny lzma zip unzip unrar-free p7zip-full bzip2 whiptail parted lua5.1 aria2 python-serial python-numpy python2.7-numpy python-paramiko zlib1g zlib1g-dev libfreetype6-dev ttf-anonymous-pro
+    exit-check 
+    aptitude -y purge cron ifupdown rsyslog vim-common vim-tiny hdparm keyboard-configuration console-setup console-setup-linux
+    aptitude -y purge cron ifupdown rsyslog vim-common vim-tiny hdparm keyboard-configuration console-setup console-setup-linux
+    exit-check 
 	log "Packages removed and installed"
 fi
 
@@ -3866,8 +3839,8 @@ cd ldm
 make
 make install
 systemctl enable ldm
-sed -i "/ExecStart/c\ExecStart=\/usr\/local\/bin\/ldm -u 0 -g 0 -p \/media -c \/usr\/bin\/ldm-shout" /usr/local/lib/systemd/system/ldm.service
-sed -i '/EnvironmentFile/d' /usr/local/lib/systemd/system/ldm.service
+sed -i "/ExecStart/c\ExecStart=\/usr\/bin\/ldm -u root -p \/media -c \/usr\/bin\/ldm-shout" /usr/lib/systemd/system/ldm.service
+sed -i '/EnvironmentFile/d' /usr/lib/systemd/system/ldm.service
 systemctl --system daemon-reload
 systemctl enable ldm
 echo "#"\!"/bin/bash" > /usr/bin/ldm-shout
@@ -3884,9 +3857,9 @@ chmod +x /usr/bin/ldm-shout
 # Camera sreaming
 ##################################################################################
 log "Download and install camera streaming"
+cd /opt
 rm -r mjpg-streamer*
 sudo ln -s /usr/include/linux/videodev2.h /usr/include/linux/videodev.h
-cd /opt
 svn co https://svn.code.sf.net/p/mjpg-streamer/code mjpg-streamer
 cd mjpg-streamer/mjpg-streamer
 make
@@ -3895,6 +3868,9 @@ cd /opt/mjpg-streamer-pi
 git clone https://github.com/jacksonliam/mjpg-streamer.git
 cd /opt/mjpg-streamer-pi/mjpg-streamer/mjpg-streamer-experimental
 make
+if [ $(has-parameter "stream_frames") == "false" ]; then
+    $(set-parameter "stream_frames" "4")
+fi
 
 
 ##################################################################################
@@ -4355,13 +4331,6 @@ if [ $(get-flag "disable_monitor") == "true" ]; then
     disable_monitor
 else
     enable_monitor
-fi
-if [ $(get-flag "overclock") == "true" ]; then
-	overclock
-elif [ $(get-flag "underclock") == "true" ]; then
-	underclock
-else
-	defaultclock
 fi
 
 
@@ -4825,6 +4794,18 @@ chmod +x /usr/bin/decrypt
 
 
 
+##################################################################################
+# Generate user password check script
+##################################################################################
+log "Generate user password check script"
+echo "#"\!"/bin/bash" > /usr/bin/checkuser
+echo "username=\$1" >> /usr/bin/checkuser
+echo "password=\$2" >> /usr/bin/checkuser
+echo "salt=\$(sudo getent shadow \$username | cut -d\$ -f3)" >> /usr/bin/checkuser
+echo "epassword=\$(sudo getent shadow \$username | cut -d: -f2)" >> /usr/bin/checkuser
+echo "match=\$(python -c 'import crypt; print crypt.crypt(\"'\"\${password}\"'\", \"\$6\$'\${salt}'\")')" >> /usr/bin/checkuser
+echo "[ \${match} == \${epassword} ] && echo \"true\" || echo \"false\"" >> /usr/bin/checkuser
+chmod +x /usr/bin/checkuser
 
 
 

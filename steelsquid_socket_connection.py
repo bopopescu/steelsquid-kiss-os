@@ -18,6 +18,7 @@ import socket
 import sys
 import select
 
+only_once=False
 
 class SteelsquidSocketConnection(steelsquid_connection.SteelsquidConnection):
 
@@ -41,7 +42,13 @@ class SteelsquidSocketConnection(steelsquid_connection.SteelsquidConnection):
         '''
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        steelsquid_utils.shout("Socket Connection: Client\n"+self.host +":"+ str(self.port), debug=True)
+        global only_once
+        if steelsquid_utils.development():
+            steelsquid_utils.shout("Socket Connection (Client)\n"+self.host +":"+ str(self.port), debug=True)
+        else:
+            if not only_once:
+                only_once = True
+                steelsquid_utils.shout("Socket Connection (Client)\n"+self.host +":"+ str(self.port), debug=False)
         return sock
 
 
@@ -57,7 +64,7 @@ class SteelsquidSocketConnection(steelsquid_connection.SteelsquidConnection):
         s.settimeout(2)
         s.bind(('', self.port))
         s.listen(3)
-        steelsquid_utils.shout("Socket Connection: Server "+str(self.port), debug=True)
+        steelsquid_utils.shout("Socket Connection (Server)\nPort: "+str(self.port), debug=False)
         return s
 
 
@@ -171,26 +178,4 @@ class SteelsquidSocketConnection(steelsquid_connection.SteelsquidConnection):
         print parameters
 
 
-if __name__ == "__main__":
-    steelsquid_utils.set_development()
-    if sys.argv[1] == "client":
-        rover = SteelsquidSocketConnection(False)
-        rover.start()
-        try:
-            raw_input("Press Enter to send")
-            rover.send_request("test", ["kalle", "kula"])
-        except:
-            print sys.exc_info()        
-        raw_input("Press Enter to exit server...")
-        rover.stop()
-    elif sys.argv[1] == "server":
-        rover = SteelsquidSocketConnection(True)
-        rover.start()
-        try:
-            raw_input("Press Enter to send")
-            rover.send_request("test", ["kalle", "kula"])
-        except:
-            print sys.exc_info()        
-        raw_input("Press Enter to exit server...")
-        rover.stop()
 
