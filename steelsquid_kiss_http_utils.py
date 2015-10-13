@@ -26,6 +26,8 @@ import steelsquid_kiss_http_server
 import steelsquid_utils
 import steelsquid_event
 import steelsquid_kiss_global
+import subprocess
+from subprocess import Popen, PIPE, STDOUT
 
 
 class SteelsquidKissHttpServerUtils(steelsquid_kiss_http_server.SteelsquidKissHttpServer):

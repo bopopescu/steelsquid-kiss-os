@@ -1984,7 +1984,7 @@ function alarm_on()
 {
 	log "Enable Alarm/Surveillance"
     set-flag "alarm"
-	systemctl restart steelsquid
+    stream_on_pi
 	log-ok
 }
 if [ "$in_parameter_1" == "alarm-on" ]; then
@@ -1996,7 +1996,7 @@ fi
 ##################################################################################
 # Disable Alarm/Surveillance
 ##################################################################################
-function alarm_ff()
+function alarm_off()
 {
 	log "Disable Alarm/Surveillance"
     del-flag "alarm"
