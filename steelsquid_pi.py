@@ -1340,7 +1340,8 @@ def pcf8591_write(value, address=0x48):
 
 def yl40_light_level(address=0x48): 
     '''
-    Read light level from YL-40 sensor
+    Read light level from YL-40 sensor (pcf8591)
+    Just invert the scale to 0 to 255
     http://dx.com/p/pcf8591-8-bit-a-d-d-a-converter-module-150190
     return 0=dark  -->  255=super bright
     '''
@@ -1350,6 +1351,27 @@ def yl40_light_level(address=0x48):
     value = (value-255)*-1
     return value
         
+
+def hdc1008(address=0x40): 
+    '''
+    Read Temperature + Humidity from HDC1008
+    Return tuple with Temperature and Humidity
+    '''
+    steelsquid_i2c.write_bytes(address, 0x02, [0x02, 0x00])
+    time.sleep(0.015)
+    steelsquid_i2c.write_8_bit_raw(address, 0x00)
+    time.sleep(0.0625)
+    b1 = steelsquid_i2c.read_8_bit_raw(address)
+    b2 = steelsquid_i2c.read_8_bit_raw(address)
+    temp = ((((b1<<8) + (b2))/65536.0)*165.0 ) - 40.0   
+    time.sleep(0.015)
+    steelsquid_i2c.write_8_bit_raw(address, 0x01)
+    time.sleep(0.0625)
+    b1 = steelsquid_i2c.read_8_bit_raw(address)
+    b2 = steelsquid_i2c.read_8_bit_raw(address)
+    hum = (((b1<<8) + (b2))/65536.0)*100.0
+    return temp, hum
+
 
 if __name__ == '__main__':
     if len(sys.argv)==1:
@@ -1542,6 +1564,11 @@ if __name__ == '__main__':
         print("Set analog out value on pcf8591")
         print("http://dx.com/p/pcf8591-8-bit-a-d-d-a-converter-module-150190")
         print("value = 0 to 255")
+        print("")
+        printb("pi <d/e> hdc1008")
+        print("Read Temperature + Humidity from HDC1008")
+        print("https://learn.adafruit.com/adafruit-hdc1008-temperature-and-humidity-sensor-breakout/overview")
+        print("Temperatur in celsius and humidity in %")
     else:
         manner = sys.argv[1]
         command = sys.argv[2]
@@ -1815,6 +1842,14 @@ if __name__ == '__main__':
                  pcf8591_write(para1)
             elif manner == "e" or manner == "event":
                 steelsquid_event.broadcast_event_external("pi_io_event", ["pcf8591_write", para1])
+            else:
+                print "Expected: direct (d), event (e)"
+        elif command == "hdc1008":
+            if manner == "d" or manner == "direct":
+                 temp, hum = hdc1008()
+                 print "Temperature: " + str(round(temp, 1)) + "C\nHumidity: " + str(round(hum, 1)) + "%"
+            elif manner == "e" or manner == "event":
+                steelsquid_event.broadcast_event_external("pi_io_event", ["hdc1008"])
             else:
                 print "Expected: direct (d), event (e)"
         else:
