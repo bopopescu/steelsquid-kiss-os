@@ -392,6 +392,9 @@ function help_upgrade()
     echo 
     echb "steelsquid update-img"
     echo "Download and upgrade icons and images to the web server."
+    echo 
+    echb "steelsquid update-all"
+    echo "Update steelsquid-kiss-os, python scripts, web files and images"
 }
 if [ "$in_parameter_1" == "help-upgrade" ]; then
     help_upgrade
@@ -2941,6 +2944,25 @@ if [ "$in_parameter_1" == "update-img" ]; then
 	install_img_files
 	exit 0
 fi
+
+
+##################################################################################
+# Download and install all
+##################################################################################
+function install_all_files()
+{
+	log "Download and install all steelsquid files"
+    version_check
+    install_steelsquid_python
+    install_web_files
+    install_img_files
+	log "OK"
+}
+if [ "$in_parameter_1" == "update-all" ]; then
+	install_all_files
+	exit 0
+fi
+
 
 
 ##################################################################################

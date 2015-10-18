@@ -71,10 +71,10 @@ class Alarm(object):
         Flag: alarm
         '''    
         steelsquid_utils.shout("Steelsquid Alarm/Surveillance enabled")
-        steelsquid_pi.gpio_event(4, cls.on_motion)
+        steelsquid_pi.gpio_event(25, cls.on_motion, resistor=steelsquid_pi.PULL_NONE)
         
         if not steelsquid_utils.has_parameter("alarm_security_movments"):
-            steelsquid_utils.set_parameter("alarm_security_movments", "3");
+            steelsquid_utils.set_parameter("alarm_security_movments", "1");
         if not steelsquid_utils.has_parameter("alarm_security_movments_seconds"):
             steelsquid_utils.set_parameter("alarm_security_movments_seconds", "20");
         if not steelsquid_utils.has_parameter("alarm_security_seconds"):
@@ -95,7 +95,6 @@ class Alarm(object):
             alarm_security_wait = int(steelsquid_utils.get_parameter("alarm_security_wait"))
             activate_siren = steelsquid_utils.get_flag("alarm_security_activate_siren")
             alarm_security_send_mail = steelsquid_utils.get_flag("alarm_security_send_mail")
-            flash_light = steelsquid_utils.get_flag("alarm_flash_light")
             if status==True and cls.alarm_triggered==False:
                 now = datetime.now()
                 delta = now - cls.last_trigger
@@ -113,23 +112,9 @@ class Alarm(object):
                         cls.last_trigger=datetime.now() 
                         if activate_siren:
                             cls.siren(True)
-                        if flash_light:
-                            thread.start_new_thread(cls.flash_l, ()) 
                         if alarm_security_send_mail:
                             cls.send_mail()
                         steelsquid_utils.execute_delay(alarm_for_seconds, cls.turn_off_alarm, None)
-
-    @classmethod
-    def flash_l(cls):
-        '''
-        flash light
-        '''
-        while cls.alarm_triggered:
-            cls.lamp(True)
-            time.sleep(0.3)
-            cls.lamp(False)
-            time.sleep(0.3)
-        cls.lamp(False)
                     
     @classmethod
     def send_mail(cls):

@@ -146,10 +146,6 @@ class SteelsquidKissHttpServerUtils(steelsquid_kiss_http_server.SteelsquidKissHt
                 steelsquid_utils.set_flag("alarm_security_send_mail")
             else:
                 steelsquid_utils.del_flag("alarm_security_send_mail")
-            if parameters[6]=="True":
-                steelsquid_utils.set_flag("alarm_flash_light")
-            else:
-                steelsquid_utils.del_flag("alarm_flash_light")
             is_saved=True
         movments = steelsquid_utils.get_parameter("alarm_security_movments")
         movments_seconds = steelsquid_utils.get_parameter("alarm_security_movments_seconds")
@@ -157,8 +153,7 @@ class SteelsquidKissHttpServerUtils(steelsquid_kiss_http_server.SteelsquidKissHt
         wait_ = steelsquid_utils.get_parameter("alarm_security_wait")
         alarm_activate_siren = steelsquid_utils.get_flag("alarm_security_activate_siren")
         alarm_mail = steelsquid_utils.get_flag("alarm_security_send_mail")
-        alarm_flash = steelsquid_utils.get_flag("alarm_flash_light")
-        return [is_saved, movments, movments_seconds, seconds, wait_, alarm_activate_siren, alarm_mail, alarm_flash]
+        return [is_saved, movments, movments_seconds, seconds, wait_, alarm_activate_siren, alarm_mail]
 
 
     def alarm_arm(self, session_id, parameters):

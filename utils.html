@@ -224,11 +224,11 @@
                 }
                 if(paramaters[2] == "true"){
                     $("#alarm_lamp").html("<span class='error'>Lit!!!</span>");
-                    $("#alarm_lamp_button").html("<button onclick=\"javascript:submitSync('alarm_lamp', 'false')\">Turn off the lamp</button>");
+                    $("#alarm_lamp_button").html("<button onclick=\"javascript:submitSync('alarm_lamp', 'false')\">Turn off the IR lamp</button>");
                 }
                 else{
                     $("#alarm_lamp").html("Off");
-                    $("#alarm_lamp_button").html("<button onclick=\"javascript:submitSync('alarm_lamp', 'true')\">Turn on the lamp</button>");
+                    $("#alarm_lamp_button").html("<button onclick=\"javascript:submitSync('alarm_lamp', 'true')\">Turn on the IR lamp</button>");
                 }
                 if(paramaters[3] == "true"){
                     $("#alarm_triggered").html("<span class='error' style='font-size:10pt'><b>Alarm is triggered!!!</b></span>");
@@ -278,9 +278,6 @@
                 }    
                 if(paramaters[6]=="True"){
                     $("#alarm_mail").prop("checked", true)
-                }    
-                if(paramaters[7]=="True"){
-                    $("#alarm_flash").prop("checked", true)
                 }    
             }
 
@@ -592,8 +589,8 @@
                 <div id="alarm_disabled" class="hide">
                     The Alarm/Surveillance functionality is not enabled on this system.<br/>
                     For this to work you need a Raspberry PI camera connected. <br/>
-                    Also a PIR sensor connected to GPIO04 and a siren connected to GPIO17.<br/>
-                    If you enable the alarm you will get "Connection error" while service restart...you need to reboot the device.<br/>
+                    Also a PIR sensor connected to GPIO25 and a siren connected to GPIO17.<br/>
+                    If you enable the alarm you will get "Connection error" while service restart...you need to <b>reboot the device</b>.<br/>
                     See <a href="http://www.steelsquid.org/alarm">http://www.steelsquid.org/alarm</a>
                     <br/><br/>
                     <table>
@@ -606,7 +603,7 @@
                     The Alarm/Surveillance functionality is enabled on this system.<br/>
                     For this to work you need a Raspberry PI camera connected. <br/>
                     Also a PIR sensor conneted to GPIO04 and a siren conencted to GPIO17.<br/>
-                    And GPIO27 and GPIO22 to the lamps.<br/>
+                    And GPIO08 to the IR lamps.<br/>
                     See <a href="http://www.steelsquid.org/alarm">http://www.steelsquid.org/alarm</a>
                     <br/><br/>
                     Push to Arm/Disarm: <a href="#" id="toggler" class="toggler">&nbsp;</a>&nbsp;&nbsp;<span id="toggler_text"></span>
@@ -638,7 +635,7 @@
                         </tr>
                         <tr>
                             <td>
-                                Lamp
+                                IR Lamp
                             </td>
                             <td id="alarm_lamp">
                             </td>
@@ -712,18 +709,6 @@
                         <tbody>
                             <tr>
                                 <td style="width:25px">
-                                    <input type="checkbox" id="alarm_flash" name="alarm_flash" value="True">
-                                </td>
-                                <td>
-                                    <label for="alarm_flash">Flash lamp on alarm</label>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <table style="margin-top:3px;margin-bottom:4px">
-                        <tbody>
-                            <tr>
-                                <td style="width:25px">
                                     <input type="checkbox" id="alarm_mail" name="alarm_mail" value="True">
                                 </td>
                                 <td>
@@ -732,7 +717,7 @@
                             </tr>
                         </tbody>
                     </table>
-                    <button onclick="javascript:submitSyncFromInput('alarm_settings', 'alarm_movments', 'alarm_movments_seconds', 'alarm_seconds', 'alarm_wait', 'alarm_activate_siren', 'alarm_mail', 'alarm_flash')">Save</button>
+                    <button onclick="javascript:submitSyncFromInput('alarm_settings', 'alarm_movments', 'alarm_movments_seconds', 'alarm_seconds', 'alarm_wait', 'alarm_activate_siren', 'alarm_mail')">Save</button>
                     <br/><br/><br/>
                     <table class="input">
                         <tbody>

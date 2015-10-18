@@ -1308,8 +1308,50 @@ def gpio_event_callback_method(pin, status):
     steelsquid_utils.log("PIN: " + str(pin) + "=" + str(status))
 
 
+def pcf8591_read(pin, address=0x48): 
+    '''
+    Read analog value from pcf8591
+    http://dx.com/p/pcf8591-8-bit-a-d-d-a-converter-module-150190
+    pin = 0 to 3
+    return 0 to 255
+    '''
+    pin = int(pin)
+    if pin==0:
+        steelsquid_i2c.write_8_bit_raw(address, 0x40)
+    elif pin==1:
+        steelsquid_i2c.write_8_bit_raw(address, 0x41)
+    elif pin==2:
+        steelsquid_i2c.write_8_bit_raw(address, 0x42)
+    else:
+        steelsquid_i2c.write_8_bit_raw(address, 0x43)
+    steelsquid_i2c.read_8_bit_raw(address)
+    return steelsquid_i2c.read_8_bit_raw(address)
+
+
+def pcf8591_write(value, address=0x48): 
+    '''
+    Set analog out value on pcf8591
+    http://dx.com/p/pcf8591-8-bit-a-d-d-a-converter-module-150190
+    value = 0 to 255
+    '''
+    value = int(value)
+    steelsquid_i2c.write_8_bit(address, 0x40, value)
+
+
+def yl40_light_level(address=0x48): 
+    '''
+    Read light level from YL-40 sensor
+    http://dx.com/p/pcf8591-8-bit-a-d-d-a-converter-module-150190
+    return 0=dark  -->  255=super bright
+    '''
+    steelsquid_i2c.write_8_bit_raw(address, 0x40)
+    steelsquid_i2c.read_8_bit_raw(address)
+    value = steelsquid_i2c.read_8_bit_raw(address)
+    value = (value-255)*-1
+    return value
+        
+
 if __name__ == '__main__':
-    import sys
     if len(sys.argv)==1:
         from steelsquid_utils import printb
         printb("IO commands for SteelsquidKissOS. Commands to get/set gpio and other stuff...")
@@ -1490,6 +1532,16 @@ if __name__ == '__main__':
         print("http://www.pichips.co.uk/index.php/P015_GPIO_with_PWM")
         print("channel = 1 to 4")
         print("value = 0 to 1023")
+        print("")
+        printb("pi <d/e> pcf8591_read <pin>")
+        print("Read analog value from pcf8591")
+        print("http://dx.com/p/pcf8591-8-bit-a-d-d-a-converter-module-150190")
+        print("pin = 0 to 3")
+        print("")
+        printb("pi <d/e> pcf8591_write <value>")
+        print("Set analog out value on pcf8591")
+        print("http://dx.com/p/pcf8591-8-bit-a-d-d-a-converter-module-150190")
+        print("value = 0 to 255")
     else:
         manner = sys.argv[1]
         command = sys.argv[2]
@@ -1749,6 +1801,20 @@ if __name__ == '__main__':
                  po16_pwm(para1, para2)
             elif manner == "e" or manner == "event":
                 steelsquid_event.broadcast_event_external("pi_io_event", ["po16_pwm", para1, para2])
+            else:
+                print "Expected: direct (d), event (e)"
+        elif command == "pcf8591_read":
+            if manner == "d" or manner == "direct":
+                 print pcf8591_read(para1)
+            elif manner == "e" or manner == "event":
+                steelsquid_event.broadcast_event_external("pi_io_event", ["pcf8591_read", para1])
+            else:
+                print "Expected: direct (d), event (e)"
+        elif command == "pcf8591_write":
+            if manner == "d" or manner == "direct":
+                 pcf8591_write(para1)
+            elif manner == "e" or manner == "event":
+                steelsquid_event.broadcast_event_external("pi_io_event", ["pcf8591_write", para1])
             else:
                 print "Expected: direct (d), event (e)"
         else:

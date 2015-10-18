@@ -556,9 +556,12 @@ def on_pi_io_event(args, para):
     elif para[0] == "po16_gpio_set":
         steelsquid_pi.po16_gpio_set(para[1], para[2])
         steelsquid_utils.shout("po16_gpio_set(" + para[1]  + ", "+para[2] + "): OK", always_show=True)
-    elif para[0] == "po16_pwm":
-        steelsquid_pi.po16_pwm(para[1], para[2])
-        steelsquid_utils.shout("po16_pwm(" + para[1]  + ", "+para[2] + "): OK", always_show=True)
+    elif para[0] == "pcf8591_read":
+        value = steelsquid_pi.pcf8591_read(para[1])
+        steelsquid_utils.shout("pcf8591_read(" + para[1] + "): "+str(value), always_show=True)
+    elif para[0] == "pcf8591_write":
+        steelsquid_pi.pcf8591_write(para[1])
+        steelsquid_utils.shout("pcf8591_write(" + para[1] + "): OK", always_show=True)
 
 
 def main():
