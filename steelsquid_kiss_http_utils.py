@@ -123,7 +123,16 @@ class SteelsquidKissHttpServerUtils(steelsquid_kiss_http_server.SteelsquidKissHt
             alarm_sec="true"
         else:
             alarm_sec="false"
-        return [motion, siren, lamp, alarm_t, alarm_sec]
+        light_level = "---"
+        if steelsquid_kiss_global.Alarm.light_level!=None:
+            light_level = str(steelsquid_kiss_global.Alarm.light_level)
+        temperature = "---"
+        if steelsquid_kiss_global.Alarm.temperature!=None:
+            temperature = str(steelsquid_kiss_global.Alarm.temperature)
+        humidity = "---"
+        if steelsquid_kiss_global.Alarm.humidity!=None:
+            humidity = str(steelsquid_kiss_global.Alarm.humidity)
+        return [motion, siren, lamp, alarm_t, alarm_sec, light_level, temperature, humidity]
 
 
     def alarm_settings(self, session_id, parameters):

@@ -40,7 +40,7 @@ from pprint import pprint
 
 DOWNLOAD_RPC = "http://localhost:6800/rpc"
 DOWNLOAD_LIST =['gid', 'totalLength', 'completedLength', 'downloadSpeed', 'uploadSpeed', 'files', 'status']
-ALLOWED = ['/media/', '/mnt/', '/root/']
+ALLOWED = ['/media', '/mnt', '/root']
 
 
 class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
@@ -532,7 +532,6 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
                 if steelsquid_utils.is_file_ok(parameters[0], ALLOWED, check_if_exist=False):
                     steelsquid_utils.set_parameter("download_dir", parameters[0])
                     steelsquid_utils.execute_system_command(['steelsquid', 'download-dir', parameters[0]])
-                    steelsquid_utils.execute_system_command(['steelsquid', 'download-on'])
                 else:
                     raise Exception("Download directory must be inside /root/, /mnt/ or /media/") 
         par = steelsquid_utils.get_parameter("download_dir")
@@ -876,9 +875,7 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
             raise Exception("You must be connected to the internet to make an upgrade!")
         self.lock_command('upgrade')
         if parameters[0] == 'small':
-            self.execute_system_command(['steelsquid', 'update'], "upgrade")
-            self.execute_system_command(['steelsquid', 'update-web'], "upgrade")
-            self.execute_system_command(['steelsquid', 'update-python'], "upgrade")
+            self.execute_system_command(['steelsquid', 'update-all'], "upgrade")
         elif parameters[0] == 'full':
             self.execute_system_command(['steelsquid', 'upgrade'], "upgrade")
 

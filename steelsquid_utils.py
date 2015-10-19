@@ -681,14 +681,19 @@ def send_mail_attachment(smtp_host, username, password, from_mail, to_mail, subj
     msg['From'] = from_mail
     msg['To'] = to_mail
     msg.attach(MIMEText(message))
-
-    part = MIMEBase('application', "octet-stream")
-    part.set_payload(open(attachment, "rb").read())
-    Encoders.encode_base64(part)
-
-    part.add_header('Content-Disposition', 'attachment; filename="'+os.path.basename(attachment)+'"')
-
-    msg.attach(part)
+    if isinstance(attachment, (list, tuple)):
+        for att in attachment:
+            part = MIMEBase('application', "octet-stream")
+            part.set_payload(open(att, "rb").read())
+            Encoders.encode_base64(part)
+            part.add_header('Content-Disposition', 'attachment; filename="'+os.path.basename(att)+'"')
+            msg.attach(part)
+    else:
+        part = MIMEBase('application', "octet-stream")
+        part.set_payload(open(attachment, "rb").read())
+        Encoders.encode_base64(part)
+        part.add_header('Content-Disposition', 'attachment; filename="'+os.path.basename(attachment)+'"')
+        msg.attach(part)
 
     server = None
     try:

@@ -245,6 +245,10 @@
                     $("#toggler").addClass('arm');
                     $("#toggler_text").html("<span  class='error'>Security alarm armed!</span>");
                 }
+                $("#alarm_light").html(paramaters[5]);
+                $("#alarm_temperature").html(paramaters[6]);
+                $("#alarm_humidity").html(paramaters[7]);
+                
             }
 
 
@@ -588,10 +592,7 @@
                 </table>
                 <div id="alarm_disabled" class="hide">
                     The Alarm/Surveillance functionality is not enabled on this system.<br/>
-                    For this to work you need a Raspberry PI camera connected. <br/>
-                    Also a PIR sensor connected to GPIO25 and a siren connected to GPIO17.<br/>
-                    If you enable the alarm you will get "Connection error" while service restart...you need to <b>reboot the device</b>.<br/>
-                    See <a href="http://www.steelsquid.org/alarm">http://www.steelsquid.org/alarm</a>
+                    For more info see <a href="http://www.steelsquid.org/alarm">http://www.steelsquid.org/alarm</a>
                     <br/><br/>
                     <table>
                         <tr>
@@ -601,10 +602,8 @@
                 </div>
                 <div id="alarm_enabled" class="hide">
                     The Alarm/Surveillance functionality is enabled on this system.<br/>
-                    For this to work you need a Raspberry PI camera connected. <br/>
-                    Also a PIR sensor conneted to GPIO04 and a siren conencted to GPIO17.<br/>
-                    And GPIO08 to the IR lamps.<br/>
-                    See <a href="http://www.steelsquid.org/alarm">http://www.steelsquid.org/alarm</a>
+                    For this to work you need a Raspberry PI camera and other stuff connected to the GPIO.<br/>
+                    For more info see <a href="http://www.steelsquid.org/alarm">http://www.steelsquid.org/alarm</a>
                     <br/><br/>
                     Push to Arm/Disarm: <a href="#" id="toggler" class="toggler">&nbsp;</a>&nbsp;&nbsp;<span id="toggler_text"></span>
                     <br/><br/>
@@ -638,6 +637,30 @@
                                 IR Lamp
                             </td>
                             <td id="alarm_lamp">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Ambient lighting
+                            </td>
+                            <td>
+                                <span id="alarm_light">---</span> <span style="color:gray;font-weight: normal">(0=pitch-black to 255=bright)</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Temperature
+                            </td>
+                            <td id="alarm_temperature">
+                                ---
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Humidity
+                            </td>
+                            <td id="alarm_humidity">
+                                ---
                             </td>
                         </tr>
                     </table>

@@ -2049,7 +2049,7 @@ function socket_server()
 	systemctl restart steelsquid
     log-ok
 }
-if [ "$in_parameter_1" == "socket-server" ]; then
+if [ "$in_parameter_1" == "socket-server" ]; then 
 	socket_server
 	exit 0
 fi

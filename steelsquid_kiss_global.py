@@ -63,6 +63,14 @@ class Alarm(object):
     last_move = 0
     last_trigger = datetime.now() - timedelta(days =1 )
     
+    # Lightlevel from PCF8591 (YL-40)
+    light_level = None
+
+    # Temperature from HDC1008
+    temperature = None
+
+    # Lightlevel from HDC1008
+    humidity = None
     
     @classmethod
     def enable(cls):
@@ -81,7 +89,26 @@ class Alarm(object):
             steelsquid_utils.set_parameter("alarm_security_seconds", "10");
         if not steelsquid_utils.has_parameter("alarm_security_wait"):
             steelsquid_utils.set_parameter("alarm_security_wait", "120");
-
+            
+        # Read lightlevel, temperature and humidity in background every second
+        steelsquid_event.subscribe_to_event("second", cls.on_every_second, None, False)
+        
+    @classmethod
+    def on_every_second(cls, args, para):
+        '''
+        Read lightlevel, temperature and humidity in background every second
+        '''
+        try:
+            cls.light_level = steelsquid_pi.yl40_light_level();
+        except:
+            pass
+        try:
+            temp, hum = steelsquid_pi.hdc1008();
+            cls.temperature = round(temp, 1)
+            cls.humidity = round(hum, 1)
+        except:
+            pass
+        
     @classmethod
     def on_motion(cls, pin, status):
         '''
@@ -122,13 +149,17 @@ class Alarm(object):
         Send alarm mail
         '''
         try:
-            urllib.urlretrieve("http://localhost:8080/?action=snapshot", "/tmp/snapshot.jpg")
+            urllib.urlretrieve("http://localhost:8080/?action=snapshot", "/tmp/snapshot1.jpg")
+            time.sleep(1.5)
+            urllib.urlretrieve("http://localhost:8080/?action=snapshot", "/tmp/snapshot2.jpg")
+            time.sleep(1.5)
+            urllib.urlretrieve("http://localhost:8080/?action=snapshot", "/tmp/snapshot3.jpg")
             ip = steelsquid_utils.network_ip_test_all()
             if steelsquid_utils.get_flag("web_https"):
                 link = 'https://'+ip+'/utils?alarm'
             else:
                 link = 'http://'+ip+'/utils?alarm'
-            steelsquid_utils.notify("Security alarm from: " + os.popen("hostname").read()+"\n"+link, "/tmp/snapshot.jpg")
+            steelsquid_utils.notify("Security alarm from: " + os.popen("hostname").read()+"\n"+link, ["/tmp/snapshot1.jpg", "/tmp/snapshot2.jpg", "/tmp/snapshot3.jpg"])
         except:
             steelsquid_utils.shout()
 

@@ -55,7 +55,7 @@ import readline
 from datetime import datetime
 
 steel_last = 0
-base_remote_server=""
+base_remote_server=[]
 base_remote_port=""
 base_remote_user=""
 base_remote_password=""
@@ -63,10 +63,11 @@ python_files = []
 web_files = []
 extra_files = []
 img_files = []
-ssh = None
-sftp = None
-channel = None
-channel_f = None
+
+ssh = []
+sftp = []
+channel = []
+channel_f = []
 lock = threading.Lock()
 
 
@@ -81,20 +82,16 @@ def load_data():
     global web_files
     global extra_files
     global img_files
+    global ssh
+    global sftp
+    global channel
+    global channel_f 
     print ""
     steelsquid_utils.log("Load settings from steelsquid-kiss-os.sh")
     with open("steelsquid-kiss-os.sh") as f:
         for line in f:
             line = line.replace("\n","")
-            if line.startswith("base_remote_server="):
-                base_remote_server = line.split("=")[1]
-            elif line.startswith("base_remote_port="):
-                base_remote_port = line.split("=")[1]
-            elif line.startswith("base_remote_user="):
-                base_remote_user = line.split("=")[1]
-            elif line.startswith("base_remote_password="):
-                base_remote_password = line.split("=")[1]
-            elif line.startswith("python_downloads["):
+            if line.startswith("python_downloads["):
                 line = line.split("=")[1]
                 line = line.replace("$base/","")
                 line = line.replace("\"","")
@@ -117,7 +114,14 @@ def load_data():
             for line in f:
                 line = line.replace("\n","")
                 if i == 0:
-                    base_remote_server = line
+                    tmp = line.split(',')
+                    for x in tmp:
+                        base_remote_server.append(x.strip())
+                    le = len(base_remote_server)
+                    ssh = [None] * le
+                    sftp = [None] * le
+                    channel = [None] * le
+                    channel_f = [None] * le
                 elif i == 1:
                     base_remote_port = line
                 elif i == 2:
@@ -131,6 +135,9 @@ def load_data():
                     line.append(0)
                     extra_files.append(line)
                 i = i + 1 
+    else:
+        steelsquid_utils.log("config.txt not found!!!")
+        sys.exit()
 
         
 def listener():
@@ -177,115 +184,123 @@ def listener():
 
 def connect():
     with lock:
+        global base_remote_server
         global ssh
         global channel
         global channel_f
         global sftp
         disconnect()
-        try:
-            print ""
-            steelsquid_utils.log("Connecting to: " + base_remote_server)
-            ssh.connect(base_remote_server, port=int(base_remote_port), username=base_remote_user, password=base_remote_password)
-            channel = ssh.get_transport().open_session()
-            channel.get_pty()
-            channel.invoke_shell()
-            channel_f = channel.makefile()
-            sftp = ssh.open_sftp()
-        except Exception, e:
-            steelsquid_utils.log(str(e))
-            raise e
-
-
+        x = 0
+        for server in base_remote_server:
+            try:
+                print ""
+                steelsquid_utils.log("Connecting to: " + server)
+                ssh[x].connect(server, port=int(base_remote_port), username=base_remote_user, password=base_remote_password)
+                channel[x] = ssh[x].get_transport().open_session()
+                channel[x].get_pty()
+                channel[x].invoke_shell()
+                channel_f[x] = channel[x].makefile()
+                sftp[x] = ssh[x].open_sftp()
+                x = x + 1
+            except Exception, e:
+                steelsquid_utils.shout()
+                raise e
+            
+            
 def disconnect():
     global ssh
     global sftp
-    try:
-        sftp.close()
-    except:
-        pass
-    try:
-        ssh.close()
-    except:
-        pass
+    for x in range(0, len(base_remote_server)):
+        try:
+            sftp[x].close()
+        except:
+            pass
+        try:
+            ssh[x].close()
+        except:
+            pass
     
 
 def transmit(local, remote):
     print ""
     steelsquid_utils.log("SYNC: " + local)
-    try:
-        sftp.put(local, remote)
-    except:
+    for x in range(0, len(base_remote_server)):
         try:
-            connect()
-            sftp.put(local, remote)            
+            sftp[x].put(local, remote)
         except:
-            pass
+            try:
+                connect()
+                sftp[x].put(local, remote)            
+            except:
+                pass
         
 
 def send_command(command):
     '''
     '''
-    try:
-        ssh.exec_command(command)
-    except:
+    for x in range(0, len(base_remote_server)):
         try:
-            connect()
-            ssh.exec_command(command)
+            ssh[x].exec_command(command)
         except:
-            pass
+            try:
+                connect()
+                ssh[x].exec_command(command)
+            except:
+                pass
 
 
 def send_command_read_answer(command):
     '''
     '''
-    try:
-        stdin, stdout, stderr = ssh.exec_command(command)
-        printempty = True
-        for line in stdout.readlines():
-            line = line.strip().replace("\n","").replace("\r","")
-            if len(line)>0:
-                printempty = True
-                print line
-            elif printempty:
-                printempty = False
-                print
-        printempty = True
-        for line in stderr.readlines():
-            if len(line)>0:
-                printempty = True
-                print line
-            elif printempty:
-                printempty = False
-                print
-    except:
+    for x in range(0, len(base_remote_server)):
         try:
-            connect()
-            stdin, stdout, stderr = ssh.exec_command(command)
+            stdin, stdout, stderr = ssh[x].exec_command(command)
+            printempty = True
             for line in stdout.readlines():
                 line = line.strip().replace("\n","").replace("\r","")
                 if len(line)>0:
+                    printempty = True
                     print line
+                elif printempty:
+                    printempty = False
+                    print
+            printempty = True
             for line in stderr.readlines():
-                line = line.strip().replace("\n","").replace("\r","")
                 if len(line)>0:
+                    printempty = True
                     print line
+                elif printempty:
+                    printempty = False
+                    print
         except:
-            pass
+            try:
+                connect()
+                stdin, stdout, stderr = ssh[x].exec_command(command)
+                for line in stdout.readlines():
+                    line = line.strip().replace("\n","").replace("\r","")
+                    if len(line)>0:
+                        print line
+                for line in stderr.readlines():
+                    line = line.strip().replace("\n","").replace("\r","")
+                    if len(line)>0:
+                        print line
+            except:
+                pass
 
 
-def listen_for_std():
+def listen_for_std(x):
     '''
     '''
     time.sleep(1)
     print ""
-    steelsquid_utils.log("Listen for output from remote device")
+    steelsquid_utils.log("Listen for output from: " + base_remote_server[x])
     global channel_f
     while True:
         try:
-            if not channel_f.closed:
+            if not channel_f[x].closed:
                 first = True
                 last_time = 1000
-                for line in channel_f:
+                for line in channel_f[x]:
                     if first:
                         first = False
                     else:
@@ -298,7 +313,7 @@ def listen_for_std():
                             if answer != None:
                                 if ms > 100:
                                     print ""
-                                    steelsquid_utils.log("FROM REMOTE DEVICE:")
+                                    steelsquid_utils.log("FROM REMOTE DEVICE: " + base_remote_server[x])
                                 print answer
                                 last_time = cur_time
         except:
@@ -322,7 +337,8 @@ def remove_timestamp(line):
 
 def print_menu(): 
     print "------------------------------------------------------------------------------"
-    print "Listen for changes and commit to " + base_remote_server
+    print "Listen for changes and commit to following server(s)"
+    print ', '.join(base_remote_server)
     print "------------------------------------------------------------------------------"
     print " H : help   : Show this help"
     print " Q : quit   : This program will terminate"
@@ -339,13 +355,15 @@ def print_menu():
 
 if __name__ == '__main__':
     load_data()
-    ssh = paramiko.SSHClient()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    for x in range(0, len(base_remote_server)):
+        ssh[x] = paramiko.SSHClient()
+        ssh[x].set_missing_host_key_policy(paramiko.AutoAddPolicy())
     try:
         connect()
     except:
         pass
-    thread.start_new_thread(listen_for_std, ()) 
+    for x in range(0, len(base_remote_server)):
+        thread.start_new_thread(listen_for_std, (x,)) 
     print ""
     print_menu()
     thread.start_new_thread(listener, ()) 
@@ -377,13 +395,6 @@ if __name__ == '__main__':
             send_command("reboot &")
         elif len(answer.strip())>0:
             send_command_read_answer(answer)
-    try:
-        sftp.close()
-    except:
-        pass
-    try:
-        ssh.close()
-    except:
-        pass
+    disconnect()
     steelsquid_utils.log("By :-)")
     
