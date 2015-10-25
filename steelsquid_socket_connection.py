@@ -161,19 +161,36 @@ class SteelsquidSocketConnection(steelsquid_connection.SteelsquidConnection):
         steelsquid_utils.shout("Socket Connection: Listener closed: " + error_message, debug=True)
         listener_object.close()
 
+    def get_connected_ip_numbers(self):
+        '''
+        Get IP number of all connections.
+        If this is a server it is a list of clients ip number (the list is empty if no clients is connected).
+        If this is a client it is a list with one IP-number, the server IP (the list is empty if not connected to server).
+        @return: List of IP number
+        '''
+        the_list = []
+        for client in self.get_connection_objects():
+            the_list.append(client.getpeername()[0])
+        return the_list
 
 
+    def on_get_remote_address(self, connection_object):
+        '''
+        Override this to do and return the adress of the remote address (IP)
+        @param connection_object: The listener object to read adress from (Can be None)
+        '''
+        return connection_object.getpeername()[0]
 
 
-    def test_request(self, parameters):
+    def test_request(self, remote_address, parameters):
         print "REQUEST"
         print parameters
 
-    def test_response(self, parameters):
+    def test_response(self, remote_address, parameters):
         print "RESPONSE"
         print parameters
 
-    def test_error(self, parameters):
+    def test_error(self, remote_address, parameters):
         print "ERROR"
         print parameters
 

@@ -1648,7 +1648,7 @@ def execute_delay(seconds, function, paramters, dummy=False):
         if dummy:
             time.sleep(seconds)
             if isinstance(paramters, tuple):
-                function(paramters)
+                function(*paramters)
             else:
                 function()
         else:

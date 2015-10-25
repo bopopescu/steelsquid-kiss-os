@@ -70,91 +70,157 @@ class SteelsquidKissSocketServer(steelsquid_socket_connection.SteelsquidSocketCo
         listener_object.close()
 
 
-    def rover_info_request(self, parameters):
+    def alarm_push_request(self, remote_address, parameters):
+        '''
+        Send status of client to server
+        '''
+        steelsquid_kiss_global.Alarm.clients_status[remote_address]=parameters
+        
+
+    def alarm_push_response(self, remote_address, parameters):
+        '''
+        Send status of client to server
+        '''
+        pass
+        
+
+    def alarm_push_error(self, remote_address, parameters):
+        '''
+        Send status of client to server
+        '''
+        steelsquid_utils.shout(parameters[0]);
+
+
+    def alarm_remote_alarm_request(self, remote_address, parameters):
+        '''
+        Server send to all clients that some other clients or the server has an alarm
+        '''
+        steelsquid_kiss_global.Alarm.on_remote_alarm()
+        
+
+    def alarm_remote_alarm_response(self, remote_address, parameters):
+        '''
+        Server send to all clients that some other clients or the server has an alarm
+        '''
+        pass
+        
+
+    def alarm_remote_alarm_error(self, remote_address, parameters):
+        '''
+        Server send to all clients that some other clients or the server has an alarm
+        '''
+        steelsquid_utils.shout(parameters[0]);
+
+
+    def alarm_client_set_request(self, remote_address, parameters):
+        '''
+        Set status of alarm on client (from server)
+        '''
+        if parameters[0] == "True":
+            steelsquid_kiss_global.Alarm.arm(True)
+        else:
+            steelsquid_kiss_global.Alarm.arm(False)
+        
+
+    def alarm_client_set_response(self, remote_address, parameters):
+        '''
+        Set status of alarm on client (from server)
+        '''
+        pass
+        
+
+    def alarm_client_set_error(self, remote_address, parameters):
+        '''
+        Set status of alarm on client (from server)
+        '''
+        steelsquid_utils.shout(parameters[0]);
+
+
+    def rover_info_request(self, remote_address, parameters):
         '''
         '''
         return steelsquid_kiss_global.Rover.info()
         
 
-    def rover_info_response(self, parameters):
+    def rover_info_response(self, remote_address, parameters):
         '''
         '''
         pass
         
 
-    def rover_info_error(self, parameters):
+    def rover_info_error(self, remote_address, parameters):
         '''
         '''
         pass
 
 
-    def rover_light_request(self, parameters):
+    def rover_light_request(self, remote_address, parameters):
         '''
         '''
         return steelsquid_kiss_global.Rover.light()
         
 
-    def rover_light_response(self, parameters):
+    def rover_light_response(self, remote_address, parameters):
         '''
         '''
         pass
         
 
-    def rover_light_error(self, parameters):
+    def rover_light_error(self, remote_address, parameters):
         '''
         '''
         pass
 
 
-    def rover_alarm_request(self, parameters):
+    def rover_alarm_request(self, remote_address, parameters):
         '''
         '''
         return steelsquid_kiss_global.Rover.alarm()
         
 
-    def rover_alarm_response(self, parameters):
+    def rover_alarm_response(self, remote_address, parameters):
         '''
         '''
         pass
         
 
-    def rover_alarm_error(self, parameters):
+    def rover_alarm_error(self, remote_address, parameters):
         '''
         '''
         pass
 
 
-    def rover_tilt_request(self, parameters):
+    def rover_tilt_request(self, remote_address, parameters):
         '''
         '''
         steelsquid_kiss_global.Rover.tilt(parameters[0])
         
 
-    def rover_tilt_response(self, parameters):
+    def rover_tilt_response(self, remote_address, parameters):
         '''
         '''
         pass
         
 
-    def rover_tilt_error(self, parameters):
+    def rover_tilt_error(self, remote_address, parameters):
         '''
         '''
         pass
 
 
-    def rover_drive_request(self, parameters):
+    def rover_drive_request(self, remote_address, parameters):
         '''
         '''
         steelsquid_kiss_global.Rover.drive(parameters[0], parameters[1])
         
 
-    def rover_drive_response(self, parameters):
+    def rover_drive_response(self, remote_address, parameters):
         '''
         '''
         pass
         
 
-    def rover_drive_error(self, parameters):
+    def rover_drive_error(self, remote_address, parameters):
         '''
         '''
         pass

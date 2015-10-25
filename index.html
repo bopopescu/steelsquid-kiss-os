@@ -663,20 +663,26 @@
                     disable("socket_button_server");
                     enable("socket_button_client");
                     enable("socket_button_disable");
+                    disable("socket_button_disable_client");
+                    enable("socket_button_disable_server");
                 }
                 else if(paramaters[0]=="client"){
                     enable("socket_button_server");
                     enable("socket_button_client");
                     enable("socket_button_disable");
-                    $("#socket_client_host").val(paramaters[3])
+                    enable("socket_button_disable_client");
+                    disable("socket_button_disable_server");
+                    $("#socket_client_host").val(paramaters[2])
                 }
                 else{
                     enable("socket_button_server");
                     enable("socket_button_client");
-                    disable("socket_button_disable");
+                    disable("socket_button_disable_client");
+                    disable("socket_button_disable_server");
+                    $("#socket_client_host").val("")
                 }
-                $("#socket_server_info").html(paramaters[1]);
-                $("#socket_client_info").html(paramaters[2]);
+                $("#socket_connections").html(paramaters[3]);
+                $("#socket_info").html(paramaters[1]);
             }
             
             
@@ -959,8 +965,13 @@
              * This will execute every 10 second
              */
             function onEvery05s(){
-                if(isLayerShowing("lcd")){
-                    submitNoPW('lcd');
+                if(isVisible()){
+                    if(isLayerShowing("lcd")){
+                        submitNoPW('lcd');
+                    }
+                    else if(isLayerShowing("socket")){
+                        submitNoPW('socket_info');
+                    }
                 }
             }
 
@@ -968,21 +979,23 @@
              * This will execute every 10 second
              */
             function onEvery10s(){
-                if (isLayerShowing('wifi')){
-                    submitNoPW('wifi_status');
-                    submitNoPW('wifi_list');
-                }
-                else if (isLayerShowing('upgrade')){
-                    checkAsync('upgrade');
-                }
-                else if (isLayerShowing('info')){
-                    submitNoPW('system_info');
-                }
-                else if(isLayerShowing("web_interface")){
-                    submitSync('web_interface_disable');
-                    submitSync('web_interface_localhost');
-                    submitSync('web_interface_https');
-                    submitSync('web_interface_authentication');
+                if(isVisible()){
+                    if (isLayerShowing('wifi')){
+                        submitNoPW('wifi_status');
+                        submitNoPW('wifi_list');
+                    }
+                    else if (isLayerShowing('upgrade')){
+                        checkAsync('upgrade');
+                    }
+                    else if (isLayerShowing('info')){
+                        submitNoPW('system_info');
+                    }
+                    else if(isLayerShowing("web_interface")){
+                        submitSync('web_interface_disable');
+                        submitSync('web_interface_localhost');
+                        submitSync('web_interface_https');
+                        submitSync('web_interface_authentication');
+                    }
                 }
             }
 
@@ -2772,10 +2785,19 @@
                         </td>
                     </tr>
                 </table>
-                <table>
+                <table class="keyvalue">
                     <tr>
                         <td>
-                            <button id="socket_button_disable" onclick="javascript:submitSync('socket_disable');">Disable socket connection</button>
+                            Current status:
+                        </td>
+                        <td id="socket_info">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Connection(s):
+                        </td>
+                        <td id="socket_connections">
                         </td>
                     </tr>
                 </table>
@@ -2787,37 +2809,21 @@
                         </td>
                     </tr>
                 </table>
-                <table class="keyvalue">
-                    <tr>
-                        <td>
-                            Current status:
-                        </td>
-                        <td id="socket_server_info">
-                        </td>
-                    </tr>
-                </table>
                 <table>
                     <tr>
                         <td>
                             <button id="socket_button_server" onclick="javascript:submitSync('socket_server');">Enable as server</button>
                         </td>
+                        <td>
+                            <button id="socket_button_disable_server" onclick="javascript:submitSync('socket_disable');">Disable server</button>
+                        </td>
                     </tr>
                 </table>
                 <br />
-                <br/>
                 <table>
                     <tr>
                         <td>
-                            Enable socket connection as client.
-                        </td>
-                    </tr>
-                </table>
-                <table class="keyvalue">
-                    <tr>
-                        <td>
-                            Current status:
-                        </td>
-                        <td id="socket_client_info">
+                            Enable socket connection as client / Change address.
                         </td>
                     </tr>
                 </table>
@@ -2839,6 +2845,9 @@
                     <tr>
                         <td>
                             <button id="socket_button_client" onclick="javascript:submitSyncFromInput('socket_client', 'socket_client_host');">Enable as client / Change address</button>
+                        </td>
+                        <td>
+                            <button id="socket_button_disable_client" onclick="javascript:submitSync('socket_disable');">Disable client</button>
                         </td>
                     </tr>
                 </table>

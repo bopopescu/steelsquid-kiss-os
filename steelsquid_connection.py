@@ -25,15 +25,16 @@ aclient.send_request("thecommand", ["A", "test"])
 Communication takes place in the following way (may also be the other way (client to server))
 1. aserver.send_request("thecommand", ["A test para 1", "A test para 2"])
 2. The function thecommand_request execute on the client with ["A test para 1", "A test para 2"] as paramters
-   def thecommand_request(self, parameters):
+   def thecommand_request(self, remote_address, parameters):
         return ["A answer 1", "A answer 2"]
 3. The function thecommand_response execute on the server with ["A answer 1", "A answer 2"] as paramters
-   def thecommand_response(self, parameters):
+   def thecommand_response(self, remote_address, parameters):
         ...
 3. If exception in thecommand_error will execute on the server with [error message] as paramters
-   def thecommand_error(self, parameters):
+   def thecommand_error(self, remote_address, parameters):
         ...
 
+remote_address is the other sides address, example IP number
 
 This is what is send on the socket when a client send a request to the server:
 
@@ -42,14 +43,14 @@ This is what is send on the socket when a client send a request to the server:
 3. Both server and client is listening on there input stream.
 4. Client send the request 'acommand' with the paramaters 'aparamater1' and 'aparamater2' on the output stream.
    request|acommand|aparamater1|aparamater2
-5. The server reads the string and try to execute a function named acommand_request with one paramater ['aparamater1', 'aparamater2']
+5. The server reads the string and try to execute a function named acommand_request with two paramaters remote_address and ['aparamater1', 'aparamater2']
 6. The function  acommand_request return ['answer1', 'answer2']
 7. The server send the answer to the client
    response|acommand|answer1|answer2
-8. The client read the answer and execute the method acommand_response with one paramater ['answer1', 'answer2']
+8. The client read the answer and execute the method acommand_response with two paramaters remote_address and ['answer1', 'answer2']
 9. If the execution on the server has error the response would have looked like this:
    error|acommand|error string
-10. The client read the answer (error) and execute the method acommand_error with one paramater ['error string']
+10. The client read the answer (error) and execute the method acommand_error with two paramaters remote_address and ['error string']
 
 
 @organization: Steelsquid
@@ -71,14 +72,28 @@ class SteelsquidConnection(object):
     '''
     The server
     '''
-    __slots__ = ['listen_thread', 'is_server']
-
+    
+    lock = threading.Lock()
 
     def __init__(self, is_server):
         '''
         Constructor.
         '''
         self.is_server = is_server
+
+
+    def is_server(self):
+        '''
+        Is this a server
+        '''
+        return self.is_server
+
+
+    def is_client(self):
+        '''
+        Is this a client
+        '''
+        return not self.is_server
         
 
     def on_setup_client(self):
@@ -173,16 +188,24 @@ class SteelsquidConnection(object):
 
     def on_start(self):
         '''
-        Override this to do start on start
+        Override this to do things when the server/client starts
         '''
         pass
 
 
     def on_stop(self):
         '''
-        Override this to do start on stop
+        Override this to do things when the server/client stops
         '''
         pass
+
+
+    def on_get_remote_address(self, connection_object):
+        '''
+        Override this to do and return the adress of the remote address (IP)
+        @param connection_object: The listener object to read adress from (Can be None)
+        '''
+        return None
 
 
     def start(self):
@@ -211,15 +234,31 @@ class SteelsquidConnection(object):
             steelsquid_utils.shout()
             
             
-    def send_request(self, command, parameters):
+    def send_request(self, command, parameters, remote_address=None):
         '''
-        Send request
+        Send request remote server or clients
+        command = Command to send
+        parameters = Paramater list to send
+        remote_address = If this is a server with multipple clients, only send to thisclient address (IP)
+                         None send to all clients
         '''
-        for cli in self.listen_thread.clients:
-            self.on_write("request", cli, command, parameters)
+        count = 0
+        for string in parameters:
+            parameters[count] = steelsquid_utils.decode_string(str(string))
+            count = count + 1
+        if remote_address == None:
+            for cli in self.listen_thread.clients:
+                with self.lock:
+                    self.on_write("request", cli, command, parameters)
+        else:
+            for cli in self.listen_thread.clients:
+                this_remote_add = self.on_get_remote_address(cli)
+                if this_remote_add==remote_address:
+                    with self.lock:
+                        self.on_write("request", cli, command, parameters)
            
 
-    def execute(self, command, parameters=None):
+    def execute(self, connection_object, command, parameters=None):
         '''
         Execute the command (method with same name as the command)
         Will raise a RuntimeError on error
@@ -227,12 +266,14 @@ class SteelsquidConnection(object):
         String => [String]
         int => [String]
         bool => [True/False]
+        @param connection_object: To read remote adress from (IP)
         @param command: Command to execute
         @param paramaters: Paramaters (list of bool, int, float, string or a single bool, int, float, string)
         @return: Answer list
         '''
         try:
             the_answer = None
+            remote_add = self.on_get_remote_address(connection_object)
             fn = getattr(self, command)
             if not parameters == None:
                 if isinstance(parameters, (list)):
@@ -240,11 +281,11 @@ class SteelsquidConnection(object):
                     for string in parameters:
                         parameters[count] = steelsquid_utils.decode_string(str(string))
                         count = count + 1
-                    the_answer = fn(parameters)
+                    the_answer = fn(remote_add, parameters)
                 else:
-                    the_answer = fn([steelsquid_utils.decode_string(str(parameters))])
+                    the_answer = fn(remote_add, [steelsquid_utils.decode_string(str(parameters))])
             else:
-                the_answer = fn([])
+                the_answer = fn(remote_add, [])
             if the_answer != None:
                 if isinstance(the_answer, (list)):
                     count = 0
@@ -263,6 +304,15 @@ class SteelsquidConnection(object):
             import sys
             exc_type, exc_value, exc_traceback = sys.exc_info()
             raise RuntimeError, (exc_value), exc_traceback
+
+    def get_connection_objects(self):
+        '''
+        Get all connection objects in this client or server.
+        On the client it will always be one (or 0 if no connection).
+        But the server may have several.
+        @return: List with all Connection objects (example socket)
+        '''
+        return self.listen_thread.clients
 
 
 class ListenThread(threading.Thread):
@@ -338,17 +388,19 @@ class ListenThread(threading.Thread):
                     if the_type == "request":
                         answer_list = None
                         try:
-                            answer_list = self.server.execute(command+"_request", parameters)
+                            answer_list = self.server.execute(client, command+"_request", parameters)
                         except:
                             import traceback
                             import sys
                             exc_type, exc_var, exc_traceback = sys.exc_info()            
                             answer_list = [str(exc_var)]
                             del exc_traceback
-                            execute = self.server.on_write("error", client, command, answer_list)
+                            with self.server.lock:
+                                execute = self.server.on_write("error", client, command, answer_list)
                         else:
                             if answer_list != None:
-                                execute = self.server.on_write("response", client, command, answer_list)
+                                with self.server.lock:
+                                    execute = self.server.on_write("response", client, command, answer_list)
                     elif the_type == "response":
                         try:
                             self.server.execute(command+"_response", parameters)
@@ -356,7 +408,7 @@ class ListenThread(threading.Thread):
                             steelsquid_utils.shout(debug=True)
                     elif the_type == "error":
                         try:
-                            self.server.execute(command+"_error", parameters)
+                            self.server.execute(client, command+"_error", parameters)
                         except:
                             steelsquid_utils.shout(debug=True)
         except Exception, err:

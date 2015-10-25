@@ -93,8 +93,10 @@
              * This will execute every 1 second
              */
             function onEvery01s(){
-                if (isVisible() && isLayerShowing('alarm')){
-                    submitNoPW('alarm_status');
+                if(isVisible()){
+                    if (isLayerShowing('alarm')){
+                        submitNoPW('alarm_status');
+                    }
                 }
             }
 
@@ -108,6 +110,12 @@
                     }
                     else if (isLayerShowing('alarm')){
                         $("#alarm_img").attr("src", "http://"+window.location.hostname+":"+stream_port+"/?action=stream");         
+                    }
+                    else if(isLayerShowing("socket")){
+                        submitNoPW('socket_info');
+                    }
+                    else if(isLayerShowing("alarm_server")){
+                        submitNoPW('alarm_server_statuses');
                     }
                 }
             }
@@ -142,7 +150,12 @@
                     submitNoPW('alarm_status');
                     submitNoPW('hostname_get');
                     submitNoPW('alarm_settings');
+                    submitNoPW('socket_info');
                     $("#alarm_img").attr("src", "http://"+window.location.hostname+":"+stream_port+"/?action=stream");         
+                }
+                else if(layer == "alarm_server"){
+                    submitNoPW('alarm_server');
+                    submitNoPW('alarm_server_statuses');
                 }
                 else if(layer == "mail"){
                     submitSync('mail_get');
@@ -265,6 +278,35 @@
                 }
             }
 
+            /**
+             * socket
+             */
+            function on_socket_info(paramaters){
+                if(paramaters[0]=="server"){
+                    disable("socket_button_server");
+                    enable("socket_button_client");
+                    enable("socket_button_disable");
+                    disable("socket_button_disable_client");
+                    enable("socket_button_disable_server");
+                }
+                else if(paramaters[0]=="client"){
+                    enable("socket_button_server");
+                    enable("socket_button_client");
+                    enable("socket_button_disable");
+                    enable("socket_button_disable_client");
+                    disable("socket_button_disable_server");
+                    $("#socket_client_host").val(paramaters[2])
+                }
+                else{
+                    enable("socket_button_server");
+                    enable("socket_button_client");
+                    disable("socket_button_disable_client");
+                    disable("socket_button_disable_server");
+                    $("#socket_client_host").val("")
+                }
+                $("#socket_connections").html(paramaters[3]);
+                $("#socket_info").html(paramaters[1]);
+            }
 
             /**
              * On alarm
@@ -283,6 +325,10 @@
                 if(paramaters[6]=="True"){
                     $("#alarm_mail").prop("checked", true)
                 }    
+                $("#alarm_light_acivate").val(paramaters[7]);                
+                if(paramaters[7]=="True"){
+                    $("#alarm_remote_siren").prop("checked", true)
+                }    
             }
 
 
@@ -291,6 +337,271 @@
              */
             function on_hostname_get(paramaters){
                 setValue("hostname_name", paramaters[0]);
+            }
+
+
+            /**
+             * On alarm_server
+             */
+            function on_alarm_server(paramaters){
+                if(paramaters[0] == "True"){
+                    if(paramaters[1] != "server"){
+                        hide('alarm_server_disabled');
+                        show('alarm_server_not_server');
+                        hide('alarm_server_enabled');
+                    }
+                    else{
+                        hide('alarm_server_disabled');
+                        hide('alarm_server_not_server');
+                        show('alarm_server_enabled');
+                    }
+                }
+                else{
+                    show('alarm_server_disabled');
+                    hide('alarm_server_not_server');
+                    hide('alarm_server_enabled');
+                }
+            }
+            
+            /**
+             * Answer when change status of client connected to this server.
+             */
+            function on_alarm_client_set(paramaters){
+                submitNoPW('alarm_server_statuses');
+            }
+            
+
+            var isFirst = true;
+            
+            /**
+             * On alarm_server_statuses
+             */
+            function on_alarm_server_statuses(paramaters){
+                if(isFirst){
+                    var html = [];
+                    for(i = 0; i<paramaters.length; i++){
+                        isFirst = false;
+                        ip = paramaters[i];
+                        i++;
+                        name = paramaters[i];
+                        i++;
+                        armed = paramaters[i];
+                        i++;
+                        alarm_triggered = paramaters[i];
+                        i++;
+                        motion_detected = paramaters[i];
+                        i++;
+                        is_siren_on = paramaters[i];
+                        i++;
+                        is_lamp_on = paramaters[i];
+                        i++;
+                        light_level = paramaters[i];
+                        i++;
+                        temperature = paramaters[i];
+                        i++;
+                        humidity = paramaters[i];
+
+                        
+                        alarm_string="";
+                        if(alarm_triggered=="True"){
+                            alarm_string = "<b><span class='flash'>Alarm is triggered!!!</span></b>";
+                        }
+                        else if(armed=="True"){
+                            alarm_string = "<b><span class='error'>Security alarm armed!</span></b>";
+                        }
+                        else{
+                            alarm_string = "<b><span class='ok'>Security alarm disarmed</span></b>";
+                        }
+
+                        motion_string="";
+                        if(motion_detected=="True"){
+                            motion_string = "<span class='error'>Motion detected!</span>";
+                        }
+                        else{
+                            motion_string = "<span class='ok'>No motion detected</span>";
+                        }
+
+                        siren_string="";
+                        if(is_siren_on=="True"){
+                            siren_string = "<span class='error'>Sounding!</span>";
+                        }
+                        else{
+                            siren_string = "<span class='ok'>Silent</span>";
+                        }
+
+                        lamp_string="";
+                        if(is_lamp_on=="True"){
+                            lamp_string = "<span class='ok'>On</span>";
+                        }
+                        else{
+                            lamp_string = "<span class='ok'>Off</span>";
+                        }
+                        html.push(
+                            "<tr><td>",
+                                "<span style='font-size:large;font-weight: bold;' id='name_",ip,"'>",
+                                    name,
+                                "</span>",
+                                "<br/>",
+                                "<a id='href_",ip,"' href='snapshots/",ip,".jpg?rand=",Math.random(),"' target='_blank'><img id='snap_",ip,"' src='snapshots/",ip,".jpg?rand=",Math.random(),"' style='width: 225px'/></a>",
+                                "<table class='grid' style='width:225px'>",
+                                    "<tr>",
+                                        "<td style='padding-right:4px;width:50%'>",
+                                            "<button onclick=\"javascript:submitSync('alarm_client_set', '",ip,"', 'True');\">Arm</button>",
+                                        "</td>",
+                                        "<td style='padding-left:4px;width:50%'>",
+                                            "<button onclick=\"javascript:submitSync('alarm_client_set', '",ip,"', 'False');\">Disarm</button>",
+                                        "</td>",
+                                    "</tr>",
+                                "</table>",
+                                "<table class='grid'>",
+                                    "<tr>",
+                                        "<td colspan='2' id='alarm_",ip,"'>",
+                                            alarm_string,
+                                        "</td>",
+                                    "</tr>",
+                                "</table>",
+                                "<table class='grid'>",
+                                    "<tr>",
+                                        "<td style='white-space: nowrap;padding-right:8px'>",
+                                            "IP:",
+                                        "</td>",
+                                        "<td style='width:100%'>",
+                                            "<span class='ok'>",
+                                                ip,
+                                            "</span>",
+                                        "</td>",
+                                    "</tr>",
+                                "</table>",
+                                "<table class='grid'>",
+                                    "<tr>",
+                                        "<td style='white-space: nowrap;padding-right:8px'>",
+                                            "Motion:",
+                                        "</td>",
+                                        "<td style='width:100%' id='motion_",ip,"'>",
+                                            motion_string,
+                                        "</td>",
+                                    "</tr>",
+                                "</table>",
+                                "<table class='grid'>",
+                                    "<tr>",
+                                        "<td style='white-space: nowrap;padding-right:8px'>",
+                                            "Siren/IR lamp:",
+                                        "</td>",
+                                        "<td id='siren_",ip,"'>",
+                                            siren_string,
+                                        "</td>",
+                                        "<td>",
+                                            "/",
+                                        "</td>",
+                                        "<td id='lamp_",ip,"'>",
+                                            lamp_string,
+                                        "</td>",
+                                        "<td style='width:100%' id='lamp_",ip,"'>",
+                                        "</td>",
+                                    "</tr>",
+                                "</table>",
+                                "<table class='grid'>",
+                                    "<tr>",
+                                        "<td style='white-space: nowrap;padding-right:8px'>",
+                                            "Light/Temp/Hum:",
+                                        "</td>",
+                                        "<td style='width:100%'>",
+                                            "<span class='ok' id='light_",ip,"'>",
+                                                light_level,
+                                            "</span>",
+                                            "/",
+                                            "<span class='ok' id='temp_",ip,"'>",
+                                                temperature,
+                                                "C",
+                                            "</span>",
+                                            "/",
+                                            "<span class='ok' id='hum_",ip,"'>",
+                                                humidity,
+                                                "%",
+                                            "</span>",
+                                        "</td>",
+                                    "</tr>",
+                                "</table>",
+                                "<br/>",
+                            "</td></tr>"
+                        );
+                    }
+
+                    tbody = $("#alarm_server_statuses").find('tbody');
+                    tbody.html(html.join(""));
+                }
+                else{
+                    for(i = 0; i<paramaters.length; i++){
+                        ip = paramaters[i];
+                        i++;
+                        name = paramaters[i];
+                        i++;
+                        armed = paramaters[i];
+                        i++;
+                        alarm_triggered = paramaters[i];
+                        i++;
+                        motion_detected = paramaters[i];
+                        i++;
+                        is_siren_on = paramaters[i];
+                        i++;
+                        is_lamp_on = paramaters[i];
+                        i++;
+                        light_level = paramaters[i];
+                        i++;
+                        temperature = paramaters[i];
+                        i++;
+                        humidity = paramaters[i];
+                        try{
+                            alarm_string="";
+                            if(alarm_triggered=="True"){
+                                alarm_string = "<b><span class='flash'>Alarm is triggered!!!</span></b>";
+                            }
+                            else if(armed=="True"){
+                                alarm_string = "<b><span class='error'>Security alarm armed!</span></b>";
+                            }
+                            else{
+                                alarm_string = "<b><span class='ok'>Security alarm disarmed</span></b>";
+                            }
+                            motion_string = ""
+                            if(motion_detected=="True"){
+                                motion_string = "<span class='error'>Motion detected!</span>";
+                            }
+                            else{
+                                motion_string = "<span class='ok'>No motion detected</span>";
+                            }
+
+                            siren_string = ""
+                            if(is_siren_on=="True"){
+                                siren_string = "<span class='error'>Sounding!</span>";
+                            }
+                            else{
+                                siren_string = "<span class='ok'>Silent</span>";
+                            }
+
+                            lamp_string = ""
+                            if(is_lamp_on=="True"){
+                                lamp_string = "<span class='ok'>On</span>";
+                            }
+                            else{
+                                lamp_string = "<span class='ok'>Off</span>";
+                            }
+                            document.getElementById("name_"+ip).innerHTML = name;
+                            document.getElementById("alarm_"+ip).innerHTML = alarm_string;
+                            document.getElementById("motion_"+ip).innerHTML = motion_string;
+                            document.getElementById("siren_"+ip).innerHTML = siren_string;
+                            document.getElementById("lamp_"+ip).innerHTML = lamp_string;
+                            document.getElementById("light_"+ip).innerHTML = light_level;
+                            document.getElementById("temp_"+ip).innerHTML = temperature+"C";
+                            document.getElementById("hum_"+ip).innerHTML = humidity+"%";
+                            
+                            document.getElementById("href_"+ip).setAttribute("href", "snapshots/"+ip+".jpg?rand=" + Math.random());
+                            document.getElementById("snap_"+ip).src = "snapshots/"+ip+".jpg?rand=" + Math.random();
+                        }
+                        catch(eee){
+                            isFirst = false;
+                        }
+                    }
+                }
             }
 
 
@@ -487,6 +798,14 @@
                             </td>
                             <td>
                                 Alarm/Surveillance
+                            </td>
+                        </tr>
+                        <tr onclick="javascript:showLayer('alarm_server');">
+                            <td>
+                                <img alt="logo" src="img/alarm-panel.png"></img>
+                            </td>
+                            <td>
+                                Alarm/Surveillance Server
                             </td>
                         </tr>
                         <tr onclick="javascript:showLayer('rover');">
@@ -714,6 +1033,16 @@
                                     <input type="text" id="alarm_wait" name="alarm_wait" />
                                 </td>
                             </tr>
+                            <tr>
+                                <td>
+                                    When ambient lighting under this, activate the IR-lamp. ((0=pitch-black to 255=bright))
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <input type="text" id="alarm_light_acivate" name="alarm_light_acivate" />
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                     <table style="margin-top:3px;margin-bottom:4px">
@@ -740,7 +1069,19 @@
                             </tr>
                         </tbody>
                     </table>
-                    <button onclick="javascript:submitSyncFromInput('alarm_settings', 'alarm_movments', 'alarm_movments_seconds', 'alarm_seconds', 'alarm_wait', 'alarm_activate_siren', 'alarm_mail')">Save</button>
+                    <table style="margin-top:3px;margin-bottom:4px">
+                        <tbody>
+                            <tr>
+                                <td style="width:25px">
+                                    <input type="checkbox" id="alarm_remote_siren" name="alarm_remote_siren" value="True">
+                                </td>
+                                <td>
+                                    <label for="alarm_remote_siren">Activate siren on alarm from other device</label>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <button onclick="javascript:submitSyncFromInput('alarm_settings', 'alarm_movments', 'alarm_movments_seconds', 'alarm_seconds', 'alarm_wait', 'alarm_activate_siren', 'alarm_mail', 'alarm_light_acivate', 'alarm_remote_siren')">Save</button>
                     <br/><br/><br/>
                     <table class="input">
                         <tbody>
@@ -758,6 +1099,75 @@
                         </tbody>
                     </table>
                     <br/><br/>
+                    <table>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <b>Connect mutiple devices</b><br/>
+                                    One device is the server and the rest clients.<br/>
+                                    On the server you then can see the clients, you only need to watch one device instead of all...<br/>
+                                    If you change this you will get "Connection error" while service restart...you need to refresh the browser.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <table class="keyvalue">
+                        <tr>
+                            <td>
+                                Current status:
+                            </td>
+                            <td id="socket_info">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Connection(s):
+                            </td>
+                            <td id="socket_connections">
+                            </td>
+                        </tr>
+                    </table>
+                    <br/>
+                    <table>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <button id="socket_button_server" onclick="javascript:submitSync('socket_server');">Enable as server</button>
+                                </td>
+                                <td>
+                                    <button id="socket_button_disable_server" onclick="javascript:submitSync('socket_disable');">Disable server</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <br/>
+                    <table>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    Address to server:
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <input type="text" id="socket_client_host"></input>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <table>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <button id="socket_button_client" onclick="javascript:submitSyncFromInput('socket_client', 'socket_client_host');">Enable as client / Change address</button>
+                                </td>
+                                <td>
+                                    <button id="socket_button_disable_client" onclick="javascript:submitSync('socket_disable');">Disable client</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <br/><br/>
                     <b>Disable the alarm functionality</b>
                     <table>
                         <tr>
@@ -766,6 +1176,52 @@
                         <tr>
                             <td><button onclick="javascript:submitSync('alarm', 'false');">Disable Alarm/Surveillance</button></td>
                         </tr>
+                    </table>
+                </div>
+                <br/><br/>
+                <table class="footer">
+                    <tr onclick="javascript:onBack();">
+                        <td>
+                            <img alt="logo" src="img/back.png"></img>
+                        </td>
+                        <td>
+                            Back to main menu
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <!--####################################################################################################-->
+            <div class="layer" id="alarm_server">
+                <table class="sheader">
+                    <tr onclick="javascript:onBack();">
+                        <th>
+                            <img alt="logo" src="img/alarm-panel.png"></img>
+                        </th>
+                        <th>Alarm/Surveillance Server</th>
+                    </tr>
+                </table>
+                <div id="alarm_server_disabled" class="hide">
+                    The Alarm/Surveillance functionality is not enabled on this system.<br/>
+                    You muste enable it and also activate this device as a server, you can do it <a href="javascript: showLayer('alarm');">here</a>.
+                </div>
+                <div id="alarm_server_not_server" class="hide">
+                    This device is not acivated as server.<br/>
+                    You can do it on the bottom of <a href="javascript: showLayer('alarm_server');">this</a> page.
+                </div>
+                <div id="alarm_server_enabled" class="hide">
+                    List of this and all other devices that is a client to this server.<br/>
+                    For more info see <a href="http://www.steelsquid.org/alarm">http://www.steelsquid.org/alarm</a>
+                    <br/><br/>
+                    <table style="width:225px">
+                        <tr>
+                            <td style="width:50%"><button onclick="javascript:submitSync('alarm_client_set', 'True')">Arm all</button></td>
+                            <td style="width:50%"><button onclick="javascript:submitSync('alarm_client_set', 'False')">Disarm all</button></td>
+                        </tr>
+                    </table>
+                    <br/>
+                    <table id="alarm_server_statuses">
+                        <tbody>
+                        </tbody>
                     </table>
                 </div>
                 <br/><br/>

@@ -150,6 +150,7 @@ web_img_downloads[33]="$base/img/terminal.png"
 web_img_downloads[34]="$base/img/time.png"
 web_img_downloads[35]="$base/img/upgrade.png"
 web_img_downloads[36]="$base/img/alarm.png"
+web_img_downloads[37]="$base/img/alarm-panel.png"
 
 
 # Must have packages will install if necessary
@@ -3834,6 +3835,7 @@ mkdir $steelsquid_folder/web/img
 mkdir $steelsquid_folder/web/css
 mkdir $steelsquid_folder/web/js
 mkdir $steelsquid_folder/web/font
+mkdir $steelsquid_folder/web/snapshots
 mkdir $steelsquid_folder/vpn
 chmod -R 755 /opt/steelsquid/python/
 chmod 755 $steelsquid_folder/steelsquid-kiss-os.sh

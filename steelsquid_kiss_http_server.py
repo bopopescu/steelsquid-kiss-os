@@ -1705,12 +1705,21 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         '''
         
         '''
+        connections=""
+        if steelsquid_utils.get_flag("socket_server") or steelsquid_utils.has_parameter("socket_client"):
+            for ip in steelsquid_kiss_global.socket_connection.get_connected_ip_numbers():
+                if len(connections)==0:
+                    connections = ip
+                else:
+                    connections = connections+", "+ip
+        if len(connections)==0:
+            connections = "No connection"
         if steelsquid_utils.get_flag("socket_server"):
-            return ["server", "Socket connection as server enabled on port 22222", "Disabled"]
+            return ["server", "Enabled as server", "", connections]
         elif steelsquid_utils.has_parameter("socket_client"):
-            return ["client", "Disabled", "Socket connection as client enabled ("+steelsquid_utils.get_parameter("socket_client")+":22222)", steelsquid_utils.get_parameter("socket_client")]
+            return ["client", "Enabled as client to " + steelsquid_utils.get_parameter("socket_client"), steelsquid_utils.get_parameter("socket_client"), connections]
         else:
-            return ["disabled", "Disabled", "Disabled"]
+            return ["disabled", "Disabled", "", ""]
 
     def socket_server(self, session_id, parameters):
         '''

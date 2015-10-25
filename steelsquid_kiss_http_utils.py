@@ -143,6 +143,7 @@ class SteelsquidKissHttpServerUtils(steelsquid_kiss_http_server.SteelsquidKissHt
         if len(parameters) > 0:
             if int(parameters[2]) >= int(parameters[3]):
                 raise Exception("Alarm time must be smaller than alarm wait!")
+                alarm_light_acivate
             steelsquid_utils.set_parameter("alarm_security_movments", parameters[0])
             steelsquid_utils.set_parameter("alarm_security_movments_seconds", parameters[1])
             steelsquid_utils.set_parameter("alarm_security_seconds", parameters[2])
@@ -155,6 +156,11 @@ class SteelsquidKissHttpServerUtils(steelsquid_kiss_http_server.SteelsquidKissHt
                 steelsquid_utils.set_flag("alarm_security_send_mail")
             else:
                 steelsquid_utils.del_flag("alarm_security_send_mail")
+            steelsquid_utils.set_parameter("alarm_light_acivate", parameters[6])
+            if parameters[7]=="True":
+                steelsquid_utils.set_flag("alarm_remote_siren")
+            else:
+                steelsquid_utils.del_flag("alarm_remote_siren")
             is_saved=True
         movments = steelsquid_utils.get_parameter("alarm_security_movments")
         movments_seconds = steelsquid_utils.get_parameter("alarm_security_movments_seconds")
@@ -162,7 +168,9 @@ class SteelsquidKissHttpServerUtils(steelsquid_kiss_http_server.SteelsquidKissHt
         wait_ = steelsquid_utils.get_parameter("alarm_security_wait")
         alarm_activate_siren = steelsquid_utils.get_flag("alarm_security_activate_siren")
         alarm_mail = steelsquid_utils.get_flag("alarm_security_send_mail")
-        return [is_saved, movments, movments_seconds, seconds, wait_, alarm_activate_siren, alarm_mail]
+        alarm_light_a = steelsquid_utils.get_parameter("alarm_light_acivate")
+        alarm_remote_siren = steelsquid_utils.get_flag("alarm_remote_siren")
+        return [is_saved, movments, movments_seconds, seconds, wait_, alarm_activate_siren, alarm_mail, alarm_light_a, alarm_remote_siren]
 
 
     def alarm_arm(self, session_id, parameters):
@@ -171,10 +179,41 @@ class SteelsquidKissHttpServerUtils(steelsquid_kiss_http_server.SteelsquidKissHt
         '''
         if len(parameters) > 0:
             if parameters[0]=="true":
-                steelsquid_utils.set_flag("alarm_security")
+                steelsquid_kiss_global.Alarm.arm(True)
             else:
-                steelsquid_utils.del_flag("alarm_security")
-                steelsquid_kiss_global.Alarm.turn_off_alarm()
+                steelsquid_kiss_global.Alarm.arm(False)
+        return [steelsquid_utils.get_flag("alarm_security")]
+
+
+    def alarm_client_set(self, session_id, parameters):
+        '''
+        Set status of client that is connected to this server
+        '''
+        if len(parameters)==1:
+            if parameters[0] == "True":
+                steelsquid_kiss_global.Alarm.arm(True)
+            else:
+                steelsquid_kiss_global.Alarm.arm(False)
+            steelsquid_kiss_global.socket_connection.send_request("alarm_client_set", parameters)
+        else:
+            if parameters[0]==steelsquid_utils.network_ip():
+                if parameters[1] == "True":
+                    steelsquid_kiss_global.Alarm.arm(True)
+                else:
+                    steelsquid_kiss_global.Alarm.arm(False)
+            else:
+                steelsquid_kiss_global.socket_connection.send_request("alarm_client_set", parameters[1:], parameters[0])
+
+
+    def alarm_arm(self, session_id, parameters):
+        '''
+        Settings of alarm
+        '''
+        if len(parameters) > 0:
+            if parameters[0]=="true":
+                steelsquid_kiss_global.Alarm.arm(True)
+            else:
+                steelsquid_kiss_global.Alarm.arm(False)
         return [steelsquid_utils.get_flag("alarm_security")]
 
 
@@ -201,6 +240,27 @@ class SteelsquidKissHttpServerUtils(steelsquid_kiss_http_server.SteelsquidKissHt
         else:
             steelsquid_kiss_global.Alarm.lamp(False)
             return "The lamp is off"
+
+
+    def alarm_server(self, session_id, parameters):
+        '''
+        Status of alarm server
+        '''
+        alarm = steelsquid_utils.get_flag("alarm")
+        if steelsquid_utils.get_flag("socket_server"):
+            socket = "server"
+        elif steelsquid_utils.has_parameter("socket_client"):
+            socket = "client"
+        else:
+            socket = "disabled"
+        return [alarm, socket]
+
+
+    def alarm_server_statuses(self, session_id, parameters):
+        '''
+        Get all statuses from this server and connected clients
+        '''
+        return steelsquid_kiss_global.Alarm.get_statuses()
 
 
     def rover_info(self, session_id, parameters):

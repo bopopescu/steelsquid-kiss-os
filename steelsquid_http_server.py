@@ -113,6 +113,19 @@ class ThreadedHTTPServer(ThreadingMixIn, BaseHTTPServer.HTTPServer):
         self.socket.close()
         BaseHTTPServer.HTTPServer.shutdown(self)    
 
+    def log_message(self, format, *args):
+        '''
+        Disable logging
+        '''
+        return
+
+
+    def handle_error(self, request, client_address):
+        '''
+        Disable logging
+        '''
+        return
+  
 class SteelsquidHttpServer(steelsquid_server.SteelsquidServer):
 
     __slots__ = ['port', 'root', 'authorization', 'only_localhost', 'client_ip', 'use_https']
@@ -1808,12 +1821,12 @@ class SteelsquidHttpServer(steelsquid_server.SteelsquidServer):
         """
         '''
         
-        STEELSQUID_CSS = r"""body{background-color:#ededed;padding:0px;margin:0px;border:0px;font-family:"Droid Sans", Verdana;font-size:11pt;color:#272727}table,td,tr,thead,tbody,th{border-collapse:collapse;border-spacing:0;margin:0px;padding:0px;border:0px;text-align:left;vertical-align:middle}table{width:100%}select,button{width:100%;margin:0px;padding:3px;white-space:nowrap;font-family:"Droid Sans", Verdana;font-size:11pt;color:#272727}input{width:100%;box-sizing:border-box;margin:0px;padding:3px;white-space:nowrap;font-family:"Droid Sans", Verdana;font-size:11pt;color:#272727}input[type="checkbox"]{width:20px;height:20px;margin-top:3px}img,div{padding:0px;margin:0px}ul{margin-top:2px}h1{font-size:14pt;margin:0px}a:link{color:#005596;text-decoration:none}a:visited{color:#005596;text-decoration:none}a:hover{color:#005596;text-decoration:underline}div.layer{display:none}div.flow{border:1px solid transparent}@media (min-width: 710px){div.flow{width:700px}}div.log{overflow-y:auto;overflow-x:auto;white-space:nowrap;background-color:white;width:100%;height:100px}div.scroll{overflow-y:auto;overflow-x:hidden;width:100%}div.twin-panel{border-top:1px solid transparent;border-left:1px solid transparent;border-right:1px solid transparent;overflow-y:auto;overflow-x:hidden;width:calc(100% - 2px);height:calc(50% - 30px)}@media (min-width: 710px){div.twin-panel{width:700px}}div.footer{width:calc(100% - 2px);height:20px;word-break:break-all;border:1px solid transparent}table.list thead tr th{padding:5px}table.list tbody tr:nth-child(odd){background-color:white}table.list tbody tr td{padding:5px}table.menu thead tr th{padding:2px;padding-bottom:0px;font-weight:bold;font-size:12pt}table.menu tbody tr td{padding:2px;padding-bottom:0px}table.menu tbody tr td:last-child{width:100%}table.menu tbody tr:hover{background-color:white;cursor:pointer;cursor:hand}table.sheader tr th{padding:2px;font-weight:bold;font-size:12pt}table.sheader tr:hover{background-color:white;cursor:pointer;cursor:hand}table.sheader tr th:last-child{width:100%}table.header thead tr th{padding:2px;font-weight:bold;font-size:12pt}table.header thead tr:hover{background-color:white;cursor:pointer;cursor:hand}table.header thead tr th:last-child{width:100%}table.header tbody tr td{padding-bottom:8px}table.footer tr td{padding:2px;padding-bottom:0px}table.footer tr:hover{background-color:white;cursor:pointer;cursor:hand}table.footer tr td:last-child{font-weight:bold;font-size:12pt;width:100%}table.input thead tr th{padding-top:5px;font-weight:bold}table.input tbody tr:nth-child(odd) td{padding-top:5px;padding-bottom:0px;padding-right:0px}table.input tbody tr:nth-child(even) td{padding-top:0px;padding-bottom:5px;padding-right:0px}table.keyvalue tr td{padding-top:0px;padding-bottom:0px}table.keyvalue tr td:first-child{padding-right:10px;white-space:nowrap}table.keyvalue tr td:last-child{width:100%;color:#009d00;font-size:10pt;font-weight:bold}table.grid tr td{padding-right:1px;padding-bottom:1px}table.grid tr td:last-child{padding-right:0px}.highlight{color:#009d00;font-size:10pt;font-weight:bold}.ok{color:#009d00}.error{color:#b80000}.minimize{font-size:10pt}.status{font-size:10pt;font-weight:bold}.hide{display:none}.expand{width:100%;word-break:break-all}.right{text-align:right}.nowrap{white-space:nowrap}.wrap{word-break:break-all}@keyframes "blink"{0%{color:#ff0000;}100%{color:eaff00;}}@-webkit-keyframes "blink"{0%{color:#ff0000;}100%{color:eaff00;}}.flash{-webkit-animation:blink 0.5s linear infinite;-moz-animation:blink 0.5s linear infinite;animation:blink 0.5s linear infinite}table.bar{width:100%;background-color:#272727;color:#ededed}table.bar thead tr td:first-child{padding-top:2px;padding-left:4px;padding-right:4px}table.bar thead tr td:nth-child(2){width:100%;font-weight:bold;font-size:14pt}table.bar thead tr td:last-child{padding-top:2px;padding-right:6px;text-align:right}table.bar thead tr:hover{cursor:pointer;cursor:hand}table.bar tbody tr td:first-child{padding-top:2px;padding-left:4px;padding-right:4px;display:none}table.bar tbody tr td:last-child{width:100%;font-weight:bold;font-size:12pt;display:none}table.bar tbody tr:hover{cursor:pointer;cursor:hand;text-decoration:underline}.flip-horizontal{-moz-transform:scaleX(-1);-webkit-transform:scaleX(-1);-o-transform:scaleX(-1);-ms-transform:scaleX(1);transform:scaleX(-1);-ms-filter:fliph;filter:fliph}.flip-vertical{-moz-transform:scaleY(-1);-webkit-transform:scaleY(-1);-o-transform:scaleY(-1);-ms-transform:scaleY(1);transform:scaleY(-1);-ms-filter:flipv;filter:flipv}.rotate-90{-webkit-transform:rotate(90deg);-moz-transform:rotate(90deg);-o-transform:rotate(90deg);-ms-transform:rotate(90deg);transform:rotate(90deg)}.rotate-90-back{-webkit-transform:rotate(-90deg);-moz-transform:rotate(-90deg);-o-transform:rotate(-90deg);-ms-transform:rotate(-90deg);transform:rotate(-90deg)}.rotate-180{-webkit-transform:rotate(180deg);-moz-transform:rotate(180deg);-o-transform:rotate(180deg);-ms-transform:rotate(180deg);transform:rotate(180deg)}.rotate-180-back{-webkit-transform:rotate(-180deg);-moz-transform:rotate(-180deg);-o-transform:rotate(-180deg);-ms-transform:rotate(-180deg);transform:rotate(-180deg)}"""
+        STEELSQUID_CSS = r"""body{background-color:#ededed;padding:0px;margin:0px;border:0px;font-family:"Droid Sans", Verdana;font-size:11pt;color:#272727}table,td,tr,thead,tbody,th{border-collapse:collapse;border-spacing:0;margin:0px;padding:0px;border:0px;text-align:left;vertical-align:middle}table{width:100%}select,button{width:100%;margin:0px;padding:3px;white-space:nowrap;font-family:"Droid Sans", Verdana;font-size:11pt;color:#272727}input{width:100%;box-sizing:border-box;margin:0px;padding:3px;white-space:nowrap;font-family:"Droid Sans", Verdana;font-size:11pt;color:#272727}input[type="checkbox"]{width:20px;height:20px;margin-top:3px}img,div{padding:0px;margin:0px}ul{margin-top:2px}h1{font-size:14pt;margin:0px}a:link{color:#005596;text-decoration:none}a:visited{color:#005596;text-decoration:none}a:hover{color:#005596;text-decoration:underline}div.layer{display:none}div.flow{border:1px solid transparent}@media (min-width: 710px){div.flow{width:700px}}div.log{overflow-y:auto;overflow-x:auto;white-space:nowrap;background-color:white;width:100%;height:100px}div.scroll{overflow-y:auto;overflow-x:hidden;width:100%}div.twin-panel{border-top:1px solid transparent;border-left:1px solid transparent;border-right:1px solid transparent;overflow-y:auto;overflow-x:hidden;width:calc(100% - 2px);height:calc(50% - 30px)}@media (min-width: 710px){div.twin-panel{width:700px}}div.footer{width:calc(100% - 2px);height:20px;word-break:break-all;border:1px solid transparent}table.list thead tr th{padding:5px}table.list tbody tr:nth-child(odd){background-color:white}table.list tbody tr td{padding:5px}table.menu thead tr th{padding:2px;padding-bottom:0px;font-weight:bold;font-size:12pt}table.menu tbody tr td{padding:2px;padding-bottom:0px}table.menu tbody tr td:last-child{width:100%}table.menu tbody tr:hover{background-color:white;cursor:pointer;cursor:hand}table.sheader tr th{padding:2px;font-weight:bold;font-size:12pt}table.sheader tr:hover{background-color:white;cursor:pointer;cursor:hand}table.sheader tr th:last-child{width:100%}table.header thead tr th{padding:2px;font-weight:bold;font-size:12pt}table.header thead tr:hover{background-color:white;cursor:pointer;cursor:hand}table.header thead tr th:last-child{width:100%}table.header tbody tr td{padding-bottom:8px}table.footer tr td{padding:2px;padding-bottom:0px}table.footer tr:hover{background-color:white;cursor:pointer;cursor:hand}table.footer tr td:last-child{font-weight:bold;font-size:12pt;width:100%}table.input thead tr th{padding-top:5px;font-weight:bold}table.input tbody tr:nth-child(odd) td{padding-top:5px;padding-bottom:0px;padding-right:0px}table.input tbody tr:nth-child(even) td{padding-top:0px;padding-bottom:5px;padding-right:0px}table.keyvalue tr td{padding-top:0px;padding-bottom:0px}table.keyvalue tr td:first-child{padding-right:10px;white-space:nowrap}table.keyvalue tr td:last-child{width:100%;color:#009d00;font-size:10pt;font-weight:bold}table.grid tbody tr td{padding:0px;margin:0px;border:0px}.highlight{color:#009d00;font-size:10pt;font-weight:bold}.ok{color:#009d00}.error{color:#b80000}.minimize{font-size:10pt}.status{font-size:10pt;font-weight:bold}.hide{display:none}.expand{width:100%;word-break:break-all}.right{text-align:right}.nowrap{white-space:nowrap}.wrap{word-break:break-all}@keyframes "blink"{0%{color:#ff0000;}100%{color:eaff00;}}@-webkit-keyframes "blink"{0%{color:#ff0000;}100%{color:eaff00;}}.flash{-webkit-animation:blink 0.5s linear infinite;-moz-animation:blink 0.5s linear infinite;animation:blink 0.5s linear infinite}table.bar{width:100%;background-color:#272727;color:#ededed}table.bar thead tr td:first-child{padding-top:2px;padding-left:4px;padding-right:4px}table.bar thead tr td:nth-child(2){width:100%;font-weight:bold;font-size:14pt}table.bar thead tr td:last-child{padding-top:2px;padding-right:6px;text-align:right}table.bar thead tr:hover{cursor:pointer;cursor:hand}table.bar tbody tr td:first-child{padding-top:2px;padding-left:4px;padding-right:4px;display:none}table.bar tbody tr td:last-child{width:100%;font-weight:bold;font-size:12pt;display:none}table.bar tbody tr:hover{cursor:pointer;cursor:hand;text-decoration:underline}.flip-horizontal{-moz-transform:scaleX(-1);-webkit-transform:scaleX(-1);-o-transform:scaleX(-1);-ms-transform:scaleX(1);transform:scaleX(-1);-ms-filter:fliph;filter:fliph}.flip-vertical{-moz-transform:scaleY(-1);-webkit-transform:scaleY(-1);-o-transform:scaleY(-1);-ms-transform:scaleY(1);transform:scaleY(-1);-ms-filter:flipv;filter:flipv}.rotate-90{-webkit-transform:rotate(90deg);-moz-transform:rotate(90deg);-o-transform:rotate(90deg);-ms-transform:rotate(90deg);transform:rotate(90deg)}.rotate-90-back{-webkit-transform:rotate(-90deg);-moz-transform:rotate(-90deg);-o-transform:rotate(-90deg);-ms-transform:rotate(-90deg);transform:rotate(-90deg)}.rotate-180{-webkit-transform:rotate(180deg);-moz-transform:rotate(180deg);-o-transform:rotate(180deg);-ms-transform:rotate(180deg);transform:rotate(180deg)}.rotate-180-back{-webkit-transform:rotate(-180deg);-moz-transform:rotate(-180deg);-o-transform:rotate(-180deg);-ms-transform:rotate(-180deg);transform:rotate(-180deg)}"""
+      
         '''
         http://cleancss.com/ 
-        
 
-        '''
+        
         STEELSQUID_CSS = r"""
         
         /* Body */
@@ -2074,12 +2087,10 @@ class SteelsquidHttpServer(steelsquid_server.SteelsquidServer):
         }
         
         /* A grid */
-        table.grid tr td{ 
-            padding-right: 1px;
-            padding-bottom: 1px;
-        }
-        table.grid tr td:last-child{
-            padding-right: 0px;
+        table.grid tbody tr td{ 
+            padding: 0px;
+            margin: 0px;
+            border: 0px;
         }
         
         /* Higligt text */
@@ -2240,7 +2251,7 @@ class SteelsquidHttpServer(steelsquid_server.SteelsquidServer):
           transform: rotate(-180deg);
         }         
         """
-        
+        '''
 
         HTTP_OK = 200
         HTTP_BAD_REQUEST = 400
@@ -2495,6 +2506,22 @@ class SteelsquidHttpServer(steelsquid_server.SteelsquidServer):
                 self.send_headers_data(self.HTTP_SERVER_ERROR, self.MIME_PLAIN, len(data), None, use_cache=False)
                 self.wfile.write(data)
 
+
+
+        def log_message(self, format, *args):
+            '''
+            Disable logging
+            '''
+            return
+
+
+        def handle_error(self, request, client_address):
+            '''
+            Disable logging
+            '''
+            return
+
+        
         def security(self, resource):
             global public_resources
             if len(resource) == 0:

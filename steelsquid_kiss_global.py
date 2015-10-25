@@ -25,10 +25,13 @@ from datetime import timedelta
 import os
 import urllib
 import thread
+import sys
+import steelsquid_kiss_global
 
 
 # The socket connection, if enabled (not enabled = None)
-# Flag: socket_connection
+# Flag: socket_server
+# Parameter: socket_client
 socket_connection = None
 
 
@@ -62,6 +65,9 @@ class Alarm(object):
     counter=0
     last_move = 0
     last_trigger = datetime.now() - timedelta(days =1 )
+
+    # If this is a server calculate if to send alarm to clients
+    last_trigger_clients = datetime.now() - timedelta(days =1 )
     
     # Lightlevel from PCF8591 (YL-40)
     light_level = None
@@ -71,6 +77,12 @@ class Alarm(object):
 
     # Lightlevel from HDC1008
     humidity = None
+
+    # Status from connected clients (if this is a server)
+    # Is a dict with all clients and every object in the dict is a list of statuses from that client
+    clients_status = {}
+    
+    ever2second = True
     
     @classmethod
     def enable(cls):
@@ -89,15 +101,19 @@ class Alarm(object):
             steelsquid_utils.set_parameter("alarm_security_seconds", "10");
         if not steelsquid_utils.has_parameter("alarm_security_wait"):
             steelsquid_utils.set_parameter("alarm_security_wait", "120");
-            
-        # Read lightlevel, temperature and humidity in background every second
+        if not steelsquid_utils.has_parameter("alarm_light_acivate"):
+            steelsquid_utils.set_parameter("alarm_light_acivate", "0");
+        # Execute this every second
         steelsquid_event.subscribe_to_event("second", cls.on_every_second, None, False)
+        
         
     @classmethod
     def on_every_second(cls, args, para):
         '''
         Read lightlevel, temperature and humidity in background every second
+        Also if this is a client, send status to server.
         '''
+        # Try to read sensors
         try:
             cls.light_level = steelsquid_pi.yl40_light_level();
         except:
@@ -108,6 +124,92 @@ class Alarm(object):
             cls.humidity = round(hum, 1)
         except:
             pass
+        try:
+            alarm_light_acivate = int(steelsquid_utils.get_parameter("alarm_light_acivate"));
+            if int(cls.light_level)<alarm_light_acivate:
+                cls.lamp(True)
+            else:
+                cls.lamp(False)
+        except:
+            pass
+        if steelsquid_utils.get_flag("alarm"):
+            if steelsquid_utils.has_parameter("socket_client"):
+                # Send status to server
+                server_ip = steelsquid_utils.get_parameter("socket_client")
+                try:
+                    statuses = []
+                    name = steelsquid_utils.execute_system_command(['hostname'])[0]
+                    armed = steelsquid_utils.get_flag("alarm_security")
+                    motion_detected = cls.motion_detected
+                    statuses.append(name)
+                    statuses.append(armed)
+                    statuses.append(cls.alarm_triggered)
+                    statuses.append(cls.motion_detected)
+                    statuses.append(cls.is_siren_on)
+                    statuses.append(cls.is_lamp_on)
+                    statuses.append(cls.light_level)
+                    statuses.append(cls.temperature)
+                    statuses.append(cls.humidity)
+                    steelsquid_kiss_global.socket_connection.send_request("alarm_push", statuses)
+                except:
+                    steelsquid_utils.shout()
+            elif steelsquid_utils.get_flag("socket_server"):
+                #Check if client still is connected, of not remove from status list
+                for k in cls.clients_status.keys():
+                    if k not in steelsquid_kiss_global.socket_connection.get_connected_ip_numbers():
+                        del cls.clients_status[k]
+                #Check if to send alarm to clients
+                alarm_triggered = cls.alarm_triggered
+                if not alarm_triggered:
+                    for key in cls.clients_status:
+                        client = cls.clients_status[key]
+                        alarm_triggered = steelsquid_utils.to_boolean(client[2])
+                        if alarm_triggered:
+                            break
+                if alarm_triggered:
+                    alarm_security_wait = int(steelsquid_utils.get_parameter("alarm_security_wait"))
+                    now = datetime.now()
+                    delta = now - cls.last_trigger_clients
+                    if delta.total_seconds() > alarm_security_wait:
+                        if not cls.alarm_triggered:
+                            cls.on_remote_alarm()
+                        cls.last_trigger_clients=datetime.now() 
+                        steelsquid_kiss_global.socket_connection.send_request("alarm_remote_alarm", [])
+
+                
+    @classmethod
+    def get_statuses(cls):
+        '''
+        Get status of this device and also status on all connected clients
+        '''
+        statuses = []
+        if steelsquid_utils.get_flag("alarm") and steelsquid_utils.get_flag("socket_server"):
+            # Status of this local device
+            ip = steelsquid_utils.network_ip()
+            name = steelsquid_utils.execute_system_command(['hostname'])[0]
+            armed = steelsquid_utils.get_flag("alarm_security")
+            motion_detected = cls.motion_detected
+            statuses.append(ip)
+            statuses.append(name)
+            statuses.append(armed)
+            statuses.append(cls.alarm_triggered)
+            statuses.append(cls.motion_detected)
+            statuses.append(cls.is_siren_on)
+            statuses.append(cls.is_lamp_on)
+            statuses.append(cls.light_level)
+            statuses.append(cls.temperature)
+            statuses.append(cls.humidity)
+            urllib.urlretrieve("http://"+ip+":8080/?action=snapshot", "/opt/steelsquid/web/snapshots/"+ip+".jpg")
+            
+            # Get status from all connected clients
+            for key in cls.clients_status:
+                client = cls.clients_status[key]
+                statuses.append(key)
+                statuses.extend(client)
+                urllib.urlretrieve("http://"+key+":8080/?action=snapshot", "/opt/steelsquid/web/snapshots/"+key+".jpg")
+            
+        return statuses
+        
         
     @classmethod
     def on_motion(cls, pin, status):
@@ -174,6 +276,18 @@ class Alarm(object):
         cls.last_move = 0
 
     @classmethod
+    def arm(cls, armIt):
+        '''
+        Turn on and of the alarm
+        '''
+        if armIt==True:
+            steelsquid_utils.set_flag("alarm_security")
+        else:
+            steelsquid_utils.del_flag("alarm_security")
+            cls.turn_off_alarm()
+        
+
+    @classmethod
     def siren(cls, activate=None):
         '''
         Aktivate the siren and get if it is activated
@@ -200,6 +314,18 @@ class Alarm(object):
                 steelsquid_pi.gpio_set(27, False);
             cls.is_lamp_on=activate
         return cls.is_lamp_on
+
+
+    @classmethod
+    def on_remote_alarm(cls):
+        '''
+        If this clients server or other clients has an alarm
+        turn on this device siren
+        '''
+        if steelsquid_utils.get_flag("alarm_security") and steelsquid_utils.get_flag("alarm_remote_siren"):
+            alarm_for_seconds = int(steelsquid_utils.get_parameter("alarm_security_seconds"))
+            cls.siren(True)
+            steelsquid_utils.execute_delay(alarm_for_seconds, cls.siren, ((False),))
 
 
 class Rover(object):
