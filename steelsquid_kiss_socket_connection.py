@@ -112,9 +112,9 @@ class SteelsquidKissSocketServer(steelsquid_socket_connection.SteelsquidSocketCo
         steelsquid_utils.shout(parameters[0]);
 
 
-    def alarm_client_set_request(self, remote_address, parameters):
+    def alarm_arm_request(self, remote_address, parameters):
         '''
-        Set status of alarm on client (from server)
+        Arm/disarm alarm on client (from server)
         '''
         if parameters[0] == "True":
             steelsquid_kiss_global.Alarm.arm(True)
@@ -122,16 +122,40 @@ class SteelsquidKissSocketServer(steelsquid_socket_connection.SteelsquidSocketCo
             steelsquid_kiss_global.Alarm.arm(False)
         
 
-    def alarm_client_set_response(self, remote_address, parameters):
+    def alarm_arm_response(self, remote_address, parameters):
         '''
-        Set status of alarm on client (from server)
+        Arm/disarm alarm on client (from server)
         '''
         pass
         
 
-    def alarm_client_set_error(self, remote_address, parameters):
+    def alarm_arm_error(self, remote_address, parameters):
         '''
-        Set status of alarm on client (from server)
+        Arm/disarm alarm on client (from server)
+        '''
+        steelsquid_utils.shout(parameters[0]);
+
+
+    def alarm_siren_request(self, remote_address, parameters):
+        '''
+        Activate/deaqctivate siren on client (from server)
+        '''
+        if parameters[0] == "True":
+            steelsquid_kiss_global.Alarm.siren(True)
+        else:
+            steelsquid_kiss_global.Alarm.siren(False)
+        
+
+    def alarm_siren_response(self, remote_address, parameters):
+        '''
+        ctivate/deaqctivate siren on client (from server)
+        '''
+        pass
+        
+
+    def alarm_siren_error(self, remote_address, parameters):
+        '''
+        ctivate/deaqctivate siren on client (from server)
         '''
         steelsquid_utils.shout(parameters[0]);
 

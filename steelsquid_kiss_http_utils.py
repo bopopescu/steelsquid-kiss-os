@@ -185,7 +185,7 @@ class SteelsquidKissHttpServerUtils(steelsquid_kiss_http_server.SteelsquidKissHt
         return [steelsquid_utils.get_flag("alarm_security")]
 
 
-    def alarm_client_set(self, session_id, parameters):
+    def alarm_client_arm(self, session_id, parameters):
         '''
         Set status of client that is connected to this server
         '''
@@ -194,7 +194,7 @@ class SteelsquidKissHttpServerUtils(steelsquid_kiss_http_server.SteelsquidKissHt
                 steelsquid_kiss_global.Alarm.arm(True)
             else:
                 steelsquid_kiss_global.Alarm.arm(False)
-            steelsquid_kiss_global.socket_connection.send_request("alarm_client_set", parameters)
+            steelsquid_kiss_global.socket_connection.send_request("alarm_arm", parameters)
         else:
             if parameters[0]==steelsquid_utils.network_ip():
                 if parameters[1] == "True":
@@ -202,7 +202,18 @@ class SteelsquidKissHttpServerUtils(steelsquid_kiss_http_server.SteelsquidKissHt
                 else:
                     steelsquid_kiss_global.Alarm.arm(False)
             else:
-                steelsquid_kiss_global.socket_connection.send_request("alarm_client_set", parameters[1:], parameters[0])
+                steelsquid_kiss_global.socket_connection.send_request("alarm_arm", parameters[1:], parameters[0])
+
+
+    def alarm_client_siren(self, session_id, parameters):
+        '''
+        Activate/deactivate siren on client that is connected to this server
+        '''
+        if parameters[0] == "True":
+            steelsquid_kiss_global.Alarm.siren(True)
+        else:
+            steelsquid_kiss_global.Alarm.siren(False)
+        steelsquid_kiss_global.socket_connection.send_request("alarm_siren", parameters)
 
 
     def alarm_arm(self, session_id, parameters):

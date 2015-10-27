@@ -366,7 +366,7 @@
             /**
              * Answer when change status of client connected to this server.
              */
-            function on_alarm_client_set(paramaters){
+            function on_alarm_client_arm(paramaters){
                 submitNoPW('alarm_server_statuses');
             }
             
@@ -446,10 +446,10 @@
                                 "<table class='grid' style='width:225px'>",
                                     "<tr>",
                                         "<td style='padding-right:4px;width:50%'>",
-                                            "<button onclick=\"javascript:submitSync('alarm_client_set', '",ip,"', 'True');\">Arm</button>",
+                                            "<button onclick=\"javascript:submitSync('alarm_client_arm', '",ip,"', 'True');\">Arm</button>",
                                         "</td>",
                                         "<td style='padding-left:4px;width:50%'>",
-                                            "<button onclick=\"javascript:submitSync('alarm_client_set', '",ip,"', 'False');\">Disarm</button>",
+                                            "<button onclick=\"javascript:submitSync('alarm_client_arm', '",ip,"', 'False');\">Disarm</button>",
                                         "</td>",
                                     "</tr>",
                                 "</table>",
@@ -1214,8 +1214,12 @@
                     <br/><br/>
                     <table style="width:225px">
                         <tr>
-                            <td style="width:50%"><button onclick="javascript:submitSync('alarm_client_set', 'True')">Arm all</button></td>
-                            <td style="width:50%"><button onclick="javascript:submitSync('alarm_client_set', 'False')">Disarm all</button></td>
+                            <td style="width:50%;padding:1px"><button onclick="javascript:submitSync('alarm_client_arm', 'True')">Arm all</button></td>
+                            <td style="width:50%;padding:1px"><button onclick="javascript:submitSync('alarm_client_arm', 'False')">Disarm all</button></td>
+                        </tr>
+                        <tr>
+                            <td style="width:50%;padding:1px"><button onclick="javascript:submitSync('alarm_client_siren', 'True')">All Sirens On</button></td>
+                            <td style="width:50%;padding:1px"><button onclick="javascript:submitSync('alarm_client_siren', 'False')">All Sirens Off</button></td>
                         </tr>
                     </table>
                     <br/>
