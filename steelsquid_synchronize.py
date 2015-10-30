@@ -358,6 +358,8 @@ if __name__ == '__main__':
     for x in range(0, len(base_remote_server)):
         ssh[x] = paramiko.SSHClient()
         ssh[x].set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh[x].set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
     try:
         connect()
     except:

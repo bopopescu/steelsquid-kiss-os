@@ -401,6 +401,15 @@
                         i++;
                         humidity = paramaters[i];
 
+                        if (light_level=="None"){
+                            light_level="?";
+                        }
+                        if (temperature=="None"){
+                            temperature="?";
+                        }
+                        if (humidity=="None"){
+                            humidity="?";
+                        }
                         
                         alarm_string="";
                         if(alarm_triggered=="True"){
@@ -551,6 +560,15 @@
                         temperature = paramaters[i];
                         i++;
                         humidity = paramaters[i];
+                        if (light_level=="None"){
+                            light_level="?";
+                        }
+                        if (temperature=="None"){
+                            temperature="?";
+                        }
+                        if (humidity=="None"){
+                            humidity="?";
+                        }
                         try{
                             alarm_string="";
                             if(alarm_triggered=="True"){
@@ -1035,7 +1053,7 @@
                             </tr>
                             <tr>
                                 <td>
-                                    When ambient lighting under this, activate the IR-lamp. ((0=pitch-black to 255=bright))
+                                    When ambient lighting under this, activate the IR-lamp. (0=pitch-black to 255=bright, -1=disable) 
                                 </td>
                             </tr>
                             <tr>

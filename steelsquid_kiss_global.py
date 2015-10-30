@@ -102,7 +102,7 @@ class Alarm(object):
         if not steelsquid_utils.has_parameter("alarm_security_wait"):
             steelsquid_utils.set_parameter("alarm_security_wait", "120");
         if not steelsquid_utils.has_parameter("alarm_light_acivate"):
-            steelsquid_utils.set_parameter("alarm_light_acivate", "0");
+            steelsquid_utils.set_parameter("alarm_light_acivate", "15");
         # Execute this every second
         steelsquid_event.subscribe_to_event("second", cls.on_every_second, None, False)
         
@@ -126,10 +126,11 @@ class Alarm(object):
             pass
         try:
             alarm_light_acivate = int(steelsquid_utils.get_parameter("alarm_light_acivate"));
-            if int(cls.light_level)<alarm_light_acivate:
-                cls.lamp(True)
-            else:
-                cls.lamp(False)
+            if alarm_light_acivate != -1:
+                if int(cls.light_level)<alarm_light_acivate:
+                    cls.lamp(True)
+                else:
+                    cls.lamp(False)
         except:
             pass
         if steelsquid_utils.get_flag("alarm"):
@@ -207,7 +208,6 @@ class Alarm(object):
                 statuses.append(key)
                 statuses.extend(client)
                 urllib.urlretrieve("http://"+key+":8080/?action=snapshot", "/opt/steelsquid/web/snapshots/"+key+".jpg")
-            
         return statuses
         
         

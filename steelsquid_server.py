@@ -339,6 +339,8 @@ class SteelsquidServer(object):
                                 the_answer[count] = "True"
                             else:
                                 the_answer[count] = "False"
+                        elif string == None:
+                                the_answer[count] = "None"
                         else:
                             raise RuntimeError("Unknown answer type, must be (bool, int, float, string) or a list of (bool, int, float, string)")
                         count = count + 1
@@ -352,6 +354,8 @@ class SteelsquidServer(object):
                         return ["True"]
                     else:
                         return ["False"]
+                elif parameters == None:
+                    return ["None"]
                 else:
                     raise RuntimeError("Unknown answer type, must be (bool, int, float, string) or a list of (bool, int, float, string)")
             except RuntimeError, err:
