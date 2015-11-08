@@ -256,6 +256,10 @@ class Alarm(object):
             activate_siren = steelsquid_utils.get_flag("alarm_security_activate_siren")
             alarm_security_send_mail = steelsquid_utils.get_flag("alarm_security_send_mail")
             if status==True and cls.alarm_triggered==False:
+                #Activate IR-lamp for 1 minute
+                if not cls.lamp():
+                    cls.lamp(True)
+                    steelsquid_utils.execute_delay(60, cls.lamp, ((False),))
                 now = datetime.now()
                 delta = now - cls.last_trigger
                 if delta.total_seconds() > alarm_security_wait:
@@ -275,6 +279,7 @@ class Alarm(object):
                         if alarm_security_send_mail:
                             cls.send_mail()
                         steelsquid_utils.execute_delay(alarm_for_seconds, cls.turn_off_alarm, None)
+
                     
     @classmethod
     def send_mail(cls):

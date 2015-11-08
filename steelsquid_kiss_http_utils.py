@@ -141,7 +141,6 @@ class SteelsquidKissHttpServerUtils(steelsquid_kiss_http_server.SteelsquidKissHt
         '''
         Settings of alarm
         '''
-        print parameters
         is_saved=False
         if len(parameters) > 0:
             if int(parameters[2]) >= int(parameters[3]):
