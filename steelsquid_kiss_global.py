@@ -259,7 +259,7 @@ class Alarm(object):
                 #Activate IR-lamp for 1 minute
                 if not cls.lamp():
                     cls.lamp(True)
-                    steelsquid_utils.execute_delay(60, cls.lamp, ((False),))
+                    steelsquid_utils.execute_delay(120, cls.lamp, ((False),))
                 now = datetime.now()
                 delta = now - cls.last_trigger
                 if delta.total_seconds() > alarm_security_wait:
