@@ -285,15 +285,14 @@ class SteelsquidKissHttpServerUtils(steelsquid_kiss_http_server.SteelsquidKissHt
         The Android app Alarm Arm sending if it is in near the alarm.
         return if the larm is enabled or not
         '''
-        print parameters
         if len(parameters)>0:
             if steelsquid_utils.get_flag("alarm_app"):
                 client_id = parameters[0]
                 status = parameters[1]
                 if status=="True":
-                    steelsquid_kiss_global.alarm_arm[client_id]=datetime.now()
+                    steelsquid_kiss_global.Alarm.alarm_arm.pop(client_id, None)
                 else:
-                    steelsquid_kiss_global.alarm_arm.pop(client_id, None)
+                    steelsquid_kiss_global.Alarm.alarm_arm[client_id]=datetime.now()
         return steelsquid_utils.get_flag("alarm_security")
 
 

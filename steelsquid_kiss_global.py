@@ -187,13 +187,13 @@ class Alarm(object):
                     if delta.total_seconds() > 600:
                         cls.alarm_arm.pop(client_id, None)
                 if len(cls.alarm_arm)==0:
-                    if steelsquid_utils.get_flag("alarm_security"):
-                        steelsquid_kiss_global.Alarm.arm(False)
-                        steelsquid_kiss_global.socket_connection.send_request("alarm_arm", ["False"])
-                else:
                     if not steelsquid_utils.get_flag("alarm_security"):
                         steelsquid_kiss_global.Alarm.arm(True)
                         steelsquid_kiss_global.socket_connection.send_request("alarm_arm", ["True"])
+                else:
+                    if steelsquid_utils.get_flag("alarm_security"):
+                        steelsquid_kiss_global.Alarm.arm(False)
+                        steelsquid_kiss_global.socket_connection.send_request("alarm_arm", ["False"])
 
                 
     @classmethod
