@@ -34,6 +34,17 @@
         <script type="text/javascript">
             //<![CDATA[ 
             
+            
+            submitNoPW('device_info');
+ 
+            /**
+             * Get info on device to print on top of page
+             */
+            function on_device_info(paramaters){
+                $("#device_info_name").html(paramaters[0]);
+            }
+
+            
             var stream_port="8080";
             
             $(document).ready(function(){
@@ -326,8 +337,11 @@
                     $("#alarm_mail").prop("checked", true)
                 }    
                 $("#alarm_light_acivate").val(paramaters[7]);                
-                if(paramaters[7]=="True"){
+                if(paramaters[8]=="True"){
                     $("#alarm_remote_siren").prop("checked", true)
+                }    
+                if(paramaters[9]=="True"){
+                    $("#alarm_app").prop("checked", true)
                 }    
             }
 
@@ -727,6 +741,9 @@
                         Kiss OS Utils
                     </td>
                     <td>
+                        <div class="device_info" id="device_info_name"></div>
+                    </td>
+                    <td>
                         <img alt="logo" src="img/bar_menu.png"></img>
                     </td>
                 </tr>
@@ -1094,12 +1111,24 @@
                                     <input type="checkbox" id="alarm_remote_siren" name="alarm_remote_siren" value="True">
                                 </td>
                                 <td>
-                                    <label for="alarm_remote_siren">Activate siren on alarm from other device</label>
+                                    <label for="alarm_remote_siren">Activate siren on alarm from other device (See Connect multiple devices below)</label>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
-                    <button onclick="javascript:submitSyncFromInput('alarm_settings', 'alarm_movments', 'alarm_movments_seconds', 'alarm_seconds', 'alarm_wait', 'alarm_activate_siren', 'alarm_mail', 'alarm_light_acivate', 'alarm_remote_siren')">Save</button>
+                    <table style="margin-top:3px;margin-bottom:4px">
+                        <tbody>
+                            <tr>
+                                <td style="width:25px">
+                                    <input type="checkbox" id="alarm_app" name="alarm_app" value="True">
+                                </td>
+                                <td>
+                                    <label for="alarm_app">Automatic Arm/Disarm by using Android App 'Alarm Arm' (Disarm when close to home or connected to wifi)</label>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <button onclick="javascript:submitSyncFromInput('alarm_settings', 'alarm_movments', 'alarm_movments_seconds', 'alarm_seconds', 'alarm_wait', 'alarm_activate_siren', 'alarm_mail', 'alarm_light_acivate', 'alarm_remote_siren', 'alarm_app')">Save</button>
                     <br/><br/><br/>
                     <table class="input">
                         <tbody>
@@ -1238,6 +1267,10 @@
                         <tr>
                             <td style="width:50%;padding:1px"><button onclick="javascript:submitSync('alarm_client_siren', 'True')">All Sirens On</button></td>
                             <td style="width:50%;padding:1px"><button onclick="javascript:submitSync('alarm_client_siren', 'False')">All Sirens Off</button></td>
+                        </tr>
+                        <tr>
+                            <td style="width:50%;padding:1px"><button onclick="javascript:submitSync('alarm_client_lamp', 'True')">All IR-lamp On</button></td>
+                            <td style="width:50%;padding:1px"><button onclick="javascript:submitSync('alarm_client_lamp', 'False')">All IR-lamp Off</button></td>
                         </tr>
                     </table>
                     <br/>

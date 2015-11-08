@@ -160,6 +160,30 @@ class SteelsquidKissSocketServer(steelsquid_socket_connection.SteelsquidSocketCo
         steelsquid_utils.shout(parameters[0]);
 
 
+    def alarm_lamp_request(self, remote_address, parameters):
+        '''
+        Activate/deaqctivate lamp on client (from server)
+        '''
+        if parameters[0] == "True":
+            steelsquid_kiss_global.Alarm.lamp(True)
+        else:
+            steelsquid_kiss_global.Alarm.lamp(False)
+        
+
+    def alarm_lamp_response(self, remote_address, parameters):
+        '''
+        ctivate/deaqctivate lamp on client (from server)
+        '''
+        pass
+        
+
+    def alarm_lamp_error(self, remote_address, parameters):
+        '''
+        ctivate/deaqctivate lamp on client (from server)
+        '''
+        steelsquid_utils.shout(parameters[0]);
+
+
     def rover_info_request(self, remote_address, parameters):
         '''
         '''

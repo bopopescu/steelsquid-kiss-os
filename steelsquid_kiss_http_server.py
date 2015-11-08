@@ -1811,3 +1811,9 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         return steelsquid_utils.get_parameter("stream-port")
 
 
+    def device_info(self, session_id, parameters):
+        '''
+        Get info on device to print on top of page
+        '''
+        return steelsquid_utils.execute_system_command(['hostname'])
+

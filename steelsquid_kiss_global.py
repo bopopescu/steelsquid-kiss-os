@@ -81,6 +81,9 @@ class Alarm(object):
     # Status from connected clients (if this is a server)
     # Is a dict with all clients and every object in the dict is a list of statuses from that client
     clients_status = {}
+
+    # Commands from Alarm Arm app {id, time}
+    alarm_arm = {}
     
     ever2second = True
     
@@ -176,6 +179,21 @@ class Alarm(object):
                             cls.on_remote_alarm()
                         cls.last_trigger_clients=datetime.now() 
                         steelsquid_kiss_global.socket_connection.send_request("alarm_remote_alarm", [])
+            if steelsquid_utils.get_flag("alarm_app"):
+                for client_id in cls.alarm_arm.keys():
+                    last_timestamp = cls.alarm_arm[client_id]
+                    now = datetime.now()
+                    delta = now - last_timestamp
+                    if delta.total_seconds() > 600:
+                        cls.alarm_arm.pop(client_id, None)
+                if len(cls.alarm_arm)==0:
+                    if steelsquid_utils.get_flag("alarm_security"):
+                        steelsquid_kiss_global.Alarm.arm(False)
+                        steelsquid_kiss_global.socket_connection.send_request("alarm_arm", ["False"])
+                else:
+                    if not steelsquid_utils.get_flag("alarm_security"):
+                        steelsquid_kiss_global.Alarm.arm(True)
+                        steelsquid_kiss_global.socket_connection.send_request("alarm_arm", ["True"])
 
                 
     @classmethod
@@ -200,14 +218,27 @@ class Alarm(object):
             statuses.append(cls.light_level)
             statuses.append(cls.temperature)
             statuses.append(cls.humidity)
-            urllib.urlretrieve("http://"+ip+":8080/?action=snapshot", "/opt/steelsquid/web/snapshots/"+ip+".jpg")
+            try:
+                urllib.urlretrieve("http://"+ip+":8080/?action=snapshot", "/opt/steelsquid/web/snapshots/"+ip+".jpg")
+            except:
+                try:
+                    os.remove("/opt/steelsquid/web/snapshots/"+ip+".jpg")
+                except:
+                    pass
             
             # Get status from all connected clients
             for key in cls.clients_status:
                 client = cls.clients_status[key]
                 statuses.append(key)
                 statuses.extend(client)
-                urllib.urlretrieve("http://"+key+":8080/?action=snapshot", "/opt/steelsquid/web/snapshots/"+key+".jpg")
+                try:
+                    urllib.urlretrieve("http://"+key+":8080/?action=snapshot", "/opt/steelsquid/web/snapshots/"+key+".jpg")
+                except:
+                    try:
+                        os.remove("/opt/steelsquid/web/snapshots/"+key+".jpg")
+                    except:
+                        pass
+                    
         return statuses
         
         
@@ -216,7 +247,7 @@ class Alarm(object):
         '''
         Execute on motion
         '''
-        cls.motion_detected = status
+        cls.motion_detected = status 
         if steelsquid_utils.get_flag("alarm_security"):
             nr_of_movments = int(steelsquid_utils.get_parameter("alarm_security_movments"))
             movments_under_time = int(steelsquid_utils.get_parameter("alarm_security_movments_seconds"))

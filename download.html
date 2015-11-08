@@ -15,7 +15,16 @@
         <script type="text/javascript" src="steelsquid.js"></script>
         <script type="text/javascript">
             //<![CDATA[ 
+
+            submitNoPW('device_info');
  
+            /**
+             * Get info on device to print on top of page
+             */
+            function on_device_info(paramaters){
+                $("#device_info_name").html(paramaters[0]);
+            }
+
             /**
              * On list downloads
              */
@@ -260,6 +269,9 @@
                     </td>
                     <td>
                         Kiss OS Download Manager
+                    </td>
+                    <td>
+                        <div class="device_info" id="device_info_name"></div>
                     </td>
                     <td>
                         <img alt="logo" src="img/bar_menu.png"></img>
