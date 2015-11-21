@@ -830,7 +830,7 @@ def nokia5110_write(text, number_of_seconds = 0, force_setup = False):
             nokia_lcd.display()
 
 
-def ssd1306_write(text, number_of_seconds = 0):
+def ssd1306_write(text=None, number_of_seconds = 0):
     '''
     Print text to ssd1306 oled  LCD
     @param text: Text to write (\n or \\ = new line)
