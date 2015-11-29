@@ -3,6 +3,8 @@
 
 '''
 Mostly wrapper functions (hard coded adresses and pins) for my steelsquid PIIO board
+On the PIIO board the pins has the number 1,2,3... You can use that numbering or the normal Raspberrt Pi GPIO numbering.
+The numbering looks like: 1_14, 2_15, 3_18...   Before the underscore is the PIIO board pin nr and after is the Raspberry Pi GPIO.
 http://www.steelsquid.org/steelsquid-piio-board
 
 @organization: Steelsquid
@@ -16,7 +18,17 @@ http://www.steelsquid.org/steelsquid-piio-board
 import steelsquid_utils
 import steelsquid_pi
 import steelsquid_trex
+import steelsquid_event
+import steelsquid_kiss_global
+from decimal import Decimal
+import time
 
+EDGE_RISING = steelsquid_pi.EDGE_RISING
+EDGE_FALLING = steelsquid_pi.EDGE_FALLING
+EDGE_BOTH = steelsquid_pi.EDGE_BOTH
+PULL_UP = steelsquid_pi.PULL_UP
+PULL_DOWN = steelsquid_pi.PULL_DOWN
+PULL_NONE = steelsquid_pi.PULL_NONE
 GAIN_6_144_V = 6144
 GAIN_6_144_V = 6144
 GAIN_4_096_V = 4096
@@ -36,124 +48,259 @@ motor_forward = 255
 # Motor max backward
 motor_backward = -255
 
+counter=0
 version = "1.0"
 
-def cleanup():
+
+def shutdown():
     '''
-    Clean all event detection (click, blink...)
+    Shutdown and power off the PIIO board
     '''
-    steelsquid_pi.cleanup()
+    steelsquid_kiss_global.PIIO.disable()
+    steelsquid_pi.po16_gpio_set(1, True)
+    steelsquid_utils.execute_system_command_blind(['shutdown', 'now', '-h'])
 
 
-def gpio_set_3v3(pin, state):
+def volt(number_of_decimals=-1, samples=1):
     '''
-    set gpio pin to hight (true) or low (false) on a pin connecte to 3.3v
-    @param pin: GPIO number (1 to 24)
+    Read main in voltage to the PIIO board
+    Return: main in voltage
+    '''
+    v = steelsquid_pi.po12_adc_volt(3, samples=samples) / float(steelsquid_utils.get_parameter("voltage_divider", "0.1179"))
+    if number_of_decimals!=-1:
+        v = Decimal(v)
+        v = round(v, number_of_decimals)
+    return v
+
+
+def volt_event(callback_method, min_change=0.01, sample_sleep=0.2, samples=1):
+    '''
+    Read main in voltage to the PIIO board and execute method if it change
+    def callback_method(voltage):
+       ...do stuff
+    callback_method: Execute this method on change
+    min_change: Only execute method if value change this mutch from last time
+    sample_sleep: Sleep ths long between sample (only one thread handle all events so the last set sleep time is in use)
+    '''
+    def inner_callback_method(ch, voltage):
+        callback_method(voltage / float(steelsquid_utils.get_parameter("voltage_divider", "0.1179")))
+    return steelsquid_pi.po12_adc_event(3, inner_callback_method, min_change, sample_sleep, samples=samples)
+
+
+def button(button_nr):
+    '''
+    Read status of the 6 buttons on the PIIO board
+    button_nr = 1 to 6
+    return True/False  (Pressed or not pressed)
+    '''
+    button_nr = int(button_nr)-1
+    return not steelsquid_pi.mcp23017_get(21, button_nr)
+
+
+def button_event(button_nr, callback_method):
+    '''
+    Listen for changes on the 6 buttons on the PIIO board
+    button_nr = 1 to 6
+    callback_method = Execute this method on event.
+                    callback_method(button_nr, status)
+                        ....Do something
+    '''
+    button_nr = int(button_nr)
+    def mcp_event_callback_method(address, pin, status): 
+        callback_method(button_nr, not status)
+    steelsquid_pi.mcp23017_event(21, button_nr-1, mcp_event_callback_method, rpi_gpio=26)
+
+
+def button_click(button_nr, callback_method):
+    '''
+    Listen for click on the 6 buttons on the PIIO board
+    button_nr = 1 to 6
+    callback_method = Execute this method on click.
+                    callback_method(button_nr)
+                        ....Do something
+    '''
+    button_nr = int(button_nr)
+    def mcp_event_callback_method(address, pin): 
+        callback_method(button_nr)
+    steelsquid_pi.mcp23017_click(21, button_nr-1, mcp_event_callback_method, rpi_gpio=26)
+
+
+def dip(dip_nr):
+    '''
+    Read status of the 6 dip switch on the PIIO board
+    dip_nr = 1 to 6
+    return True/False 
+    '''
+    dip_nr = (int(dip_nr)-14)*-1
+    return not steelsquid_pi.mcp23017_get(21, dip_nr)
+
+
+def dip_event(dip_nr, callback_method):
+    '''
+    Listen for changes on the 6 dip switches on the PIIO board
+    dip_nr = 1 to 6
+    callback_method = Execute this method on event.
+                    callback_method(dip_nr, status)
+                        ....Do something
+    '''
+    ndip_nr = (int(dip_nr)-14)*-1
+    def mcp_event_callback_method(address, pin, status): 
+        callback_method(dip_nr, not status)
+    steelsquid_pi.mcp23017_event(21, ndip_nr, mcp_event_callback_method, rpi_gpio=26)
+
+
+def led(led_nr, status):
+    '''
+    Turn on or off the user LED
+    led_nr = 1 to 6
+    status = True/False 
+    '''
+    led_nr=int(led_nr)
+    if led_nr == 1:
+        led_nr=2
+    elif led_nr == 2:
+        led_nr=4
+    elif led_nr == 3:
+        led_nr=5
+    elif led_nr == 4:
+        led_nr=6
+    elif led_nr == 5:
+        led_nr=7
+    elif led_nr == 6:
+        led_nr=8
+    steelsquid_pi.po16_gpio_set(led_nr, status)
+
+
+def led_flash(led_nr, status, seconds):
+    '''
+    Turn on and off the LED on given interval
+    led_nr = 1 to 6
+    status = True/False (if None: On and of one time)
+    seconds = On and off intervall
+    only_ones = Flash it one time only
+    '''
+    steelsquid_utils.execute_flash("led" + str(led_nr), status, seconds, led, (led_nr, True,), led, (led_nr, False,))
+
+
+def buz(status):
+    '''
+    Turn on or off the buzzer
+    status = True/False 
+    '''
+    steelsquid_pi.po12_digital_out(2, status)
+
+
+def buz_flash(status, seconds):
+    '''
+    Turn on and off the buzzer on given interval
+    status = True/False (if None: On and of one time)
+    seconds = On and off intervall
+    only_ones = Flash it one time only
+    '''
+    steelsquid_utils.execute_flash("buz_flash", status, seconds, steelsquid_pi.po12_digital_out, (2, True,), steelsquid_pi.po12_digital_out, (2, False,))
+
+
+def lcd(text=None, number_of_seconds = 0):
+    '''
+    Print text to ssd1306 oled  LCD
+    @param text: Text to write (\n or \\ = new line)
+    @param number_of_seconds: How long to show this message, then show the last message again (if there was one)
+                              < 1 Show for ever
+    EX1: Message in the screen: A message
+         lcd_write("A new message", number_of_seconds = 10)
+         Message in the screen: A new message
+         After ten seconds:
+         Message in the screen: A message
+    EX2: Message in the screen: 
+         lcd_write("A new message", number_of_seconds = 10)
+         Message in the screen: A new message
+         After ten seconds:
+         Message in the screen: A new message
+    The text can also be a list, will join the list with spaces between.
+    '''
+    steelsquid_pi.ssd1306_write(text, number_of_seconds)
+
+
+def gpio_set(gpio, state, use_piio_pin_nr=True):
+    '''
+    Set gpio pin to hight (true) or low (false) on a pin
+    This is marked with GPIO and GPIO_5V on the PIIO board.
+    @param gpio: GPIO number (Raspberry GPIO or piio pin nr)
     @param state: True/False
+    @param use_piio_pin_nr: Use PIIO pin nr or Raspberry GPIO nr.
     '''
-    gpio = __convert_to_gpio(pin)
-    steelsquid_pi.gpio_set_3v3(gpio, state)
+    state = steelsquid_utils.to_boolean(state)
+    if use_piio_pin_nr:
+        gpio = __convert_to_gpio(gpio)
+    steelsquid_pi.gpio_set(gpio, state)
 
 
-def gpio_set_gnd(pin, state):
+def gpio_flash(gpio, status, seconds, use_piio_pin_nr=True):
     '''
-    set gpio pin to hight (true) or low (false) on a pin connecte to ground
-    @param pin: GPIO number (1 to 24)
-    @param state: True/False
+    Change to hight (true) or low (false) on a pin alternately
+    This is marked with GPIO and GPIO_5V on the PIIO board.
+    @param gpio: GPIO number
+    @param status: True/False (None = Only alternate one time (True, false))
+    @param seconds: Seconds between state change
+    @param use_piio_pin_nr: Use PIIO pin nr or Raspberry GPIO nr.
     '''
-    gpio = __convert_to_gpio(pin)
-    steelsquid_pi.gpio_set_gnd(gpio, state)
+    steelsquid_utils.execute_flash("gpio_flash"+str(gpio), status, seconds, gpio_set, (gpio, True, use_piio_pin_nr,), gpio_set, (gpio, False, use_piio_pin_nr,))
 
 
-def gpio_get_3v3(pin):
-    '''
-    Get gpio pin state (connect gpio to 3.3v)
-    @param pin: GPIO number (1 to 24)
-    @return: True/False
-    '''
-    gpio = __convert_to_gpio(pin)
-    return steelsquid_pi.gpio_get_3v3(gpio)
-
-
-def gpio_get_gnd(pin):
+def gpio_get(gpio, resistor=PULL_DOWN, use_piio_pin_nr=True):
     '''
     Get gpio pin state
-    @param pin: GPIO number (1 to 24)
-    @return: 0 / GPIO.LOW / False or 1 / GPIO.HIGH / True
+    This is marked with GPIO and GPIO_5V on the PIIO board.
+    Connect GPIO to gnd (using internal pull-up)    
+    @param gpio: GPIO number (Raspberry GPIO or piio pin nr)
+    @resistor: PULL_UP, PULL_DOWN, PULL_NONE
+    @param use_piio_pin_nr: Use PIIO pin nr or Raspberry GPIO nr.
+    @return: True/False
     '''
-    gpio = __convert_to_gpio(pin)
-    return steelsquid_pi.gpio_get_gnd(gpio)
+    if use_piio_pin_nr:
+        gpio = __convert_to_gpio(gpio)
+    return steelsquid_pi.gpio_get(gpio, resistor)
 
 
-def gpio_event_3v3(pin, callback_method):
+def gpio_event(gpio, callback_method, bouncetime_ms=60, resistor=PULL_DOWN, edge=EDGE_BOTH, use_piio_pin_nr=True):
     '''
-    Listen for events on gpio pin and 3.3v
-    @param pin: GPIO number (1 to 24)
+    Listen for events on gpio pin
+    Connect GPIO to gnd (using internal pull-up)    
+    This is marked with GPIO and GPIO_5V on the PIIO board.
+    @param gpio: GPIO number (Raspberry GPIO or piio pin nr)
     @param callback_method: execute this method on event (paramater is the gpio and status (True/False))
                             callback_method(pin, status)
+    @resistor: PULL_UP, PULL_DOWN, PULL_NONE
+    @edge: EDGE_BOTH, EDGE_FALLING, EDGE_RISING
+    @param use_piio_pin_nr: Use PIIO pin nr or Raspberry GPIO nr.
     '''
-    gpio = __convert_to_gpio(pin)
-    steelsquid_pi.gpio_event_3v3(gpio, callback_method)
+    gpio = int(gpio)
+    if use_piio_pin_nr:
+        ngpio = __convert_to_gpio(gpio)
+    def inner_callback_method(pin, status):
+        callback_method(gpio, status)
+    steelsquid_pi.gpio_event(ngpio, inner_callback_method, bouncetime_ms, resistor, edge)
 
 
-def gpio_event_gnd(pin, callback_method):
+def gpio_click(gpio, callback_method, bouncetime_ms=60, resistor=PULL_DOWN, use_piio_pin_nr=True):
     '''
-    Listen for events on gpio pin and ground
-    @param pin: GPIO number (1 to 24)
-    @param callback_method: execute this method on event (paramater is the gpio and status (True/False))
-                            callback_method(pin, status)
-    '''
-    gpio = __convert_to_gpio(pin)
-    steelsquid_pi.gpio_event_gnd(gpio, callback_method)
-
-
-def gpio_click_3v3(pin, callback_method):
-    '''
-    Connect a button to gpio pin and 3.3v
+    Connect a button to gpio pin
+    Connect GPIO to gnd (using internal pull-up)    
     Will fire when button is released. If press more than 1s it will be ignore
-    @param pin: GPIO number (1 to 24)
+    This is marked with GPIO and GPIO_5V on the PIIO board.
+    @param gpio: GPIO number (Raspberry GPIO or piio pin nr)
     @param callback_method: execute this method on event (paramater is the gpio)
                             callback_method(pin)
+    @resistor: PULL_UP, PULL_DOWN, PULL_NONE
+    @param use_piio_pin_nr: Use PIIO pin nr or Raspberry GPIO nr.
     '''
-    gpio = __convert_to_gpio(pin)
-    steelsquid_pi.gpio_click_3v3(gpio, callback_method)
-
-
-def gpio_click_gnd(pin, callback_method):
-    '''
-    Connect a button to gpio pin and ground
-    Will fire when button is released. If press more than 1s it will be ignore
-    @param pin: GPIO number (1 to 24)
-    @param callback_method: execute this method on event (paramater is the gpio)
-                            callback_method(pin)
-    '''
-    gpio = __convert_to_gpio(pin)
-    steelsquid_pi.gpio_click_gnd(gpio, callback_method)
-
-
-def gpio_flash_3v3(pin, enable):
-    '''
-    Flash a gpio on and off connected to 3.3v
-
-    @param pin: The gpio to flash (1 to 24)
-    @param enable: Strart or stop the flashing (True/False)
-                   None = only flash once
-    '''
-    gpio = __convert_to_gpio(pin)
-    steelsquid_pi.gpio_flash_3v3(gpio, enable)
+    gpio = int(gpio)
+    if use_piio_pin_nr:
+        ngpio = __convert_to_gpio(gpio)
+    def inner_callback_method(pin):
+        callback_method(gpio)
+    steelsquid_pi.gpio_click(ngpio, inner_callback_method, bouncetime_ms, resistor)
     
-    
-def gpio_flash_gnd(pin, enable):
-    '''
-    Flash a gpio on and off connected to ground
-
-    @param pin: The gpio to flash (1 to 24)
-    @param enable: Strart or stop the flashing (True/False)
-                   None = only flash once
-    '''
-    gpio = __convert_to_gpio(pin)
-    steelsquid_pi.gpio_flash_gnd(gpio, enable)
-
 
 def __convert_to_gpio(pin):
     pin = int(pin)
@@ -201,491 +348,723 @@ def __convert_to_gpio(pin):
         return 6
     elif pin == 22:
         return 13
-    elif pin == 23:
-        return 19
-    elif pin == 24:
-        return 26
-    
-
-def led_err(status):
-    '''
-    Turn on / off the red error LED
-    '''
-    steelsquid_pi.mcp23017_set(27, 4, status)
+    else:
+        raise ValueError("GPIO number can only be 1 to 22, you try to use " + pin)
 
 
-def led_err_flash(status):
+def xgpio_set(gpio, value):
     '''
-    Flash on / off the red error LED
-    @param status: Strart or stop the flashing (True/False)
-                   None = only flash once
+    Set a gpio hight or low on the XGPIO pins.
+    @param gpio: 1 to 8
+    @param value: True/False
     '''
-    steelsquid_pi.mcp23017_flash(27, 4, status)
+    gpio = __convert_to_xgpio(gpio)
+    steelsquid_pi.mcp23017_set(20, gpio, value)
 
 
-def led_ok(status):
+def xgpio_flash(gpio, status, seconds):
     '''
-    Turn on / off the green OK LED
+    Set a gpio hight or low on XGPIO pins
+    Change to hight (true) or low (false) on a pin alternately
+    @param gpio: GPIO number
+    @param status: True/False (None = Only alternate one time (True, false))
+    @param seconds: Seconds between state change
     '''
-    steelsquid_pi.mcp23017_set(27, 3, status)
+    steelsquid_utils.execute_flash("xgpio_set"+str(gpio), status, seconds, xgpio_set, (gpio, True,), xgpio_set, (gpio, False,))
+        
+        
+def xgpio_get(gpio, pullup=True):
+    '''
+    Get status on pin on the XGPIO pins.
+    Connect GPIO to gnd (using internal pull-up)    
+    @param gpio: 1 to 8
+    @return: True/False
+    True = Hight (1)
+    False = Low (0)
+    '''
+    gpio = __convert_to_xgpio(gpio)
+    return steelsquid_pi.mcp23017_get(20, gpio, pullup)
 
 
-def led_ok_flash(status):
-    '''
-    Flash on / off the green OK LED
-    @param status: Strart or stop the flashing (True/False)
-                   None = only flash once
-    '''
-    steelsquid_pi.mcp23017_flash(27, 3, status)
-
-
-def led_net(status):
-    '''
-    Turn on / off the yellow network LED
-    '''
-    steelsquid_pi.mcp23017_set(27, 5, status)
-
-
-def led_net_flash(status):
-    '''
-    Flash on / off the yellow NET LED
-    @param status: Strart or stop the flashing (True/False)
-                   None = only flash once
-    '''
-    steelsquid_pi.mcp23017_flash(27, 5, status)
-
-
-def led_bt(status):
-    '''
-    Turn on / off the blue bluetooth LED
-    '''
-    steelsquid_pi.mcp23017_set(27, 6, status)
-
-
-def led_net_flash(status):
-    '''
-    Flash on / off the blue bluetooth LED
-    @param status: Strart or stop the flashing (True/False)
-                   None = only flash once
-    '''
-    steelsquid_pi.mcp23017_flash(27, 6, status)
-
-
-def led(led_no, status):
-    '''
-    Turn on / off user leds
-    '''
-    if led_no == 1:
-        steelsquid_pi.mcp23017_set(27, 7, status)
-    elif led_no == 2:
-        steelsquid_pi.mcp23017_set(26, 0, status)
-    elif led_no == 3:
-        steelsquid_pi.mcp23017_set(26, 1, status)
-
-
-def led_flash(led_no, status):
-    '''
-    Flash on / off user leds
-    @param status: Strart or stop the flashing (True/False)
-                   None = only flash once
-    '''
-    if led_no == 1:
-        steelsquid_pi.mcp23017_flash(27, 7, status)
-    elif led_no == 2:
-        steelsquid_pi.mcp23017_flash(26, 0, status)
-    elif led_no == 3:
-        steelsquid_pi.mcp23017_flash(26, 1, status)
-
-
-def summer(status):
-    '''
-    Turn on/off the summer
-    SUM
-    '''
-    steelsquid_pi.mcp23017_set(26, 14, status)
-
-
-def summer_flash(status):
-    '''
-    SUM
-    Flash on / off the summer
-    @param status: Strart or stop the flashing (True/False)
-                   None = only flash once
-    '''
-    steelsquid_pi.mcp23017_flash(26, 14, status)
-
-
-def button(which_button, callback_method):
-    '''
-    Listen for user button clicks
-    which_button = 1-6
-    @param callback_method: execute this method on event (paramater is the address and gpio)
-                            callback_method(address, pin)
-    '''
-    which_button = int(which_button)
-    if which_button == 1:
-        which_button = 13
-    elif which_button == 2:
-        which_button = 12
-    elif which_button == 3:
-        which_button = 11
-    elif which_button == 4:
-        which_button = 10
-    elif which_button == 5:
-        which_button = 9
-    elif which_button == 6:
-        which_button = 8
-    steelsquid_pi.mcp23017_click(26, which_button, callback_method)
-
-
-def dip(dip_nr, callback_method):
-    '''
-    Listen for DIP change
-    dip_nr = 1 to 6
+def xgpio_event(gpio, callback_method, pullup=True): 
+    ''' 
+    Listen for event on the XGPIO pins.
+    Connect GPIO to gnd (using internal pull-up)    
+    @param gpio: 2 to 8
     @param callback_method: execute this method on event (paramater is the address, gpio and status (True/False))
-                            callback_method(address, pin, status)
+                            callback_method(pin, status)
+    @param pullup: Use internal pululp
     '''
-    dip_nr = int(dip_nr) + 1
-    steelsquid_pi.mcp23017_event(26, dip_nr, callback_method)
+    gpio = int(gpio)
+    ngpio = __convert_to_xgpio(gpio)
+    def inner_callback_method(address, pin, status):
+        callback_method(gpio, status)
+    steelsquid_pi.mcp23017_event(20, ngpio, inner_callback_method, pullup, 19)
+    
 
-
-def button_info(callback_method):
+def xgpio_click(gpio, callback_method, pullup=True):
     '''
-    Listen for info button click
+    Listen for click on the XGPIO pins.
+    Connect GPIO to gnd (using internal pull-up)    
+    @param gpio: 1 to 8
     @param callback_method: execute this method on event (paramater is the address and gpio)
-                            callback_method(address, pin)
+                            callback_method(pin)
     '''
-    steelsquid_pi.mcp23017_click(27, 0, callback_method)
+    gpio = int(gpio)
+    ngpio = __convert_to_xgpio(gpio)
+    def inner_callback_method(address, pin):
+        callback_method(gpio)
+    steelsquid_pi.mcp23017_click(20, ngpio, inner_callback_method, pullup, 19)
 
 
-def button_power_off(callback_method):
+def __convert_to_xgpio(pin):
+    pin = int(pin)
+    if pin == 1:
+        return 15
+    elif pin == 2:
+        return 14
+    elif pin == 3:
+        return 13
+    elif pin == 4:
+        return 12
+    elif pin == 5:
+        return 11
+    elif pin == 6:
+        return 10
+    elif pin == 7:
+        return 9
+    elif pin == 8:
+        return 8
+    else:
+        raise ValueError("XGPIO number can only be 1 to 8, you try to use " + pin)
+
+
+def power(gpio, value):
     '''
-    Listen for power off button click
-    @param callback_method: execute this method on event (paramater is the address and gpio)
-                            callback_method(address, pin)
+    Set the status of the POWER pins.
+    Connect POWER pin to the device you want to control (voltage from 4V to 50V), 500mA
+    The POWER pin is GND, so from the voltage source to the device then to POWER pin.
+    @param gpio: 1 to 8
+    @param value: True/False
     '''
-    steelsquid_pi.mcp23017_click(27, 1, callback_method)
+    gpio = int(gpio)
+    if gpio > 8:
+        raise ValueError("POWER pin number can only be 1 to 8, you try to use " + pin)
+    steelsquid_pi.mcp23017_set(20, gpio-1, value)
+
+
+def power_flash(gpio, status, seconds):
+    '''
+    Set a gpio hight or low on POWER pins
+    Change to hight (true) or low (false) on a pin alternately
+    Connect POWER pin to the device you want to control (voltage from 4V to 50V), 500mA
+    The POWER pin is GND, so from the voltage source to the device then to POWER pin.
+    @param gpio: GPIO number
+    @param status: True/False (None = Only alternate one time (True, false))
+    @param seconds: Seconds between state change
+    '''
+    steelsquid_utils.execute_flash("power_flash"+str(gpio), status, seconds, power, (gpio, True,), power, (gpio, False,))
+        
+    
+def adc(channel, samples=1):
+    '''
+    Read the analog voltage in on the ADC pins
+    channel = 1 to 7
+    Return 0V to 3.3V
+    '''
+    channel = int(channel)
+    if channel==1:
+        channel=4
+    elif channel==2:
+        channel=5
+    elif channel==3:
+        channel=6
+    elif channel==4:
+        channel=7
+    elif channel==5:
+        channel=2
+    elif channel==6:
+        channel=8
+    elif channel==7:
+        channel=1
+    return steelsquid_pi.po12_adc_volt(channel, samples=samples)
+
+
+def adc_event(channel, callback_method, min_change=0.01, sample_sleep=0.2, samples=1):
+    '''
+    Read the analog voltage in on the ADC pins and execute method if it change
+    def callback_method(channel, voltage):
+       ...do stuff
+    channel = 1 to 7
+    callback_method: Execute this method on change
+    min_change: Only execute method if value change this mutch from last time
+    sample_sleep: Sleep ths long between sample (only one thread handle all events so the last set sleep time is in use)
+    '''
+    channel = int(channel)
+    if channel==1:
+        nchannel=4
+    elif channel==2:
+        nchannel=5
+    elif channel==3:
+        nchannel=6
+    elif channel==4:
+        nchannel=7
+    elif channel==5:
+        nchannel=2
+    elif channel==6:
+        nchannel=8
+    elif channel==7:
+        nchannel=1
+    def inner_callback_method(ch, voltage):
+        callback_method(channel, voltage)
+    return steelsquid_pi.po12_adc_event(nchannel, inner_callback_method, min_change, sample_sleep, samples=samples)
+
+
+def dac(volt_1, volt_2, volt_3, volt_4):
+    '''
+    Write analog out from the 4 DAC pins (0 to 3.3v)
+    volt0 to3 = Voltage on pins (0 and 4095)
+    '''
+    steelsquid_pi.mcp4728(61, volt_1, volt_2, volt_3, volt_4)
+
+
+def servo(servo, position):
+    '''
+    Move a servo connected to the PIIO board.
+    Servo: 1 to 12
+    Position: 0 to 255
+    '''
+    servo=int(servo)
+    steelsquid_pi.servo12c(servo-1, position)
+
+
+def pwm(pin, value):
+    '''
+    Set pwm value on one of the 4 PWM pins.
+    The PWM pins use the same curcit that control the DC motors.
+    You can not use the PWM and MOTOR controller at the same time.
+    pin: 1 to 4
+    value: 0 to 1023
+    '''
+    pin=int(pin)
+    if pin == 1:
+        pin=3
+    elif pin == 3:
+        pin=1
+    steelsquid_pi.po16_pwm(pin, value)
     
     
+def motor(motor_1, motor_2):
+    '''
+    Set speed of two DC motors.
+    The motors use the same curcit as the PWM pins.
+    You can not use the PWM and MOTOR controller at the same time.
+    -1023 = fullspeed reverse
+    0 = not moving
+    1023 = fullspeed forward
+    motor_1: -1023 to 1023 
+    motor_2: -1023 to 1023
+    '''
+    motor_1 = int(motor_1)
+    motor_2 = int(motor_2)
+    if motor_1 < 0:
+        steelsquid_pi.po16_pwm(1, 0)
+        steelsquid_pi.po16_pwm(4, motor_1*-1)
+    elif motor_1 > 0:
+        steelsquid_pi.po16_pwm(1, motor_1)
+        steelsquid_pi.po16_pwm(4, 0)
+    else:
+        steelsquid_pi.po16_pwm(1, 0)
+        steelsquid_pi.po16_pwm(4, 0)
+    if motor_2 < 0:
+        steelsquid_pi.po16_pwm(3, 0)
+        steelsquid_pi.po16_pwm(2, motor_2*-1)
+    elif motor_2 > 0:
+        steelsquid_pi.po16_pwm(3, motor_2)
+        steelsquid_pi.po16_pwm(2, 0)
+    else:
+        steelsquid_pi.po16_pwm(3, 0)
+        steelsquid_pi.po16_pwm(2, 0)
+
+
+def movement():
+    '''
+    Read movement with the gyro sensor.
+    Returns: (x, y, z)
+    '''
+    return steelsquid_pi.mpu6050_movement()
+    
+
+def rotation():
+    '''
+    Read rotation angle in degrees for both the X & Y.
+    Returns: (x, y)
+    '''
+    return steelsquid_pi.mpu6050_rotation()
+
+
+def movement_event(callback_method, min_change=10, sample_sleep=0.2):
+    '''
+    Listen for movements on mpu-6050 and execute method on change.
+    SparkFun Triple Axis Accelerometer and Gyro Breakout - MPU-6050
+    https://www.sparkfun.com/products/11028
+    def callback_method(x, y, z):
+       ...do stuff
+    callback_method: Execute this method on change
+    min_change: Only execute method if value change this mutch from last time
+    sample_sleep: Sleep ths long between sample (only one thread handle all events so the last set sleep time is in use)
+    '''
+    steelsquid_pi.mpu6050_movement_event(callback_method, min_change, sample_sleep)
+
+
+def rotation_event(callback_method, min_change=2, sample_sleep=0.2):
+    '''
+    Listen for mpu-6050 rotation angle in degrees for both the X & Y changes and execute method on change.
+    SparkFun Triple Axis Accelerometer and Gyro Breakout - MPU-6050
+    https://www.sparkfun.com/products/11028
+    def callback_method(x, y):
+       ...do stuff
+    callback_method: Execute this method on change
+    min_change: Only execute method if value change this mutch from last time
+    sample_sleep: Sleep ths long between sample (only one thread handle all events so the last set sleep time is in use)
+    '''
+    steelsquid_pi.mpu6050_rotation_event(callback_method, min_change, sample_sleep)
+
+
+def bt(status):
+    '''
+    Turn on and off the bluetooth led (BT)
+    status = True/False 
+    '''
+    steelsquid_pi.po12_digital_out(3, status)
+
+
+def bt_flash(status, seconds):
+    '''
+    Turn on and off the bluetooth led on given interval (BT)
+    status = True/False (if None: On and of one time)
+    seconds = On and off intervall
+    only_ones = Flash it one time only
+    '''
+    steelsquid_utils.execute_flash("bt_flash", status, seconds, bt, (True,), bt, (False,))
+
+
+def net(status):
+    '''
+    Turn on and off the network led (NET)
+    status = True/False 
+    '''
+    steelsquid_pi.po12_digital_out(1, status)
+
+
+def net_flash(status, seconds):
+    '''
+    Turn on and off the network led on given interval (NET)
+    status = True/False (if None: On and of one time)
+    seconds = On and off intervall
+    only_ones = Flash it one time only
+    '''
+    steelsquid_utils.execute_flash("net_flash", status, seconds, net, (True,), net, (False,))
+
+
+def error(status):
+    '''
+    Turn on and off the error led (ERROR)
+    status = True/False 
+    '''
+    steelsquid_pi.mcp23017_set(21, 7, status)
+
+
+def error_flash(status, seconds):
+    '''
+    Turn on and off the error led on given interval (ERROR)
+    status = True/False (if None: On and of one time)
+    seconds = On and off intervall
+    only_ones = Flash it one time only
+    '''
+    steelsquid_pi.mcp23017_flash(21, 7, status, seconds)
+
+
+def ok(status):
+    '''
+    Turn on and off the ok led (OK)
+    status = True/False 
+    '''
+    steelsquid_pi.mcp23017_set(21, 6, status)
+
+
+def ok_flash(status, seconds):
+    '''
+    Turn on and off the ok led on given interval (OK)
+    status = True/False (if None: On and of one time)
+    seconds = On and off intervall
+    only_ones = Flash it one time only
+    '''
+    steelsquid_pi.mcp23017_flash(21, 6, status, seconds)
+
+
+def low_bat(status):
+    '''
+    Turn on and off the low_bat bat LED flashing
+    Will also buzz every 20 second
+    status = True/False 
+    '''
+    global counter
+    def flashit(status): 
+        global counter
+        steelsquid_pi.po16_gpio_set(3, status)
+        if status:
+            if counter==0:
+                counter = counter+1
+                buz(True)
+            elif counter==10:
+                counter=0
+            else:
+                counter = counter+1
+        else:
+            buz(False)
+    steelsquid_utils.execute_flash("low_bat", status, 0.5, flashit, (True,), flashit, (False,))
+    if not status:
+        counter=0
+
+
+def info():
+    '''
+    Get status of the INFO button
+    @return: True/False
+    True = Hight (1)
+    False = Low (0)
+    '''
+    return not steelsquid_pi.mcp23017_get(21, 14, True)
+
+
+def info_event(callback_method): 
+    ''' 
+    Listen for event on the info button.
+    @param callback_method: execute this method on event 
+                            callback_method(status)
+    '''
+    def inner_callback_method(address, pin, status):
+        callback_method(not status)
+    steelsquid_pi.mcp23017_event(21, 14, inner_callback_method, True, 26)
+    
+    
+def info_click(callback_method):
+    '''
+    Listen for click on the info button.
+    @param callback_method: execute this method on event
+                            callback_method()
+    '''
+    def inner_callback_method(address, pin):
+        callback_method()
+    steelsquid_pi.mcp23017_click(21, 14, inner_callback_method, True, 26)
+    
+
 def power_off():
     '''
-    Send a power of signal, the delay surcit will wait for some seconds (selectable by the DELAY_POWER_OF trim)
+    Get status of the power off button
+    @return: True/False
+    True = Hight (1)
+    False = Low (0)
     '''
-    steelsquid_pi.mcp23017_set(26, 15, True)
-    steelsquid_utils.execute_system_command_blind(['shutdown', '-h', 'now'])
+    return not steelsquid_pi.mcp23017_get(21, 15, True)
 
 
-def xgpio_get(pin_nr):
+def power_off_event(callback_method): 
+    ''' 
+    Listen for event on the power off button.
+    @param callback_method: execute this method on event 
+                            callback_method(status)
     '''
-    Get hight/low on extra gpio
-    pin_nr = 1 to 16
-    '''
-    pin_nr = int(pin_nr) - 1
-    return steelsquid_pi.mcp23017_get(20, pin_nr)
-    
-        
-def xgpio_set(pin_nr, status):
-    '''
-    Set hight/low on extra gpio
-    pin_nr = 1 to 16
-    '''
-    pin_nr = int(pin_nr) - 1
-    steelsquid_pi.mcp23017_set(20, pin_nr, status)
-
-
-def xgpio_toggle(pin_nr):
-    '''
-    Toggle hight/low on extra gpio
-    pin_nr = 1 to 16
-    '''
-    pin_nr = int(pin_nr) - 1
-    steelsquid_pi.mcp23017_toggle(20, pin_nr)
-
-
-def xgpio_toggle_current(pin_nr):
-    '''
-    Get current toggle hight/low from extra gpio
-    pin_nr = 1 to 16
-    '''
-    pin_nr = int(pin_nr) - 1
-    return steelsquid_pi.mcp23017_toggle_current(20, pin_nr)
-
-
-def xgpio_flash(pin_nr, status):
-    '''
-    Toggle gpio pin to hight/low on a mcp
-    @param pin_nr: 1 to 16
-    @param status: Strart or stop the flashing (True/False)
-                   None = only flash once
-    '''
-    pin_nr = int(pin_nr) - 1
-    return steelsquid_pi.mcp23017_flash(20, pin_nr, status)
-
-
-def xgpio_click(pin_nr, callback_method):
-    '''
-    Listen for click
-    @param pin_nr: 1 to 16
-    @param callback_method: execute this method on event (paramater is the address and gpio)
-                            callback_method(address, pin)
-    '''
-    pin_nr = int(pin_nr) - 1
-    return steelsquid_pi.mcp23017_click(20, callback_method)
-
-
-def xgpio_event(pin_nr, callback_method):
-    '''
-    Listen for event
-    @param pin_nr: 1 to 16
-    @param callback_method: execute this method on event (paramater is the address, gpio and status (True/False))
-                            callback_method(address, pin, status)
-    '''
-    pin_nr = int(pin_nr) - 1
-    return steelsquid_pi.mcp23017_event(20, callback_method)
-
-
-def power(pin_nr, status):
-    '''
-    Turn on / off the power ouput (uln2801)
-    pin_nr = 1 to 8
-    '''
-    pin_nr = int(pin_nr) + 7
-    steelsquid_pi.mcp23017_set(27, pin_nr, status)
-
-
-def power_toggle(pin_nr):
-    '''
-    Toggle power ouput (uln2801)
-    pin_nr = 1 to 8
-    '''
-    pin_nr = int(pin_nr) + 7
-    steelsquid_pi.mcp23017_toggle(27, pin_nr)
-
-
-def power_toggle_current(pin_nr):
-    '''
-    Get current toggle hight/low from power ouput (uln2801)
-    pin_nr = 1 to 8
-    '''
-    pin_nr = int(pin_nr) + 7
-    return steelsquid_pi.mcp23017_toggle_current(27, pin_nr)
-
-
-def power_flash(pin_nr, status):
-    '''
-    Toggle power ouput (uln2801) pin to hight/low
-    @param pin_nr: 1 to 8
-    @param status: Strart or stop the flashing (True/False)
-                   None = only flash once
-    '''
-    pin_nr = int(pin_nr) + 7
-    return steelsquid_pi.mcp23017_flash(27, pin_nr, status)
-
-
-def adc_1(pin, gain=GAIN_6_144_V):
-    '''
-    Read analog in from ADS1015
-    pin = 1 to 4
-    '''
-    pin = int(pin) - 1
-    return steelsquid_pi.ads1015(48, pin, gain)
-        
-
-def adc_1_median(pin, gain=GAIN_6_144_V, samples=16):
-    '''
-    Read analog in from ADS1015
-    pin = 1 to 3
-    '''
-    pin = int(pin) - 1
-    return steelsquid_pi.ads1015_median(48, pin, gain, samples)
-
-
-def adc_1_event(pin, callback_method, gain=GAIN_6_144_V):
-    '''
-    Listen for changes on analog in from ADS1015
-    pin = 1 to 4
-    @param callback_method: execute this method on event (paramater is the gpio and status (True/False))
-                            callback_method(address, pin, value)
-    '''
-    pin = int(pin) - 1
-    return steelsquid_pi.ads1015_event(48, pin, callback_method, gain)
-
-
-def adc_2(pin, gain=GAIN_6_144_V):
-    '''
-    Read analog in from ADS1015
-    pin = 1 to 3
-    '''
-    pin = int(pin) - 1
-    return steelsquid_pi.ads1015(49, pin, gain)
-
-
-def adc_2_median(pin, gain=GAIN_6_144_V, samples=16):
-    '''
-    Read analog in from ADS1015
-    pin = 1 to 3
-    '''
-    pin = int(pin) - 1
-    return steelsquid_pi.ads1015_median(49, pin, gain, samples)
-
-
-def adc_2_event(pin, callback_method, gain=GAIN_6_144_V):
-    '''
-    Listen for changes on analog in from ADS1015
-    pin = 1 to 3
-    @param callback_method: execute this method on event (paramater is the gpio and status (True/False))
-                            callback_method(address, pin, value)
-    '''
-    pin = int(pin) - 1
-    return steelsquid_pi.ads1015_event(49, pin, callback_method, gain)
-
-
-def voltage():
-    '''
-    Get voltage in to Steelsquid IO board as a float (V_IN)
-    '''
-    return adc_2_median(4) / float(steelsquid_utils.get_parameter("voltage_divider", "0.15"))
-
-
-
-
-
-
-
-def dac_61_5v(volt1, volt2, volt3, volt4):
-    '''
-    Write analog out from MCP4728 (0 to 5v)
-    volt1 to 4 = Voltage on pins (0 and 4095)
-    '''
-    steelsquid_pi.mcp4728(61, volt1, volt2, volt3, volt4)
-
-
-def lcd_write(text, number_of_seconds = 0):
-    '''
-    Print text to the Oled display
-    @param text: Text to write (\n or \\ = new line)
-    @param number_of_seconds: How long to show this message, then show the last message again (if there was one)
-                              < 1 Show for ever
-    EX1: Message in the screen: A message
-         lcd_write("A new message", number_of_seconds = 10)
-         Message in the screen: A new message
-         After ten seconds:
-         Message in the screen: A message
-    EX2: Message in the screen: 
-         lcd_write("A new message", number_of_seconds = 10)
-         Message in the screen: A new message
-         After ten seconds:
-         Message in the screen: A new message
-    The text can also be a list, will join the list with spaces between.
-    '''
-    steelsquid_pi.ssd1306_write(text, number_of_seconds)
-            
-
-def measure_distance(trig_gpio, echo_gpio, force_setup = False):
-    '''
-    Measure_distance with a with HC-SR04.
-    @param trig_gpio: The trig gpio
-    @param echo_gpio: The echo gpio
-    @param force_setup: Force setup of pins
-    @return: The distance in cm (-1 = unable to mesure)
-    '''
-    steelsquid_pi.hcsr04_distance(trig_gpio, echo_gpio, force_setup)
-
-
-def servo(servo, value):
-    '''
-    Move Adafruit 16-channel I2c servo to position (pwm value)
-    @param servo: 1 to 16
-    @param value: min=150, max=600 (may differ between servos)
-    Set max/min value in the paramaters: servo_position_max, servo_position_min
-    '''
-    servo = int(servo)
-    value = int(value)
-    if value>servo_position_max:
-        value = servo_position_max
-    elif value<servo_position_min:
-        value = servo_position_min
-    servo_position = value
-    steelsquid_pi.rbada70_move(servo-1, value)
-
-
-def servo_move(servo, value):
-    '''
-    Move Adafruit 16-channel I2c servo to position (pwm value)
-    @param servo: 1 to 16
-    @param value: increase/decrice with this value (min=150, max=600 (may differ between servos))
-    Set max/min value in the paramaters: servo_position_max, servo_position_min
-    '''
-    global servo_position
-    servo_position = servo_position + int(value)
-    if servo_position>servo_position_max:
-        servo_position = servo_position_max
-    elif servo_position<servo_position_min:
-        servo_position = servo_position_min
-    servo = int(servo)
-    steelsquid_pi.rbada70_move(servo-1, servo_position)
-
-
-def trex_reset():
-    '''
-    Reset the trex controller to default
-    Stop dc motors...
-    '''
-    steelsquid_trex.trex_reset()
+    def inner_callback_method(address, pin, status):
+        callback_method(not status)
+    steelsquid_pi.mcp23017_event(21, 15, inner_callback_method, True, 26)
     
     
-def trex_motor(left, right):
+def power_off_click(callback_method):
     '''
-    Set speed of the dc motors
-    left and right can have the folowing values: -255 to 255
-    -255 = Full speed astern
-    0 = stop
-    255 = Full speed ahead
+    Listen for click on the power off button.
+    @param callback_method: execute this method on event
+                            callback_method()
     '''
-    steelsquid_trex.trex_motor(left, right)
+    def inner_callback_method(address, pin):
+        callback_method()
+    steelsquid_pi.mcp23017_click(21, 15, inner_callback_method, True, 26)
 
 
-def trex_motor_last_change():
+def gpio_event_callback_method(pin, status): 
     '''
-    Last timestamp when motor chnge values
-    @return: last time i ms
+    To test the gpio event handler
     '''
-    return steelsquid_trex.motor_last_change
+    steelsquid_utils.log("Pin " + str(pin) + " = " + str(status))
 
 
-def trex_servo(servo, position):
+def gpio_click_callback_method(pin): 
     '''
-    Set servo position
-    Servo = 1 to 6
-    Position = Typically the servo position should be a value between 1000 and 2000 although it will vary depending on the servos used
+    To test the gpio event handler
     '''
-    steelsquid_trex.trex_servo(servo, position)
+    steelsquid_utils.log("Pin Click " + str(pin) + " = Click")
 
 
-def trex_status():
+def xgpio_event_callback_method(pin, status): 
     '''
-    Get status from trex
-     - Battery voltage:   An integer that is 100x the actual voltage
-     - Motor current:  Current drawn by the motor in mA
-     - Accelerometer
-     - Impact
-    Return tuple: battery_voltage, left_motor_current, right_motor_current, accelerometer_x, accelerometer_y, accelerometer_z, impact_x, impact_y, impact_z
+    To test the gpio event handler
     '''
-    return steelsquid_trex.trex_status()
+    steelsquid_utils.log("Pin " + str(pin) + " = " + str(status))
 
+
+def xgpio_click_callback_method(pin): 
+    '''
+    To test the gpio event handler
+    '''
+    steelsquid_utils.log("Pin " + str(pin) + " = Click")
 
     
 if __name__ == '__main__':
     import sys
     if len(sys.argv)==1:
         from steelsquid_utils import printb
-        printb("Some commands for Steelsquid IO board.")
+        printb("Send commands to the Steelsquid IO board from the command line.")
+        printb("This is mostly ment for test purpuse.")
+        printb("You should use it from example steelsquid_kiss_expand.py running inside the steelsquid daemon.")
+        printb("This may interupt the steelsquid daemon so for example the power off button stop working.")
         print("")
-        printb("io poweroff")
-        print("Power of the IO board")
+        printb("piio shutdown")
+        print("Shutdown and power off the system")
+        print("")
+        printb("piio volt")
+        print("Read main in voltage to the PIIO board and execute method if it change")
+        print("Return: Main in voltage on the PIIO board")
+        print("")
+        printb("piio volt_event")
+        print("Make method execute when the main in voltage to the PIIO board and execute method if it change")
+        print("")
+        printb("piio button <button_nr>")
+        print("Read status of the 6 buttons on the PIIO board")
+        print("button_nr = 1 to 6")
+        print("")
+        printb("piio button_event <button_nr>")
+        print("Listen for change of the 6 buttons on the PIIO board")
+        print("button_nr: 1-6")
+        print("")
+        printb("piio button_click <button_nr>")
+        print("Listen for click on the 6 buttons on the PIIO board")
+        print("button_nr: 1-6")
+        print("")
+        printb("piio dip <dip_nr>")
+        print("Read status of the 6 dip switch on the PIIO board")
+        print("dip_nr = 1 to 6")
+        print("")
+        printb("piio dip_event <dip_nr>")
+        print("Listen for change of the 6 dip switch on the PIIO board")
+        print("dip_nr: 1-6")
+        print("")
+        printb("piio led <led_nr> <on_or_off>")
+        print("Turn on or off the user LED")
+        print("led_nr: 1-6")
+        print("on_or_off: on/off")
+        print("")
+        printb("piio buz <on_or_off>")
+        print("Turn on or off the buzzer")
+        print("on_or_off: on/off")
+        print("")
+        printb("piio lcd <text>")
+        print("Print text to ssd1306 oled  LCD")
+        print("")
+        printb("piio gpio_get <pin>")
+        print("Get status of RaspberryPI GPIO")
+        print("This is marked with GPIO_3V3 and GPIO_5V on the PIIO board.")
+        print("pin: 1-22 (PIIO board pin)")
+        print("")
+        printb("piio gpio_set <pin> <true/false>")
+        print("Set status of RaspberryPI GPIO")
+        print("This is marked with GPIO_3V3 and GPIO_5V on the PIIO board.")
+        print("pin: 1-22 (PIIO board pin)")
+        print("")
+        printb("piio gpio_event <pin>")
+        print("Listen for change of state on RaspberryPI GPIO")
+        print("This is marked with GPIO_3V3 and GPIO_5V on the PIIO board.")
+        print("pin: 1-22 (PIIO board pin)")
+        print("")
+        printb("piio gpio_click <pin>")
+        print("Listen for click event on RaspberryPI GPIO")
+        print("This is marked with GPIO_3V3 and GPIO_5V on the PIIO board.")
+        print("pin: 1-22 (PIIO board pin)")
+        print("")
+        printb("piio xgpio_get <pin>")
+        print("Get status of extra MCP2317 GPIO")
+        print("This is marked with XGPIO on the PIIO board.")
+        print("pin: 1-8 (PIIO board pin)")
+        print("")
+        printb("piio xgpio_set <pin> <true/false>")
+        print("Set status of extra MCP2317 GPIO")
+        print("This is marked with XGPIO on the PIIO board.")
+        print("pin: 1-8")
+        print("")
+        printb("piio xgpio_event <pin>")
+        print("Listen for change of state on extra MCP2317 GPIO")
+        print("This is marked with XGPIO on the PIIO board.")
+        print("pin: 1-8")
+        print("")
+        printb("piio xgpio_click <pin>")
+        print("Listen for click event on extra MCP2317 GPIO")
+        print("This is marked with XGPIO on the PIIO board.")
+        print("pin: 1-8")
+        print("")
+        printb("piio power <pin> <true/false>")
+        print("Set the status of the POWER pins")
+        print("pin: 1-8")
+        print("")
+        printb("piio adc <channel>")
+        print("Read the voltage value in on the 7 ADC pins")
+        print("channel = 1 to 7")
+        print("Return: 0 to 3.3")
+        print("")
+        printb("piio adc_event <channel>")
+        print("Make method execute when the analog voltage in on the ADC change")
+        print("channel = 1 to 7")
+        print("")
+        printb("piio dac <volt_1> <volt_2> <volt_3> <volt_4>")
+        print("Write analog out from the 4 DAC pins (0 to 3.3v)")
+        print("volt_1 to 4 = Voltage on pins (0 and 4095)")
+        print("")
+        printb("piio servo <servo_nr> <position>")
+        print("Move a servo connected to the PIIO board.")
+        print("servo_nr: 1-12")
+        print("position: 0-255")
+        print("")
+        printb("piio pwm <pin> <value>")
+        print("Set pwm value on one of the 4 PWM pins")
+        print("The PWM pins is the same curcit that control the DC motors.")
+        print("You can not use the PWM and MOTOR controller at the same time")
+        print("pin: 1 to 4")
+        print("value: 0 to 1023")
+        print("")
+        printb("piio motor <motor_1> <motor_1>")
+        print("Set speed of the two DC motors.")
+        print("-1023 = fullspeed reverse")
+        print("0 = not moving")
+        print("1023 = fullspeed forward")
+        print("motor_1: -1023 to 1023")
+        print("motor_2: -1023 to 1023")
+        print("")
+        printb("piio movement")
+        print("Read movement with the gyro sensor.")
+        print("")
+        printb("piio rotation")
+        print("Read mpu-6050 rotation angle in degrees for both the X & Y.")
+        print("")
+        printb("piio movement_event")
+        print("Listen for movements on mpu-6050 and execute method on change.")
+        print("")
+        printb("piio rotation_event")
+        print("Listen for mpu-6050 rotation angle in degrees and execute method on change.")
+        print("")
     else:
         command = sys.argv[1]
-        if command == "poweroff":
-            steelsquid_utils.execute_system_command_blind(["steelsquid-event", "poweroff"])
+        if len(sys.argv)>2:
+            para1 = sys.argv[2]
+        if len(sys.argv)>3:
+            para2 = sys.argv[3]
+        if len(sys.argv)>4:
+            para3 = sys.argv[4]
+        if len(sys.argv)>5:
+            para4 = sys.argv[5]
+        if len(sys.argv)>6:
+            para5 = sys.argv[6]
+        if command == "shutdown":
+            shutdown()
+        elif command == "volt":
+            print volt()
+        elif command == "volt_event":
+            def adc_change(voltage):
+                sys.stdout.write("Voltage="+str(voltage).ljust(20) + "\r")
+                sys.stdout.flush()
+            volt_event(adc_change)
+            raw_input()
+        elif command == "button":
+            print button(para1)
+        elif command == "button_event":
+            def on_change(button_nr, status):
+                sys.stdout.write(str(button_nr)+"="+str(status).ljust(10) + "\r")
+                sys.stdout.flush()
+            button_event(para1, on_change)
+            raw_input()
+        elif command == "button_click":
+            def on_change(button_nr):
+                sys.stdout.write("Click\n")
+                sys.stdout.flush()
+            button_click(para1, on_change)
+            raw_input()
+        elif command == "dip":
+            print dip(para1)
+        elif command == "dip_event":
+            def on_change(dip_nr, status):
+                sys.stdout.write(str(dip_nr)+"="+str(status).ljust(10) + "\r")
+                sys.stdout.flush()
+            dip_event(para1, on_change)
+            raw_input()
+        elif command == "led":
+            led(para1, para2)
+        elif command == "buz":
+            buz(para1)
+        elif command == "lcd":
+            #Sending a event to the steelsquid daemon instead of executing it directly
+            steelsquid_event.broadcast_event_external("pi_io_event", ["ssd1306", para1])
+        elif command == "gpio_get":
+            print gpio_get(para1)
+        elif command == "gpio_set":
+            gpio_set(para1, para2)
+        elif command == "gpio_event":
+            gpio_event(para1, gpio_event_callback_method)
+            raw_input("Press any key to exit!")
+        elif command == "gpio_click":
+            gpio_click(para1, gpio_click_callback_method)
+            raw_input("Press any key to exit!")
+        elif command == "xgpio_get":
+            print xgpio_get(para1)
+        elif command == "xgpio_set":
+            xgpio_set(para1, para2)
+        elif command == "xgpio_event":
+            xgpio_event(para1, xgpio_event_callback_method)
+            raw_input("Press any key to exit!")
+        elif command == "xgpio_click":
+            xgpio_click(para1, xgpio_click_callback_method)
+            raw_input("Press any key to exit!")
+        elif command == "power":
+            power(para1, para2)
+        elif command == "adc":
+            print adc(para1)
+        elif command == "adc_event":
+            def adc_change(channel, voltage):
+                sys.stdout.write("Voltage("+str(channel)+")="+str(voltage).ljust(20) + "\r")
+                sys.stdout.flush()
+            adc_event(para1, adc_change)
+            raw_input()
+        elif command == "dac":
+            dac(para1, para2, para3, para4)
+        elif command == "servo":
+            servo(para1, para2)
+        elif command == "pwm":
+            pwm(para1, para2)
+        elif command == "motor":
+            motor(para1, para2)
+        elif command == "movement":
+            print movement()
+        elif command == "rotation":
+            print rotation()
+        elif command == "movement_event":
+            def movement_change(x, y, z):
+                sys.stdout.write("X="+str(x).ljust(8)+"Y="+str(y).ljust(8)+"Z="+str(z).ljust(8) + "\r")
+                sys.stdout.flush()
+            movement_event(movement_change)
+            raw_input()
+        elif command == "rotation_event":
+            def rotation_changed(x, y):
+                sys.stdout.write("X="+str(x).ljust(20)+"Y="+str(y).ljust(20) + "\r")
+                sys.stdout.flush()
+            rotation_event(rotation_changed)
+            raw_input()
         else:
             print "Unknown command!!!"
+

@@ -35,9 +35,8 @@ from email.mime.text import MIMEText
 from email import Encoders
 import re
 from sets import Set
+import types
 
-
-lock = threading.Lock()
 STEELSQUID_FOLDER = "/opt/steelsquid"
 cach_credentionals = []
 salt = uuid.uuid4().hex
@@ -51,6 +50,9 @@ in_dev = None
 VALID_CHARS = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','0','1','2','3','4','5','6','7','8','9','_','/','.','-']
 cache_flag = {}
 cache_para = {}
+delay_name_list =[]
+flash_name_list =[]
+lock = threading.Lock()
 
 
 def get_pi_revision():
@@ -407,13 +409,13 @@ def shout(string=None, to_lcd=True, debug=False, is_error=False, always_show=Fal
                     import steelsquid_piio
                     if is_error:
                         try:
-                            steelsquid_piio.led_err_flash(None)
-                            steelsquid_piio.sum_flash(None)
+                            steelsquid_piio.error_flash(None, 0.1)
+                            steelsquid_piio.buz_flash(None, 0.1)
                         except:
                             pass
                     else:
                         try:
-                            steelsquid_piio.led_ok_flash(None)
+                            steelsquid_piio.ok_flash(None, 0.1)
                         except:
                             pass
                 if leave_on_lcd:
@@ -1637,24 +1639,94 @@ def del_list_tmp(name):
         pass
 
 
-def execute_delay(seconds, function, paramters, dummy=False):
+def execute_delay(seconds, function, paramters, name=None, dummy=False):
     '''
     Execute a function after number of seconds
     @param seconds: Delay for this number of seconds
     @param function: Execute this funcyion
     @param paramters: Paramater to the function (tuple)
+    @param name: If delay starts within a noter delay with the same name, it will not be executed
     '''
+    global delay_name_list
     try:
-        if dummy:
-            time.sleep(seconds)
-            if isinstance(paramters, tuple):
-                function(*paramters)
+        with(lock):
+            if dummy:
+                time.sleep(seconds)
+                if name!=None:
+                    try:
+                        delay_name_list.remove(name)
+                    except:
+                        pass
+                if isinstance(paramters, tuple):
+                    function(*paramters)
+                else:
+                    function()
             else:
-                function()
-        else:
-            thread.start_new_thread(execute_delay, (seconds, function, paramters, True)) 
+                if name==None:
+                    thread.start_new_thread(execute_delay, (seconds, function, paramters, name, True)) 
+                else:
+                    if not name in delay_name_list:
+                        delay_name_list.append(name)
+                        thread.start_new_thread(execute_delay, (seconds, function, paramters, name, True)) 
     except:
         shout()
+        
+        
+def execute_flash(name, status, seconds, function1, paramters1, function2, paramters2):
+    '''
+    Execute a 2 functions alternately to to achieve a flashing
+    @param name: Give this a name so you can enable or disable it.
+    @param status: Start or stop the flashing (None = only flash ones).
+    @param seconds: Delay between function execution
+    @param function1: First function to execute
+    @param paramters1: Paramater to the first function (tuple)
+    @param function2: Second function to execute
+    @param paramters2: Paramater to the second function (tuple)
+    '''
+    global flash_name_list
+    with(lock):
+        if status==None and name not in flash_name_list:
+            def method_thread():
+                try:
+                    if isinstance(paramters1, tuple):
+                        function1(*paramters1)
+                    else:
+                        function1()
+                    time.sleep(seconds)
+                    if isinstance(paramters2, tuple):
+                        function2(*paramters2)
+                    else:
+                        function2()
+                except:
+                    shout()
+            thread.start_new_thread(method_thread, ()) 
+        elif status and name not in flash_name_list:
+            def method_thread():
+                try:
+                    first_time=True
+                    while(name in flash_name_list):
+                        if first_time:
+                            first_time=False
+                        else:
+                            time.sleep(seconds)
+                        if isinstance(paramters1, tuple):
+                            function1(*paramters1)
+                        else:
+                            function1()
+                        time.sleep(seconds)
+                        if isinstance(paramters2, tuple):
+                            function2(*paramters2)
+                        else:
+                            function2()
+                except:
+                    shout()
+            flash_name_list.append(name)
+            thread.start_new_thread(method_thread, ()) 
+        elif not status:
+            try:
+                flash_name_list.remove(name)
+            except:
+                pass
         
 
 def is_ip(string):
@@ -1837,6 +1909,8 @@ def to_boolean(value):
     '''
     if value == None:
         return False
+    elif type(value) == types.BooleanType:
+        return value
     elif value == 0:
         return False
     elif value == 1:

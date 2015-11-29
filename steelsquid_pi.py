@@ -69,6 +69,7 @@ GPIO.setwarnings(False)
 lcd_last_text = ""
 lock = threading.Lock()
 lock_mcp = threading.Lock()
+lock_event = threading.Lock()
 distance_created = False
 pwm = None
 ads_48 = None
@@ -99,6 +100,7 @@ mcp_26 = None
 mcp_27 = None
 sabertooth = None
 dac = None
+vref_voltage = 3.3
 lock_hcsr04 = threading.Lock()
 nokia_lcd = None
 font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 9)
@@ -116,12 +118,15 @@ mcp23017_events[26] = []
 mcp23017_events[27] = []
 diablo = None
 po16_setup = [SETUP_NONE] * 8
-vref_voltage = 4.096
+event_notificatin_list=[]
+event_last_mpu6050_movement=None
+event_last_mpu6050_rotation=None
+po12_adc_has_setup=False
 
 
 def cleanup():
     '''
-    Clean all event detection (click, blink...)
+    Clean all event detection 
     '''
     gpio_cleanup()
     
@@ -149,19 +154,21 @@ def gpio_setup_out(gpio):
     @param gpio: GPIO number
     '''
     global setup
-    GPIO.setup(int(gpio), GPIO.OUT, pull_up_down=GPIO.PUD_OFF)
-    setup[int(gpio)] == SETUP_OUT
+    gpio = int(gpio)
+    GPIO.setup(gpio, GPIO.OUT, pull_up_down=GPIO.PUD_OFF)
+    setup[gpio] == SETUP_OUT
 
 
 def gpio_setup_in(gpio, resistor=PULL_DOWN):
     '''
-    set gpio pin to input mode (connect gpio to 3.3v)
+    set gpio pin to input mode 
     @param gpio: GPIO number
     @resistor: PULL_UP, PULL_DOWN, PULL_NONE
     '''
     global setup
-    GPIO.setup(int(gpio), GPIO.IN, pull_up_down=resistor)
-    setup[int(gpio)] == SETUP_IN
+    gpio = int(gpio)
+    GPIO.setup(gpio, GPIO.IN, pull_up_down=resistor)
+    setup[gpio] == SETUP_IN
 
 
 def gpio_set(gpio, state):
@@ -171,9 +178,21 @@ def gpio_set(gpio, state):
     @param state: True/False
     '''
     global setup
-    if not setup[int(gpio)] == SETUP_OUT:
+    state = steelsquid_utils.to_boolean(state)
+    gpio = int(gpio)
+    if not setup[gpio] == SETUP_OUT:
         gpio_setup_out(gpio)
-    GPIO.output(int(gpio), state)
+    GPIO.output(gpio, state)
+
+
+def gpio_flash(gpio, status, seconds):
+    '''
+    Change to hight (true) or low (false) on a pin alternately
+    @param gpio: GPIO number
+    @param status: True/False (None = Only alternate one time (True, false))
+    @param seconds: Seconds between state change
+    '''
+    steelsquid_utils.execute_flash("gpio_flash"+str(gpio), status, seconds, gpio_set, (gpio, True,), gpio_set, (gpio, False,))
 
 
 def gpio_get(gpio, resistor=PULL_DOWN):
@@ -184,9 +203,10 @@ def gpio_get(gpio, resistor=PULL_DOWN):
     @return: True/False
     '''
     global setup
-    if not setup[int(gpio)] == SETUP_IN:
+    gpio = int(gpio)
+    if not setup[gpio] == SETUP_IN:
         gpio_setup_in(gpio, resistor)
-    if GPIO.input(int(gpio)) == 1:
+    if GPIO.input(gpio) == 1:
         return True
     else:
         return False
@@ -199,7 +219,7 @@ def gpio_event_remove(gpio):
     GPIO.remove_event_detect(gpio)
 
 
-def gpio_event(gpio, callback_method, bouncetime_ms=100, resistor=PULL_DOWN, edge=EDGE_BOTH):
+def gpio_event(gpio, callback_method, bouncetime_ms=60, resistor=PULL_DOWN, edge=EDGE_BOTH):
     '''
     Listen for events on gpio pin
     @param gpio: GPIO number
@@ -209,66 +229,53 @@ def gpio_event(gpio, callback_method, bouncetime_ms=100, resistor=PULL_DOWN, edg
     @edge: EDGE_BOTH, EDGE_FALLING, EDGE_RISING
     '''
     global setup
-    if not setup[int(gpio)] == SETUP_IN:
+    gpio = int(gpio)
+    if not setup[gpio] == SETUP_IN:
         gpio_setup_in(gpio, resistor)
     def call_met(para):
         status = False
-        if GPIO.input(int(para)) == 1:
+        if GPIO.input(para) == 1:
             status = True
         try:
             callback_method(para, status)          
         except:
             steelsquid_utils.shout()
     if bouncetime_ms!=0:
-        GPIO.add_event_detect(int(gpio), edge, callback=call_met, bouncetime=bouncetime_ms)
+        GPIO.add_event_detect(gpio, edge, callback=call_met, bouncetime=bouncetime_ms)
     else:
-        GPIO.add_event_detect(int(gpio), edge, callback=call_met)
+        GPIO.add_event_detect(gpio, edge, callback=call_met)
 
 
-def gpio_click(gpio, callback_method, bouncetime_ms=100, resistor=PULL_DOWN, edge=EDGE_BOTH):
+def gpio_click(gpio, callback_method, bouncetime_ms=60, resistor=PULL_DOWN):
     '''
     Connect a button to gpio pin
-    Will fire when button is released. If press more than 1s it will be ignore
+    Will fire when button is released.
     @param gpio: GPIO number
     @param callback_method: execute this method on event (paramater is the gpio)
                             callback_method(pin)
     @resistor: PULL_UP, PULL_DOWN, PULL_NONE
-    @edge: EDGE_BOTH, EDGE_FALLING, EDGE_RISING
     '''
     global setup
-    if not setup[int(gpio)] == SETUP_IN:
+    gpio = int(gpio)
+    if not setup[gpio] == SETUP_IN:
         gpio_setup_in(gpio, resistor)
     def call_met(para):
-        global down
-        global up
         status = False
-        if GPIO.input(int(para)) == 1:
+        if GPIO.input(para) == 1:
             status = True
-        if status == True:
-            up = -1
-            down = time.time()            
-        else:
-            if down != -1:
-                up = time.time()        
-                delta = up - down        
-                down = -1
-                up = -1
-                delta =  int(delta * 1000)
-                if delta > 100 and delta < 1000:
-                    try:
-                        callback_method(para)
-                    except:
-                        steelsquid_utils.shout()
-            else:
-                up = -1
+        if status == (resistor==PULL_UP):
+            try:
+                callback_method(para)          
+            except:
+                steelsquid_utils.shout()
     global down
     global up
     down = -1
     up = -1
     if bouncetime_ms!=0:
-        GPIO.add_event_detect(int(gpio), edge, callback=call_met, bouncetime=bouncetime_ms)
+        GPIO.add_event_detect(gpio, EDGE_BOTH, callback=call_met, bouncetime=bouncetime_ms)
     else:
-        GPIO.add_event_detect(int(gpio), edge, callback=call_met)
+        GPIO.add_event_detect(gpio, EDGE_BOTH, callback=call_met)
 
 
 def mcp23017_setup_out(address, gpio):
@@ -493,6 +500,7 @@ def mcp23017_set(address, gpio, value):
     '''
     gpio = int(gpio)
     address = int(address)
+    value = steelsquid_utils.to_boolean(value)
     mcp = mcp23017_setup_out(address, gpio)
     with steelsquid_i2c.Lock():
         if value == True:
@@ -500,10 +508,23 @@ def mcp23017_set(address, gpio, value):
         else:
             mcp.output(gpio, 0) 
         
+
+def mcp23017_flash(address, gpio, status, seconds):
+    '''
+    Set a gpio hight or low on a MCP23017
+    Change to hight (true) or low (false) on a pin alternately
+    Address: 20, 21, 22, 23, 24, 25, 26, 27
+    @param gpio: GPIO number
+    @param status: True/False (None = Only alternate one time (True, false))
+    @param seconds: Seconds between state change
+    '''
+    steelsquid_utils.execute_flash("mcp23017_flash"+str(address)+str(gpio), status, seconds, mcp23017_set, (address, gpio, True,), mcp23017_set, (address, gpio, False,))
+        
         
 def mcp23017_get(address, gpio, pullup=True):
     '''
     Get status on pin
+    Connect GPIO to gnd (using internal pull-up)    
     Address: 20, 21, 22, 23, 24, 25, 26, 27
     @param gpio: 0 to 15
     The MCP23017 has 16 pins - A0 thru A7 + B0 thru B7. A0 is called 0 in the library, and A7 is called 7, then B0 continues from there as is called 8 and finally B7 is pin 15
@@ -521,17 +542,17 @@ def mcp23017_get(address, gpio, pullup=True):
             return False
 
 
-def mcp23017_event(address, gpio, callback_method, pullup=True, debouncetime_ms=0, rpi_gpio=26): 
+def mcp23017_event(address, gpio, callback_method, pullup=True, rpi_gpio=26): 
     ''' 
     Listen for event
+    Connect GPIO to gnd (using internal pull-up)    
     If this is to work one of the trigger pin needs to be connected to raspberry Pi pin 26 (you can change this with paramater rpi_gpio)
     The MCP23017 has 16 pins - A0 thru A7 + B0 thru B7. A0 is called 0 in the library, and A7 is called 7, then B0 continues from there as is called 8 and finally B7 is pin 15
-    @address: 20, 21, 22, 23, 24, 25, 26, 27
+    @param address: 20, 21, 22, 23, 24, 25, 26, 27
     @param gpio: 0 to 15
     @param callback_method: execute this method on event (paramater is the address, gpio and status (True/False))
                             callback_method(address, pin, status)
     @param pullup: Use internal pululp
-    @param bouncetime__ms: Set the debounstime in ms (Will be same on every pin on one mcp23017, the first execution with sertant adress will set the debouns on that adress)
     @param rpi_gpio: Raspberry pi glio number to use for the interruppt (Can not use the same gpio for mutipple mcp23017)
     '''
     global mcp23017_events
@@ -539,64 +560,78 @@ def mcp23017_event(address, gpio, callback_method, pullup=True, debouncetime_ms=
     address = int(address)
     mcp = mcp23017_setup_in(address, gpio, pullup)
     mcp.configPinInterrupt(gpio, mcp.INTERRUPTON, mcp.INTERRUPTCOMPAREPREVIOUS)
-    post = [None] * 4
-    post[0] = 0
-    post[1] = gpio
-    post[2] = callback_method
-    post[3] = True
+    mcp.clearInterrupts()
+    post = [None] * 3
+    post[0] = gpio
+    post[1] = callback_method
+    post[2] = None
     with(lock_mcp):
         if len(mcp23017_events[address]) == 0: 
             mcp23017_events[address].append(post)
             def call_met(para, status):
                 for p in mcp23017_events[address]:
-                    if p[0]==0:
-                        gpio = p[1]
-                        callback_method = p[2]
-                        old_v = p[3]
-                        #steelsquid_utils.shout_time("INNAN lOCK")
-                        with steelsquid_i2c.Lock():
-                            new_v = mcp.input(gpio)==1
-                            #steelsquid_utils.shout_time(":::" + str(new_v))
-                            if new_v != old_v:
-                                p[3] = new_v
+                    gpio = p[0]
+                    callback_method = p[1]
+                    last_v = p[2]
+                    with steelsquid_i2c.Lock():
+                        new_v = mcp.input(gpio)==1
+                        if last_v==None or last_v != new_v:
+                            try:
                                 callback_method(address, gpio, new_v)
+                            except:
+                                steelsquid_utils.shout()
+                            p[2] = new_v
                 mcp.clearInterrupts()
-            gpio_event(rpi_gpio, call_met, bouncetime_ms=debouncetime_ms, resistor=PULL_DOWN, edge=EDGE_RISING)
+            gpio_event(rpi_gpio, call_met, bouncetime_ms=0, resistor=PULL_DOWN, edge=EDGE_RISING)
         else: 
             mcp23017_events[address].append(post)
             
 
-def mcp23017_click(address, gpio, callback_method, pullup=True):
+def mcp23017_click(address, gpio, callback_method, pullup=True, rpi_gpio=26):
     '''
     Listen for click
-    If this is to work one of the trigger pin needs to be connected to raspberry Pi pin 26
-    Address: 20, 21, 22, 23, 24, 25, 26, 27
+    Connect GPIO to gnd (using internal pull-up)    
+    If this is to work one of the trigger pin needs to be connected to raspberry Pi pin 26 (you can change this with paramater rpi_gpio)
+    The MCP23017 has 16 pins - A0 thru A7 + B0 thru B7. A0 is called 0 in the library, and A7 is called 7, then B0 continues from there as is called 8 and finally B7 is pin 15
+    @param Address: 20, 21, 22, 23, 24, 25, 26, 27
     @param gpio: 0 to 15
     @param callback_method: execute this method on event (paramater is the address and gpio)
                             callback_method(address, pin)
-    The MCP23017 has 16 pins - A0 thru A7 + B0 thru B7. A0 is called 0 in the library, and A7 is called 7, then B0 continues from there as is called 8 and finally B7 is pin 15
+    @param rpi_gpio: Raspberry pi glio number to use for the interruppt (Can not use the same gpio for mutipple mcp23017)
     '''
     global mcp23017_events
     gpio = int(gpio)
     address = int(address)
     mcp = mcp23017_setup_in(address, gpio, pullup)
-    post = [None] * 5
-    post[0] = "click"
-    post[1] = gpio
-    post[2] = mcp
-    post[3] = callback_method
-    post[4] = False
-    if len(mcp23017_events[address]) == 0:
-        with(lock_mcp):
-            if len(mcp23017_events[address]) == 0:
-                mcp23017_events[address].append(post)
-                def call_met(para):
-                    pass
-                gpio_event(26, call_met, bouncetime_ms=0, resistor=PULL_DOWN, edge=EDGE_RISING)
-            else:
-                mcp23017_events[address].append(post)
-    else:
-        mcp23017_events[address].append(post)
+    mcp.configPinInterrupt(gpio, mcp.INTERRUPTON, mcp.INTERRUPTCOMPAREPREVIOUS)
+    mcp.clearInterrupts()
+    post = [None] * 3
+    post[0] = gpio
+    post[1] = callback_method
+    post[2] = None
+    with(lock_mcp):
+        if len(mcp23017_events[address]) == 0: 
+            mcp23017_events[address].append(post)
+            def call_met(para, status):
+                for p in mcp23017_events[address]:
+                    gpio = p[0]
+                    callback_method = p[1]
+                    last_v = p[2]
+                    with steelsquid_i2c.Lock():
+                        new_v = mcp.input(gpio)==1
+                        if last_v==None:
+                            p[2] = new_v
+                        elif last_v != new_v:
+                            if new_v==True:
+                                try:
+                                    callback_method(address, gpio)
+                                except:
+                                    steelsquid_utils.shout()
+                            p[2] = new_v
+                mcp.clearInterrupts()
+            gpio_event(rpi_gpio, call_met, bouncetime_ms=0, resistor=PULL_DOWN, edge=EDGE_RISING)
+        else: 
+            mcp23017_events[address].append(post)
 
 
 def ads1015(address, gpio, gain=GAIN_6_144_V):
@@ -611,10 +646,10 @@ def ads1015(address, gpio, gain=GAIN_6_144_V):
         return __ads1015(address).readADCSingleEnded(gpio, gain, 250) / 1000
 
 
-def ads1015_median(address, gpio, gain=GAIN_6_144_V, samples=16):
+def ads1015_median(address, gpio, gain=GAIN_6_144_V, samples=8):
     '''
     Read analog in from ADS1015 (0 to 5 v)
-    Median of sumber of samples
+    Median of number of samples
     address= 48, 49, 4A, 4B 
     gpio = 0 to 3
     '''
@@ -982,6 +1017,8 @@ def sabertooth_motor_speed(left, right, the_port="/dev/ttyAMA0"):
     the_port: /dev/ttyAMA0, the_port=/dev/ttyUSB0...
     '''
     with steelsquid_i2c.Lock():
+        left = int(left)
+        right = int(right)
         global sabertooth
         if sabertooth==None:
             import steelsquid_sabertooth
@@ -1037,6 +1074,7 @@ def diablo_motor_1(speed):
     Speed -1000 to 1000
     '''
     global diablo
+    speed = int(speed)
     with steelsquid_i2c.Lock():
         if diablo == None:
             diablo = Diablo.Diablo()
@@ -1054,6 +1092,7 @@ def diablo_motor_2(speed):
     Speed -1000 to 1000
     '''
     global diablo
+    speed = int(speed)
     with steelsquid_i2c.Lock():
         if diablo == None:
             diablo = Diablo.Diablo()
@@ -1077,7 +1116,7 @@ def callback_method(gpio, status):
 
 def servo12c(servo, position, address=0x28):
     '''
-    Move servo on a 12 servos with I2C Servo Controller IC.
+    Move servo on a servos12c with I2C Servo Controller IC.
     http://www.hobbytronics.co.uk/arduino-servo-controller
     Servo: 0 to 11
     Position: 0 to 255
@@ -1094,20 +1133,6 @@ def mpu6050_init(address=0x69):
     https://www.sparkfun.com/products/11028
     '''
     steelsquid_i2c.write_8_bit(address, 0x6b, 0)
-
-
-def mpu6050_gyro(address=0x69):
-    '''
-    Read mpu-6050 gyro data.
-    SparkFun Triple Axis Accelerometer and Gyro Breakout - MPU-6050
-    https://www.sparkfun.com/products/11028
-    Returns: (x, y, z)
-    '''
-    mpu6050_init(address)
-    gyro_xout = read_word_2c(address, 0x43) / 131
-    gyro_xout = read_word_2c(address, 0x45) / 131
-    gyro_zout = read_word_2c(address, 0x47) / 131
-    return gyro_xout, gyro_xout, gyro_zout
     
 
 def mpu6050_accel(address=0x69):
@@ -1124,6 +1149,20 @@ def mpu6050_accel(address=0x69):
     return accel_xout, accel_yout, accel_zout
 
 
+def mpu6050_movement(address=0x69):
+    '''
+    Read mpu-6050 gyro data.
+    SparkFun Triple Axis Accelerometer and Gyro Breakout - MPU-6050
+    https://www.sparkfun.com/products/11028
+    Returns: (x, y, z)
+    '''
+    mpu6050_init(address)
+    gyro_xout = read_word_2c(address, 0x43) / 131
+    gyro_xout = read_word_2c(address, 0x45) / 131
+    gyro_zout = read_word_2c(address, 0x47) / 131
+    return gyro_xout, gyro_xout, gyro_zout
+
+
 def mpu6050_rotation(address=0x69):
     '''
     Read mpu-6050 rotation angle in degrees for both the X & Y.
@@ -1135,6 +1174,134 @@ def mpu6050_rotation(address=0x69):
     x = get_x_rotation(accel_xout, accel_yout, accel_zout)
     y = get_y_rotation(accel_xout, accel_yout, accel_zout)    
     return x, y
+
+
+def mpu6050_movement_event(callback_method, min_change=10, sample_sleep=0.2):
+    '''
+    Listen for movements on mpu-6050 and execute method on change.
+    SparkFun Triple Axis Accelerometer and Gyro Breakout - MPU-6050
+    https://www.sparkfun.com/products/11028
+    def callback_method(x, y, z):
+       ...do stuff
+    callback_method: Execute this method on change
+    min_change: Only execute method if value change this mutch from last time
+    sample_sleep: Sleep ths long between sample (only one thread handle all events so the last set sleep time is in use)
+    '''
+    global event_notificatin_list
+    global event_sample_sleep
+    event_sample_sleep = sample_sleep
+    post = [None] * 3
+    post[0] = 1  #mpu6050_movement_event
+    post[1] = callback_method
+    post[2] = min_change
+    with(lock_event):
+        if len(event_notificatin_list) == 0: 
+            event_notificatin_list.append(post)
+            thread.start_new_thread(__event_notificatin_thread, ()) 
+        else:
+            event_notificatin_list.append(post)
+
+
+def mpu6050_rotation_event(callback_method, min_change=2, sample_sleep=0.2):
+    '''
+    Listen for mpu-6050 rotation angle in degrees for both the X & Y changes and execute method on change.
+    SparkFun Triple Axis Accelerometer and Gyro Breakout - MPU-6050
+    https://www.sparkfun.com/products/11028
+    def callback_method(x, y):
+       ...do stuff
+    callback_method: Execute this method on change
+    min_change: Only execute method if value change this mutch from last time
+    sample_sleep: Sleep ths long between sample (only one thread handle all events so the last set sleep time is in use)
+    '''
+    global event_notificatin_list
+    global event_sample_sleep
+    event_sample_sleep = sample_sleep
+    post = [None] * 3
+    post[0] = 2  #mpu6050_rotation_event
+    post[1] = callback_method
+    post[2] = min_change
+    with(lock_event):
+        if len(event_notificatin_list) == 0: 
+            event_notificatin_list.append(post)
+            thread.start_new_thread(__event_notificatin_thread, ()) 
+        else:
+            event_notificatin_list.append(post)
+
+    
+def __event_notificatin_thread():
+    '''
+    This thread check for changes on stuff and execute method
+    '''
+    global event_notificatin_list
+    global event_sample_sleep
+    global event_last_mpu6050_movement
+    global event_last_mpu6050_rotation
+    while len(event_notificatin_list) != 0:
+        try:
+            for post in event_notificatin_list:
+                type_of_event=post[0]
+                callback_method = post[1]
+                if type_of_event==1: #mpu6050_movement_event
+                    min_change = post[2]
+                    new_x, new_y, new_z = mpu6050_movement()
+                    if event_last_mpu6050_movement == None:
+                        event_last_mpu6050_movement = (new_x, new_y, new_z)
+                        callback_method(new_x, new_y, new_z)
+                    else:
+                        old_x, old_y, old_z = event_last_mpu6050_movement
+                        dif_x = abs(new_x-old_x)
+                        dif_y = abs(new_y-old_y)
+                        dif_z = abs(new_z-old_z)
+                        if dif_x>=min_change or dif_y>=min_change or dif_z>=min_change:
+                            event_last_mpu6050_movement = (new_x, new_y, new_z)
+                            callback_method(new_x, new_y, new_z)
+                elif type_of_event==2: #mpu6050_rotation_event
+                    min_change = post[2]
+                    new_x, new_y = mpu6050_rotation()
+                    if event_last_mpu6050_rotation == None:
+                        event_last_mpu6050_rotation = (new_x, new_y)
+                        callback_method(new_x, new_y)
+                    else:
+                        old_x, old_y = event_last_mpu6050_rotation
+                        dif_x = abs(new_x-old_x)
+                        dif_y = abs(new_y-old_y)
+                        if dif_x>=min_change or dif_y>=min_change:
+                            event_last_mpu6050_rotation = (new_x, new_y)
+                            callback_method(new_x, new_y)
+                elif type_of_event==3: #po12_adc_event
+                    min_change = post[2]
+                    old_v = post[4]
+                    samples = post[5]
+                    new_v = po12_adc_volt(post[3], samples)
+                    if old_v == None:
+                        post[4] = new_v
+                        callback_method(post[3], new_v)
+                    else:
+                        dif_v = abs(new_v-old_v)
+                        if dif_v>=min_change:
+                            post[4] = new_v
+                            callback_method(post[3], new_v)
+                elif type_of_event==4: #po16_gpio_event
+                    gpio = post[2]
+                    old_v = post[3]
+                    new_v = po16_gpio_get(gpio)
+                    if old_v == None or old_v!=new_v:
+                        post[3] = new_v
+                        callback_method(gpio, new_v)
+                elif type_of_event==5: #po16_gpio_click
+                    gpio = post[2]
+                    old_v = post[3]
+                    new_v = po16_gpio_get(gpio)
+                    if old_v == None:
+                        post[3] = new_v
+                    elif old_v!=new_v:
+                        post[3] = new_v
+                        if new_v==True:
+                            callback_method(gpio, new_v)
+            time.sleep(event_sample_sleep)
+        except:
+            steelsquid_utils.shout()
+            time.sleep(10)
 
 
 def read_word(address, adr):
@@ -1180,6 +1347,17 @@ def po12_digital_out(channel, status):
         steelsquid_i2c.write_bytes(0x34, 2, [channel, 0])
 
 
+def po12_digital_out_flash(channel, status, seconds):
+    '''
+    Set a gpio hight or low on a P011/12 ADC
+    Change to hight (true) or low (false) on a pin alternately
+    @param gpio: channel 1 to 3
+    @param status: True/False (None = Only alternate one time (True, false))
+    @param seconds: Seconds between state change
+    '''
+    steelsquid_utils.execute_flash("po12_digital_out_flash"+str(channel), status, seconds, po12_digital_out, (channel, True,), po12_digital_out, (channel, False,))
+
+
 def po12_adc_pullup(use_pullup): 
     '''
     By default there are weak pull up resistors internally attached to the ADC lines
@@ -1200,11 +1378,12 @@ def po12_adc_vref(vref):
         1.024
         2.048 
         4.096 
-        Voltage on the +V pin
+        else: Voltage on the +V pin
     '''
     global vref_voltage
-    vref = float(vref)
-    vref_voltage = vref
+    if vref!=None:
+        vref = float(vref)
+        vref_voltage = vref
     if vref == 1.024:
         cmd = 1
     elif vref == 2.048:
@@ -1215,35 +1394,84 @@ def po12_adc_vref(vref):
         cmd = 4
     steelsquid_i2c.write_bytes(0x34, 3, [cmd])
     
+    
+def __po12_adc(channel):
+    global po12_adc_has_setup
+    if not po12_adc_has_setup:
+        po12_adc_has_setup=True
+        po12_adc_pullup(False)
+        time.sleep(0.01)
+        po12_adc_vref(None)
+        time.sleep(0.01)
+    channel = int(channel)
+    return steelsquid_i2c.read_16_bit_command(0x34, 1, [channel], little_endian=False)
+    
 
-def po12_adc(channel):
+def po12_adc(channel, samples=1):
     '''
     Read the analog value in on the P011/12 ADC
     http://www.pichips.co.uk/index.php/P011_ADC#rpii2c
     channel = 1 to 8
+    samples = number of samples and then calculate median
     Return 0 to 1023
     '''
-    channel = int(channel)
-    return steelsquid_i2c.read_16_bit_command(0x34, 1, [channel], little_endian=False)
+    if samples==1:
+        return __po12_adc(channel)
+    else:
+        a_list=[]
+        for i in range(samples):
+            value =  __po12_adc(channel)
+            a_list.append(value)
+            time.sleep(0.01)
+        return steelsquid_utils.median(a_list)
 
 
-def po12_adc_volt(channel):
+def po12_adc_volt(channel, samples=1):
     '''
     Read the analog voltage in on the P011/12 ADC
     http://www.pichips.co.uk/index.php/P011_ADC#rpii2c
     channel = 1 to 8
     Return 0V to vref
     '''
-    value = po12_adc(channel)
+    value = po12_adc(channel, samples)
     calc = value/float(1023)
     return vref_voltage * calc
+
+
+def po12_adc_event(channel, callback_method, min_change=0.01, sample_sleep=0.2, samples=1):
+    '''
+    Read the analog voltage in on the P011/12 ADC and execute method if it change
+    http://www.pichips.co.uk/index.php/P011_ADC#rpii2c
+    def callback_method(channel, voltage):
+       ...do stuff
+    channel = 1 to 8
+    callback_method: Execute this method on change
+    min_change: Only execute method if value change this mutch from last time
+    sample_sleep: Sleep ths long between sample (only one thread handle all events so the last set sleep time is in use)
+    '''
+    global event_notificatin_list
+    global event_sample_sleep
+    event_sample_sleep = sample_sleep
+    post = [None] * 6
+    post[0] = 3  #po12_adc_event
+    post[1] = callback_method
+    post[2] = min_change
+    post[3] = channel
+    post[4] = None
+    post[5] = samples
+    with(lock_event):
+        if len(event_notificatin_list) == 0: 
+            event_notificatin_list.append(post)
+            thread.start_new_thread(__event_notificatin_thread, ()) 
+        else:
+            event_notificatin_list.append(post)
 
 
 def po16_gpio_pullup(gpio, use_pullup): 
     '''
     Sets a weak pull up on the specified pin on the PO16
     http://www.pichips.co.uk/index.php/P015_GPIO_with_PWM
-    gpio 0 t to 8
+    gpio 1 t to 8
     '''
     gpio = int(gpio)
     use_pullup = steelsquid_utils.to_boolean(use_pullup)
@@ -1258,17 +1486,69 @@ def po16_gpio_get(gpio):
     Read the state of gpio pin on the PO16
     This will return true if the gpio is connectid to ground
     http://www.pichips.co.uk/index.php/P015_GPIO_with_PWM
-    gpio 0 t to 8
+    gpio 1 t to 8
     '''
     gpio = int(gpio)
-    if not po16_setup[int(gpio-1)] == SETUP_IN:
-        po16_setup[int(gpio-1)] = SETUP_IN
+    if not po16_setup[gpio-1] == SETUP_IN:
+        po16_setup[gpio-1] = SETUP_IN
         steelsquid_i2c.write_bytes(0x36, 1, [gpio, 1])
     by = steelsquid_i2c.read_bytes_command(0x36, 6, [gpio], 1)
     if by[0]==1:
         return True
     else:
         return False
+    
+
+def po16_gpio_event(gpio, callback_method, sample_sleep=0.2):
+    '''
+    Read the Read the state of gpio pin on the PO16 and execute method if it change
+    http://www.pichips.co.uk/index.php/P015_GPIO_with_PWM
+    def callback_method(gpio, status):
+       ...do stuff
+    gpio = 1 to 8
+    callback_method: Execute this method on change
+    sample_sleep: Sleep ths long between sample (only one thread handle all events so the last set sleep time is in use)
+    '''
+    global event_notificatin_list
+    global event_sample_sleep
+    event_sample_sleep = sample_sleep
+    post = [None] * 4
+    post[0] = 4  #po16_gpio_event
+    post[1] = callback_method
+    post[2] = gpio
+    post[3] = None
+    with(lock_event):
+        if len(event_notificatin_list) == 0: 
+            event_notificatin_list.append(post)
+            thread.start_new_thread(__event_notificatin_thread, ()) 
+        else:
+            event_notificatin_list.append(post)
+    
+
+def po16_gpio_click(gpio, callback_method, sample_sleep=0.2):
+    '''
+    Read the Read the state of gpio pin on the PO16 and execute method if it change from low to hight (click)
+    http://www.pichips.co.uk/index.php/P015_GPIO_with_PWM
+    def callback_method(gpio):
+       ...do stuff
+    gpio = 1 to 8
+    callback_method: Execute this method on click
+    sample_sleep: Sleep ths long between sample (only one thread handle all events so the last set sleep time is in use)
+    '''
+    global event_notificatin_list
+    global event_sample_sleep
+    event_sample_sleep = sample_sleep
+    post = [None] * 4
+    post[0] = 5  #po16_gpio_click
+    post[1] = callback_method
+    post[2] = gpio
+    post[3] = None
+    with(lock_event):
+        if len(event_notificatin_list) == 0: 
+            event_notificatin_list.append(post)
+            thread.start_new_thread(__event_notificatin_thread, ()) 
+        else:
+            event_notificatin_list.append(post)
     
 
 def po16_gpio_set(gpio, status): 
@@ -1289,6 +1569,17 @@ def po16_gpio_set(gpio, status):
         steelsquid_i2c.write_bytes(0x36, 5, [gpio, 0])
 
 
+def po16_gpio_flash(gpio, status, seconds):
+    '''
+    Set a gpio hight or low on a PO16
+    Change to hight (true) or low (false) on a pin alternately
+    @param gpio: channel 0 to 8
+    @param status: True/False (None = Only alternate one time (True, false))
+    @param seconds: Seconds between state change
+    '''
+    steelsquid_utils.execute_flash("po16_gpio_flash"+str(gpio), status, seconds, po16_gpio_set, (gpio, True,), po16_gpio_set, (gpio, False,))
+
+
 def po16_pwm(channel, value): 
     '''
     Set PWM value on channel on the PO16
@@ -1299,13 +1590,6 @@ def po16_pwm(channel, value):
     channel = int(channel)
     value = int(value)
     steelsquid_i2c.write_bytes(0x36, 7, [channel, steelsquid_utils.get_hight_byte(value), steelsquid_utils.get_low_byte(value)])
-
-
-def gpio_event_callback_method(pin, status): 
-    '''
-    To test the gpio event handler
-    '''
-    steelsquid_utils.log("PIN: " + str(pin) + "=" + str(status))
 
 
 def pcf8591_read(pin, address=0x48): 
@@ -1373,6 +1657,20 @@ def hdc1008(address=0x40):
     return temp, hum
 
 
+def gpio_event_callback_method(pin, status): 
+    '''
+    To test the gpio event handler
+    '''
+    steelsquid_utils.log("Pin" + str(pin) + " = " + str(status))
+
+
+def mcp_event_callback_method(address, pin, status): 
+    '''
+    To test the gpio event handler
+    '''
+    steelsquid_utils.log("Address " + str(address) + ", Pin" + str(pin) + " = " + str(status))
+    
+    
 if __name__ == '__main__':
     if len(sys.argv)==1:
         from steelsquid_utils import printb
@@ -1414,7 +1712,13 @@ if __name__ == '__main__':
         print("")
         printb("pi <d/e> mcp23017_set <address> <gpio> <true/false>")
         print("Set a gpio hight or low on a MCP23017")
+        print("address: 20-27")
+        print("gpio: 0-15")
+        print("")
+        printb("pi d mcp23017_event <address> <gpio>")
+        print("Listen for changes on MCP23017 pin")
         print("Connect GPIO to gnd (using internal pull-up)")
+        print("If this is to work one of the trigger pin needs to be connected to raspberry Pi pin 26")
         print("address: 20-27")
         print("gpio: 0-15")
         print("")
@@ -1484,18 +1788,28 @@ if __name__ == '__main__':
         print("Servo: 0 to 11")
         print("Position: 0 to 255")
         print("")
-        printb("pi <d/e> mpu6050_gyro")
-        print("Read mpu-6050 gyro data.")
-        print("SparkFun Triple Axis Accelerometer and Gyro Breakout - MPU-6050")
-        print("https://www.sparkfun.com/products/11028")
-        print("")
         printb("pi <d/e> mpu6050_accel")
         print("Read mpu-6050 accelerometer data.")
         print("SparkFun Triple Axis Accelerometer and Gyro Breakout - MPU-6050")
         print("https://www.sparkfun.com/products/11028")
         print("")
+        printb("pi <d/e> mpu6050_movement")
+        print("Read mpu-6050 gyro data.")
+        print("SparkFun Triple Axis Accelerometer and Gyro Breakout - MPU-6050")
+        print("https://www.sparkfun.com/products/11028")
+        print("")
         printb("pi <d/e> mpu6050_rotation")
         print("Read mpu-6050 rotation angle in degrees for both the X & Y.")
+        print("SparkFun Triple Axis Accelerometer and Gyro Breakout - MPU-6050")
+        print("https://www.sparkfun.com/products/11028")
+        print("")
+        printb("pi d mpu6050_movement_event")
+        print("Listen for movements on mpu-6050 and execute method on change.")
+        print("SparkFun Triple Axis Accelerometer and Gyro Breakout - MPU-6050")
+        print("https://www.sparkfun.com/products/11028")
+        print("")
+        printb("pi d mpu6050_rotation_event")
+        print("Listen for mpu-6050 rotation angle in degrees and execute method on change.")
         print("SparkFun Triple Axis Accelerometer and Gyro Breakout - MPU-6050")
         print("https://www.sparkfun.com/products/11028")
         print("")
@@ -1530,6 +1844,11 @@ if __name__ == '__main__':
         print("channel = 1 to 8")
         print("Return: 0V to vref")
         print("")
+        printb("pi d po12_adc_event <channel>")
+        print("Make method execute when the analog voltage in on the P011/12 ADC change")
+        print("http://www.pichips.co.uk/index.php/P011_ADC#rpii2c")
+        print("channel = 1 to 8")
+        print("")
         printb("pi <d/e> po16_gpio_pullup <gpio> <use_pullup>")
         print("Sets a weak pull up on the specified pin on the PO16")
         print("http://www.pichips.co.uk/index.php/P015_GPIO_with_PWM")
@@ -1542,6 +1861,11 @@ if __name__ == '__main__':
         print("http://www.pichips.co.uk/index.php/P015_GPIO_with_PWM")
         print("gpio = 1 to 8")
         print("Return: True/False")
+        print("")
+        printb("pi d po16_gpio_event <gpio>")
+        print("Make method execute when state of gpio pin on the PO16 change")
+        print("Set the state of gpio pin on the PO16")
+        print("gpio = 1 to 8")
         print("")
         printb("pi <d/e> po16_gpio_set <gpio> <status>")
         print("Set the state of gpio pin on the PO16")
@@ -1616,6 +1940,12 @@ if __name__ == '__main__':
                 steelsquid_event.broadcast_event_external("pi_io_event", ["mcp23017_set", para1, para2, para3])
             else:
                 print "Expected: direct (d), event (e)"
+        elif command == "mcp23017_event":
+            if manner == "d" or manner == "direct":
+                mcp23017_event(para1, para2, mcp_event_callback_method)
+                raw_input("Press any key to exit!")
+            else:
+                print "Expected: direct (d)"
         elif command == "ads1015":
             if manner == "d" or manner == "direct":
                 print ads1015(para1, para2)
@@ -1746,18 +2076,18 @@ if __name__ == '__main__':
                 steelsquid_event.broadcast_event_external("pi_io_event", ["servo12c", para1, para2])
             else:
                 print "Expected: direct (d), event (e)"
-        elif command == "mpu6050_gyro":
-            if manner == "d" or manner == "direct":
-                 print mpu6050_gyro()
-            elif manner == "e" or manner == "event":
-                steelsquid_event.broadcast_event_external("pi_io_event", ["mpu6050_gyro"])
-            else:
-                print "Expected: direct (d), event (e)"
         elif command == "mpu6050_accel":
             if manner == "d" or manner == "direct":
                  print mpu6050_accel()
             elif manner == "e" or manner == "event":
                 steelsquid_event.broadcast_event_external("pi_io_event", ["mpu6050_accel"])
+            else:
+                print "Expected: direct (d), event (e)"
+        elif command == "mpu6050_movement":
+            if manner == "d" or manner == "direct":
+                 print mpu6050_movement()
+            elif manner == "e" or manner == "event":
+                steelsquid_event.broadcast_event_external("pi_io_event", ["mpu6050_movement"])
             else:
                 print "Expected: direct (d), event (e)"
         elif command == "mpu6050_rotation":
@@ -1767,6 +2097,24 @@ if __name__ == '__main__':
                 steelsquid_event.broadcast_event_external("pi_io_event", ["mpu6050_rotation"])
             else:
                 print "Expected: direct (d), event (e)"
+        elif command == "mpu6050_movement_event":
+            if manner == "d" or manner == "direct":
+                def movment_change(x, y, z):
+                    sys.stdout.write("X="+str(x).ljust(8)+"Y="+str(y).ljust(8)+"Z="+str(z).ljust(8) + "\r")
+                    sys.stdout.flush()
+                mpu6050_movement_event(movment_change)
+                raw_input()
+            else:
+                print "Expected: direct (d)"
+        elif command == "mpu6050_rotation_event":
+            if manner == "d" or manner == "direct":
+                def rotation_changed(x, y):
+                    sys.stdout.write("X="+str(x).ljust(20)+"Y="+str(y).ljust(20) + "\r")
+                    sys.stdout.flush()
+                mpu6050_rotation_event(rotation_changed)
+                raw_input()
+            else:
+                print "Expected: direct (d)"
         elif command == "po12_digital_out":
             if manner == "d" or manner == "direct":
                  po12_digital_out(para1, para2)
@@ -1802,6 +2150,15 @@ if __name__ == '__main__':
                 steelsquid_event.broadcast_event_external("pi_io_event", ["po12_adc_volt", para1])
             else:
                 print "Expected: direct (d), event (e)"
+        elif command == "po12_adc_event":
+            if manner == "d" or manner == "direct":
+                def on_change(channel, voltage):
+                    sys.stdout.write("Voltage="+str(voltage).ljust(20) + "\r")
+                    sys.stdout.flush()
+                po12_adc_event(para1, on_change)
+                raw_input()                
+            else:
+                print "Expected: direct (d)"
         elif command == "po16_gpio_pullup":
             if manner == "d" or manner == "direct":
                  po16_gpio_pullup(para1, para2)
@@ -1816,6 +2173,15 @@ if __name__ == '__main__':
                 steelsquid_event.broadcast_event_external("pi_io_event", ["po16_gpio_get", para1])
             else:
                 print "Expected: direct (d), event (e)"
+        elif command == "po16_gpio_event":
+            if manner == "d" or manner == "direct":
+                def on_change(gpio, value):
+                    sys.stdout.write(gpio + "="+str(value).ljust(10) + "\r")
+                    sys.stdout.flush()
+                po16_gpio_event(para1, on_change)
+                raw_input()                
+            else:
+                print "Expected: direct (d)"
         elif command == "po16_gpio_set":
             if manner == "d" or manner == "direct":
                  po16_gpio_set(para1, para2)

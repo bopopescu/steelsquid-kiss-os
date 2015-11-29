@@ -29,7 +29,7 @@ broadcast_event("name_of_event", parameters_from_trigger)
 
 =======================================================================
 
-There are some built-in events that you dont need to execute your self:
+There are some built-in events that you dont need to create your self:
 startup     Execute when system starts  (You must subscribe to this befor execute activate_event_handler)
 second      Execute every second
 seconds     Execute every 10 second
@@ -38,7 +38,7 @@ minutes     Execute every 10 minutes
 hourly      Execute hourly
 daily       Execute Daily
 shutdown    Stop this eventhandler
-poweroff    If it is a Steelsquid IO board this event will shutdown linux and power off the system
+poweroff    If it is a Steelsquid PIIO board this event will shutdown linux and power off the system
 shout       Will execute steelsquid_utils.shout()
             First paramater is the message
 flag        Set/Delete a flag
@@ -67,11 +67,6 @@ umount      Will fire on umount
             Parameter 1: usb, ssh, samba
             Parameter 2: Remote host and directory
             Parameter 3: Local directory
-button      When button clicked on steelsquid_piio
-            Parameter 1: Button 1 to 6
-dip         When dip 1 to 4 i changed on steelsquid_piio
-            Parameter 1: DIP 1 to 6
-            Parameter 2: On/Off
 
 To subscribe to seconds (the method function_to_execute will execute every 10 seconds):
 subscribe_to_event("seconds", function_to_execute, args_from_subscription)
@@ -260,6 +255,7 @@ def broadcast_event_external(event, parameters=None):
     if parameters != None:
         nl = []
         for s in parameters:
+            s = str(s)
             nl.append("\"")
             nl.append(s)
             nl.append("\" ")
@@ -495,8 +491,7 @@ if __name__ == '__main__':
         print("")
         steelsquid_utils.printb("DESCRIPTION")
         print("Broadcast event to the python program.")
-        print("If you create a executable file with the same name as the event under /opt/steelsquid/ that will be excuted")
-        print("The python program steelsquid_event must liten for event for this to work...")
+        print("The python program steelsquid_event must listen for event for this to work...")
         print("")
         steelsquid_utils.printb("steelsquid-event <event>")
         print("Broadcast event without parameters")

@@ -27,6 +27,7 @@ import urllib
 import thread
 import sys
 import steelsquid_kiss_global
+import steelsquid_piio
 
 
 # The socket connection, if enabled (not enabled = None)
@@ -38,6 +39,132 @@ socket_connection = None
 # The http webserver, if enabled (not enabled = None)
 # Flag: web
 http_server = None
+
+
+class PIIO(object):
+    '''
+    Fuctionality for my Steelsquid PIIO board
+    Also see steelquid_piio.py
+    '''
+
+    # Is the PIIO board functionality enabled
+    is_enabled = False
+    
+    # Last voltage read
+    last_voltage = 0
+    
+    # Last voltage read
+    last_print_voltage = 0
+
+
+    @classmethod
+    def enable(cls):
+        '''
+        Enable the IO board functionality (this is executed by steelsquid_boot)
+        Flag: piio
+        '''    
+        steelsquid_utils.shout("Steelsquid PIIO board enabled")
+        steelsquid_piio.led(1, False)
+        steelsquid_piio.led(2, False)
+        steelsquid_piio.led(3, False)
+        steelsquid_piio.led(4, False)
+        steelsquid_piio.led(5, False)
+        steelsquid_piio.led(6, False)
+        steelsquid_event.subscribe_to_event("seconds", cls.on_every_second, ())
+        steelsquid_piio.power_off_click(cls.on_poweroff_button_click)
+        steelsquid_piio.info_click(cls.on_info_button_click)
+        #steelsquid_piio.button(1, cls.on_button_1)
+        #steelsquid_piio.button(2, cls.on_button_2)
+        #steelsquid_piio.button(3, cls.on_button_3)
+        #steelsquid_piio.button(4, cls.on_button_4)
+        #steelsquid_piio.button(5, cls.on_button_5)
+        #steelsquid_piio.button(6, cls.on_button_6)
+        #steelsquid_piio.dip(1, cls.on_dip_1)
+        #steelsquid_piio.dip(2, cls.on_dip_2)
+        #steelsquid_piio.dip(3, cls.on_dip_3)
+        #steelsquid_piio.dip(4, cls.on_dip_4)
+        #steelsquid_piio.dip(5, cls.on_dip_5)
+        #steelsquid_piio.dip(6, cls.on_dip_6)
+        #steelsquid_piio.button_info(cls.on_button_info)
+        #steelsquid_piio.button_power_off(cls.on_button_power_off)
+        #if steelsquid_utils.get_flag("development"):
+        #    steelsquid_event.subscribe_to_event("button", cls.dev_button, ())
+        #    steelsquid_event.subscribe_to_event("dip", cls.dev_dip, ())
+        #steelsquid_event.subscribe_to_event("poweroff", cls.on_poweroff, ())
+        #steelsquid_piio.ok_flash(True, 0.1)
+        cls.is_enabled=True
+
+    @classmethod
+    def disable(cls):
+        '''
+        Disable the IO board functionality (this is executed by steelsquid_boot)
+        Use this when system shutdown
+        Flag: piio
+        '''    
+        cls.is_enabled=False
+        steelsquid_piio.buz_flash(None, 0.1)
+        steelsquid_piio.low_bat(False)
+        steelsquid_piio.bt(False)
+        steelsquid_piio.net(False)
+        steelsquid_piio.led(1, False)
+        steelsquid_piio.led(2, False)
+        steelsquid_piio.led(3, False)
+        steelsquid_piio.led(4, False)
+        steelsquid_piio.led(5, False)
+        steelsquid_piio.led(6, False)
+
+    @classmethod
+    def on_poweroff_button_click(cls):
+        '''
+        Power off the system
+        '''
+        steelsquid_piio.shutdown()
+
+    @classmethod
+    def on_info_button_click(cls):
+        '''
+        Info button clicked
+        '''
+        steelsquid_piio.buz_flash(None, 0.1)
+        steelsquid_event.broadcast_event("network")
+
+    @classmethod
+    def on_every_second(cls, args, para):
+        '''
+        Read voltage and display on LCD
+        Check for low voltage
+        '''
+        new_voltage = steelsquid_piio.volt(2, 4)
+        voltage_waring = int(steelsquid_utils.get_parameter("voltage_waring", "10"))
+        voltage_poweroff = int(steelsquid_utils.get_parameter("voltage_poweroff", "8"))
+        v_warn=""
+        if new_voltage<voltage_waring:
+            v_warn=" (Warning)"
+            steelsquid_piio.low_bat(True)
+        else:
+            steelsquid_piio.low_bat(False)
+        if new_voltage<voltage_poweroff:
+            steelsquid_piio.shutdown()
+            
+        if not steelsquid_utils.get_flag("no_lcd_voltage"):
+            if new_voltage != cls.last_voltage:
+                if abs(new_voltage - cls.last_print_voltage)>=0.1:
+                    if cls.last_print_voltage == 0:
+                        steelsquid_utils.shout("Voltage is: " + str(new_voltage), to_lcd=False)
+                    else:
+                        steelsquid_utils.shout("Voltage changed: " + str(new_voltage), to_lcd=False)
+                    cls.last_print_voltage = new_voltage
+                last = steelsquid_pi.lcd_last_text
+                if last != None and "VOLTAGE: " in last:
+                    i1 = last.find("VOLTAGE: ", 0) + 9
+                    if i1 != -1:
+                        i2 = last.find("\n", i1)
+                        if i2 == -1:
+                            news = last[:i1]+str(new_voltage)+v_warn
+                        else:
+                            news = last[:i1]+str(new_voltage)+v_warn+last[i2:]
+                        steelsquid_piio.lcd(news, number_of_seconds = 0)
+                
 
 
 class Alarm(object):
@@ -108,6 +235,16 @@ class Alarm(object):
             steelsquid_utils.set_parameter("alarm_light_acivate", "15");
         # Execute this every second
         steelsquid_event.subscribe_to_event("second", cls.on_every_second, None, False)
+        
+        
+    @classmethod
+    def disable(cls):
+        '''
+        Disable the IO board functionality (this is executed by steelsquid_boot)
+        Use this when system shutdown
+        Flag: piio
+        '''    
+    pass
         
         
     @classmethod
@@ -391,6 +528,15 @@ class Rover(object):
         cls.is_enabled=True
 
     @classmethod
+    def disable(cls):
+        '''
+        Disable the IO board functionality (this is executed by steelsquid_boot)
+        Use this when system shutdown
+        Flag: piio
+        '''    
+    pass
+
+    @classmethod
     def on_second(cls, args, para):
         '''
         If no signal after 1 second stop the rover. (connection lost!!!)
@@ -463,215 +609,3 @@ class Rover(object):
         right = int(right)
         steelsquid_piio.trex_motor(left, right)
 
-
-class PIIO(object):
-    '''
-    Fuctionality for my Steelsquid PIIO board
-    Also see steelquid_io.py
-    '''
-
-    # Is the PIIO board functionality enabled
-    is_enabled = False
-    
-    # Last voltage read
-    last_voltage = 0
-    
-    # Last voltage read
-    last_print_voltage = 0
-
-    @classmethod
-    def enable(cls):
-        '''
-        Enable the IO board functionality (this is done by steelsquid_boot)
-        Flag: io
-        '''    
-        import steelsquid_piio
-        steelsquid_utils.shout("Steelsquid IO board enabled")
-        steelsquid_piio.button(1, cls.on_button_1)
-        steelsquid_piio.button(2, cls.on_button_2)
-        steelsquid_piio.button(3, cls.on_button_3)
-        steelsquid_piio.button(4, cls.on_button_4)
-        steelsquid_piio.button(5, cls.on_button_5)
-        steelsquid_piio.button(6, cls.on_button_6)
-        steelsquid_piio.dip(1, cls.on_dip_1)
-        steelsquid_piio.dip(2, cls.on_dip_2)
-        steelsquid_piio.dip(3, cls.on_dip_3)
-        steelsquid_piio.dip(4, cls.on_dip_4)
-        steelsquid_piio.dip(5, cls.on_dip_5)
-        steelsquid_piio.dip(6, cls.on_dip_6)
-        steelsquid_piio.button_info(cls.on_button_info)
-        steelsquid_piio.button_power_off(cls.on_button_power_off)
-        if steelsquid_utils.get_flag("development"):
-            steelsquid_event.subscribe_to_event("button", cls.dev_button, ())
-            steelsquid_event.subscribe_to_event("dip", cls.dev_dip, ())
-        if not steelsquid_utils.get_flag("no_lcd_voltage"):
-            steelsquid_event.subscribe_to_event("seconds", cls.on_read_voltage, ())
-        steelsquid_event.subscribe_to_event("poweroff", cls.on_poweroff, ())
-        cls.is_enabled=True
-
-
-    @classmethod
-    def on_poweroff(cls, args, para):
-        '''
-        Power off the system
-        '''
-        import steelsquid_piio
-        steelsquid_piio.power_off()
-
-    @classmethod
-    def on_read_voltage(cls, args, para):
-        '''
-        Read voltage and display on LCD
-        '''
-        import steelsquid_piio
-        import datetime
-        new_voltage = steelsquid_piio.voltage()
-        if new_voltage != cls.last_voltage:
-            if abs(new_voltage - cls.last_print_voltage)>=0.1:
-                if cls.last_print_voltage == 0:
-                    steelsquid_utils.shout("Voltage is: " + str(new_voltage), to_lcd=False)
-                else:
-                    steelsquid_utils.shout("Voltage changed: " + str(new_voltage), to_lcd=False)
-                cls.last_print_voltage = new_voltage
-            cls.last_voltage = new_voltage
-            last = steelsquid_pi.lcd_last_text
-            if last != None and "VOLTAGE: " in last:
-                i1 = last.find("VOLTAGE: ", 0) + 9
-                if i1 != -1:
-                    i2 = last.find("\n", i1)
-                    if i2 == -1:
-                        news = last[:i1]+str(new_voltage)
-                    else:
-                        news = last[:i1]+str(new_voltage)+last[i2:]
-                    steelsquid_piio.lcd_write(news, number_of_seconds = 0)
-                
-                    
-    @classmethod
-    def dev_button(cls, args, para):
-        '''
-        In development mode shout if the button is pressed
-        '''    
-        import steelsquid_piio
-        bu = str(para[0])
-        steelsquid_utils.shout_time("Button " + bu + " pressed!")
-
-    @classmethod
-    def dev_dip(cls, args, para):
-        '''
-        In development mode shout if the DIP is changed
-        '''    
-        import steelsquid_piio
-        steelsquid_utils.shout_time("DIP " + str(para[0]) +": "+ str(para[1]))
-
-    @classmethod
-    def on_button_power_off(cls, address, pin):
-        '''
-        If shutdown button is clicked
-        '''    
-        import steelsquid_piio
-        steelsquid_piio.power_off()
-
-    @classmethod
-    def on_button_info(cls, address, pin):
-        '''
-        If info button is clicked
-        '''    
-        import steelsquid_piio
-        steelsquid_piio.led_ok_flash(None)
-        steelsquid_event.broadcast_event("network")
-
-    @classmethod
-    def on_button_1(cls, address, pin):
-        '''
-        If the 1 button is pressed
-        '''    
-        import steelsquid_piio
-        steelsquid_event.broadcast_event("button", [1])
-
-    @classmethod
-    def on_button_2(cls, address, pin):
-        '''
-        If the 2 button is pressed
-        '''    
-        import steelsquid_piio
-        steelsquid_event.broadcast_event("button", [2])
-
-    @classmethod
-    def on_button_3(cls, address, pin):
-        '''
-        If the 3 button is pressed
-        '''    
-        import steelsquid_piio
-        steelsquid_event.broadcast_event("button", [3])
-
-    @classmethod
-    def on_button_4(cls, address, pin):
-        '''
-        If the 4 button is pressed
-        '''    
-        import steelsquid_piio
-        steelsquid_event.broadcast_event("button", [4])
-
-    @classmethod
-    def on_button_5(cls, address, pin):
-        '''
-        If the 5 button is pressed
-        '''    
-        import steelsquid_piio
-        steelsquid_event.broadcast_event("button", [5])
-
-    @classmethod
-    def on_button_6(cls, address, pin):
-        '''
-        If the 6 button is pressed
-        '''    
-        import steelsquid_piio
-        steelsquid_event.broadcast_event("button", [6])
-
-    @classmethod
-    def on_dip_1(cls, address, pin, status):
-        '''
-        If DIP 1 changed
-        '''    
-        import steelsquid_piio
-        steelsquid_event.broadcast_event("dip", [1, status])
-
-    @classmethod
-    def on_dip_2(cls, address, pin, status):
-        '''
-        If DIP 2 changed
-        '''    
-        import steelsquid_piio
-        steelsquid_event.broadcast_event("dip", [2, status])
-
-    @classmethod
-    def on_dip_3(cls, address, pin, status):
-        '''
-        If DIP 3 changed
-        '''    
-        import steelsquid_piio
-        steelsquid_event.broadcast_event("dip", [3, status])
-
-    @classmethod
-    def on_dip_4(cls, address, pin, status):
-        '''
-        If DIP 4 changed
-        '''    
-        import steelsquid_piio
-        steelsquid_event.broadcast_event("dip", [4, status])
-
-    @classmethod
-    def on_dip_5(cls, address, pin, status):
-        '''
-        If DIP 5 changed
-        '''    
-        import steelsquid_piio
-        steelsquid_event.broadcast_event("dip", [5, status])
-
-    @classmethod
-    def on_dip_6(cls, address, pin, status):
-        '''
-        If DIP 6 changed
-        '''    
-        import steelsquid_piio
-        steelsquid_event.broadcast_event("dip", [6, status])

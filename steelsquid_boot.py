@@ -29,7 +29,7 @@ import importlib
 import expand
 import signal
 from io import TextIOWrapper, BytesIO
-
+import steelsquid_kiss_global
 
 if steelsquid_utils.is_raspberry_pi:
     try:
@@ -170,86 +170,126 @@ def on_network(args, para):
     access_point = para[3]
     wan = para[4]
     bluetooth = ""
-    if steelsquid_utils.get_flag("bluetooth_pairing") and steelsquid_utils.get_flag("piio"):
-        answer = steelsquid_utils.execute_system_command(["hciconfig", "-a"])
-        for line in answer:
-            if "Name: " in line:
-                line = line.replace("Name: '","")
-                line = line.replace("'","")
-                bluetooth = line
-                break
-        if bluetooth == "":
-            bluetooth = "\nBT: No local device"
+    if steelsquid_utils.get_flag("piio"):
+        if net == "up":            
+            steelsquid_piio.net(True)
         else:
-            bluetooth = "\nBT: " + bluetooth
-    if net == "up":
-        try:
-            shout_string = []
-            if steelsquid_utils.get_flag("piio"):
-                import steelsquid_piio
-                steelsquid_piio.led_net(True)
+            steelsquid_piio.net(False)
+    if steelsquid_utils.get_flag("ssd") or steelsquid_utils.lcd_auto == 1:
+        if steelsquid_utils.get_flag("bluetooth_pairing"):
+            answer = steelsquid_utils.execute_system_command(["hciconfig", "-a"])
+            for line in answer:
+                if "Name: " in line:
+                    line = line.replace("Name: '","")
+                    line = line.replace("'","")
+                    bluetooth = line
+                    break
+            if bluetooth == "":
+                bluetooth = "\nBT: No local device"
+            else:
+                bluetooth = "\nBT:" + bluetooth
+        if net == "up":            
+            try:
+                shout_string = []
                 if access_point != "---":
-                    shout_string.append("STEELSQUID PIIO V")
-                    shout_string.append(steelsquid_piio.version)
-                    shout_string.append("\nAP: ")
+                    shout_string.append("WIFI: ")
                     shout_string.append(access_point)
-                    shout_string.append("\nWIFI: ")
+                    shout_string.append("\n")
                     shout_string.append(wifi)
+                    if wired!="---":
+                        shout_string.append("\nWIRED: ")
+                        shout_string.append(wired)
                     if wan != "---":
                         shout_string.append("\nWAN: ")
                         shout_string.append(wan)
+                    if len(bluetooth)!=0:
+                        shout_string.append(bluetooth)
                 else:
-                    shout_string.append("STEELSQUID PIIO V")
-                    shout_string.append(steelsquid_piio.version)
-                    shout_string.append("\nWIRED: ")
+                    shout_string.append("WIRED: ")
                     shout_string.append(wired)
                     if wan != "---":
                         shout_string.append("\nWAN: ")
                         shout_string.append(wan)
-                shout_string.append(bluetooth)
-                shout_string.append("\nVOLTAGE: ")
-                shout_string.append(str(steelsquid_piio.voltage()))
+                    if len(bluetooth)!=0:
+                        shout_string.append(bluetooth)
+                if steelsquid_utils.get_flag("piio"):
+                    shout_string.append("\nVOLTAGE: ")
+                    shout_string.append(str(steelsquid_piio.volt(2)))
+                    shout_string.append("\n")
+                mes = "".join(shout_string)
+                steelsquid_utils.shout(mes, leave_on_lcd = True)
+            except:
+                steelsquid_utils.shout()
+            do_mount()
+        else:
+            if len(bluetooth)==0:
+                steelsquid_utils.shout("No network!", leave_on_lcd = True)
             else:
+                steelsquid_utils.shout("No network!"+bluetooth, leave_on_lcd = True)
+            do_umount()
+    else:
+        if steelsquid_utils.get_flag("bluetooth_pairing"):
+            answer = steelsquid_utils.execute_system_command(["hciconfig", "-a"])
+            for line in answer:
+                if "Name: " in line:
+                    line = line.replace("Name: '","")
+                    line = line.replace("'","")
+                    bluetooth = line
+                    break
+            if bluetooth == "":
+                bluetooth = "\nBLUETOOTH\nNo local device"
+            else:
+                bluetooth = "\nBLUETOOTH\n" + bluetooth
+        if net == "up":
+            try:
+                shout_string = []
                 if access_point != "---":
-                    shout_string.append("WIFI\n")
+                    shout_string.append("WIFI ")
                     shout_string.append(access_point)
                     shout_string.append("\n")
                     shout_string.append(wifi)
+                    if wired!="---":
+                        shout_string.append("\nWIRED\n")
+                        shout_string.append(wired)
                     if wan != "---":
                         shout_string.append("\nWAN IP\n")
                         shout_string.append(wan)
+                    if len(bluetooth)!=0:
+                        shout_string.append(bluetooth)
                 else:
                     shout_string.append("WIRED\n")
                     shout_string.append(wired)
                     if wan != "---":
                         shout_string.append("\nWAN IP\n")
                         shout_string.append(wan)
-            mes = "".join(shout_string)
-            steelsquid_utils.shout(mes, leave_on_lcd = True)
-        except:
-            steelsquid_utils.shout()
-        do_mount()
-    else:
-        if steelsquid_utils.get_flag("piio"):
-            import steelsquid_piio
-            steelsquid_piio.led_net(False)
-            shout_string = []
-            shout_string.append("STEELSQUID PIIO V")
-            shout_string.append(steelsquid_piio.version)
-            shout_string.append("\nNo network!")
-            shout_string.append(bluetooth)
-            shout_string.append("\nVOLTAGE: ")
-            shout_string.append(str(steelsquid_piio.voltage()))
-            steelsquid_utils.shout("".join(shout_string), leave_on_lcd = True)
+                    if len(bluetooth)!=0:
+                        shout_string.append(bluetooth)
+                mes = "".join(shout_string)
+                steelsquid_utils.shout(mes, leave_on_lcd = True)
+            except:
+                steelsquid_utils.shout()
+            do_mount()
         else:
-            steelsquid_utils.shout("No network!", leave_on_lcd = True)
-        do_umount()
+            if len(bluetooth)==0:
+                steelsquid_utils.shout("No network!", leave_on_lcd = True)
+            else:
+                steelsquid_utils.shout("No network!"+bluetooth, leave_on_lcd = True)
+            do_umount()
 
 
 def on_shutdown(args, para):
     '''
     Shutdown system
     '''
+    try:
+        if steelsquid_utils.get_flag("piio"):
+            steelsquid_kiss_global.PIIO.disable()
+        if steelsquid_utils.get_flag("rover"):
+            steelsquid_kiss_global.Rover.disable()
+        if steelsquid_utils.get_flag("alarm"):
+            steelsquid_kiss_global.Alarm.disable()                
+    except:
+        steelsquid_utils.shout()
     steelsquid_utils.shout("Goodbye :-(")
     if steelsquid_utils.get_flag("socket_connection"):
         try:
@@ -261,10 +301,6 @@ def on_shutdown(args, para):
             steelsquid_kiss_global.http_server.stop_server()
         except:
             pass
-    if steelsquid_utils.get_flag("piio"):
-        import steelsquid_piio
-        steelsquid_piio.led_net(False)
-        steelsquid_piio.led_bt(False)
     steelsquid_utils.execute_system_command_blind(['killall', 'aria2c'])
 
 
@@ -346,7 +382,7 @@ class Logger(object):
         '''
         if message != None:
             if len(str(message).strip())>0:
-                steelsquid_utils.shout(message, always_show=True)
+                steelsquid_utils.shout(message, always_show=True, to_lcd=False)
 
 
 def bluetooth_agent():
@@ -368,8 +404,7 @@ def bluetooth_agent():
             steelsquid_utils.shout("Start bluetooth: " + bluetooth)
             steelsquid_event.broadcast_event("network")
             if steelsquid_utils.get_flag("piio"):
-                import steelsquid_piio
-                steelsquid_piio.led_bt(True)
+                steelsquid_piio.bt(True)
             try:
                 proc=Popen("bluetoothctl", stdout=PIPE, stdin=PIPE, stderr=PIPE)
                 proc.stdin.write('power on\n')
@@ -396,7 +431,7 @@ def bluetooth_agent():
                 steelsquid_utils.shout("Error on start bluetoothctl", is_error=True)
         if steelsquid_utils.get_flag("piio"):
             import steelsquid_piio
-            steelsquid_piio.led_bt(False)
+            steelsquid_piio.bt(False)
         time.sleep(20)    
 
 
@@ -523,9 +558,9 @@ def on_pi_io_event(args, para):
     elif para[0] == "servo12c":
         steelsquid_pi.servo12c(para[1], para[2])
         steelsquid_utils.shout("servo12c(" + para[1] + ", "+para[2] + "): OK", always_show=True)
-    elif para[0] == "mpu6050_gyro":
-        x, y, z = steelsquid_pi.mpu6050_gyro()
-        steelsquid_utils.shout("mpu6050_gyro(): "+str(x)+", "+str(y)+", "+str(z), always_show=True)
+    elif para[0] == "mpu6050_movement":
+        x, y, z = steelsquid_pi.mpu6050_movement()
+        steelsquid_utils.shout("mpu6050_movement(): "+str(x)+", "+str(y)+", "+str(z), always_show=True)
     elif para[0] == "mpu6050_accel":
         x, y, z = steelsquid_pi.mpu6050_accel()
         steelsquid_utils.shout("mpu6050_accel(): "+str(x)+", "+str(y)+", "+str(z), always_show=True)
