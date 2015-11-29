@@ -687,6 +687,13 @@ def main():
             for name in pkgutil.iter_modules([pkgpath]):
                 steelsquid_utils.shout("Load custom module: " + 'expand.'+name[1], debug=True)                
                 thread.start_new_thread(import_file_dyn, (name[1],)) 
+
+            def inner_callback_method(add, pin, state):
+                print "AAAAAAAAAAAAAAAAAAA<<"
+            
+            steelsquid_pi.mcp23017_event(21, 5, inner_callback_method)
+
+
             thread.start_new_thread(import_expand, ()) 
             steelsquid_utils.shout("Listen for events", debug=True)
             steelsquid_event.broadcast_event("network")

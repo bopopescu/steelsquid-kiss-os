@@ -277,6 +277,8 @@ def gpio_event(gpio, callback_method, bouncetime_ms=60, resistor=PULL_DOWN, edge
     gpio = int(gpio)
     if use_piio_pin_nr:
         ngpio = __convert_to_gpio(gpio)
+    else:
+        ngpio=int(gpio)
     def inner_callback_method(pin, status):
         callback_method(gpio, status)
     steelsquid_pi.gpio_event(ngpio, inner_callback_method, bouncetime_ms, resistor, edge)
@@ -297,6 +299,8 @@ def gpio_click(gpio, callback_method, bouncetime_ms=60, resistor=PULL_DOWN, use_
     gpio = int(gpio)
     if use_piio_pin_nr:
         ngpio = __convert_to_gpio(gpio)
+    else:
+        ngpio=int(gpio)
     def inner_callback_method(pin):
         callback_method(gpio)
     steelsquid_pi.gpio_click(ngpio, inner_callback_method, bouncetime_ms, resistor)
@@ -746,7 +750,7 @@ def info_event(callback_method):
     '''
     def inner_callback_method(address, pin, status):
         callback_method(not status)
-    steelsquid_pi.mcp23017_event(21, 14, inner_callback_method, True, 26)
+    steelsquid_pi.mcp23017_event(21, 14, inner_callback_method, True, rpi_gpio=26)
     
     
 def info_click(callback_method):
@@ -757,7 +761,7 @@ def info_click(callback_method):
     '''
     def inner_callback_method(address, pin):
         callback_method()
-    steelsquid_pi.mcp23017_click(21, 14, inner_callback_method, True, 26)
+    steelsquid_pi.mcp23017_click(21, 14, inner_callback_method, True, rpi_gpio=26)
     
 
 def power_off():
@@ -778,7 +782,7 @@ def power_off_event(callback_method):
     '''
     def inner_callback_method(address, pin, status):
         callback_method(not status)
-    steelsquid_pi.mcp23017_event(21, 15, inner_callback_method, True, 26)
+    steelsquid_pi.mcp23017_event(21, 15, inner_callback_method, True, rpi_gpio=26)
     
     
 def power_off_click(callback_method):
@@ -789,7 +793,7 @@ def power_off_click(callback_method):
     '''
     def inner_callback_method(address, pin):
         callback_method()
-    steelsquid_pi.mcp23017_click(21, 15, inner_callback_method, True, 26)
+    steelsquid_pi.mcp23017_click(21, 15, inner_callback_method, True, rpi_gpio=26)
 
 
 def gpio_event_callback_method(pin, status): 

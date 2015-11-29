@@ -73,25 +73,6 @@ class PIIO(object):
         steelsquid_event.subscribe_to_event("seconds", cls.on_every_second, ())
         steelsquid_piio.power_off_click(cls.on_poweroff_button_click)
         steelsquid_piio.info_click(cls.on_info_button_click)
-        #steelsquid_piio.button(1, cls.on_button_1)
-        #steelsquid_piio.button(2, cls.on_button_2)
-        #steelsquid_piio.button(3, cls.on_button_3)
-        #steelsquid_piio.button(4, cls.on_button_4)
-        #steelsquid_piio.button(5, cls.on_button_5)
-        #steelsquid_piio.button(6, cls.on_button_6)
-        #steelsquid_piio.dip(1, cls.on_dip_1)
-        #steelsquid_piio.dip(2, cls.on_dip_2)
-        #steelsquid_piio.dip(3, cls.on_dip_3)
-        #steelsquid_piio.dip(4, cls.on_dip_4)
-        #steelsquid_piio.dip(5, cls.on_dip_5)
-        #steelsquid_piio.dip(6, cls.on_dip_6)
-        #steelsquid_piio.button_info(cls.on_button_info)
-        #steelsquid_piio.button_power_off(cls.on_button_power_off)
-        #if steelsquid_utils.get_flag("development"):
-        #    steelsquid_event.subscribe_to_event("button", cls.dev_button, ())
-        #    steelsquid_event.subscribe_to_event("dip", cls.dev_dip, ())
-        #steelsquid_event.subscribe_to_event("poweroff", cls.on_poweroff, ())
-        #steelsquid_piio.ok_flash(True, 0.1)
         cls.is_enabled=True
 
     @classmethod

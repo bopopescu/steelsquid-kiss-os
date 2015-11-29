@@ -292,6 +292,7 @@ def mcp23017_setup_out(address, gpio):
         if mcp_20 == None:
             with steelsquid_i2c.Lock():
                 mcp_20 = MCP23017(busnum = 1, address = 0x20, num_gpios = 16)
+                mcp_20.configSystemInterrupt(mcp_20.INTMIRRORON, mcp_20.INTPOLACTIVEHIGH)
         if mcp_setup_20[gpio] != SETUP_OUT:
             mcp_setup_20[gpio] == SETUP_OUT
             with steelsquid_i2c.Lock():
@@ -303,6 +304,7 @@ def mcp23017_setup_out(address, gpio):
         if mcp_21 == None:
             with steelsquid_i2c.Lock():
                 mcp_21 = MCP23017(busnum = 1, address = 0x21, num_gpios = 16)
+                mcp_21.configSystemInterrupt(mcp_21.INTMIRRORON, mcp_21.INTPOLACTIVEHIGH)
         if mcp_setup_21[gpio] != SETUP_OUT:
             mcp_setup_21[gpio] == SETUP_OUT
             with steelsquid_i2c.Lock():
@@ -314,6 +316,7 @@ def mcp23017_setup_out(address, gpio):
         if mcp_22 == None:
             with steelsquid_i2c.Lock():
                 mcp_22 = MCP23017(busnum = 1, address = 0x22, num_gpios = 16)
+                mcp_22.configSystemInterrupt(mcp_22.INTMIRRORON, mcp_22.INTPOLACTIVEHIGH)
         if mcp_setup_22[gpio] != SETUP_OUT:
             mcp_setup_22[gpio] == SETUP_OUT
             with steelsquid_i2c.Lock():
@@ -325,6 +328,7 @@ def mcp23017_setup_out(address, gpio):
         if mcp_23 == None:
             with steelsquid_i2c.Lock():
                 mcp_23 = MCP23017(busnum = 1, address = 0x23, num_gpios = 16)
+                mcp_23.configSystemInterrupt(mcp_23.INTMIRRORON, mcp_23.INTPOLACTIVEHIGH)
         if mcp_setup_23[gpio] != SETUP_OUT:
             mcp_setup_23[gpio] == SETUP_OUT
             with steelsquid_i2c.Lock():
@@ -336,6 +340,7 @@ def mcp23017_setup_out(address, gpio):
         if mcp_24 == None:
             with steelsquid_i2c.Lock():
                 mcp_24 = MCP23017(busnum = 1, address = 0x24, num_gpios = 16)
+                mcp_24.configSystemInterrupt(mcp_24.INTMIRRORON, mcp_24.INTPOLACTIVEHIGH)
         if mcp_setup_24[gpio] != SETUP_OUT:
             mcp_setup_24[gpio] == SETUP_OUT
             with steelsquid_i2c.Lock():
@@ -347,6 +352,7 @@ def mcp23017_setup_out(address, gpio):
         if mcp_25 == None:
             with steelsquid_i2c.Lock():
                 mcp_25 = MCP23017(busnum = 1, address = 0x25, num_gpios = 16)
+                mcp_25.configSystemInterrupt(mcp_25.INTMIRRORON, mcp_25.INTPOLACTIVEHIGH)
         if mcp_setup_25[gpio] != SETUP_OUT:
             mcp_setup_25[gpio] == SETUP_OUT
             with steelsquid_i2c.Lock():
@@ -358,6 +364,7 @@ def mcp23017_setup_out(address, gpio):
         if mcp_26 == None:
             with steelsquid_i2c.Lock():
                 mcp_26 = MCP23017(busnum = 1, address = 0x26, num_gpios = 16)
+                mcp_26.configSystemInterrupt(mcp_26.INTMIRRORON, mcp_26.INTPOLACTIVEHIGH)
         if mcp_setup_26[gpio] != SETUP_OUT:
             mcp_setup_26[gpio] == SETUP_OUT
             with steelsquid_i2c.Lock():
@@ -369,6 +376,7 @@ def mcp23017_setup_out(address, gpio):
         if mcp_27 == None:
             with steelsquid_i2c.Lock():
                 mcp_27 = MCP23017(busnum = 1, address = 0x27, num_gpios = 16)
+                mcp_27.configSystemInterrupt(mcp_27.INTMIRRORON, mcp_27.INTPOLACTIVEHIGH)
         if mcp_setup_27[gpio] != SETUP_OUT:
             mcp_setup_27[gpio] == SETUP_OUT
             with steelsquid_i2c.Lock():
@@ -630,6 +638,7 @@ def mcp23017_click(address, gpio, callback_method, pullup=True, rpi_gpio=26):
                             p[2] = new_v
                 mcp.clearInterrupts()
             gpio_event(rpi_gpio, call_met, bouncetime_ms=0, resistor=PULL_DOWN, edge=EDGE_RISING)
+            print rpi_gpio
         else: 
             mcp23017_events[address].append(post)
 
