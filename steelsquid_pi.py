@@ -569,28 +569,42 @@ def mcp23017_event(address, gpio, callback_method, pullup=True, rpi_gpio=26):
     mcp = mcp23017_setup_in(address, gpio, pullup)
     mcp.configPinInterrupt(gpio, mcp.INTERRUPTON, mcp.INTERRUPTCOMPAREPREVIOUS)
     mcp.clearInterrupts()
-    post = [None] * 3
+    post = [None] * 4
     post[0] = gpio
     post[1] = callback_method
     post[2] = None
+    post[3] = False #event
     with(lock_mcp):
         if len(mcp23017_events[address]) == 0: 
             mcp23017_events[address].append(post)
-            def call_met(para, status):
+            def mcp23017_call(para, status):
+                '''
+                '''
                 for p in mcp23017_events[address]:
                     gpio = p[0]
                     callback_method = p[1]
                     last_v = p[2]
+                    is_click=p[3]
                     with steelsquid_i2c.Lock():
                         new_v = mcp.input(gpio)==1
-                        if last_v==None or last_v != new_v:
-                            try:
-                                callback_method(address, gpio, new_v)
-                            except:
-                                steelsquid_utils.shout()
+                        if last_v==None:
+                            p[2] = new_v
+                        elif last_v != new_v:
+                            if is_click:
+                                if new_v==True:
+                                    try:
+                                        callback_method(address, gpio)
+                                    except:
+                                        steelsquid_utils.shout()
+                            else:
+                                try:
+                                    callback_method(address, gpio, new_v)
+                                except:
+                                    steelsquid_utils.shout()
+                                    
                             p[2] = new_v
                 mcp.clearInterrupts()
-            gpio_event(rpi_gpio, call_met, bouncetime_ms=0, resistor=PULL_DOWN, edge=EDGE_RISING)
+            gpio_event(rpi_gpio, mcp23017_call, bouncetime_ms=0, resistor=PULL_DOWN, edge=EDGE_RISING)
         else: 
             mcp23017_events[address].append(post)
             
@@ -613,32 +627,40 @@ def mcp23017_click(address, gpio, callback_method, pullup=True, rpi_gpio=26):
     mcp = mcp23017_setup_in(address, gpio, pullup)
     mcp.configPinInterrupt(gpio, mcp.INTERRUPTON, mcp.INTERRUPTCOMPAREPREVIOUS)
     mcp.clearInterrupts()
-    post = [None] * 3
+    post = [None] * 4
     post[0] = gpio
     post[1] = callback_method
     post[2] = None
+    post[3] = True #click
     with(lock_mcp):
         if len(mcp23017_events[address]) == 0: 
             mcp23017_events[address].append(post)
-            def call_met(para, status):
+            def mcp23017_call(para, status):
                 for p in mcp23017_events[address]:
                     gpio = p[0]
                     callback_method = p[1]
                     last_v = p[2]
+                    is_click=p[3]
                     with steelsquid_i2c.Lock():
                         new_v = mcp.input(gpio)==1
                         if last_v==None:
                             p[2] = new_v
                         elif last_v != new_v:
-                            if new_v==True:
+                            if is_click:
+                                if new_v==True:
+                                    try:
+                                        callback_method(address, gpio)
+                                    except:
+                                        steelsquid_utils.shout()
+                            else:
                                 try:
-                                    callback_method(address, gpio)
+                                    callback_method(address, gpio, new_v)
                                 except:
                                     steelsquid_utils.shout()
+                                    
                             p[2] = new_v
                 mcp.clearInterrupts()
-            gpio_event(rpi_gpio, call_met, bouncetime_ms=0, resistor=PULL_DOWN, edge=EDGE_RISING)
-            print rpi_gpio
+            gpio_event(rpi_gpio, mcp23017_call, bouncetime_ms=0, resistor=PULL_DOWN, edge=EDGE_RISING)
         else: 
             mcp23017_events[address].append(post)
 
