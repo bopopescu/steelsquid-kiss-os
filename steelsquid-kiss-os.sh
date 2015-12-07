@@ -76,6 +76,8 @@ python_downloads[23]="$base/steelsquid_oled_ssd1306.py"
 python_downloads[24]="$base/steelsquid_bluetooth_connection.py"
 python_downloads[25]="$base/steelsquid_i2c.py"
 python_downloads[26]="$base/MCP23017.py"
+python_downloads[27]="$base/expand/steelsquid_kiss_rover.py"
+python_downloads[28]="$base/expand/steelsquid_kiss_alarm.py"
 
 # Links to python_downloads
 python_links[1]="/usr/bin/steelsquid-boot"
@@ -103,6 +105,9 @@ python_links[22]="/usr/bin/dummy"
 python_links[23]="/usr/bin/dummy"
 python_links[24]="/usr/bin/dummy"
 python_links[25]="/usr/bin/dummy"
+python_links[26]="/usr/bin/dummy"
+python_links[27]="/usr/bin/dummy"
+python_links[28]="/usr/bin/dummy"
 
 # Download to web root folder
 web_root_downloads[1]="$base/index.html"

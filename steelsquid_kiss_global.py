@@ -24,10 +24,17 @@ from datetime import datetime
 from datetime import timedelta
 import os
 import urllib
+import threading
 import thread
 import sys
 import steelsquid_kiss_global
 import steelsquid_piio
+import steelsquid_boot
+import importlib
+import importlib
+import expand
+import steelsquid_kiss_expand
+import Queue
 
 
 # The socket connection, if enabled (not enabled = None)
@@ -35,10 +42,121 @@ import steelsquid_piio
 # Parameter: socket_client
 socket_connection = None
 
-
 # The http webserver, if enabled (not enabled = None)
 # Flag: web
 http_server = None
+
+# All loaded custom expand files (python module names in the expand directory that has bean imported)
+expand_modules=[]
+
+# Global data (key, Value)
+event_data={}
+
+# If data is changed in event_data, the methods in the list will fire (one thread will fire all events sequentially)
+event_data_callback_methods=[]
+
+# List with events that is to be fire by thread...
+event_data_queue=Queue.Queue()
+
+# Lock object for add to event_data_callback_methods
+lock = threading.Lock()
+
+# If more than this events pending for execution dropp new events
+max_pending_events=128
+
+
+def get_expand_module(name):
+    '''
+    Get a module from the expand directory
+    Only return modules that has bean activated
+    return: The module
+    '''    
+    return sys.modules['expand.'+name]
+
+
+def is_expand_module(name):
+    '''
+    Check if a module is imported and active
+    return: True/False
+    '''    
+    if 'expand.'+name in sys.modules:
+        mod = sys.modules['expand.'+name]
+        return hasattr(mod, "activate") and mod.activate() and mod.is_enabled
+    else:
+        return False
+    
+       
+def add_event_data_callback(method):
+    '''
+    Add event callback method
+    This method will fire when data is changed
+    def method(key, value):
+    '''    
+    with lock:
+        if len(event_data_callback_methods)==0:
+            thread.start_new_thread(__event_data_handler, ()) 
+        event_data_callback_methods.append(method)
+        
+
+def remove_event_data_callback(method):
+    '''
+    Remove event callback method
+    '''    
+    with lock:
+        try:
+            event_data_callback_methods.remove(method)
+        except ValueError:
+            pass        
+
+           
+def get_event_data(key):
+    '''
+    Get event data.
+    return: The value (None = not found/No value)
+    '''    
+    try:
+        return event_data[key]
+    except ValueError:
+        return None        
+
+
+def set_event_data(key, value):
+    '''
+    Set event data.
+    When eventdata is set methods in event_data_callback_methods will fire
+    key: Key for the data
+    value: Value for the data
+    '''    
+    event_data[key]=value
+    if len(event_data_callback_methods)>0 and event_data_queue.qsize() < max_pending_events:
+        event_data_queue.put((key, value))
+
+
+def del_event_data(key, value):
+    '''
+    Delete event data.
+    When eventdata is deleted methods in event_data_callback_methods will fire (with value=None)
+    key: Key for the data
+    '''    
+    try:
+        del event_data[key]
+    except:
+        pass
+    if event_data_queue.qsize() < max_pending_events:
+        event_data_queue.put((key, None))
+
+
+def __event_data_handler():
+    '''
+    Fire the event data events
+    '''    
+    while True:
+        key, value = event_data_queue.get()
+        try:
+            for method in event_data_callback_methods:
+                method(key, value)
+        except:
+            steelsquid_utils.shout("Fatal error in event_data_handler: "+key, is_error=True)            
 
 
 class PIIO(object):
@@ -56,31 +174,84 @@ class PIIO(object):
     # Last voltage read
     last_print_voltage = 0
 
+    # Expand has on_button_info method
+    expand_on_button_info = False
+    # Expand has on_button method
+    expand_on_button = False
+    # Expand has on_switch method
+    expand_on_switch = False
+
+    # Custom has on_button_info method
+    steel_expand_on_button_info = False
+    # Custom has on_button method
+    steel_expand_on_button = False
+    # Custom has on_switch method
+    steel_expand_on_switch = False
+
 
     @classmethod
-    def enable(cls):
+    def activate(cls):
+        '''
+        Return True/False if this functionality is to be enabled (execute on_enable)
+        return: True/False
+        '''    
+        return steelsquid_utils.get_flag("piio")
+        
+
+    @classmethod
+    def on_enable(cls):
         '''
         Enable the IO board functionality (this is executed by steelsquid_boot)
-        Flag: piio
+        Do not execute long running stuff here, do it in on_loop...
         '''    
+        global expand_modules
         steelsquid_utils.shout("Steelsquid PIIO board enabled")
+        for name in expand_modules:
+            mod = sys.modules['expand.'+name]
+            if hasattr(mod, "activate") and mod.activate():
+                if hasattr(mod, "on_button_info") and callable(getattr(mod, "on_button_info")):
+                    cls.expand_on_button_info=True
+                if hasattr(mod, "on_button") and callable(getattr(mod, "on_button")):
+                    cls.expand_on_button=True
+                if hasattr(mod, "on_switch") and callable(getattr(mod, "on_switch")):
+                    cls.expand_on_switch=True
+        if steelsquid_kiss_expand.activate():
+            if hasattr(steelsquid_kiss_expand, "on_button_info") and callable(getattr(steelsquid_kiss_expand, "on_button_info")):
+                cls.steel_expand_on_button_info=True
+            if hasattr(steelsquid_kiss_expand, "on_button") and callable(getattr(steelsquid_kiss_expand, "on_button")):
+                cls.steel_expand_on_button=True
+            if hasattr(steelsquid_kiss_expand, "on_switch") and callable(getattr(steelsquid_kiss_expand, "on_switch")):
+                cls.steel_expand_on_switch=True
         steelsquid_piio.led(1, False)
         steelsquid_piio.led(2, False)
         steelsquid_piio.led(3, False)
         steelsquid_piio.led(4, False)
         steelsquid_piio.led(5, False)
         steelsquid_piio.led(6, False)
-        steelsquid_event.subscribe_to_event("seconds", cls.on_every_second, ())
         steelsquid_piio.power_off_click(cls.on_poweroff_button_click)
-        steelsquid_piio.info_click(cls.on_info_button_click)
-        cls.is_enabled=True
+        steelsquid_piio.info_click(cls.on_button_info)
+        if cls.expand_on_button or cls.steel_expand_on_button:
+            steelsquid_piio.button_click(1, cls.on_button)
+            steelsquid_piio.button_click(2, cls.on_button)
+            steelsquid_piio.button_click(3, cls.on_button)
+            steelsquid_piio.button_click(4, cls.on_button)
+            steelsquid_piio.button_click(5, cls.on_button)
+            steelsquid_piio.button_click(6, cls.on_button)
+        if cls.expand_on_switch or cls.steel_expand_on_switch:
+            steelsquid_piio.switch_event(1, cls.on_switch)
+            steelsquid_piio.switch_event(2, cls.on_switch)
+            steelsquid_piio.switch_event(3, cls.on_switch)
+            steelsquid_piio.switch_event(4, cls.on_switch)
+            steelsquid_piio.switch_event(5, cls.on_switch)
+            steelsquid_piio.switch_event(6, cls.on_switch)
+
 
     @classmethod
-    def disable(cls):
+    def on_disable(cls):
         '''
         Disable the IO board functionality (this is executed by steelsquid_boot)
         Use this when system shutdown
-        Flag: piio
+        Do not execute long running stuff here...
         '''    
         cls.is_enabled=False
         steelsquid_piio.buz_flash(None, 0.1)
@@ -94,27 +265,14 @@ class PIIO(object):
         steelsquid_piio.led(5, False)
         steelsquid_piio.led(6, False)
 
-    @classmethod
-    def on_poweroff_button_click(cls):
-        '''
-        Power off the system
-        '''
-        steelsquid_piio.shutdown()
 
     @classmethod
-    def on_info_button_click(cls):
+    def on_loop(cls):
         '''
-        Info button clicked
-        '''
-        steelsquid_piio.buz_flash(None, 0.1)
-        steelsquid_event.broadcast_event("network")
-
-    @classmethod
-    def on_every_second(cls, args, para):
-        '''
-        Read voltage and display on LCD
-        Check for low voltage
-        '''
+        This will execute over and over again untill it return None or -1
+        If it return a number larger than 0 it will sleep for that number of seconds before execute again.
+        If it return 0 it will not not sleep, will execute again imediately.
+        '''    
         new_voltage = steelsquid_piio.volt(2, 4)
         voltage_waring = int(steelsquid_utils.get_parameter("voltage_waring", "10"))
         voltage_poweroff = int(steelsquid_utils.get_parameter("voltage_poweroff", "8"))
@@ -122,6 +280,22 @@ class PIIO(object):
         if new_voltage<voltage_waring:
             v_warn=" (Warning)"
             steelsquid_piio.low_bat(True)
+            try:
+                cls.on_low_bat(new_voltage)
+                if steelsquid_utils.get_flag("rover"):
+                    steelsquid_kiss_global.Rover.on_low_bat(new_voltage)
+                if steelsquid_utils.get_flag("alarm"):
+                    steelsquid_kiss_global.Alarm.on_low_bat(new_voltage)
+                for name in expand_modules:
+                    mod = sys.modules['expand.'+name]
+                    if hasattr(mod, "activate") and mod.activate():
+                        if hasattr(mod, "on_low_bat") and callable(getattr(mod, "on_low_bat")):
+                            mod.on_low_bat(new_voltage)
+                if steelsquid_kiss_expand.activate():
+                    if hasattr(steelsquid_kiss_expand, "on_low_bat") and callable(getattr(steelsquid_kiss_expand, "on_low_bat")):
+                        steelsquid_kiss_expand.on_low_bat(new_voltage)
+            except:
+                steelsquid_utils.shout()
         else:
             steelsquid_piio.low_bat(False)
         if new_voltage<voltage_poweroff:
@@ -132,8 +306,6 @@ class PIIO(object):
                 if abs(new_voltage - cls.last_print_voltage)>=0.1:
                     if cls.last_print_voltage == 0:
                         steelsquid_utils.shout("Voltage is: " + str(new_voltage), to_lcd=False)
-                    else:
-                        steelsquid_utils.shout("Voltage changed: " + str(new_voltage), to_lcd=False)
                     cls.last_print_voltage = new_voltage
                 last = steelsquid_pi.lcd_last_text
                 if last != None and "VOLTAGE: " in last:
@@ -145,448 +317,104 @@ class PIIO(object):
                         else:
                             news = last[:i1]+str(new_voltage)+v_warn+last[i2:]
                         steelsquid_piio.lcd(news, number_of_seconds = 0)
-                
+        return 1
 
 
-class Alarm(object):
-    '''
-    Fuctionality for my rover controller
-    Also see utils.html, steelsquid_kiss_http_server.py, steelsquid_kiss_socket_connection.py
-    '''
-    
-    # Is the alarm functionality enabled
-    is_enabled = False
-    
-    # Is siren on
-    is_siren_on = False
-
-    # Is lamp on
-    is_lamp_on = False
-
-    # Motion detected
-    motion_detected = False
-    
-    # Alarm is triggered
-    alarm_triggered = False
-    
-    # Calculate when alarm should go off
-    counter=0
-    last_move = 0
-    last_trigger = datetime.now() - timedelta(days =1 )
-
-    # If this is a server calculate if to send alarm to clients
-    last_trigger_clients = datetime.now() - timedelta(days =1 )
-    
-    # Lightlevel from PCF8591 (YL-40)
-    light_level = None
-
-    # Temperature from HDC1008
-    temperature = None
-
-    # Lightlevel from HDC1008
-    humidity = None
-
-    # Status from connected clients (if this is a server)
-    # Is a dict with all clients and every object in the dict is a list of statuses from that client
-    clients_status = {}
-
-    # Commands from Alarm Arm app {id, time}
-    alarm_arm = {}
-    
-    ever2second = True
-    
     @classmethod
-    def enable(cls):
+    def on_network(cls, status, wired, wifi_ssid, wifi, wan):
         '''
-        Enable the alarm functionality (this is set by steelsquid_boot)
-        Flag: alarm
+        Execute on network up or down.
+        status = True/False (up or down)
+        wired = Wired ip number
+        wifi_ssid = Cnnected to this wifi
+        wifi = Wifi ip number
+        wan = Ip on the internet
         '''    
-        steelsquid_utils.shout("Steelsquid Alarm/Surveillance enabled")
-        steelsquid_pi.gpio_event(25, cls.on_motion, resistor=steelsquid_pi.PULL_NONE)
-        
-        if not steelsquid_utils.has_parameter("alarm_security_movments"):
-            steelsquid_utils.set_parameter("alarm_security_movments", "1");
-        if not steelsquid_utils.has_parameter("alarm_security_movments_seconds"):
-            steelsquid_utils.set_parameter("alarm_security_movments_seconds", "20");
-        if not steelsquid_utils.has_parameter("alarm_security_seconds"):
-            steelsquid_utils.set_parameter("alarm_security_seconds", "10");
-        if not steelsquid_utils.has_parameter("alarm_security_wait"):
-            steelsquid_utils.set_parameter("alarm_security_wait", "120");
-        if not steelsquid_utils.has_parameter("alarm_light_acivate"):
-            steelsquid_utils.set_parameter("alarm_light_acivate", "15");
-        # Execute this every second
-        steelsquid_event.subscribe_to_event("second", cls.on_every_second, None, False)
-        
-        
-    @classmethod
-    def disable(cls):
-        '''
-        Disable the IO board functionality (this is executed by steelsquid_boot)
-        Use this when system shutdown
-        Flag: piio
-        '''    
-    pass
-        
-        
-    @classmethod
-    def on_every_second(cls, args, para):
-        '''
-        Read lightlevel, temperature and humidity in background every second
-        Also if this is a client, send status to server.
-        '''
-        # Try to read sensors
-        try:
-            cls.light_level = steelsquid_pi.yl40_light_level();
-        except:
-            pass
-        try:
-            temp, hum = steelsquid_pi.hdc1008();
-            cls.temperature = round(temp, 1)
-            cls.humidity = round(hum, 1)
-        except:
-            pass
-        try:
-            alarm_light_acivate = int(steelsquid_utils.get_parameter("alarm_light_acivate"));
-            if alarm_light_acivate != -1:
-                if int(cls.light_level)<alarm_light_acivate:
-                    cls.lamp(True)
-                else:
-                    cls.lamp(False)
-        except:
-            pass
-        if steelsquid_utils.get_flag("alarm"):
-            if steelsquid_utils.has_parameter("socket_client"):
-                # Send status to server
-                server_ip = steelsquid_utils.get_parameter("socket_client")
-                try:
-                    statuses = []
-                    name = steelsquid_utils.execute_system_command(['hostname'])[0]
-                    armed = steelsquid_utils.get_flag("alarm_security")
-                    motion_detected = cls.motion_detected
-                    statuses.append(name)
-                    statuses.append(armed)
-                    statuses.append(cls.alarm_triggered)
-                    statuses.append(cls.motion_detected)
-                    statuses.append(cls.is_siren_on)
-                    statuses.append(cls.is_lamp_on)
-                    statuses.append(cls.light_level)
-                    statuses.append(cls.temperature)
-                    statuses.append(cls.humidity)
-                    steelsquid_kiss_global.socket_connection.send_request("alarm_push", statuses)
-                except:
-                    steelsquid_utils.shout()
-            elif steelsquid_utils.get_flag("socket_server"):
-                #Check if client still is connected, of not remove from status list
-                for k in cls.clients_status.keys():
-                    if k not in steelsquid_kiss_global.socket_connection.get_connected_ip_numbers():
-                        del cls.clients_status[k]
-                #Check if to send alarm to clients
-                alarm_triggered = cls.alarm_triggered
-                if not alarm_triggered:
-                    for key in cls.clients_status:
-                        client = cls.clients_status[key]
-                        alarm_triggered = steelsquid_utils.to_boolean(client[2])
-                        if alarm_triggered:
-                            break
-                if alarm_triggered:
-                    alarm_security_wait = int(steelsquid_utils.get_parameter("alarm_security_wait"))
-                    now = datetime.now()
-                    delta = now - cls.last_trigger_clients
-                    if delta.total_seconds() > alarm_security_wait:
-                        if not cls.alarm_triggered:
-                            cls.on_remote_alarm()
-                        cls.last_trigger_clients=datetime.now() 
-                        steelsquid_kiss_global.socket_connection.send_request("alarm_remote_alarm", [])
-            if steelsquid_utils.get_flag("alarm_app"):
-                for client_id in cls.alarm_arm.keys():
-                    last_timestamp = cls.alarm_arm[client_id]
-                    now = datetime.now()
-                    delta = now - last_timestamp
-                    if delta.total_seconds() > 600:
-                        cls.alarm_arm.pop(client_id, None)
-                if len(cls.alarm_arm)==0:
-                    if not steelsquid_utils.get_flag("alarm_security"):
-                        steelsquid_kiss_global.Alarm.arm(True)
-                        steelsquid_kiss_global.socket_connection.send_request("alarm_arm", ["True"])
-                else:
-                    if steelsquid_utils.get_flag("alarm_security"):
-                        steelsquid_kiss_global.Alarm.arm(False)
-                        steelsquid_kiss_global.socket_connection.send_request("alarm_arm", ["False"])
+        pass
 
-                
+
     @classmethod
-    def get_statuses(cls):
+    def on_low_bat(cls, voltage):
         '''
-        Get status of this device and also status on all connected clients
+        Execute when voltage is to low.
+        Is set with the paramater: voltage_waring
+        voltage = Current voltage
+        '''    
+        pass
+
+
+    @classmethod
+    def on_button_info(cls):
         '''
-        statuses = []
-        if steelsquid_utils.get_flag("alarm") and steelsquid_utils.get_flag("socket_server"):
-            # Status of this local device
-            ip = steelsquid_utils.network_ip()
-            name = steelsquid_utils.execute_system_command(['hostname'])[0]
-            armed = steelsquid_utils.get_flag("alarm_security")
-            motion_detected = cls.motion_detected
-            statuses.append(ip)
-            statuses.append(name)
-            statuses.append(armed)
-            statuses.append(cls.alarm_triggered)
-            statuses.append(cls.motion_detected)
-            statuses.append(cls.is_siren_on)
-            statuses.append(cls.is_lamp_on)
-            statuses.append(cls.light_level)
-            statuses.append(cls.temperature)
-            statuses.append(cls.humidity)
+        Execute when info button clicken on the PIIO board
+        '''    
+        global expand_modules
+        steelsquid_piio.buz_flash(None, 0.1)
+        steelsquid_event.broadcast_event("network")
+        if cls.expand_on_button_info:
             try:
-                urllib.urlretrieve("http://"+ip+":8080/?action=snapshot", "/opt/steelsquid/web/snapshots/"+ip+".jpg")
+                for name in expand_modules:
+                    mod = sys.modules['expand.'+name]
+                    mod.on_button_info()
             except:
-                try:
-                    os.remove("/opt/steelsquid/web/snapshots/"+ip+".jpg")
-                except:
-                    pass
-            
-            # Get status from all connected clients
-            for key in cls.clients_status:
-                client = cls.clients_status[key]
-                statuses.append(key)
-                statuses.extend(client)
-                try:
-                    urllib.urlretrieve("http://"+key+":8080/?action=snapshot", "/opt/steelsquid/web/snapshots/"+key+".jpg")
-                except:
-                    try:
-                        os.remove("/opt/steelsquid/web/snapshots/"+key+".jpg")
-                    except:
-                        pass
-                    
-        return statuses
-        
-        
-    @classmethod
-    def on_motion(cls, pin, status):
-        '''
-        Execute on motion
-        '''
-        cls.motion_detected = status 
-        if steelsquid_utils.get_flag("alarm_security"):
-            nr_of_movments = int(steelsquid_utils.get_parameter("alarm_security_movments"))
-            movments_under_time = int(steelsquid_utils.get_parameter("alarm_security_movments_seconds"))
-            alarm_for_seconds = int(steelsquid_utils.get_parameter("alarm_security_seconds"))
-            alarm_security_wait = int(steelsquid_utils.get_parameter("alarm_security_wait"))
-            activate_siren = steelsquid_utils.get_flag("alarm_security_activate_siren")
-            alarm_security_send_mail = steelsquid_utils.get_flag("alarm_security_send_mail")
-            if status==True and cls.alarm_triggered==False:
-                #Activate IR-lamp for 1 minute
-                if not cls.lamp():
-                    cls.lamp(True)
-                    steelsquid_utils.execute_delay(120, cls.lamp, ((False),))
-                now = datetime.now()
-                delta = now - cls.last_trigger
-                if delta.total_seconds() > alarm_security_wait:
-                    if cls.last_move == 0:
-                        cls.last_move = datetime.now()                
-                    delta = now - cls.last_move
-                    if delta.total_seconds()<movments_under_time:
-                        cls.counter=cls.counter+1
-                    else:
-                        cls.counter=0
-                        cls.last_move = 0
-                    if cls.counter>=nr_of_movments:
-                        cls.alarm_triggered=True
-                        cls.last_trigger=datetime.now() 
-                        if activate_siren:
-                            cls.siren(True)
-                        if alarm_security_send_mail:
-                            cls.send_mail()
-                        steelsquid_utils.execute_delay(alarm_for_seconds, cls.turn_off_alarm, None)
+                steelsquid_utils.shout("Fatal error in expand."+name+" on_button_info", is_error=True)
 
-                    
-    @classmethod
-    def send_mail(cls):
-        '''
-        Send alarm mail
-        '''
-        try:
-            urllib.urlretrieve("http://localhost:8080/?action=snapshot", "/tmp/snapshot1.jpg")
-            time.sleep(1.5)
-            urllib.urlretrieve("http://localhost:8080/?action=snapshot", "/tmp/snapshot2.jpg")
-            time.sleep(1.5)
-            urllib.urlretrieve("http://localhost:8080/?action=snapshot", "/tmp/snapshot3.jpg")
-            ip = steelsquid_utils.network_ip_test_all()
-            if steelsquid_utils.get_flag("web_https"):
-                link = 'https://'+ip+'/utils?alarm'
-            else:
-                link = 'http://'+ip+'/utils?alarm'
-            steelsquid_utils.notify("Security alarm from: " + os.popen("hostname").read()+"\n"+link, ["/tmp/snapshot1.jpg", "/tmp/snapshot2.jpg", "/tmp/snapshot3.jpg"])
-        except:
-            steelsquid_utils.shout()
-
-    @classmethod
-    def turn_off_alarm(cls):
-        '''
-        Turn off a activated alarm
-        '''
-        cls.siren(False)
-        cls.alarm_triggered=False
-        cls.counter=0
-        cls.last_move = 0
-
-    @classmethod
-    def arm(cls, armIt):
-        '''
-        Turn on and of the alarm
-        '''
-        if armIt==True:
-            steelsquid_utils.set_flag("alarm_security")
-        else:
-            steelsquid_utils.del_flag("alarm_security")
-            cls.turn_off_alarm()
-        
-
-    @classmethod
-    def siren(cls, activate=None):
-        '''
-        Aktivate the siren and get if it is activated
-        '''    
-        if activate!=None:
-            if activate:
-                steelsquid_pi.gpio_set(17, True);
-            else:
-                steelsquid_pi.gpio_set(17, False);
-            cls.is_siren_on=activate
-        return cls.is_siren_on
-
-    @classmethod
-    def lamp(cls, activate=None):
-        '''
-        Aktivate the lamp and get if it is activated
-        '''    
-        if activate!=None:
-            if activate:
-                steelsquid_pi.gpio_set(22, True);
-                steelsquid_pi.gpio_set(27, True);
-            else:
-                steelsquid_pi.gpio_set(22, False);
-                steelsquid_pi.gpio_set(27, False);
-            cls.is_lamp_on=activate
-        return cls.is_lamp_on
-
-
-    @classmethod
-    def on_remote_alarm(cls):
-        '''
-        If this clients server or other clients has an alarm
-        turn on this device siren
-        '''
-        if steelsquid_utils.get_flag("alarm_security") and steelsquid_utils.get_flag("alarm_remote_siren"):
-            alarm_for_seconds = int(steelsquid_utils.get_parameter("alarm_security_seconds"))
-            cls.siren(True)
-            steelsquid_utils.execute_delay(alarm_for_seconds, cls.siren, ((False),))
-
-
-class Rover(object):
-    '''
-    Fuctionality for my rover controller
-    Also see utils.html, steelsquid_kiss_http_server.py, steelsquid_kiss_socket_connection.py
-    '''
-
-    # Is the rover functionality enabled
-    is_enabled = False
-    
-    @classmethod
-    def enable(cls):
-        '''
-        Enable the rover functionality (this is set by steelsquid_boot)
-        Flag: rover
-        '''    
-        import steelsquid_piio
-        steelsquid_utils.shout("Steelsquid Rover enabled")
-        steelsquid_piio.servo_position = steelsquid_utils.get_parameter("servo_position", steelsquid_piio.servo_position)
-        steelsquid_piio.servo_position_max = steelsquid_utils.get_parameter("servo_position_max", steelsquid_piio.servo_position_max)
-        steelsquid_piio.servo_position_min = steelsquid_utils.get_parameter("servo_position_min", steelsquid_piio.servo_position_min)
-        steelsquid_piio.motor_forward = steelsquid_utils.get_parameter("motor_forward", steelsquid_piio.motor_forward)
-        steelsquid_piio.motor_backward = steelsquid_utils.get_parameter("motor_backward", steelsquid_piio.motor_backward)
-        steelsquid_piio.servo(1, steelsquid_piio.servo_position)       
-        steelsquid_event.subscribe_to_event("second", cls.on_second, ())         
-        cls.is_enabled=True
-
-    @classmethod
-    def disable(cls):
-        '''
-        Disable the IO board functionality (this is executed by steelsquid_boot)
-        Use this when system shutdown
-        Flag: piio
-        '''    
-    pass
-
-    @classmethod
-    def on_second(cls, args, para):
-        '''
-        If no signal after 1 second stop the rover. (connection lost!!!)
-        '''
-        import steelsquid_piio
-        now = time.time()*1000
-        if now - steelsquid_piio.trex_motor_last_change() > 1000:
+        if cls.steel_expand_on_button_info:
             try:
-                steelsquid_piio.trex_motor(0,0)
+                steelsquid_kiss_expand.on_button_info()
             except:
-                pass
+                steelsquid_utils.shout("Fatal error in steelsquid_kiss_expand on_button_info", is_error=True)
+
+
+    @classmethod
+    def on_button(cls, button_nr):
+        '''
+        Execute when button 1 to 6 is clicken on the PIIO board
+        button_nr = button 1 to 6
+        '''    
+        global expand_modules
+        if cls.expand_on_button:
+            try:
+                for name in expand_modules:
+                    mod = sys.modules['expand.'+name]
+                    mod.on_button(button_nr)
+            except:
+                steelsquid_utils.shout("Fatal error in expand."+name+" on_button", is_error=True)
+
+        if cls.steel_expand_on_button:
+            try:
+                steelsquid_kiss_expand.on_button(button_nr)
+            except:
+                steelsquid_utils.shout("Fatal error in steelsquid_kiss_expand on_button", is_error=True)
+
+
+    @classmethod
+    def on_switch(cls, dip_nr, status):
+        '''
+        Execute when switch 1 to 6 is changed on the PIIO board
+        dip_nr = DIP switch nr 1 to 6
+        status = True/False   (on/off)
+        '''    
+        global expand_modules
+        if cls.expand_on_switch:
+            try:
+                for name in expand_modules:
+                    mod = sys.modules['expand.'+name]
+                    mod.on_switch(dip_nr, status)
+            except:
+                steelsquid_utils.shout("Fatal error in expand."+name+" on_switch", is_error=True)
+        if cls.steel_expand_on_switch:
+            try:
+                steelsquid_kiss_expand.on_switch(dip_nr, status)
+            except:
+                steelsquid_utils.shout("Fatal error in steelsquid_kiss_expand on_switch", is_error=True)
+
+
+    @classmethod
+    def on_poweroff_button_click(cls):
+        '''
+        Power off the system
+        '''
+        steelsquid_piio.shutdown()
                 
-    @classmethod
-    def info(cls):
-        '''
-        Get info on rover functionality
-        '''
-        enabled = steelsquid_utils.get_flag("rover")
-        if enabled:
-            import steelsquid_piio
-            battery_voltage, _, _, _, _, _, _, _, _ = steelsquid_piio.trex_status()
-            battery_voltage = float(battery_voltage)/100
-            return [True, battery_voltage, steelsquid_piio.gpio_22_xv_toggle_current(2), steelsquid_piio.gpio_22_xv_toggle_current(1), steelsquid_piio.servo_position, steelsquid_piio.servo_position_min, steelsquid_piio.servo_position_max, steelsquid_piio.motor_backward, steelsquid_piio.motor_forward]
-        else:
-            return False
-
-
-    @classmethod
-    def light(cls):
-        '''
-        Light on and off (toggle)
-        '''
-        import steelsquid_piio
-        status = steelsquid_piio.gpio_22_xv_toggle(2)
-        steelsquid_piio.gpio_22_xv(3, status)
-        return status
-
-
-    @classmethod
-    def alarm(cls):
-        '''
-        Alarm on and off (toggle)
-        '''
-        import steelsquid_piio
-        return steelsquid_piio.gpio_22_xv_toggle(1)
-
-
-    @classmethod
-    def tilt(cls, value):
-        '''
-        Tilt the camera
-        '''
-        import steelsquid_piio
-        if value == True:
-            steelsquid_piio.servo_move(1, 10)
-        elif value == False:
-            steelsquid_piio.servo_move(1, -10)
-        else:
-            value = int(value)
-            steelsquid_piio.servo(1, value)
-
-
-    @classmethod
-    def drive(cls, left, right):
-        '''
-        Tilt the camera
-        '''
-        import steelsquid_piio
-        left = int(left)
-        right = int(right)
-        steelsquid_piio.trex_motor(left, right)
 

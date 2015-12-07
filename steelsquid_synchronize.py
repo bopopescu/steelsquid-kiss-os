@@ -12,7 +12,7 @@ base_remote_port=22
 base_remote_user=root
 base_remote_password=raspberry
 
-Settings will be used in config.txt is it exists.
+Settings will be used in config.txt if it exists.
 4 first rows:
 ip
 port
@@ -20,11 +20,19 @@ user
 password
 
 Will check for changes in this files:
-steelsquid-kiss-os.sh
-The files in the paramater python_downloads inside steelsquid-kiss-os.sh
-The files in the paramater web_root_downloads inside steelsquid-kiss-os.sh
+ - steelsquid-kiss-os.sh
+ - The files in the paramater python_downloads inside steelsquid-kiss-os.sh
+   Will be copied to /opt/steelsquid/python/
+ - The files in the paramater web_root_downloads inside steelsquid-kiss-os.sh
+   Will be copied to /opt/steelsquid/web
+ - Files under the img directory
+   Will be copied to /opt/steelsquid/web/img
+ - Files (.py) under the expand directory
+   Will be copied to /opt/steelsquid/python/expand
 
 Will also check config.txt 6 row and forward for files.
+Local file|Remote file
+
 Example config.txt
 192.168.0.194
 22
@@ -32,7 +40,7 @@ root
 raspberry
 
 /home/steelsquid/steelsquid-kiss-os/mypythonfile.py|/opt/steelsquid/python/mypythonfile1.py
-/home/steelsquid/steelsquid-kiss-os/autoinportthis.py|/opt/steelsquid/python/run/autoinportthis.py
+/home/steelsquid/steelsquid-kiss-os/autoinportthis.py|/opt/steelsquid/python/expand/autoinportthis.py
 /home/steelsquid/steelsquid-kiss-os/myhtml.html|/opt/steelsquid/web/myhtml.html
 
 @organization: Steelsquid
@@ -63,6 +71,7 @@ python_files = []
 web_files = []
 extra_files = []
 img_files = []
+expand_files = []
 
 ssh = []
 sftp = []
@@ -82,6 +91,7 @@ def load_data():
     global web_files
     global extra_files
     global img_files
+    global expand_files
     global ssh
     global sftp
     global channel
@@ -101,11 +111,13 @@ def load_data():
                 line = line.replace("$base/","")
                 line = line.replace("\"","")
                 web_files.append([line, 0])
-            elif line.startswith("web_img_downloads["):
-                line = line.split("=")[1]
-                line = line.replace("$base/","")
-                line = line.replace("\"","")
-                img_files.append([line, 0])
+    if os.path.isdir("expand"):
+        for tfile in os.listdir("expand"):
+            if tfile.endswith(".py"):
+                expand_files.append(["expand/"+tfile, 0])
+    if os.path.isdir("img"):
+        for tfile in os.listdir("img"):
+            img_files.append(["img/"+tfile, 0])
     if os.path.isfile("config.txt"):
         print ""
         steelsquid_utils.log("Load settings from config.txt")
@@ -171,6 +183,13 @@ def listener():
             if file_change != file_last:
                 o[1] = file_change
                 transmit(file_name, "/opt/steelsquid/web/"+file_name)
+        for o in expand_files:
+            file_name = o[0]
+            file_last = o[1]
+            file_change = os.path.getmtime(file_name)
+            if file_change != file_last:
+                o[1] = file_change
+                transmit(file_name, "/opt/steelsquid/python/"+file_name)
         for o in extra_files:
             file_local = o[0]
             file_remote = o[1]
@@ -179,6 +198,7 @@ def listener():
             if file_change != file_last:
                 o[2] = file_change
                 transmit(file_local, file_remote)
+        
         time.sleep(0.5)
 
 
@@ -345,6 +365,7 @@ def print_menu():
     print " C : custom : Reload the custom modules (/opt/steelsquid/python/expand/...)"
     print " E : expand : Reload steelsquid_kiss_expand.py"
     print " S : server : Reload ...uid_kiss_http_expand.py, ...uid_kiss_socket_expand.py"
+    print " G : global : Reload steelsquid_kiss_global.py"
     print " A : all    : Start/Restart steelsquid service (implememt all changes)"
     print " K : kill   : Stop steelsquid service"
     print " R : reboot : Reboot the remote machine"
@@ -386,6 +407,9 @@ if __name__ == '__main__':
         elif answer == "S" or answer == "s" or answer == "server":
             steelsquid_utils.log("Request reload of ...uid_kiss_http_expand.py, ...uid_kiss_socket_expand.py")
             send_command("event reload server")
+        elif answer == "G" or answer == "g" or answer == "global":
+            steelsquid_utils.log("Request reload of steelsquid_kiss_global.py")
+            send_command("event reload global")
         elif answer == "A" or answer == "a" or answer == "all":
             steelsquid_utils.log("Request service restart")
             send_command("steelsquid restart")

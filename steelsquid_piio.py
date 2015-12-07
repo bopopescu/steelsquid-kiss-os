@@ -56,7 +56,7 @@ def shutdown():
     '''
     Shutdown and power off the PIIO board
     '''
-    steelsquid_kiss_global.PIIO.disable()
+    steelsquid_kiss_global.PIIO.on_disable()
     steelsquid_pi.po16_gpio_set(1, True)
     steelsquid_utils.execute_system_command_blind(['shutdown', 'now', '-h'])
 
@@ -125,7 +125,7 @@ def button_click(button_nr, callback_method):
     steelsquid_pi.mcp23017_click(21, button_nr-1, mcp_event_callback_method, rpi_gpio=26)
 
 
-def dip(dip_nr):
+def switch(dip_nr):
     '''
     Read status of the 6 dip switch on the PIIO board
     dip_nr = 1 to 6
@@ -135,7 +135,7 @@ def dip(dip_nr):
     return not steelsquid_pi.mcp23017_get(21, dip_nr)
 
 
-def dip_event(dip_nr, callback_method):
+def switch_event(dip_nr, callback_method):
     '''
     Listen for changes on the 6 dip switches on the PIIO board
     dip_nr = 1 to 6
@@ -855,11 +855,11 @@ if __name__ == '__main__':
         print("Listen for click on the 6 buttons on the PIIO board")
         print("button_nr: 1-6")
         print("")
-        printb("piio dip <dip_nr>")
+        printb("piio switch <dip_nr>")
         print("Read status of the 6 dip switch on the PIIO board")
         print("dip_nr = 1 to 6")
         print("")
-        printb("piio dip_event <dip_nr>")
+        printb("piio switch_event <dip_nr>")
         print("Listen for change of the 6 dip switch on the PIIO board")
         print("dip_nr: 1-6")
         print("")
@@ -1000,13 +1000,13 @@ if __name__ == '__main__':
                 sys.stdout.flush()
             button_click(para1, on_change)
             raw_input()
-        elif command == "dip":
-            print dip(para1)
-        elif command == "dip_event":
+        elif command == "switch":
+            print switch(para1)
+        elif command == "switch_event":
             def on_change(dip_nr, status):
                 sys.stdout.write(str(dip_nr)+"="+str(status).ljust(10) + "\r")
                 sys.stdout.flush()
-            dip_event(para1, on_change)
+            switch_event(para1, on_change)
             raw_input()
         elif command == "led":
             led(para1, para2)

@@ -74,7 +74,8 @@ class SteelsquidKissSocketServer(steelsquid_socket_connection.SteelsquidSocketCo
         '''
         Send status of client to server
         '''
-        steelsquid_kiss_global.Alarm.clients_status[remote_address]=parameters
+        module = steelsquid_kiss_global.get_expand_module("steelsquid_kiss_alarm")
+        module.clients_status[remote_address]=parameters
         
 
     def alarm_push_response(self, remote_address, parameters):
@@ -95,7 +96,8 @@ class SteelsquidKissSocketServer(steelsquid_socket_connection.SteelsquidSocketCo
         '''
         Server send to all clients that some other clients or the server has an alarm
         '''
-        steelsquid_kiss_global.Alarm.on_remote_alarm()
+        module = steelsquid_kiss_global.get_expand_module("steelsquid_kiss_alarm")
+        module.on_remote_alarm()
         
 
     def alarm_remote_alarm_response(self, remote_address, parameters):
@@ -116,10 +118,11 @@ class SteelsquidKissSocketServer(steelsquid_socket_connection.SteelsquidSocketCo
         '''
         Arm/disarm alarm on client (from server)
         '''
+        module = steelsquid_kiss_global.get_expand_module("steelsquid_kiss_alarm")
         if parameters[0] == "True":
-            steelsquid_kiss_global.Alarm.arm(True)
+            module.arm(True)
         else:
-            steelsquid_kiss_global.Alarm.arm(False)
+            module.arm(False)
         
 
     def alarm_arm_response(self, remote_address, parameters):
@@ -140,10 +143,11 @@ class SteelsquidKissSocketServer(steelsquid_socket_connection.SteelsquidSocketCo
         '''
         Activate/deaqctivate siren on client (from server)
         '''
+        module = steelsquid_kiss_global.get_expand_module("steelsquid_kiss_alarm")
         if parameters[0] == "True":
-            steelsquid_kiss_global.Alarm.siren(True)
+            module.siren(True)
         else:
-            steelsquid_kiss_global.Alarm.siren(False)
+            module.siren(False)
         
 
     def alarm_siren_response(self, remote_address, parameters):
@@ -164,10 +168,11 @@ class SteelsquidKissSocketServer(steelsquid_socket_connection.SteelsquidSocketCo
         '''
         Activate/deaqctivate lamp on client (from server)
         '''
+        module = steelsquid_kiss_global.get_expand_module("steelsquid_kiss_alarm")
         if parameters[0] == "True":
-            steelsquid_kiss_global.Alarm.lamp(True)
+            module.lamp(True)
         else:
-            steelsquid_kiss_global.Alarm.lamp(False)
+            module.lamp(False)
         
 
     def alarm_lamp_response(self, remote_address, parameters):

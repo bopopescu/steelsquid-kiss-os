@@ -105,19 +105,20 @@ class SteelsquidKissHttpServerUtils(steelsquid_kiss_http_server.SteelsquidKissHt
         '''
         Status of alarm
         '''
-        if steelsquid_kiss_global.Alarm.siren():
+        module = steelsquid_kiss_global.get_expand_module("steelsquid_kiss_alarm")
+        if module.siren():
             siren="true"
         else:
             siren="false"
-        if steelsquid_kiss_global.Alarm.lamp():
+        if module.lamp():
             lamp="true"
         else:
             lamp="false"
-        if steelsquid_kiss_global.Alarm.motion_detected:
+        if module.motion_detected:
             motion="true"
         else:
             motion="false"
-        if steelsquid_kiss_global.Alarm.alarm_triggered:
+        if module.alarm_triggered:
             alarm_t="true"
         else:
             alarm_t="false"
@@ -126,14 +127,14 @@ class SteelsquidKissHttpServerUtils(steelsquid_kiss_http_server.SteelsquidKissHt
         else:
             alarm_sec="false"
         light_level = "---"
-        if steelsquid_kiss_global.Alarm.light_level!=None:
-            light_level = str(steelsquid_kiss_global.Alarm.light_level)
+        if module.light_level!=None:
+            light_level = str(module.light_level)
         temperature = "---"
-        if steelsquid_kiss_global.Alarm.temperature!=None:
-            temperature = str(steelsquid_kiss_global.Alarm.temperature)
+        if module.temperature!=None:
+            temperature = str(module.temperature)
         humidity = "---"
-        if steelsquid_kiss_global.Alarm.humidity!=None:
-            humidity = str(steelsquid_kiss_global.Alarm.humidity)
+        if module.humidity!=None:
+            humidity = str(module.humidity)
         return [motion, siren, lamp, alarm_t, alarm_sec, light_level, temperature, humidity]
 
 
@@ -184,11 +185,12 @@ class SteelsquidKissHttpServerUtils(steelsquid_kiss_http_server.SteelsquidKissHt
         '''
         Settings of alarm
         '''
+        module = steelsquid_kiss_global.get_expand_module("steelsquid_kiss_alarm")
         if len(parameters) > 0:
             if parameters[0]=="true":
-                steelsquid_kiss_global.Alarm.arm(True)
+                module.arm(True)
             else:
-                steelsquid_kiss_global.Alarm.arm(False)
+                module.arm(False)
         return [steelsquid_utils.get_flag("alarm_security")]
 
 
@@ -196,18 +198,19 @@ class SteelsquidKissHttpServerUtils(steelsquid_kiss_http_server.SteelsquidKissHt
         '''
         Set status of client that is connected to this server
         '''
+        module = steelsquid_kiss_global.get_expand_module("steelsquid_kiss_alarm")
         if len(parameters)==1:
             if parameters[0] == "True":
-                steelsquid_kiss_global.Alarm.arm(True)
+                module.arm(True)
             else:
-                steelsquid_kiss_global.Alarm.arm(False)
+                module.arm(False)
             steelsquid_kiss_global.socket_connection.send_request("alarm_arm", parameters)
         else:
             if parameters[0]==steelsquid_utils.network_ip():
                 if parameters[1] == "True":
-                    steelsquid_kiss_global.Alarm.arm(True)
+                    module.arm(True)
                 else:
-                    steelsquid_kiss_global.Alarm.arm(False)
+                    module.arm(False)
             else:
                 steelsquid_kiss_global.socket_connection.send_request("alarm_arm", parameters[1:], parameters[0])
 
@@ -216,10 +219,11 @@ class SteelsquidKissHttpServerUtils(steelsquid_kiss_http_server.SteelsquidKissHt
         '''
         Activate/deactivate siren on client that is connected to this server
         '''
+        module = steelsquid_kiss_global.get_expand_module("steelsquid_kiss_alarm")
         if parameters[0] == "True":
-            steelsquid_kiss_global.Alarm.siren(True)
+            module.siren(True)
         else:
-            steelsquid_kiss_global.Alarm.siren(False)
+            module.siren(False)
         steelsquid_kiss_global.socket_connection.send_request("alarm_siren", parameters)
 
 
@@ -227,10 +231,11 @@ class SteelsquidKissHttpServerUtils(steelsquid_kiss_http_server.SteelsquidKissHt
         '''
         Activate/deactivate IR-lamp on client that is connected to this server
         '''
+        module = steelsquid_kiss_global.get_expand_module("steelsquid_kiss_alarm")
         if parameters[0] == "True":
-            steelsquid_kiss_global.Alarm.lamp(True)
+            module.lamp(True)
         else:
-            steelsquid_kiss_global.Alarm.lamp(False)
+            module.lamp(False)
         steelsquid_kiss_global.socket_connection.send_request("alarm_lamp", parameters)
 
 
@@ -238,11 +243,12 @@ class SteelsquidKissHttpServerUtils(steelsquid_kiss_http_server.SteelsquidKissHt
         '''
         Aktivate/deactiva siren
         '''
+        module = steelsquid_kiss_global.get_expand_module("steelsquid_kiss_alarm")
         if parameters[0] == "true":
-            steelsquid_kiss_global.Alarm.siren(True)
+            module.siren(True)
             return "Siren activated"
         else:
-            steelsquid_kiss_global.Alarm.siren(False)
+            module.siren(False)
             return "Siren dectivated"
 
 
@@ -250,11 +256,12 @@ class SteelsquidKissHttpServerUtils(steelsquid_kiss_http_server.SteelsquidKissHt
         '''
         Aktivate/deactiva the lamp
         '''
+        module = steelsquid_kiss_global.get_expand_module("steelsquid_kiss_alarm")
         if parameters[0] == "true":
-            steelsquid_kiss_global.Alarm.lamp(True)
+            module.lamp(True)
             return "The lamp is on"
         else:
-            steelsquid_kiss_global.Alarm.lamp(False)
+            module.lamp(False)
             return "The lamp is off"
 
 
@@ -276,7 +283,8 @@ class SteelsquidKissHttpServerUtils(steelsquid_kiss_http_server.SteelsquidKissHt
         '''
         Get all statuses from this server and connected clients
         '''
-        return steelsquid_kiss_global.Alarm.get_statuses()
+        module = steelsquid_kiss_global.get_expand_module("steelsquid_kiss_alarm")
+        return module.get_statuses()
 
 
     def alarm_app(self, session_id, parameters):
@@ -284,14 +292,15 @@ class SteelsquidKissHttpServerUtils(steelsquid_kiss_http_server.SteelsquidKissHt
         The Android app Alarm Arm sending if it is in near the alarm.
         return if the larm is enabled or not
         '''
+        module = steelsquid_kiss_global.get_expand_module("steelsquid_kiss_alarm")
         if len(parameters)>0:
             if steelsquid_utils.get_flag("alarm_app"):
                 client_id = parameters[0]
                 status = parameters[1]
                 if status=="True":
-                    steelsquid_kiss_global.Alarm.alarm_arm.pop(client_id, None)
+                    module.alarm_arm.pop(client_id, None)
                 else:
-                    steelsquid_kiss_global.Alarm.alarm_arm[client_id]=datetime.now()
+                    module.alarm_arm[client_id]=datetime.now()
         return steelsquid_utils.get_flag("alarm_security")
 
 
@@ -299,10 +308,11 @@ class SteelsquidKissHttpServerUtils(steelsquid_kiss_http_server.SteelsquidKissHt
         '''
         The app set arm/disarm
         '''
+        module = steelsquid_kiss_global.get_expand_module("steelsquid_kiss_alarm")
         if parameters[0] == "True":
-            steelsquid_kiss_global.Alarm.arm(True)
+            module.arm(True)
         else:
-            steelsquid_kiss_global.Alarm.arm(False)
+            module.arm(False)
         steelsquid_kiss_global.socket_connection.send_request("alarm_arm", parameters)
         return steelsquid_utils.get_flag("alarm_security")
 
