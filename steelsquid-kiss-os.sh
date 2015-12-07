@@ -76,8 +76,8 @@ python_downloads[23]="$base/steelsquid_oled_ssd1306.py"
 python_downloads[24]="$base/steelsquid_bluetooth_connection.py"
 python_downloads[25]="$base/steelsquid_i2c.py"
 python_downloads[26]="$base/MCP23017.py"
-python_downloads[27]="$base/expand/steelsquid_kiss_rover.py"
-python_downloads[28]="$base/expand/steelsquid_kiss_alarm.py"
+python_downloads[27]="$base/expand/steelsquid_kiss_alarm.py"
+python_downloads[28]="$base/expand/steelsquid_kiss_rover.py"
 
 # Links to python_downloads
 python_links[1]="/usr/bin/steelsquid-boot"
@@ -625,12 +625,6 @@ function help_system()
     echb "############################################################################"
     if [ $(is-raspberry-pi) == "true" ]; then
         echo 
-        echb "steelsquid expand"
-        echo "Expand Filesystem."
-        echo "Ensures that all of the SD card storage is available to the OS."
-        echo "This is only for raspberry-pi"
-        echo "Will take effect on next reboot...."
-        echo 
         echb "steelsquid display"
         echo "Is the display enabled"
         echo 
@@ -804,11 +798,6 @@ function help_files()
     echb "$steelsquid_folder/web/"
     echo "Web root"
     echo 
-    echb "$steelsquid_folder/events/"
-    echo "If you create a executable file with the same name as the event under $steelsquid_folder/events that will also be excuted"
-    echo "The parametars will be arg to the file"
-    echo "See /opt/steelsquid/python/steelsquid_event.py"
-    echo 
     echb "/root/Media"
     echo "Link to /media"
     echo 
@@ -842,12 +831,6 @@ function help_files()
     echo 
     echb "/usr/lib/python3/dist-packages"
     echo "External python 3 libraries (quick2wire)"
-    echo 
-    echb "/opt/steelsquid/events"
-    echo "If you create a executable file with the same name as the event under this folder that will be executed."
-    echo "The parametars will be arg to the file"
-    echo "If: broadcast_event(\"kalle\", (\"arg1\", \"arg2\"))"
-    echo "This will exucute: /opt/steelsquid/events/kalle \"arg1\" \"arg2\""
 }
 if [ "$in_parameter_1" == "help-files" ]; then
     help_files
@@ -1158,11 +1141,11 @@ function help_build()
     echb "############################################################################"
     echo 
     echb "1.  Download and extract the installer image"
-    echo "wget https://github.com/debian-pi/raspbian-ua-netinst/releases/download/v1.0.7/raspbian-ua-netinst-v1.0.7.img.xz"
-    echo "unxz raspbian-ua-netinst-v1.0.7.img.xz"
+    echo "wget https://github.com/debian-pi/raspbian-ua-netinst/releases/download/v1.0.8/raspbian-ua-netinst-v1.0.8.img.xz"
+    echo "unxz raspbian-ua-netinst-v1.0.8.img.xz"
     echo 
     echb "2.  Copy to sdcard"
-    echo "dd bs=4M if=raspbian-ua-netinst-v1.0.7.img of=/dev/sdb"
+    echo "dd bs=4M if=raspbian-ua-netinst-v1.0.8.img of=/dev/sdb"
     echo 
     echb "3.  Insert sdcard into raspberry and boot"
     echo "Must have the networkcabel connected (internet access)"
@@ -1177,7 +1160,7 @@ function help_build()
     echo "passwd  (raspberry)"
     echo 
     echb "7.  Change to jessie and uppgrade"
-    echo "echo \"deb http://archive.raspbian.org/raspbian jessie main contrib non-free firmware rpi\" > /etc/apt/sources.list"
+    echo "echo \"deb http://mirrordirector.raspbian.org/raspbian jessie main contrib non-free firmware rpi\" > /etc/apt/sources.list"
     echo "echo \"deb http://archive.raspberrypi.org/debian jessie main untested staging ui\" >> /etc/apt/sources.list"
     echo "apt-get update"
     echo "apt-get --no-install-recommends install sudo nano aptitude linux-image-rpi-rpfv linux-image-rpi2-rpfv"
@@ -2797,27 +2780,34 @@ function install_steelsquid_python()
 	index=1
 	for var in "${python_downloads[@]}"
 	do
+        expandf=""
+        if [[ $var == */expand/* ]]; then
+            expandf="/expand"
+        fi
+        
         if [ $(get-flag "expanded") == "true" ]; then
             if [[ $var != *_expand* ]]; then
-                sudo wget --progress=dot:giga --no-check-certificate -O /opt/steelsquid/python/$(basename $var) $var
-                if [ $? -ne 0 ]; then
-                    do-err-exit "Unable to download from $var"
-                else
-                    sudo chmod 755 /opt/steelsquid/python/$(basename $var)
-                    rm ${python_links[$index]} > /dev/null 2>&1
-                    sudo ln -s /opt/steelsquid/python/$(basename $var) ${python_links[$index]}
-                    index=$[$index +1]
-                    log "$var downloaded and installed"
-                fi
+                if [ $expandf == "" ]; then
+                    sudo wget --progress=dot:giga --no-check-certificate -O /opt/steelsquid/python$expandf/$(basename $var) $var
+                    if [ $? -ne 0 ]; then
+                        do-err-exit "Unable to download from $var"
+                    else
+                        sudo chmod 755 /opt/steelsquid/python$expandf/$(basename $var)
+                        rm ${python_links[$index]} > /dev/null 2>&1
+                        sudo ln -s /opt/steelsquid/python$expandf/$(basename $var) ${python_links[$index]}
+                        index=$[$index +1]
+                        log "$var downloaded and installed"
+                    fi
+                fi        
             fi        
         else
-            sudo wget --progress=dot:giga --no-check-certificate -O /opt/steelsquid/python/$(basename $var) $var
+            sudo wget --progress=dot:giga --no-check-certificate -O /opt/steelsquid/python$expandf/$(basename $var) $var
             if [ $? -ne 0 ]; then
                 do-err-exit "Unable to download from $var"
             else
-                sudo chmod 755 /opt/steelsquid/python/$(basename $var)
+                sudo chmod 755 /opt/steelsquid/python$expandf/$(basename $var)
                 rm ${python_links[$index]} > /dev/null 2>&1
-                sudo ln -s /opt/steelsquid/python/$(basename $var) ${python_links[$index]}
+                sudo ln -s /opt/steelsquid/python$expandf/$(basename $var) ${python_links[$index]}
                 index=$[$index +1]
                 log "$var downloaded and installed"
             fi
@@ -2829,13 +2819,17 @@ function install_steelsquid_python_one()
 {
 	log "Download and install python script"
     var=${python_downloads[$in_parameter_2]}
-    sudo wget --progress=dot:giga --no-check-certificate -O /opt/steelsquid/python/$(basename $var) $var
+    expandf=""
+    if [[ $var == */expand/* ]]; then
+        expandf="/expand"
+    fi
+    sudo wget --progress=dot:giga --no-check-certificate -O /opt/steelsquid/python$expandf/$(basename $var) $var
     if [ $? -ne 0 ]; then
         do-err-exit "Unable to download from $var"
     else
-        sudo chmod 755 /opt/steelsquid/python/$(basename $var)
+        sudo chmod 755 /opt/steelsquid/python$expandf/$(basename $var)
         rm ${python_links[$in_parameter_2]} > /dev/null 2>&1
-        sudo ln -s /opt/steelsquid/python/$(basename $var) ${python_links[$in_parameter_2]}
+        sudo ln -s /opt/steelsquid/python$expandf/$(basename $var) ${python_links[$in_parameter_2]}
         log "$var downloaded and installed"
     fi
 	log "Python script installed"
@@ -3407,10 +3401,14 @@ function local_commit()
 	index=1
 	for var in "${python_downloads[@]}"
 	do
-        cp $(basename $var) /opt/steelsquid/python/$(basename $var)
-        chmod 755 /opt/steelsquid/python/$(basename $var)
+        expand_folder=""
+        if [[ $var == */expand/* ]]; then
+            expand_folder="expand/"
+        fi
+        cp $expandf/$(basename $var) /opt/steelsquid/python$expandf/$(basename $var)
+        chmod 755 /opt/steelsquid/python$expandf/$(basename $var)
         rm ${python_links[$index]} > /dev/null 2>&1
-        ln -s /opt/steelsquid/python/$(basename $var) ${python_links[$index]}
+        ln -s /opt/steelsquid/python$expandf/$(basename $var) ${python_links[$index]}
         index=$[$index +1]
 	done
 }
@@ -3464,7 +3462,9 @@ function remote_commit()
 
     for var in "${python_downloads[@]}"
 	do
-        cstring="$cstring $(basename $var)"
+        if [[ $var != */expand/* ]]; then
+            cstring="$cstring $(basename $var)"
+        fi
     done
     
 	log "Transmitting files"
@@ -3519,10 +3519,13 @@ function remote_commit_install()
 	index=1
 	for var in "${python_downloads[@]}"
 	do
-        cp /var/tmp/$(basename $var) /opt/steelsquid/python/$(basename $var)
-        chmod 755 /opt/steelsquid/python/$(basename $var)
-        rm ${python_links[$index]} > /dev/null 2>&1
-        ln -s /opt/steelsquid/python/$(basename $var) ${python_links[$index]}
+        expand_folder=""
+        if [[ $var != */expand/* ]]; then
+            cp /var/tmp/$(basename $var) /opt/steelsquid/python/$(basename $var)
+            chmod 755 /opt/steelsquid/python/$(basename $var)
+            rm ${python_links[$index]} > /dev/null 2>&1
+            ln -s /opt/steelsquid/python/$(basename $var) ${python_links[$index]}
+        fi
         index=$[$index +1]
 	done
 }
@@ -3834,7 +3837,6 @@ mkdir $steelsquid_folder/flags
 mkdir $steelsquid_folder/lists
 mkdir $steelsquid_folder/parameters
 mkdir $steelsquid_folder/pem
-mkdir $steelsquid_folder/events
 mkdir $steelsquid_folder/web
 mkdir $steelsquid_folder/web/img
 mkdir $steelsquid_folder/web/css
