@@ -29,20 +29,15 @@ import importlib
 import expand
 import signal
 from io import TextIOWrapper, BytesIO
+import steelsquid_kiss_expand
 import steelsquid_kiss_global
+
 
 if steelsquid_utils.is_raspberry_pi:
     try:
         import steelsquid_pi
     except:
         steelsquid_utils.shout("Fatal error when import steelsquid_pi", is_error=True)
-
-
-if steelsquid_utils.get_flag("piio"):
-    try:
-        import steelsquid_piio
-    except:
-        steelsquid_utils.shout("Fatal error when import steelsquid_piio", is_error=True)
 
 
 def signal_term_handler(signal, frame):
@@ -164,6 +159,7 @@ def on_network(args, para):
     '''
     On network update
     '''
+    import steelsquid_kiss_expand
     net = para[0]
     wired = para[1]
     wifi = para[2]
@@ -172,34 +168,10 @@ def on_network(args, para):
     bluetooth = ""
     
     stat = net=="up"
-    try:
-        for name in steelsquid_kiss_global.expand_modules:
-            mod = sys.modules['expand.'+name]
-            if hasattr(mod, "activate") and mod.activate():
-                if hasattr(mod, "on_network") and callable(getattr(mod, "on_network")):
-                    mod.on_network(stat, wired, access_point, wifi, wan)
-    except:
-        steelsquid_utils.shout()
-    try:
-        import steelsquid_kiss_expand
-        if steelsquid_kiss_expand.activate():
-            if hasattr(steelsquid_kiss_expand, "on_network") and callable(getattr(steelsquid_kiss_expand, "on_network")):
-                steelsquid_kiss_expand.on_network(stat, wired, access_point, wifi, wan)
-    except:
-        steelsquid_utils.shout()
-    try:
-        if steelsquid_kiss_global.PIIO.activate():
-            steelsquid_kiss_global.PIIO.on_network(stat, wired, access_point, wifi, wan)
-    except:
-        steelsquid_utils.shout()
-    
-    
-    if steelsquid_kiss_global.PIIO.activate():
-        if net == "up":            
-            steelsquid_piio.net(True)
-        else:
-            steelsquid_piio.net(False)
-    if steelsquid_utils.get_flag("ssd") or steelsquid_utils.lcd_auto == 1:
+    for name in steelsquid_kiss_global.expand_modules:
+        steelsquid_kiss_global.__execute_expand_module_method(name, "SYSTEM", "on_network", (stat, wired, access_point, wifi, wan,))
+    steelsquid_kiss_global.__execute_expand_module_method(steelsquid_kiss_expand, "SYSTEM", "on_network", (stat, wired, access_point, wifi, wan,))
+    if steelsquid_utils.get_flag("ssd") or steelsquid_pi.lcd_auto == 1:
         if steelsquid_utils.get_flag("bluetooth_pairing"):
             answer = steelsquid_utils.execute_system_command(["hciconfig", "-a"])
             for line in answer:
@@ -236,9 +208,9 @@ def on_network(args, para):
                         shout_string.append(wan)
                     if len(bluetooth)!=0:
                         shout_string.append(bluetooth)
-                if steelsquid_kiss_global.PIIO.activate():
+                if steelsquid_utils.get_flag("piio"):
                     shout_string.append("\nVOLTAGE: ")
-                    shout_string.append(str(steelsquid_piio.volt(2)))
+                    shout_string.append("---")
                     shout_string.append("\n")
                 mes = "".join(shout_string)
                 steelsquid_utils.shout(mes, leave_on_lcd = True)
@@ -298,38 +270,30 @@ def on_network(args, para):
                 steelsquid_utils.shout("No network!", leave_on_lcd = True)
             else:
                 steelsquid_utils.shout("No network!"+bluetooth, leave_on_lcd = True)
-            do_umount()
+            do_umount
 
 
 def on_shutdown(args, para):
     '''
     Shutdown system
     '''
+    import steelsquid_kiss_expand
     try:
         for name in steelsquid_kiss_global.expand_modules:
-            mod = sys.modules['expand.'+name]
-            if hasattr(mod, "activate") and mod.activate():
-                if hasattr(mod, "on_event_data") and callable(getattr(mod, "on_event_data")):
-                    steelsquid_kiss_global.remove_event_data_callback(mod.on_event_data)
-                if hasattr(mod, "on_disable") and callable(getattr(mod, "on_disable")):
-                    mod.is_enabled=False
-                    mod.on_disable()
-    except:
-        steelsquid_utils.shout()
-    try:
-        import steelsquid_kiss_expand
-        if steelsquid_kiss_expand.activate():
-            if hasattr(steelsquid_kiss_expand, "on_event_data") and callable(getattr(steelsquid_kiss_expand, "on_event_data")):
-                steelsquid_kiss_global.remove_event_data_callback(steelsquid_kiss_expand.on_event_data)
-            if hasattr(steelsquid_kiss_expand, "on_disable") and callable(getattr(steelsquid_kiss_expand, "on_disable")):
-                steelsquid_kiss_expand.is_enabled=False
-                steelsquid_kiss_expand.on_disable()
-    except:
-        steelsquid_utils.shout()
-    try:
-        if steelsquid_kiss_global.PIIO.activate():
-            steelsquid_kiss_global.PIIO.is_enabled=False
-            steelsquid_kiss_global.PIIO.on_disable()
+            met = steelsquid_kiss_global.__get_expand_module_method(name, "SYSTEM", "on_event_data")
+            if met != None:
+                steelsquid_kiss_global.remove_event_data_callback(mod)
+            mod = steelsquid_kiss_global.__get_expand_module(name, "SYSTEM", "on_disable")
+            if mod != None:
+                mod.is_enabled=False
+                mod.SYSTEM.on_disable()
+        met = steelsquid_kiss_global.__get_expand_module_method(steelsquid_kiss_expand, "SYSTEM", "on_event_data")
+        if met != None:
+            steelsquid_kiss_global.remove_event_data_callback(mod)
+        mod = steelsquid_kiss_global.__get_expand_module(steelsquid_kiss_expand, "SYSTEM", "on_disable")
+        if mod != None:
+            mod.is_enabled=False
+            mod.SYSTEM.on_disable()
     except:
         steelsquid_utils.shout()
     steelsquid_utils.shout("Goodbye :-(")
@@ -360,27 +324,37 @@ def on_shutdown_button(gpio):
     steelsquid_utils.execute_system_command_blind(['shutdown', '-h', 'now'], wait_for_finish=False)
 
 
-def import_expand():
+def import_expand(reloadit=True):
     '''
     Import the expand module
     '''
+    import steelsquid_kiss_expand
     try:
-        if 'steelsquid_kiss_expand' in sys.modules:
-            import steelsquid_kiss_expand
-            if steelsquid_kiss_expand.activate():
-                if hasattr(steelsquid_kiss_expand, "on_event_data") and callable(getattr(steelsquid_kiss_expand, "on_event_data")):
-                    steelsquid_kiss_global.remove_event_data_callback(steelsquid_kiss_expand.on_event_data)
-            reload(steelsquid_kiss_expand)
-        else:
-            import steelsquid_kiss_expand
-        if steelsquid_kiss_expand.activate():
-            if hasattr(steelsquid_kiss_expand, "on_enable") and callable(getattr(steelsquid_kiss_expand, "on_enable")):
-                steelsquid_kiss_expand.on_enable()
-                steelsquid_kiss_expand.is_enabled=True
-            if hasattr(steelsquid_kiss_expand, "on_loop") and callable(getattr(steelsquid_kiss_expand, "on_loop")):
-                do_on_loop(steelsquid_kiss_expand) 
-            if hasattr(steelsquid_kiss_expand, "on_event_data") and callable(getattr(steelsquid_kiss_expand, "on_event_data")):
-                steelsquid_kiss_global.add_event_data_callback(steelsquid_kiss_expand.on_event_data)
+        if reloadit:
+            if 'steelsquid_kiss_expand' in sys.modules:
+                met = steelsquid_kiss_global.__get_expand_module_method(steelsquid_kiss_expand, "SYSTEM", "on_event_data")
+                steelsquid_kiss_global.remove_event_data_callback(met)
+                reload(steelsquid_kiss_expand)
+            else:
+                import steelsquid_kiss_expand
+        mod = steelsquid_kiss_global.__get_expand_module(steelsquid_kiss_expand, "SYSTEM", "on_enable")
+        if mod!=None:
+            mod.SYSTEM.on_enable()
+            mod.is_enabled=True
+        if steelsquid_kiss_global.http_server!=None:
+            mod = steelsquid_kiss_global.__get_expand_module_class(steelsquid_kiss_expand, "WEB")
+            if mod!=None:
+                steelsquid_kiss_global.http_server.external_objects.append(mod)
+        if steelsquid_kiss_global.socket_connection!=None:
+            mod = steelsquid_kiss_global.__get_expand_module_class(steelsquid_kiss_expand, "SOCKET")
+            if mod!=None:
+                steelsquid_kiss_global.socket_connection.external_objects.append(mod)
+        mod = steelsquid_kiss_global.__get_expand_module_method(steelsquid_kiss_expand, "SYSTEM", "on_event_data")
+        if mod!=None:
+            steelsquid_kiss_global.add_event_data_callback(mod)
+        met = steelsquid_kiss_global.__get_expand_module_method(steelsquid_kiss_expand, "SYSTEM", "on_loop")
+        if met!=None:
+            do_on_loop(met) 
     except:
         steelsquid_utils.shout("Fatal error when import steelsquid_kiss_expand", is_error=True)
 
@@ -390,16 +364,24 @@ def import_file_dyn(name):
     Load custom module
     '''
     try:
-        mod = importlib.import_module('expand.'+name)
-        if hasattr(mod, "activate") and mod.activate():
-            if hasattr(mod, "on_enable") and callable(getattr(mod, "on_enable")):
-                mod.on_enable()
-                mod.is_enabled=True
-            if hasattr(mod, "on_loop") and callable(getattr(mod, "on_loop")):
-                do_on_loop(mod) 
-            if hasattr(mod, "on_event_data") and callable(getattr(mod, "on_event_data")):
-                steelsquid_kiss_global.add_event_data_callback(mod.on_event_data)
-            steelsquid_kiss_global.expand_modules.append(name)
+        mod = steelsquid_kiss_global.__get_expand_module(name, "SYSTEM", "on_enable")
+        if mod!=None:
+            mod.SYSTEM.on_enable()
+            mod.is_enabled=True
+        if steelsquid_kiss_global.http_server!=None:
+            mod = steelsquid_kiss_global.__get_expand_module_class(name, "WEB")
+            if mod!=None:
+                steelsquid_kiss_global.http_server.external_objects.append(mod)
+        if steelsquid_kiss_global.socket_connection!=None:
+            mod = steelsquid_kiss_global.__get_expand_module_class(name, "SOCKET")
+            if mod!=None:
+                steelsquid_kiss_global.socket_connection.external_objects.append(mod)
+        mod = steelsquid_kiss_global.__get_expand_module_method(name, "SYSTEM", "on_event_data")
+        if mod!=None:
+            steelsquid_kiss_global.add_event_data_callback(mod)
+        met = steelsquid_kiss_global.__get_expand_module_method(name, "SYSTEM", "on_loop")
+        if met!=None:
+            do_on_loop(met) 
     except:
         steelsquid_utils.shout("Fatal error when load custom module: " + 'expand.'+name, is_error=True)
 
@@ -410,19 +392,30 @@ def reload_file_dyn(name):
     '''
     try:
         steelsquid_utils.shout("Reload custom module: " + 'expand.'+name)
+
+        mod = steelsquid_kiss_global.__get_expand_module(name, "SYSTEM", "on_event_data")
+        if mod!=None:
+            teelsquid_kiss_global.remove_event_data_callback(mod)
         the_lib = importlib.import_module('expand.'+name)
-        if hasattr(the_lib, "activate") and the_lib.activate():
-            if hasattr(the_lib, "on_event_data") and callable(getattr(the_lib, "on_event_data")):
-                steelsquid_kiss_global.remove_event_data_callback(the_lib.on_event_data)
         reload(the_lib)
-        if hasattr(the_lib, "activate") and the_lib.activate():
-            if hasattr(the_lib, "on_enable") and callable(getattr(the_lib, "on_enable")):
-                the_lib.on_enable()
-                the_lib.is_enabled=True
-            if hasattr(the_lib, "on_loop") and callable(getattr(the_lib, "on_loop")):
-                do_on_loop(the_lib) 
-            if hasattr(the_lib, "on_event_data") and callable(getattr(the_lib, "on_event_data")):
-                steelsquid_kiss_global.add_event_data_callback(the_lib.on_event_data)
+        mod = steelsquid_kiss_global.__get_expand_module(name, "SYSTEM", "on_enable")
+        if mod!=None:
+            mod.SYSTEM.on_enable()
+            mod.is_enabled=True
+        if steelsquid_kiss_global.http_server!=None:
+            mod = steelsquid_kiss_global.__get_expand_module_class(name, "WEB")
+            if mod!=None:
+                steelsquid_kiss_global.http_server.external_objects.append(mod)
+        if steelsquid_kiss_global.socket_connection!=None:
+            mod = steelsquid_kiss_global.__get_expand_module_class(name, "SOCKET")
+            if mod!=None:
+                steelsquid_kiss_global.socket_connection.external_objects.append(mod)
+        mod = steelsquid_kiss_global.__get_expand_module_method(name, "SYSTEM", "on_event_data")
+        if mod!=None:
+            steelsquid_kiss_global.add_event_data_callback(mod)
+        met = steelsquid_kiss_global.__get_expand_module_method(name, "SYSTEM", "on_loop")
+        if met!=None:
+            do_on_loop(met) 
     except:
         steelsquid_utils.shout("Fatal error when reload custom module: " + 'expand.'+name, is_error=True)
 
@@ -435,52 +428,33 @@ def on_reload(args, para):
         if steelsquid_utils.get_flag("web"):
             try:
                 steelsquid_kiss_global.http_server.stop_server()
-                steelsquid_utils.shout("Restart steelsquid_kiss_http_expand", debug=False)
+                steelsquid_utils.shout("Restart steelsquid_kiss_http_server", debug=False)
                 import steelsquid_kiss_http_server
                 reload(steelsquid_kiss_http_server)
-                reload(steelsquid_kiss_http_expand)
-                steelsquid_kiss_global.http_server = steelsquid_kiss_http_expand.SteelsquidKissExpandHttpServer(None, steelsquid_utils.STEELSQUID_FOLDER+"/web/", steelsquid_utils.get_flag("web_authentication"), steelsquid_utils.get_flag("web_local"), steelsquid_utils.get_flag("web_authentication"), steelsquid_utils.get_flag("web_https"))
+                steelsquid_kiss_global.http_server = steelsquid_kiss_http_server.SteelsquidKissHttpServer(None, steelsquid_utils.STEELSQUID_FOLDER+"/web/", steelsquid_utils.get_flag("web_authentication"), steelsquid_utils.get_flag("web_local"), steelsquid_utils.get_flag("web_authentication"), steelsquid_utils.get_flag("web_https"))
                 steelsquid_kiss_global.http_server.start_server()
             except:
-                steelsquid_utils.shout("Fatal error when restart steelsquid_kiss_http_expand", is_error=True)
+                steelsquid_utils.shout("Fatal error when restart steelsquid_kiss_http_server", is_error=True)
         if steelsquid_utils.get_flag("socket_connection"):
             try:
                 steelsquid_kiss_global.socket_connection.stop()
-                steelsquid_utils.shout("Restart steelsquid_kiss_socket_expand", debug=False)
+                steelsquid_utils.shout("Restart steelsquid_kiss_socket_connection", debug=False)
                 import steelsquid_kiss_socket_connection
                 reload(steelsquid_kiss_socket_connection)
-                reload(steelsquid_kiss_socket_expand)
-                steelsquid_kiss_global.socket_connection = steelsquid_kiss_socket_expand.SteelsquidKissSocketExpand(True)
+                steelsquid_kiss_global.socket_connection = steelsquid_kiss_socket_connection.SteelsquidKissSocketConnection(True)
                 steelsquid_kiss_global.socket_connection.start()
             except:
-                steelsquid_utils.shout("Fatal error when sestart steelsquid_kiss_socket_expand", is_error=True)
+                steelsquid_utils.shout("Fatal error when sestart steelsquid_kiss_socket_connection", is_error=True)
     elif para[0] == "custom":
+        if steelsquid_kiss_global.http_server!=None:
+            del steelsquid_kiss_global.http_server.external_objects[:]
         pkgpath = os.path.dirname(expand.__file__)
         for name in pkgutil.iter_modules([pkgpath]):
             thread.start_new_thread(reload_file_dyn, (name[1],))
     elif para[0] == "expand":
+        if steelsquid_kiss_global.http_server!=None:
+            del steelsquid_kiss_global.http_server.external_objects[:]
         thread.start_new_thread(import_expand, ()) 
-    elif para[0] == "global":
-        reimport_global()
-
-
-def reimport_global():
-    '''
-    reimport steelsquid_kiss_global
-    '''
-    if 'steelsquid_kiss_global' in sys.modules:
-        import steelsquid_kiss_global
-        reload(steelsquid_kiss_global)
-    else:
-        import steelsquid_kiss_global
-    if steelsquid_kiss_global.PIIO.activate():
-        try:
-            steelsquid_kiss_global.PIIO.on_enable()
-            steelsquid_kiss_global.PIIO.is_enabled=True
-            if hasattr(steelsquid_kiss_global.PIIO, "on_loop") and callable(getattr(steelsquid_kiss_global.PIIO, "on_loop")):
-                thread.start_new_thread(do_on_loop, (steelsquid_kiss_global.PIIO,)) 
-        except:
-            steelsquid_utils.shout("Fatal error on enable PIIO server", is_error=True)            
 
 
 def import_my_stuff():
@@ -488,46 +462,34 @@ def import_my_stuff():
     Import my stuff
     '''
     try:
-        import steelsquid_kiss_global
+        import steelsquid_kiss_socket_connection
     except:
-        steelsquid_utils.shout("Fatal error when import steelsquid_kiss_global", is_error=True)
+        steelsquid_utils.shout("Fatal error when import steelsquid_kiss_socket_connection", is_error=True)
     try:
-        import steelsquid_kiss_socket_expand
+        import steelsquid_kiss_http_server
     except:
-        steelsquid_utils.shout("Fatal error when import steelsquid_kiss_socket_expand", is_error=True)
-    try:
-        import steelsquid_kiss_http_expand
-    except:
-        steelsquid_utils.shout("Fatal error when import steelsquid_kiss_http_expand", is_error=True)
+        steelsquid_utils.shout("Fatal error when import steelsquid_kiss_http_server", is_error=True)
     if steelsquid_utils.get_flag("web"):
         try:
             port = None
             if steelsquid_utils.has_parameter("web_port"):
                 port = steelsquid_utils.get_parameter("web_port")
-            steelsquid_kiss_global.http_server = steelsquid_kiss_http_expand.SteelsquidKissHttpServerExpand(port, steelsquid_utils.STEELSQUID_FOLDER+"/web/", steelsquid_utils.get_flag("web_authentication"), steelsquid_utils.get_flag("web_local"), steelsquid_utils.get_flag("web_authentication"), steelsquid_utils.get_flag("web_https"))
+            steelsquid_kiss_global.http_server = steelsquid_kiss_http_server.SteelsquidKissHttpServer(port, steelsquid_utils.STEELSQUID_FOLDER+"/web/", steelsquid_utils.get_flag("web_authentication"), steelsquid_utils.get_flag("web_local"), steelsquid_utils.get_flag("web_authentication"), steelsquid_utils.get_flag("web_https"))
             steelsquid_kiss_global.http_server.start_server()
         except:
-            steelsquid_utils.shout("Fatal error when start steelsquid_kiss_http_expand", is_error=True)
+            steelsquid_utils.shout("Fatal error when start steelsquid_kiss_http_server", is_error=True)
     if steelsquid_utils.get_flag("socket_server"):
         try:
-            steelsquid_kiss_global.socket_connection = steelsquid_kiss_socket_expand.SteelsquidKissSocketExpand(True)
+            steelsquid_kiss_global.socket_connection = steelsquid_kiss_socket_connection.SteelsquidKissSocketConnection(True)
             steelsquid_kiss_global.socket_connection.start()
         except:
-            steelsquid_utils.shout("Fatal error when start steelsquid_kiss_socket_expand as server", is_error=True)
+            steelsquid_utils.shout("Fatal error when start steelsquid_kiss_socket_connection as server", is_error=True)
     elif steelsquid_utils.has_parameter("socket_client"):
         try:
-            steelsquid_kiss_global.socket_connection = steelsquid_kiss_socket_expand.SteelsquidKissSocketExpand(False, steelsquid_utils.get_parameter("socket_client"))
+            steelsquid_kiss_global.socket_connection = steelsquid_kiss_socket_connection.SteelsquidKissSocketConnection(False, steelsquid_utils.get_parameter("socket_client"))
             steelsquid_kiss_global.socket_connection.start()
         except:
-            steelsquid_utils.shout("Fatal error when start steelsquid_kiss_socket_expand as server", is_error=True)            
-    if steelsquid_kiss_global.PIIO.activate():
-        try:
-            steelsquid_kiss_global.PIIO.on_enable()
-            steelsquid_kiss_global.PIIO.is_enabled=True
-            if hasattr(steelsquid_kiss_global.PIIO, "on_loop") and callable(getattr(steelsquid_kiss_global.PIIO, "on_loop")):
-                thread.start_new_thread(do_on_loop, (steelsquid_kiss_global.PIIO,)) 
-        except:
-            steelsquid_utils.shout("Fatal error on enable PIIO server", is_error=True)            
+            steelsquid_utils.shout("Fatal error when start steelsquid_kiss_socket_connection as server", is_error=True)            
                 
                 
 def do_on_loop(tobj):
@@ -536,8 +498,8 @@ def do_on_loop(tobj):
     '''
     run = 0
     try:
-        while run != None and run>=0 and tobj.is_enabled:
-            run = tobj.on_loop()
+        while run != None and run>=0:
+            run = tobj()
             if run!=None and run>0:
                 time.sleep(run)
     except:
@@ -558,6 +520,7 @@ def bluetooth_agent():
     '''
     Start the bluetooth_agent (enable pairing)
     '''
+    import steelsquid_kiss_expand
     while True:
         answer = steelsquid_utils.execute_system_command(["hciconfig", "-a"])
         bluetooth = None
@@ -572,8 +535,9 @@ def bluetooth_agent():
         else:
             steelsquid_utils.shout("Start bluetooth: " + bluetooth)
             steelsquid_event.broadcast_event("network")
-            if steelsquid_kiss_global.PIIO.activate():
-                steelsquid_piio.bt(True)
+            for name in steelsquid_kiss_global.expand_modules:
+                steelsquid_kiss_global.__execute_expand_module_method(name, "SYSTEM", "on_bluetooth", (True,))
+            steelsquid_kiss_global.__execute_expand_module_method(steelsquid_kiss_expand, "SYSTEM", "on_bluetooth", (True,))
             try:
                 proc=Popen("bluetoothctl", stdout=PIPE, stdin=PIPE, stderr=PIPE)
                 proc.stdin.write('power on\n')
@@ -598,9 +562,9 @@ def bluetooth_agent():
                             proc.stdin.flush()
             except:
                 steelsquid_utils.shout("Error on start bluetoothctl", is_error=True)
-        if steelsquid_kiss_global.PIIO.activate():
-            import steelsquid_piio
-            steelsquid_piio.bt(False)
+        for name in steelsquid_kiss_global.expand_modules:
+            steelsquid_kiss_global.__execute_expand_module_method(name, "SYSTEM", "on_bluetooth", (False,))
+        steelsquid_kiss_global.__execute_expand_module_method(steelsquid_kiss_expand, "SYSTEM", "on_bluetooth", (False,))
         time.sleep(20)    
 
 
@@ -801,9 +765,10 @@ def main():
             steelsquid_event.subscribe_to_event("pi_io_event", on_pi_io_event, ())
             pkgpath = os.path.dirname(expand.__file__)
             for name in pkgutil.iter_modules([pkgpath]):
+                steelsquid_kiss_global.expand_modules.append(name[1])
                 steelsquid_utils.shout("Load custom module: " + 'expand.'+name[1], debug=True)                
                 thread.start_new_thread(import_file_dyn, (name[1],)) 
-            thread.start_new_thread(import_expand, ()) 
+            thread.start_new_thread(import_expand, (False,)) 
             import_my_stuff()
             steelsquid_utils.shout("Listen for events", debug=True)
             steelsquid_event.broadcast_event("network")

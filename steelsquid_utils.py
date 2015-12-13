@@ -1649,25 +1649,24 @@ def execute_delay(seconds, function, paramters, name=None, dummy=False):
     '''
     global delay_name_list
     try:
-        with(lock):
-            if dummy:
-                time.sleep(seconds)
-                if name!=None:
-                    try:
-                        delay_name_list.remove(name)
-                    except:
-                        pass
-                if isinstance(paramters, tuple):
-                    function(*paramters)
-                else:
-                    function()
+        if dummy:
+            time.sleep(seconds)
+            if name!=None:
+                try:
+                    delay_name_list.remove(name)
+                except:
+                    pass
+            if isinstance(paramters, tuple):
+                function(*paramters)
             else:
-                if name==None:
+                function()
+        else:
+            if name==None:
+                thread.start_new_thread(execute_delay, (seconds, function, paramters, name, True)) 
+            else:
+                if not name in delay_name_list:
+                    delay_name_list.append(name)
                     thread.start_new_thread(execute_delay, (seconds, function, paramters, name, True)) 
-                else:
-                    if not name in delay_name_list:
-                        delay_name_list.append(name)
-                        thread.start_new_thread(execute_delay, (seconds, function, paramters, name, True)) 
     except:
         shout()
         
@@ -1684,10 +1683,30 @@ def execute_flash(name, status, seconds, function1, paramters1, function2, param
     @param paramters2: Paramater to the second function (tuple)
     '''
     global flash_name_list
-    with(lock):
-        if status==None and name not in flash_name_list:
-            def method_thread():
-                try:
+    if status==None and name not in flash_name_list:
+        def method_thread():
+            try:
+                if isinstance(paramters1, tuple):
+                    function1(*paramters1)
+                else:
+                    function1()
+                time.sleep(seconds)
+                if isinstance(paramters2, tuple):
+                    function2(*paramters2)
+                else:
+                    function2()
+            except:
+                shout()
+        thread.start_new_thread(method_thread, ()) 
+    elif status and name not in flash_name_list:
+        def method_thread():
+            try:
+                first_time=True
+                while(name in flash_name_list):
+                    if first_time:
+                        first_time=False
+                    else:
+                        time.sleep(seconds)
                     if isinstance(paramters1, tuple):
                         function1(*paramters1)
                     else:
@@ -1697,36 +1716,15 @@ def execute_flash(name, status, seconds, function1, paramters1, function2, param
                         function2(*paramters2)
                     else:
                         function2()
-                except:
-                    shout()
-            thread.start_new_thread(method_thread, ()) 
-        elif status and name not in flash_name_list:
-            def method_thread():
-                try:
-                    first_time=True
-                    while(name in flash_name_list):
-                        if first_time:
-                            first_time=False
-                        else:
-                            time.sleep(seconds)
-                        if isinstance(paramters1, tuple):
-                            function1(*paramters1)
-                        else:
-                            function1()
-                        time.sleep(seconds)
-                        if isinstance(paramters2, tuple):
-                            function2(*paramters2)
-                        else:
-                            function2()
-                except:
-                    shout()
-            flash_name_list.append(name)
-            thread.start_new_thread(method_thread, ()) 
-        elif not status:
-            try:
-                flash_name_list.remove(name)
             except:
-                pass
+                shout()
+        flash_name_list.append(name)
+        thread.start_new_thread(method_thread, ()) 
+    elif not status:
+        try:
+            flash_name_list.remove(name)
+        except:
+            pass
         
 
 def is_ip(string):

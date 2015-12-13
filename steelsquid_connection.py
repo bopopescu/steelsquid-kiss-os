@@ -72,6 +72,9 @@ class SteelsquidConnection(object):
     '''
     The server
     '''
+
+    #Execute the command on this objects as well
+    external_objects=[]
     
     lock = threading.Lock()
 
@@ -126,7 +129,7 @@ class SteelsquidConnection(object):
         '''
         time.sleep(1)
         return connection_object
-
+        
 
     def on_listen(self, listener_object):
         '''
@@ -272,20 +275,32 @@ class SteelsquidConnection(object):
         @return: Answer list
         '''
         try:
-            the_answer = None
             remote_add = self.on_get_remote_address(connection_object)
-            fn = getattr(self, command)
             if not parameters == None:
                 if isinstance(parameters, (list)):
                     count = 0
                     for string in parameters:
                         parameters[count] = steelsquid_utils.decode_string(str(string))
                         count = count + 1
-                    the_answer = fn(remote_add, parameters)
                 else:
-                    the_answer = fn(remote_add, [steelsquid_utils.decode_string(str(parameters))])
+                    parameters = [steelsquid_utils.decode_string(str(parameters))]
             else:
-                the_answer = fn(remote_add, [])
+                parameters = []
+
+            the_answer = None
+            is_found=False
+            if hasattr(self, command):
+                is_found=True
+                fn = getattr(self, command)
+                the_answer = fn(remote_add, parameters)
+            else:
+                for o in self.external_objects:
+                    if hasattr(o, command):
+                        is_found=True
+                        fn = getattr(o, command)
+                        the_answer = fn(remote_add, parameters)
+            if not is_found:
+                raise RuntimeError("Command "+command+" not found!")
             if the_answer != None:
                 if isinstance(the_answer, (list)):
                     count = 0
@@ -296,10 +311,10 @@ class SteelsquidConnection(object):
                 else:
                     return [steelsquid_utils.encode_string(str(the_answer))]
         except RuntimeError, err:
-            steelsquid_utils.shout(debug=True)
+            steelsquid_utils.shout()
             raise err
         except:
-            steelsquid_utils.shout(debug=True)
+            steelsquid_utils.shout()
             import traceback                
             import sys
             exc_type, exc_value, exc_traceback = sys.exc_info()
@@ -379,7 +394,18 @@ class ListenThread(threading.Thread):
         '''
         self.clients.append(client)
         execute = True
+        error = None
         try:
+            remote_add = self.server.on_get_remote_address(client)
+            try:
+                for o in self.server.external_objects:
+                    if hasattr(o, "is_server"):
+                        o.is_server=self.server.is_server
+                    if hasattr(o, "on_connect"):
+                        fn = getattr(o, "on_connect")
+                        fn(remote_add)
+            except:
+                steelsquid_utils.shout()
             while execute:
                 the_type, command, parameters = self.server.on_read(client)
                 if not self.running:
@@ -405,16 +431,22 @@ class ListenThread(threading.Thread):
                         try:
                             self.server.execute(command+"_response", parameters)
                         except:
-                            steelsquid_utils.shout(debug=True)
+                            steelsquid_utils.shout()
                     elif the_type == "error":
                         try:
                             self.server.execute(client, command+"_error", parameters)
                         except:
-                            steelsquid_utils.shout(debug=True)
+                            steelsquid_utils.shout()
         except Exception, err:
-            print err
             error = str(err)
         self.clients.remove(client)
+        try:
+            for o in self.server.external_objects:
+                if hasattr(o, "on_disconnect"):
+                    fn = getattr(o, "on_disconnect")
+                    fn(error)
+        except:
+            steelsquid_utils.shout()
         try:
             self.server.on_close_connection(client, error)
         except Exception, e:

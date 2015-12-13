@@ -22,7 +22,6 @@ only_once=False
 
 class SteelsquidSocketConnection(steelsquid_connection.SteelsquidConnection):
 
-    __slots__ = ['host', 'port']
 
     def __init__(self, is_server, host='localhost', port=22222):
         '''

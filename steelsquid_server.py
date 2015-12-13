@@ -31,8 +31,11 @@ class SteelsquidServer(object):
     '''
     The server
     '''
-    __slots__ = ['listen_thread', 'executing_command', 'executing_lock', 'async_response', 'async_response_err', 'async_has_executed']
+    __slots__ = ['listen_thread', 'executing_command', 'executing_lock', 'async_response', 'async_response_err', 'async_has_executed', 'external_objects']
 
+    #Execute the command on this objects as well
+    external_objects=[]
+    
 
     def __init__(self):
         '''
@@ -274,56 +277,52 @@ class SteelsquidServer(object):
                 self.executing_command.append(command)
                 self.async_response[command] = []
                 self.async_response_err[command] = None
-                the_answer = None
-                fn = getattr(self, command)
                 if not parameters == None:
                     if isinstance(parameters, (list)):
                         count = 0
                         for string in parameters:
                             if isinstance(string, basestring):
                                 parameters[count] = steelsquid_utils.decode_string(string)
-                            elif isinstance(string, (int, long, float)):
-                                parameters[count] = str(string)
                             elif isinstance(string, bool):
                                 if string:
                                     parameters[count] = "True"
                                 else:
                                     parameters[count] = "False"
                             else:
-                                raise RuntimeError("Unknown paramater type, must be (bool, int, float, string) or a list of (bool, int, float, string)")
+                                parameters[count] = str(string)
                             count = count + 1
-                        if session_id!=None:
-                            the_answer = fn(session_id, parameters)
-                        else:
-                            the_answer = fn(parameters)
                     elif isinstance(parameters, basestring):
-                        if session_id!=None:
-                            the_answer = fn(session_id, [steelsquid_utils.decode_string(parameters)])
-                        else:
-                            the_answer = fn([steelsquid_utils.decode_string(parameters)])
-                    elif isinstance(parameters, (int, long, float)):
-                        if session_id!=None:
-                            the_answer = fn(session_id, [str(parameters)])
-                        else:
-                            the_answer = fn([str(parameters)])
+                        parameters = [steelsquid_utils.decode_string(parameters)]
                     elif isinstance(parameters, bool):
                         if parameters:
-                            if session_id!=None:
-                                the_answer = fn(session_id, ["True"])
-                            else:
-                                the_answer = fn(["True"])
+                            parameters = ["True"]
                         else:
-                            if session_id!=None:
-                                the_answer = fn(session_id, ["False"])
-                            else:
-                                the_answer = fn(["False"])
+                            parameters = ["False"]
                     else:
-                        raise RuntimeError("Unknown paramater type, must be (bool, int, float, string) or a list of (bool, int, float, string)")
+                        parameters = [str(parameters)]
                 else:
+                    parameters = []
+                
+                the_answer = None
+                is_found=False
+                if hasattr(self, command):
+                    is_found=True
+                    fn = getattr(self, command)
                     if session_id!=None:
-                        the_answer = fn(session_id, [])
+                        the_answer = fn(session_id, parameters)
                     else:
-                        the_answer = fn([])
+                        the_answer = fn(parameters)
+                else:
+                    for o in self.external_objects:
+                        if hasattr(o, command):
+                            is_found=True
+                            fn = getattr(o, command)
+                            if session_id!=None:
+                                the_answer = fn(session_id, parameters)
+                            else:
+                                the_answer = fn(parameters)
+                if not is_found:
+                    raise RuntimeError("Command "+command+" not found!")
                 self.async_has_executed.append(command)
                 if the_answer == None:
                     return []
@@ -332,8 +331,6 @@ class SteelsquidServer(object):
                     for string in the_answer:
                         if isinstance(string, basestring):
                             the_answer[count] = steelsquid_utils.encode_string(string)
-                        elif isinstance(string, (int, long, float)):
-                            the_answer[count] = str(string)
                         elif isinstance(string, bool):
                             if string:
                                 the_answer[count] = "True"
@@ -342,13 +339,11 @@ class SteelsquidServer(object):
                         elif string == None:
                                 the_answer[count] = "None"
                         else:
-                            raise RuntimeError("Unknown answer type, must be (bool, int, float, string) or a list of (bool, int, float, string)")
+                            the_answer[count] = str(string)
                         count = count + 1
                     return the_answer
                 elif isinstance(the_answer, basestring):
                     return [steelsquid_utils.encode_string(the_answer)]
-                elif isinstance(the_answer, (int, long, float)):
-                    return [str(the_answer)]
                 elif isinstance(parameters, bool):
                     if parameters:
                         return ["True"]
@@ -357,7 +352,7 @@ class SteelsquidServer(object):
                 elif parameters == None:
                     return ["None"]
                 else:
-                    raise RuntimeError("Unknown answer type, must be (bool, int, float, string) or a list of (bool, int, float, string)")
+                    return [str(the_answer)]
             except RuntimeError, err:
                 self.async_response_err[command] = str(err)
                 raise err

@@ -64,20 +64,17 @@ python_downloads[11]="$base/steelsquid_http_server.py"
 python_downloads[12]="$base/steelsquid_kiss_global.py"
 python_downloads[13]="$base/steelsquid_kiss_expand.py"
 python_downloads[14]="$base/steelsquid_kiss_http_server.py"
-python_downloads[15]="$base/steelsquid_kiss_http_expand.py"
-python_downloads[16]="$base/steelsquid_kiss_http_utils.py"
-python_downloads[17]="$base/steelsquid_kiss_socket_connection.py"
-python_downloads[18]="$base/steelsquid_kiss_socket_expand.py"
-python_downloads[19]="$base/steelsquid_lcd_hdd44780.py"
-python_downloads[20]="$base/steelsquid_omx.py"
-python_downloads[21]="$base/steelsquid_sabertooth.py"
-python_downloads[22]="$base/steelsquid_trex.py"
-python_downloads[23]="$base/steelsquid_oled_ssd1306.py"
-python_downloads[24]="$base/steelsquid_bluetooth_connection.py"
-python_downloads[25]="$base/steelsquid_i2c.py"
-python_downloads[26]="$base/MCP23017.py"
-python_downloads[27]="$base/expand/steelsquid_kiss_alarm.py"
-python_downloads[28]="$base/expand/steelsquid_kiss_rover.py"
+python_downloads[15]="$base/steelsquid_kiss_socket_connection.py"
+python_downloads[16]="$base/steelsquid_lcd_hdd44780.py"
+python_downloads[17]="$base/steelsquid_omx.py"
+python_downloads[18]="$base/steelsquid_sabertooth.py"
+python_downloads[19]="$base/steelsquid_trex.py"
+python_downloads[20]="$base/steelsquid_oled_ssd1306.py"
+python_downloads[21]="$base/steelsquid_bluetooth_connection.py"
+python_downloads[22]="$base/steelsquid_i2c.py"
+python_downloads[23]="$base/MCP23017.py"
+python_downloads[24]="$base/expand/steelsquid_kiss_alarm.py"
+python_downloads[25]="$base/expand/steelsquid_kiss_rover.py"
 
 # Links to python_downloads
 python_links[1]="/usr/bin/steelsquid-boot"
@@ -105,18 +102,15 @@ python_links[22]="/usr/bin/dummy"
 python_links[23]="/usr/bin/dummy"
 python_links[24]="/usr/bin/dummy"
 python_links[25]="/usr/bin/dummy"
-python_links[26]="/usr/bin/dummy"
-python_links[27]="/usr/bin/dummy"
-python_links[28]="/usr/bin/dummy"
 
 # Download to web root folder
-web_root_downloads[1]="$base/index.html"
-web_root_downloads[2]="$base/favicon.ico"
-web_root_downloads[3]="$base/play.html"
-web_root_downloads[4]="$base/download.html"
-web_root_downloads[5]="$base/file.html"
-web_root_downloads[6]="$base/utils.html"
-web_root_downloads[7]="$base/expand.html"
+web_root_downloads[1]="$base/web/index.html"
+web_root_downloads[2]="$base/web/favicon.ico"
+web_root_downloads[3]="$base/web/play.html"
+web_root_downloads[4]="$base/web/download.html"
+web_root_downloads[5]="$base/web/file.html"
+web_root_downloads[6]="$base/web/utils.html"
+web_root_downloads[7]="$base/web/expand.html"
 
 # Download to web img folder
 web_img_downloads[1]="$base/img/back.png"
@@ -798,6 +792,9 @@ function help_files()
     echb "$steelsquid_folder/web/"
     echo "Web root"
     echo 
+    echb "/root"
+    echo "Home folder (root user)"
+    echo 
     echb "/root/Media"
     echo "Link to /media"
     echo 
@@ -831,6 +828,102 @@ function help_files()
     echo 
     echb "/usr/lib/python3/dist-packages"
     echo "External python 3 libraries (quick2wire)"
+    echo 
+    echb "/opt/steelsquid/web/download.html"
+    echo "HTML-file for the download manager"
+    echo 
+    echb "/opt/steelsquid/web/expand.html"
+    echo "Use this to create your own stuff..."
+    echo 
+    echb "/opt/steelsquid/web/file.html"
+    echo "HTML-file for the filemanager"
+    echo 
+    echb "/opt/steelsquid/web/index.html"
+    echo "HTML-file for the web start page (settings)"
+    echo 
+    echb "/opt/steelsquid/web/play.html"
+    echo "HTML-file for the mediaplayer"
+    echo 
+    echb "/opt/steelsquid/web/utils.html"
+    echo "HTML-file for different utils (Camera streaming, alarm and rover)"
+    echo 
+    echb "/opt/steelsquid/python/MCP23017.py"
+    echo "Use the mcp23017 16-bit input/output port expander with interrupt output"
+    echo 
+    echb "/opt/steelsquid/python/steelsquid_bluetooth_connection.py"
+    echo "Bluetooth implementation of steelsquid_connection..."
+    echo 
+    echb "/opt/steelsquid/python/steelsquid_boot.py"
+    echo "This will execute when steelsquid-kiss-os starts"
+    echo 
+    echb "/opt/steelsquid/python/steelsquid_connection.py"
+    echo "A simple module that i use to sen async command to and from client/server."
+    echo 
+    echb "/opt/steelsquid/python/steelsquid_event.py"
+    echo "Broadcast and subscribe to events, to use this you first must execute activate_event_handler(...)"
+    echo 
+    echb "/opt/steelsquid/python/steelsquid_http_server.py"
+    echo "This server will listen for http requests."
+    echo 
+    echb "/opt/steelsquid/python/steelsquid_i2c.py"
+    echo "Use this to communicate with i2c devices."
+    echo 
+    echb "/opt/steelsquid/python/steelsquid_kiss_expand.py"
+    echo "Use this file to implement you own stuff..."
+    echo 
+    echb "/opt/steelsquid/python/steelsquid_kiss_global.py"
+    echo "Global stuff for steelsquid kiss os"
+    echo 
+    echb "/opt/steelsquid/python/steelsquid_kiss_http_server.py"
+    echo "Handles requests from index.html, download.html, file.html, play.html, utils.html"
+    echo 
+    echb "/opt/steelsquid/python/steelsquid_kiss_socket_connection.py"
+    echo "Controll steelsquid kiss os with simle socket commands"
+    echo 
+    echb "/opt/steelsquid/python/steelsquid_lcd_hdd44780.py"
+    echo "Print text on a HDD44780 compatible LCD from Raspberry Pi"
+    echo 
+    echb "/opt/steelsquid/python/steelsquid_nm.py"
+    echo "List and connect to wifi network using network manager"
+    echo 
+    echb "/opt/steelsquid/python/steelsquid_oled_ssd1306.py"
+    echo "Write text to a ssd1306 oled display"
+    echo 
+    echb "/opt/steelsquid/python/steelsquid_omx.py"
+    echo "Simple python interface for the omxplayer"
+    echo 
+    echb "/opt/steelsquid/python/steelsquid_pi.py"
+    echo "Some useful stuff for Raspberry Pi"
+    echo 
+    echb "/opt/steelsquid/python/steelsquid_piio.py"
+    echo "Mostly wrapper functions (hard coded adresses and pins) for my steelsquid PIIO board"
+    echo 
+    echb "/opt/steelsquid/python/steelsquid_sabertooth.py"
+    echo "A simple serial interface for Sabertooth motor controller."
+    echo 
+    echb "/opt/steelsquid/python/steelsquid_server.py"
+    echo "A simple module that i use to listen for command and then execute stuff."
+    echo 
+    echb "/opt/steelsquid/python/steelsquid_socket_connection.py"
+    echo "Socket implementation of steelsquid_connection..."
+    echo 
+    echb "/opt/steelsquid/python/steelsquid_synchronize.py"
+    echo "Automatic listen for changes abd commit changes to a nother system via ssh (install on remote system)"
+    echo 
+    echb "/opt/steelsquid/python/steelsquid_trex.py"
+    echo "Controll the Trex robot controller"
+    echo 
+    echb "/opt/steelsquid/python/steelsquid_utils.py"
+    echo "Some useful functions."
+    echo 
+    echb "/opt/steelsquid/python/expand/steelsquid_kiss_alarm.py"
+    echo "This is functionality for my alarm."
+    echo 
+    echb "/opt/steelsquid/python/expand/steelsquid_kiss_rover.py"
+    echo "Fuctionality for my rover controller"
+    echo 
+    echb "/opt/steelsquid/python/expand/steelsquid_kiss_piio.py"
+    echo "Fuctionality for my PIIO board"
 }
 if [ "$in_parameter_1" == "help-files" ]; then
     help_files
@@ -1036,9 +1129,6 @@ function help_develop()
     echb "steelsquid i2c-lock-off"
     echo "Disable i2c lock/syncronization"
     echo "If many devices and strange errors from I2C, try to enabler this."
-    echo 
-    echb "piio"
-    echo "Comands for my Steelsquid PIIO board."
 }
 if [ "$in_parameter_1" == "help-dev" ]; then
     help_develop
@@ -1057,8 +1147,25 @@ function help_io()
 
 }
 
-if [ "$in_parameter_1" == "help-io" ]; then
+if [ "$in_parameter_1" == "help-pi" ]; then
     help_io
+    echo
+	exit 0
+fi
+##################################
+function help_piio()
+{
+    echo 
+    echo 
+    echo 
+    echb "############################################################################"
+    piio
+    echo 
+
+}
+
+if [ "$in_parameter_1" == "help-piio" ]; then
+    help_piio
     echo
 	exit 0
 fi
@@ -1105,15 +1212,6 @@ function help_utils()
     echb "steelsquid alarm-off"
     echo "Disable the Alarm/Surveillance functionality."
     if [ $(is-raspberry-pi) == "true" ]; then
-        echo 
-        echb "steelsquid piio"
-        echo "Is this a Steelsquid PIIO Board."
-        echo 
-        echb "steelsquid piio-on"
-        echo "Enable Steelsquid PIIO Board."
-        echo 
-        echb "steelsquid piio-off"
-        echo "Disable Steelsquid PIIO Board."
         echo 
         echb "steelsquid rover"
         echo "Is rover functionality enabled."
@@ -1293,6 +1391,12 @@ function help_top()
     echo 
     echb "steelsquid help-other"
     echo "Show some other useful commands"
+    echo 
+    echb "steelsquid help-pi"
+    echo "IO commands for Steelsquid Kiss OS. Commands to get/set gpio and other stuff."
+    echo 
+    echb "steelsquid help-piio"
+    echo "Send commands to the Steelsquid PIIO board from the command line."
     echo 
     echb "steelsquid help-files"
     echo "Description of some files and folders."
@@ -3395,7 +3499,7 @@ function local_commit()
 
 	for var in "${web_root_downloads[@]}"
 	do
-        cp $(basename $var) $steelsquid_folder/web/$(basename $var)
+        cp web/$(basename $var) $steelsquid_folder/web/$(basename $var)
 	done
 
 	index=1
@@ -3457,7 +3561,7 @@ function remote_commit()
     cstring="steelsquid-kiss-os.sh" 
     for var in "${web_root_downloads[@]}"
 	do
-        cstring="$cstring $(basename $var)"
+        cstring="$cstring web/$(basename $var)"
     done
 
     for var in "${python_downloads[@]}"

@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# Code for the 16-bit input/output port expander with interrupt output
 # This is made by: Dan Woodruff
 # https://bitbucket.org/dewoodruff
 

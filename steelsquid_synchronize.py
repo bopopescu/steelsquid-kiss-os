@@ -175,7 +175,7 @@ def listener():
             file_change = os.path.getmtime(file_name)
             if file_change != file_last:
                 o[1] = file_change
-                transmit(file_name, "/opt/steelsquid/web/"+file_name)
+                transmit(file_name, "/opt/steelsquid/"+file_name)
         for o in img_files:
             file_name = o[0]
             file_last = o[1]
@@ -365,7 +365,6 @@ def print_menu():
     print " C : custom : Reload the custom modules (/opt/steelsquid/python/expand/...)"
     print " E : expand : Reload steelsquid_kiss_expand.py"
     print " S : server : Reload ...uid_kiss_http_expand.py, ...uid_kiss_socket_expand.py"
-    print " G : global : Reload steelsquid_kiss_global.py"
     print " A : all    : Start/Restart steelsquid service (implememt all changes)"
     print " K : kill   : Stop steelsquid service"
     print " R : reboot : Reboot the remote machine"
@@ -407,14 +406,11 @@ if __name__ == '__main__':
         elif answer == "S" or answer == "s" or answer == "server":
             steelsquid_utils.log("Request reload of ...uid_kiss_http_expand.py, ...uid_kiss_socket_expand.py")
             send_command("event reload server")
-        elif answer == "G" or answer == "g" or answer == "global":
-            steelsquid_utils.log("Request reload of steelsquid_kiss_global.py")
-            send_command("event reload global")
         elif answer == "A" or answer == "a" or answer == "all":
             steelsquid_utils.log("Request service restart")
             send_command("steelsquid restart")
         elif answer == "K" or answer == "k" or answer == "kill":
-            steelsquid_utils.log("Request roboot")
+            steelsquid_utils.log("Request stop steelsquid daemon")
             send_command("systemctl stop steelsquid")
         elif answer == "R" or answer == "r" or answer == "reboot":
             steelsquid_utils.log("Request roboot")

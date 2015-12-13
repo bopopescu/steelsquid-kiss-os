@@ -828,10 +828,19 @@ if __name__ == '__main__':
     import sys
     if len(sys.argv)==1:
         from steelsquid_utils import printb
-        printb("Send commands to the Steelsquid IO board from the command line.")
+        printb("Send commands to the Steelsquid PIIO board from the command line.")
         printb("This is mostly ment for test purpuse.")
         printb("You should use it from example steelsquid_kiss_expand.py running inside the steelsquid daemon.")
         printb("This may interupt the steelsquid daemon so for example the power off button stop working.")
+        print("")
+        printb("steelsquid piio")
+        print("Is Steelsquid PIIO enable on this device.")
+        print("")
+        printb("steelsquid piio-on")
+        print("Enable Steelsquid PIIO Board.")
+        print("")
+        printb("steelsquid piio-off")
+        print("Disable Steelsquid PIIO Board.")
         print("")
         printb("piio shutdown")
         print("Shutdown and power off the system")

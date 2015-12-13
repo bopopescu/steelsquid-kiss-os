@@ -2,17 +2,16 @@
 
 
 '''
-Use this to implement HTTP stuff, will execute on boot
+Handles requests from index.html, download.html, file.html, play.html, utils.html
 Do not execute long running stuff or the system won't start properly.
 This will always execute with root privilege.
 The web-server will be started by steelsquid_boot.py
 
-Use this to expand the capabilities of the webserver.
-Handle stuff in index.html
 -Administartot
 -Download manager
 -Mediaplayer
 -Filemanager
+-Stream camera
 
 @organization: Steelsquid
 @author: Andreas Nilsson
@@ -1816,4 +1815,46 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         Get info on device to print on top of page
         '''
         return steelsquid_utils.execute_system_command(['hostname'])
+
+
+    def stream(self, session_id, parameters):
+        '''
+        Enable or disable streamimg
+        '''
+        if len(parameters) > 0:
+            if parameters[0] == "usb":
+                proc=Popen(['steelsquid', 'stream-on'], stdout = PIPE, stderr = STDOUT)  
+                proc.wait()
+                steelsquid_utils.set_flag("stream")
+                steelsquid_utils.del_flag("stream-pi")
+            elif parameters[0] == "pi":
+                proc=Popen(['steelsquid', 'stream-pi-on'], stdout = PIPE, stderr = STDOUT)  
+                proc.wait()
+                steelsquid_utils.del_flag("stream")
+                steelsquid_utils.set_flag("stream-pi")
+                steelsquid_utils.set_flag("camera")
+            else:
+                proc=Popen(['steelsquid', 'stream-off'], stdout = PIPE, stderr = STDOUT)  
+                proc.wait()
+                steelsquid_utils.del_flag("stream")
+                steelsquid_utils.del_flag("stream-pi")
+        if steelsquid_utils.get_flag("stream"):
+            return "usb"
+        elif steelsquid_utils.get_flag("stream-pi"):
+            return "pi"
+        else:
+            return "false"
+
+
+    def stream_frames(self, session_id, parameters):
+        '''
+        Frames /second
+        '''
+        if not steelsquid_utils.has_parameter("stream_frames"):
+            steelsquid_utils.set_parameter("stream_frames", "4")
+        if len(parameters) > 0:
+            steelsquid_utils.set_parameter("stream_frames", parameters[0])
+            return [steelsquid_utils.get_parameter("stream_frames"), "Settings saved"]
+        else:
+            return [steelsquid_utils.get_parameter("stream_frames"), ""]
 

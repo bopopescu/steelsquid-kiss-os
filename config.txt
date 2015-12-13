@@ -3,4 +3,3 @@
 root
 raspberry
 
-custom.py | /opt/steelsquid/python/expand/custom.py
