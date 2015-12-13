@@ -2883,7 +2883,7 @@ function install_steelsquid_python()
 {
 	log "Download and install python scripts"
     mkdir -p /opt/steelsquid/python/
-    mkdir -p /opt/steelsquid/expand/
+    mkdir -p /opt/steelsquid/python/expand/
 	index=1
 	for var in "${python_downloads[@]}"
 	do
