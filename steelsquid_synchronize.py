@@ -57,8 +57,11 @@ import threading
 import os
 import paramiko
 import select
-import readline
 from datetime import datetime
+try:
+    import readline
+except:
+    import pyreadline as readline
 
 steel_last = 0
 base_remote_server=[]
