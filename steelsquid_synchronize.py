@@ -57,6 +57,7 @@ import threading
 import os
 import paramiko
 import select
+import traceback
 from datetime import datetime
 try:
     import readline
