@@ -24,25 +24,14 @@ The file /etc/modules shall have the following lines
 i2c-bcm2708
 i2c-dev
 
-2. Change the baudrate on The Raspberry Pi
+2. If you have problem to this, otherwise, leave it out
+Change the baudrate on The Raspberry Pi 
 Create a new file: /etc/modprobe.d/i2c.conf
 And add:
 options i2c_bcm2708 baudrate=9600
 
 3. Install smbus:
 sudo apt-get install python-smbus
-
-4. Install quick2wire:
-Add the following to /etc/apt/sources.list
-deb http://dist.quick2wire.com/raspbian wheezy main 
-deb-src http://dist.quick2wire.com/raspbian wheezy main
-
-sudo apt-get update
-sudo apt-get install install quick2wire-gpio-admin quick2wire-python3-api
-sed -i '/^assert sys.version_info.major/d' /usr/lib/python3/dist-packages/quick2wire/i2c.py
-
-5. If you use python2 add the following to /etc/profile.d/pythonpath.sh
-export PYTHONPATH=/usr/lib/python3/dist-packages
 
 NOTE! When you execute this from the command line it execute outside of steelsquid daemon, and may interrupt for example the LCD, DAC, ADC or extra GPIO.
 It is meant to be used inside the steelsquid daemon (see http://www.steelsquid.org/steelsquid-kiss-os-development)
@@ -56,19 +45,14 @@ It is meant to be used inside the steelsquid daemon (see http://www.steelsquid.o
 
 
 import sys
-#If the python3 packages not is in path (quick2wire)
-sys.path.append("/usr/lib/python3/dist-packages")
 import threading
 import time
 import smbus
-#import quick2wire.i2c as i2c
-#from quick2wire.i2c import I2CMaster, writing_bytes, reading
 
 
 TREX_ADDRESS = 0x07
 
 i2c_write_bus = smbus.SMBus(1)
-#i2c_read_bus = i2c.I2CMaster()
 trex_lock = threading.Lock()
 trex_package = [None] * 26
 trex_voltage_f = 8
@@ -117,12 +101,15 @@ def printb(string):
 
 def __trex_status():
     '''
+    OBS! This is under construction....
     Read status from trex
     Return as a byte array
     '''
-    import steelsquid_utils
-    answer = i2c_read_bus.transaction(i2c.reading(TREX_ADDRESS, 24))[0]
-    return map(ord, answer)
+    answer = []
+    answer1 = i2c_write_bus.block_process_call(TREX_ADDRESS, 24, [])
+    answer2 = i2c_write_bus.block_process_call(TREX_ADDRESS, 24, [])
+    answer1.extend(answer2)
+    raise Exception("This is under construction, can not read a block of bytes from the smb bus whitout the cmd???")
 
 
 def __hight_byte(integer):
@@ -203,6 +190,7 @@ def trex_servo(servo, position):
 
 def trex_status():
     '''
+    OBS! Ths is under construction....
     Get status from trex
      - Battery voltage:   An integer that is 100x the actual voltage
      - Motor current:  Current drawn by the motor in mA
@@ -258,24 +246,27 @@ if __name__ == '__main__':
         help()
     else:
         if sys.argv[1] == "motor":
-            trex_motor(sys.argv[2], sys.argv[3])
-            print "Motor speed left: " + sys.argv[2]
-            print "Motor speed right: " + sys.argv[3]
+            for a in range(10, 40, 1):
+                trex_motor(a, a)
+                time.sleep(0.3)
+            for a in range(40, 0, -1):
+                trex_motor(a, a)
+                time.sleep(0.3)
         elif sys.argv[1] == "servo":
             trex_servo(sys.argv[2], sys.argv[3])
-            print "Servo number: " + sys.argv[2]
-            print "Position: " + sys.argv[3]
+            print("Servo number: " + sys.argv[2])
+            print("Position: " + sys.argv[3])
         elif sys.argv[1] == "status":
             battery_voltage, left_motor_current, right_motor_current, accelerometer_x, accelerometer_y, accelerometer_z, impact_x, impact_y, impact_z = trex_status()
-            print "Battery voltage: " + str(battery_voltage)
-            print "Left motor current: " + str(left_motor_current)
-            print "Right motor current: " + str(right_motor_current)
-            print "Accelerometer X-axis: " + str(accelerometer_x)
-            print "Accelerometer Y-axis : " + str(accelerometer_y)
-            print "Accelerometer Z-axis : " + str(accelerometer_z)
-            print "Impact X-axis: " + str(impact_x)
-            print "Impact Y-axis: " + str(impact_y)
-            print "Impact Z-axis: " + str(impact_z)
+            print("Battery voltage: " + str(battery_voltage))
+            print("Left motor current: " + str(left_motor_current))
+            print("Right motor current: " + str(right_motor_current))
+            print("Accelerometer X-axis: " + str(accelerometer_x))
+            print("Accelerometer Y-axis : " + str(accelerometer_y))
+            print("Accelerometer Z-axis : " + str(accelerometer_z))
+            print("Impact X-axis: " + str(impact_x))
+            print("Impact Y-axis: " + str(impact_y))
+            print("Impact Z-axis: " + str(impact_z))
         else:
             help()
 

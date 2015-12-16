@@ -803,6 +803,9 @@ function help_files()
     echb "/media"
     echo "USB disks will automatically be installed here."
     echo 
+    echb "/root/test.py"
+    echo "A puthon file to test stuff in..."
+    echo 
     echb "/opt/steelsquid/steelsquid-kiss-os.sh"
     echo "The steelsquid install and update script"
     echo 
@@ -1260,7 +1263,7 @@ function help_build()
     echo "passwd  (raspberry)"
     echo 
     echb "7.  Change to jessie and uppgrade"
-    echo "echo \"deb http://mirrordirector.raspbian.org/raspbian jessie main contrib non-free firmware rpi\" > /etc/apt/sources.list"
+    echo "echo \"http://archive.raspbian.org/raspbian jessie main contrib non-free firmware rpi\" > /etc/apt/sources.list"
     echo "echo \"deb http://archive.raspberrypi.org/debian jessie main untested staging ui\" >> /etc/apt/sources.list"
     echo "apt-get update"
     echo "apt-get --no-install-recommends install sudo nano aptitude linux-image-rpi-rpfv linux-image-rpi2-rpfv"
@@ -4543,6 +4546,19 @@ echo "#"\!"/bin/bash" > /usr/bin/aria2shoutok
 echo "event shout \"Download complete\\n\$3\"" >> /usr/bin/aria2shoutok
 echo "exit 0" >> /usr/bin/aria2shoutok
 chmod +x /usr/bin/aria2shoutok
+
+
+##################################################################################
+# Generate test python file
+##################################################################################
+log "Generate test python file"
+echo "#"\!"/usr/bin/python -OO" > /root/test.py
+echo "import steelsquid_utils" >> /root/test.py
+echo "import steelsquid_event" >> /root/test.py
+echo "import steelsquid_pi" >> /root/test.py
+echo "import steelsquid_kiss_global" >> /root/test.py
+echo "" >> /root/test.py
+chmod +x /root/test.py
 
 
 ##################################################################################

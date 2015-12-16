@@ -21,14 +21,14 @@ password
 
 Will check for changes in this files:
  - steelsquid-kiss-os.sh
- - The files in the paramater python_downloads inside steelsquid-kiss-os.sh
-   Will be copied to /opt/steelsquid/python/
- - The files in the paramater web_root_downloads inside steelsquid-kiss-os.sh
+ - Files (.py) in the directory this script execute from
+   Will be copied to /opt/steelsquid/python
+ - Files (.py) under the expand directory
+   Will be copied to /opt/steelsquid/python/expand
+ - Files in the web directory
    Will be copied to /opt/steelsquid/web
  - Files under the img directory
    Will be copied to /opt/steelsquid/web/img
- - Files (.py) under the expand directory
-   Will be copied to /opt/steelsquid/python/expand
 
 Will also check config.txt 6 row and forward for files.
 Local file|Remote file
@@ -39,9 +39,8 @@ Example config.txt
 root
 raspberry
 
-/home/steelsquid/steelsquid-kiss-os/mypythonfile.py|/opt/steelsquid/python/mypythonfile1.py
-/home/steelsquid/steelsquid-kiss-os/autoinportthis.py|/opt/steelsquid/python/expand/autoinportthis.py
-/home/steelsquid/steelsquid-kiss-os/myhtml.html|/opt/steelsquid/web/myhtml.html
+/home/steelsquid/afile.txt|/root/afile.txt
+/home/steelsquid/afile2.txt|/root/afile2.txt
 
 @organization: Steelsquid
 @author: Andreas Nilsson
@@ -56,7 +55,6 @@ import sys
 import thread
 import threading
 import os
-import steelsquid_utils
 import paramiko
 import select
 import readline
@@ -97,30 +95,23 @@ def load_data():
     global channel
     global channel_f 
     print ""
-    steelsquid_utils.log("Load settings from steelsquid-kiss-os.sh")
-    with open("steelsquid-kiss-os.sh") as f:
-        for line in f:
-            line = line.replace("\n","")
-            if line.startswith("python_downloads["):
-                line = line.split("=")[1]
-                line = line.replace("$base/","")
-                line = line.replace("\"","")
-                python_files.append([line, 0])
-            elif line.startswith("web_root_downloads["):
-                line = line.split("=")[1]
-                line = line.replace("$base/","")
-                line = line.replace("\"","")
-                web_files.append([line, 0])
+    log("Load settings from steelsquid-kiss-os.sh")
+    for tfile in os.listdir("."):
+        if tfile.endswith(".py"):
+            python_files.append([tfile, 0])
     if os.path.isdir("expand"):
         for tfile in os.listdir("expand"):
             if tfile.endswith(".py"):
                 expand_files.append(["expand/"+tfile, 0])
+    if os.path.isdir("web"):
+        for tfile in os.listdir("web"):
+            web_files.append(["web/"+tfile, 0])
     if os.path.isdir("img"):
         for tfile in os.listdir("img"):
             img_files.append(["img/"+tfile, 0])
     if os.path.isfile("config.txt"):
         print ""
-        steelsquid_utils.log("Load settings from config.txt")
+        log("Load settings from config.txt")
         i = 0
         with open("config.txt") as f:
             for line in f:
@@ -148,7 +139,7 @@ def load_data():
                     extra_files.append(line)
                 i = i + 1 
     else:
-        steelsquid_utils.log("config.txt not found!!!")
+        log("config.txt not found!!!")
         sys.exit()
 
         
@@ -169,6 +160,14 @@ def listener():
             if file_change != file_last:
                 o[1] = file_change
                 transmit(file_name, "/opt/steelsquid/python/"+file_name)
+                send_command("chmod +x /opt/steelsquid/python/"+file_name)
+        for o in expand_files:
+            file_name = o[0]
+            file_last = o[1]
+            file_change = os.path.getmtime(file_name)
+            if file_change != file_last:
+                o[1] = file_change
+                transmit(file_name, "/opt/steelsquid/python/"+file_name)
         for o in web_files:
             file_name = o[0]
             file_last = o[1]
@@ -183,13 +182,6 @@ def listener():
             if file_change != file_last:
                 o[1] = file_change
                 transmit(file_name, "/opt/steelsquid/web/"+file_name)
-        for o in expand_files:
-            file_name = o[0]
-            file_last = o[1]
-            file_change = os.path.getmtime(file_name)
-            if file_change != file_last:
-                o[1] = file_change
-                transmit(file_name, "/opt/steelsquid/python/"+file_name)
         for o in extra_files:
             file_local = o[0]
             file_remote = o[1]
@@ -214,7 +206,7 @@ def connect():
         for server in base_remote_server:
             try:
                 print ""
-                steelsquid_utils.log("Connecting to: " + server)
+                log("Connecting to: " + server)
                 ssh[x].connect(server, port=int(base_remote_port), username=base_remote_user, password=base_remote_password)
                 channel[x] = ssh[x].get_transport().open_session()
                 channel[x].get_pty()
@@ -223,7 +215,7 @@ def connect():
                 sftp[x] = ssh[x].open_sftp()
                 x = x + 1
             except Exception, e:
-                steelsquid_utils.shout()
+                shout()
                 raise e
             
             
@@ -243,7 +235,7 @@ def disconnect():
 
 def transmit(local, remote):
     print ""
-    steelsquid_utils.log("SYNC: " + local)
+    log("SYNC: " + local)
     for x in range(0, len(base_remote_server)):
         try:
             sftp[x].put(local, remote)
@@ -313,7 +305,7 @@ def listen_for_std(x):
     '''
     time.sleep(1)
     print ""
-    steelsquid_utils.log("Listen for output from: " + base_remote_server[x])
+    log("Listen for output from: " + base_remote_server[x])
     global channel_f
     while True:
         try:
@@ -333,11 +325,11 @@ def listen_for_std(x):
                             if answer != None:
                                 if ms > 100:
                                     print ""
-                                    steelsquid_utils.log("FROM REMOTE DEVICE: " + base_remote_server[x])
+                                    log("FROM REMOTE DEVICE: " + base_remote_server[x])
                                 print answer
                                 last_time = cur_time
         except:
-            steelsquid_utils.shout()
+            shout()
             try:
                 connect()
             except:
@@ -355,6 +347,34 @@ def remove_timestamp(line):
     return line
 
 
+def shout(string=None):
+    '''
+    Send message to tty1, wall notify-send
+    @param string: The string
+    '''
+    if string == None:
+        is_error = True
+        exc_type, exc_value, exc_tb = sys.exc_info()
+        ex = traceback.format_exception(exc_type, exc_value, exc_tb)
+        if string == None:
+            string = str(exc_type) + ": " + str(exc_value) +"\n"+str(ex)
+        else:
+            string = str(string)
+            string = string + "\n" + str(exc_type) + ": " + str(exc_value) +"\n"+str(ex)
+        del exc_tb
+    elif string != None:
+        string = str(string)
+    print(string)
+
+
+def log(message):
+    '''
+    Log a message.
+    @param message: The message to log
+    '''
+    print(datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " " + message)
+
+
 def print_menu(): 
     print "------------------------------------------------------------------------------"
     print "Listen for changes and commit to following server(s)"
@@ -364,7 +384,7 @@ def print_menu():
     print " Q : quit   : This program will terminate"
     print " C : custom : Reload the custom modules (/opt/steelsquid/python/expand/...)"
     print " E : expand : Reload steelsquid_kiss_expand.py"
-    print " S : server : Reload ...uid_kiss_http_expand.py, ...uid_kiss_socket_expand.py"
+    print " S : server : Reload ..uid_kiss_http_server.py ..uid_kiss_socket_connection.py"
     print " A : all    : Start/Restart steelsquid service (implememt all changes)"
     print " K : kill   : Stop steelsquid service"
     print " R : reboot : Reboot the remote machine"
@@ -398,25 +418,25 @@ if __name__ == '__main__':
         elif answer == "Q" or answer == "q" or answer == "quit":
             cont = False
         elif answer == "C" or answer == "c" or answer == "custom":
-            steelsquid_utils.log("Request reload of custom modules")
+            log("Request reload of custom modules")
             send_command("event reload custom")
         elif answer == "E" or answer == "e" or answer == "expand":
-            steelsquid_utils.log("Request reload of steelsquid_kiss_expand.py")
+            log("Request reload of steelsquid_kiss_expand.py")
             send_command("event reload expand")
         elif answer == "S" or answer == "s" or answer == "server":
-            steelsquid_utils.log("Request reload of ...uid_kiss_http_expand.py, ...uid_kiss_socket_expand.py")
+            log("Request reload of ...uid_kiss_http_expand.py, ...uid_kiss_socket_expand.py")
             send_command("event reload server")
         elif answer == "A" or answer == "a" or answer == "all":
-            steelsquid_utils.log("Request service restart")
+            log("Request service restart")
             send_command("steelsquid restart")
         elif answer == "K" or answer == "k" or answer == "kill":
-            steelsquid_utils.log("Request stop steelsquid daemon")
+            log("Request stop steelsquid daemon")
             send_command("systemctl stop steelsquid")
         elif answer == "R" or answer == "r" or answer == "reboot":
-            steelsquid_utils.log("Request roboot")
+            log("Request roboot")
             send_command("reboot &")
         elif len(answer.strip())>0:
             send_command_read_answer(answer)
     disconnect()
-    steelsquid_utils.log("By :-)")
+    log("By :-)")
     
