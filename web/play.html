@@ -1,0 +1,408 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+    <head>
+        <title>Kiss OS Media Player</title>
+        <meta http-equiv="Content-Language" content="en" />
+        <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
+        <meta name="Steelsquid Kiss OS" content="Administrate/Control/Configure steelsquid-kiss-os from web browser." />
+        <meta name="keywords" content="steelsquid, steelsquid-kiss-os, raspberry, pi, debian, linux, distribution, administrator, configure" />
+        <meta name="author" content="Andreas Nilsson (Steelsquid)" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+        <link rel="icon" href="favicon.ico" type="image/x-icon"/>
+        <link rel="shortcut icon" href="favicon.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="steelsquid.css"/>
+        <script type="text/javascript" src="jquery.js"></script>
+        <script type="text/javascript" src="steelsquid.js"></script>
+        <script type="text/javascript">
+            //<![CDATA[ 
+            submitNoPW('device_info');
+ 
+            /**
+             * Get info on device to print on top of page
+             */
+            function on_device_info(paramaters){
+                $("#device_info_name").html(paramaters[0]);
+            }
+
+             function on_media_list(paramaters){
+                tbody = $("#dir_list").find('tbody');
+                tbody.empty();
+                if(paramaters.length > 1){
+                    for(var i = 0; i<paramaters.length; i++){
+                        var type = paramaters[i];
+                        i++;
+                        var name = paramaters[i];
+                        i++;
+                        var size = paramaters[i];
+                        i++;
+                        var t_link = paramaters[i];
+                        if(type == "DIR"){
+                            tbody.append("<tr><td>" + type + "</td><td class='expand'><a href=\"javascript:submitSync('media_list', '" + t_link + "');\">" + name + "</a></td><td class='nowrap'>" + size + "</td></tr>");
+                        }
+                        else if(type == "<=="){
+                            tbody.append("<tr><td><a href=\"javascript:submitSync('media_list', '" + t_link + "');\">&lt;==</a></td><td class='expand'><a href=\"javascript:submitSync('media_list', '" + t_link + "');\">" + name + "</a></td><td class='nowrap'>" + size + "</td></tr>");
+                        }
+                        else{
+                            tbody.append("<tr><td><a href=\"javascript:submitSync('media_playlist_add', '" + t_link + "');\">Add</a></td><td class='expand'><a href=\"javascript:submitSync('media_play', '" + t_link + "');\">" + name + "</a></td><td class='nowrap'>" + size + "</td></tr>");
+                        }
+                    }
+                }
+                if(paramaters.length == 1){
+                    tbody.append("<tr><td colspan='3'>No media files found!</td></td></tr>");
+                }
+            }
+            function on_media_playlist(paramaters){
+                tbody = $("#playlist").find('tbody');
+                tbody.empty();
+                if(paramaters.length > 1){
+                    number=0;
+                    for(var i = 0; i<paramaters.length; i++){
+                        var name = paramaters[i];
+                        i++;
+                        var t_link = paramaters[i];
+                        tbody.append("<tr><td><a href=\"javascript:submitSync('media_playlist_remove', '" + number + "');\">Remove</a></td><td class='expand'><a href=\"javascript:submitSync('media_playlist_play', '" + t_link + "');\">" + name + "</a></td></tr>");
+                        number++;
+                    }
+                }
+                if(paramaters.length == 1){
+                    tbody.append("<tr><td colspan='2'>Empty playlist!</td></td></tr>");
+                }
+            }
+            function on_media_playlist_add(paramaters){
+                on_media_playlist(paramaters);
+            }
+            function on_media_playlist_remove(paramaters){
+                on_media_playlist(paramaters);
+            }
+            function on_media_playlist_clear(paramaters){
+                on_media_playlist(paramaters);
+            }
+            function on_media_playlist_play(paramaters){
+                showAlert("Playing from playlist", 1000, false);
+                submitSync('media_playing');
+            }
+            function on_media_playlist_next(paramaters){
+                showAlert("Playing next from playlist", 1000, false);
+                submitSync('media_playing');
+            }
+            function on_media_playlist_previous(paramaters){
+                showAlert("Playing previous from playlist", 1000, false);
+                submitSync('media_playing');
+            }
+            function on_media_play(paramaters){
+                showAlert("Playing", 1000, false);
+                submitSync('media_playing');
+            }
+            function on_media_stop(paramaters){
+                showAlert("Stopping", 1000, false);
+                submitSync('media_playing');
+            }
+            function on_media_pause(paramaters){
+                showAlert("Toggle pause", 1000, false);
+            }
+            function on_media_backward_long(paramaters){
+                showAlert("Backward", 1000, false);
+            }
+            function on_media_backward_short(paramaters){
+                showAlert("Backward", 1000, false);
+            }
+            function on_media_forward_short(paramaters){
+                showAlert("Forward", 1000, false);
+            }
+            function on_media_forward_long(paramaters){
+                showAlert("Forward", 1000, false);
+            }
+            function on_media_audio_previous(paramaters){
+                showAlert("Previous language", 1000, false);
+            }
+            function on_media_audio_next(paramaters){
+                showAlert("Next language", 1000, false);
+            }
+            function on_media_volume_decrease(paramaters){
+                showAlert("Decrease volume", 1000, false);
+            }
+            function on_media_volume_increase(paramaters){
+                showAlert("Increase volume", 1000, false);
+            }
+            function on_media_sub_previous(paramaters){
+                showAlert("Previous subtitles", 1000, false);
+            }
+            function on_media_sub_toggle(paramaters){
+                showAlert("Toggle subtitles", 1000, false);
+            }
+            function on_media_sub_next(paramaters){
+                showAlert("Next subtitles", 1000, false);
+            }
+            function on_media_playing(paramaters){
+                $("#playing").html(paramaters[0]);
+            }
+            
+            /**
+             * On web interface share /mnt, /media and /home/steelsquid
+             */
+            function on_web_interface_share(paramaters){
+                if(paramaters[0] == "True"){
+                    showLayer('main');
+                    $('.twin-panel').show();                  
+                }
+                else{
+                    showLayer('share');
+                }
+            }
+            function on_web_interface_share_on(paramaters){
+                on_web_interface_share(paramaters);
+            }
+            
+            /**
+             * When the page is loaded
+             */
+            function onPageLoad(){
+                submitNoPW('web_interface_share');
+            }
+            
+            /**
+             * When go back or middle mouse button or esc pressed
+             */
+            function onBack(){
+                if (isLayerShowing('main')){
+                    submitSync('media_playing');
+                    submitSync('media_list');
+                    submitSync('media_playlist');
+                }
+            }
+            
+            /**
+             * This will execute every 10 second
+             */
+            function onEvery05s(){
+                if (isLayerShowing('main')){
+                    submitNoPW('media_playing');
+                }
+            }
+
+            /**
+             * This will execute every 10 second
+             */
+            function onEvery10s(){
+            }
+
+            /**
+             * When a layer is shown
+             */
+            function onLayerShown(layer){
+                if(layer == "main"){
+                    submitSync('media_list');
+                    submitSync('media_playlist');
+                }
+            }
+            
+            /**
+             * On submit command
+             */
+            function onWork(command){
+            }
+
+            /**
+             * On answer from submit dommand
+             */
+            function onSleep(command){
+            }
+
+            
+            /**
+             * On window resize
+             */
+            function onResize(width, height){
+            }            
+            
+            //]]>
+        </script>
+        
+    </head>
+    <body>
+        <div class="fill">
+            <table class="bar">
+                <thead>
+                    <tr>
+                        <td>
+                            <img alt="logo" src="img/bar_steelsquid.png"></img>
+                        </td>
+                        <td>
+                            Kiss OS Media Player
+                        </td>
+                        <td>
+                            <div class="device_info" id="device_info_name"></div>
+                        </td>
+                        <td>
+                            <img alt="logo" src="img/bar_menu.png"></img>
+                        </td>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr onclick="javascript:window.location = 'http://www.steelsquid.org/steelsquid-kiss-os';">
+                        <td>
+                            <img alt="logo" src="img/bar_help.png"></img>
+                        </td>
+                        <td colspan="2" >
+                            Help
+                        </td>
+                    </tr>
+                    <tr onclick="javascript:window.location = '/';">
+                        <td>
+                            <img alt="logo" src="img/bar_admin.png"></img>
+                        </td>
+                        <td colspan="2" >
+                            Administrator
+                        </td>
+                    </tr>
+                    <tr onclick="javascript:window.location = '/file';">
+                        <td>
+                            <img alt="logo" src="img/bar_file.png"></img>
+                        </td>
+                        <td colspan="2" >
+                            File Manager
+                        </td>
+                    </tr>
+                    <tr onclick="javascript:window.location = '/download';">
+                        <td>
+                            <img alt="logo" src="img/bar_download.png"></img>
+                        </td>
+                        <td colspan="2" >
+                            Download Manager
+                        </td>
+                    </tr>
+                    <tr onclick="javascript:window.location = '/utils';">
+                        <td>
+                            <img alt="logo" src="img/bar_utils.png"></img>
+                        </td>
+                        <td colspan="2" >
+                            Utils
+                        </td>
+                    </tr>
+                    <tr onclick="javascript:window.location = '/expand';">
+                        <td>
+                            <img alt="logo" src="img/bar_expand.png"></img>
+                        </td>
+                        <td colspan="2" >
+                            Expand
+                        </td>
+                    </tr>
+                    <tr onclick="javascript:submitSyncConfirm('Are you sure you want to reboot?', 'reboot');">
+                        <td>
+                            <img alt="logo" src="img/bar_reboot.png"></img>
+                        </td>
+                        <td colspan="2" >
+                            Reboot
+                        </td>
+                    </tr>
+                    <tr onclick="javascript:submitSyncConfirm('Are you sure you want to shutdown?', 'shutdown');">
+                        <td>
+                            <img alt="logo" src="img/bar_shutdown.png"></img>
+                        </td>
+                        <td colspan="2" >
+                            Shutdown
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="layer" id="share">
+                The Media Player is not enabled on this system.<br/>
+                If you enable the Media Player you will expose <span class="highlight">/root</span> on this web interface.<br/>
+                You can undo this choice under Administrator/Administrator interface<br/>
+                <br/>
+                <button onclick="javascript:submitSyncFromPrompt('web_interface_share_on', 'Please enter password for the user root?', '');">Enable Media Player</button>
+            </div>
+            <div class="twin-panel hide">
+                <table class="grid">
+                    <tr>
+                        <td style="width:17%">
+                            <button title="Backward 10 minutes" onclick="javascript:submitSync('media_backward_long')">&lt; 10m</button>
+                        </td>
+                        <td style="width:17%">
+                            <button title="Backward 30 seconds" onclick="javascript:submitSync('media_backward_short')">&lt; 30s</button>
+                        </td>
+                        <td style="width:17%">
+                            <button title="Stop playing" onclick="javascript:submitSync('media_stop')">Stop</button>
+                        </td>
+                        <td style="width:17%">
+                            <button title="Toggle pause/Resume" onclick="javascript:submitSync('media_pause')">Pause</button>
+                        </td>
+                        <td style="width:17%">
+                            <button title="Forward 30 seconds" onclick="javascript:submitSync('media_forward_short')">30s &gt;</button>
+                        </td>
+                        <td style="width:17%">
+                            <button title="Forward 10 minutes" onclick="javascript:submitSync('media_forward_long')">10m &gt;</button>
+                        </td>
+                    </tr>
+                </table>
+                <table class="grid">
+                    <tr>
+                        <td style="width:25%">
+                            <button title="Previous audio stream (language)" onclick="javascript:submitSync('media_audio_previous')">&lt; Language</button>
+                        </td>
+                        <td style="width:25%">
+                            <button title="Next audio stream (language)" onclick="javascript:submitSync('media_audio_next')">Language &gt;</button>
+                        </td>
+                        <td style="width:25%">
+                            <button title="Decrease volume" onclick="javascript:submitSync('media_volume_decrease')">Volume -</button>
+                        </td>
+                        <td style="width:25%">
+                            <button title="Increase volume" onclick="javascript:submitSync('media_volume_increase')">Volume +</button>
+                        </td>
+                    </tr>
+                </table>            
+                <table class="grid">
+                    <tr>
+                        <td style="width:34%">
+                            <button title="Previous subtitle stream" onclick="javascript:submitSync('media_sub_previous')">&lt; Subtitle</button>
+                        </td>
+                        <td style="width:34%">
+                            <button title="Toggle subtitle on and off" onclick="javascript:submitSync('media_sub_toggle')">Sub/NoSub</button>
+                        </td>
+                        <td style="width:34%">
+                            <button title="Next subtitle stream" onclick="javascript:submitSync('media_sub_next')">Subtitle &gt;</button>
+                        </td>
+                    </tr>
+                </table>            
+                <table id="dir_list" class="list">
+                    <thead>
+                        <tr>
+                            <th colspan="2">Files and folders</th><th>Size</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td></td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="twin-panel hide">
+                <table class="grid">
+                    <tr>
+                        <td style="width:34%">
+                            <button title="Play previous in playlist" onclick="javascript:submitSync('media_playlist_previous')">&lt; Previous</button>
+                        </td>
+                        <td style="width:34%">
+                            <button title="Clear the playlist" onclick="javascript:submitSync('media_playlist_clear')">Clear</button>
+                        </td>
+                        <td style="width:34%">
+                            <button title="Play next in playlist" onclick="javascript:submitSync('media_playlist_next')">Next &gt;</button>
+                        </td>
+                    </tr>
+                </table>
+                <table id="playlist" class="list">
+                    <thead>
+                        <tr>
+                            <th class="wrap" colspan="2">Playlist</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td></td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="footer" id="playing">
+
+            </div>
+        </div>
+    </body>
+</html>

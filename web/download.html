@@ -1,0 +1,397 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+    <head>
+        <title>Kiss OS Download Manager</title>
+        <meta http-equiv="Content-Language" content="en" />
+        <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
+        <meta name="Steelsquid Kiss OS" content="Administrate/Control/Configure steelsquid-kiss-os from web browser." />
+        <meta name="keywords" content="steelsquid, steelsquid-kiss-os, raspberry, pi, debian, linux, distribution, administrator, configure" />
+        <meta name="author" content="Andreas Nilsson (Steelsquid)" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+        <link rel="icon" href="favicon.ico" type="image/x-icon"/>
+        <link rel="shortcut icon" href="favicon.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="steelsquid.css"/>
+        <script type="text/javascript" src="jquery.js"></script>
+        <script type="text/javascript" src="steelsquid.js"></script>
+        <script type="text/javascript">
+            //<![CDATA[ 
+
+            submitNoPW('device_info');
+ 
+            /**
+             * Get info on device to print on top of page
+             */
+            function on_device_info(paramaters){
+                $("#device_info_name").html(paramaters[0]);
+            }
+
+            /**
+             * On list downloads
+             */
+            function on_download_active(paramaters){
+                showLayer('main');
+                tbody = $("#download_list_active").find('tbody');
+                tbody.empty();
+                if(paramaters.length > 1){
+                    for(var i = 0; i<paramaters.length; i++){
+                        var gid = paramaters[i];
+                        i++;
+                        var size = paramaters[i];
+                        i++;
+                        var proc = paramaters[i];
+                        i++;
+                        var downloadSpeed = paramaters[i];
+                        i++;
+                        var uploadSpeed = paramaters[i];
+                        i++;
+                        var file = paramaters[i];
+                        var row = ["<tr><td class='expand'>"];
+                        row.push(file);
+                        row.push("<br/><span class='minimize'>");
+                        row.push(proc + " (" + size+")");
+                        row.push("&nbsp;&nbsp;&nbsp;&nbsp;Up: " + uploadSpeed);
+                        row.push("&nbsp;&nbsp;&nbsp;&nbsp;Down: " + downloadSpeed);
+                        row.push("</span></td><td>");
+                        row.push("<button onClick=\"javascript:submitSync('download_pause', '" + gid + "')\">Pause</button>");
+                        row.push("<br/>");
+                        row.push("<button onClick=\"javascript:submitSync('download_remove', '" + gid + "')\">Remove</button>");
+                        row.push("</td></tr>");
+                        tbody.append(row.join(''));
+                    }
+                }
+                if(paramaters.length == 1){
+                    tbody.append("<tr><td>No active downloads</td></tr>");
+                }
+            }
+
+            /**
+             * On list downloads
+             */
+            function on_download_paused(paramaters){
+                tbody = $("#download_list_paused").find('tbody');
+                tbody.empty();
+                if(paramaters.length > 1){
+                    for(var i = 0; i<paramaters.length; i++){
+                        var gid = paramaters[i];
+                        i++;
+                        var status = paramaters[i];
+                        i++;
+                        var size = paramaters[i];
+                        i++;
+                        var proc = paramaters[i];
+                        i++;
+                        var file = paramaters[i];
+                        var row = ["<tr><td class='expand'>"];
+                        row.push(file);
+                        row.push("<br/><span class='minimize'>");
+                        row.push(proc + " (" + size+")");
+                        if(status == "paused"){
+                            row.push("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class='ok'>Paused!</span>");
+                        }
+                        else if(status == "waiting"){
+                            row.push("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class='ok'>Waiting!</span>");
+                        }
+                        else{
+                            row.push("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class='ok'>Error!</span>");
+                        }
+                        row.push("</span></td><td>");
+                        row.push("<button onClick=\"javascript:submitSync('download_resume', '" + gid + "')\">Resume</button>");
+                        row.push("<br/>");
+                        row.push("<button onClick=\"javascript:submitSync('download_remove', '" + gid + "')\">Remove</button>");
+                        row.push("</td></tr>");
+                        tbody.append(row.join(''));
+                    }
+                }
+                if(paramaters.length == 1){
+                    tbody.append("<tr><td>No paused downloads</td></tr>");
+                }
+            }
+
+            /**
+             * On list downloads
+             */
+            function on_download_stopped(paramaters){
+                tbody = $("#download_list_stopped").find('tbody');
+                tbody.empty();
+                if(paramaters.length > 1){
+                    for(var i = 0; i<paramaters.length; i++){
+                        var gid = paramaters[i];
+                        i++;
+                        var status = paramaters[i];
+                        i++;
+                        var size = paramaters[i];
+                        i++;
+                        var proc = paramaters[i];
+                        i++;
+                        var file = paramaters[i];
+                        var row = ["<tr><td class='expand'>"];
+                        row.push(file);
+                        row.push("<br/><span class='minimize'>");
+                        row.push(proc + " (" + size+")");
+                        if(status == "error"){
+                            row.push("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class='ok'>Error!</span>");
+                        }
+                        else{
+                            row.push("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class='ok'>Completed!</span>");
+                        }
+                        row.push("</span></td><td>");
+                        row.push("</td></tr>");
+                        tbody.append(row.join(''));
+                    }
+                }
+                if(paramaters.length == 1){
+                    tbody.append("<tr><td>No completed downloads</td></tr>");
+                }
+            }
+
+            /**
+             * On list downloads
+             */
+            function on_download_active_err(err){
+                showLayer('error');
+                setContent("download_error", err);
+            }
+
+            /**
+             * On list downloads
+             */
+            function on_download_paused_err(err){
+                
+            }
+
+            /**
+             * On list downloads
+             */
+            function on_download_stopped_err(err){
+            }
+
+            /**
+             * On list downloads
+             */
+            function on_download_remove(paramaters){
+                onPageLoad()
+            }
+
+            /**
+             * On list downloads
+             */
+            function on_download_new(paramaters){
+                onPageLoad()
+            }
+
+            /**
+             * On list downloads
+             */
+            function on_download_pause(paramaters){
+                onPageLoad()
+            }
+
+            /**
+             * On list downloads
+             */
+            function on_download_resume(paramaters){
+                onPageLoad()
+            }
+
+            /**
+             * On list downloads
+             */
+            function on_download_directory(paramaters){
+                setContent("download_directory", paramaters[0]);
+            }
+
+            /**
+             * When the page is loaded
+             */
+            function onPageLoad(){
+                submitNoPW('download_directory');
+                submitNoPW('download_active');
+                submitNoPW('download_paused');
+                submitNoPW('download_stopped');
+            }
+            
+            /**
+             * When go back or middle mouse button or esc pressed
+             */
+            function onBack(){
+            }
+            
+            /**
+             * This will execute every 10 second
+             */
+            function onEvery05s(){
+                submitNoPW('download_active');
+                submitNoPW('download_paused');
+                submitNoPW('download_stopped');
+            }
+
+            /**
+             * This will execute every 10 second
+             */
+            function onEvery10s(){
+            }
+
+            /**
+             * When a layer is shown
+             */
+            function onLayerShown(layer){
+            }
+            
+            /**
+             * On submit command
+             */
+            function onWork(command){
+            }
+
+            /**
+             * On answer from submit dommand
+             */
+            function onSleep(command){
+            }
+
+            
+            /**
+             * On window resize
+             */
+            function onResize(width, height){
+            }            
+            
+            //]]>
+        </script>
+        
+    </head>
+    <body>
+        <table class="bar">
+            <thead>
+                <tr>
+                    <td>
+                        <img alt="logo" src="img/bar_steelsquid.png"></img>
+                    </td>
+                    <td>
+                        Kiss OS Download Manager
+                    </td>
+                    <td>
+                        <div class="device_info" id="device_info_name"></div>
+                    </td>
+                    <td>
+                        <img alt="logo" src="img/bar_menu.png"></img>
+                    </td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr onclick="javascript:window.location = 'http://www.steelsquid.org/steelsquid-kiss-os';">
+                    <td>
+                        <img alt="logo" src="img/bar_help.png"></img>
+                    </td>
+                    <td colspan="2" >
+                        Help
+                    </td>
+                </tr>
+                <tr onclick="javascript:window.location = '/';">
+                    <td>
+                        <img alt="logo" src="img/bar_admin.png"></img>
+                    </td>
+                    <td colspan="2" >
+                        Administrator
+                    </td>
+                </tr>
+                <tr onclick="javascript:window.location = '/file';">
+                    <td>
+                        <img alt="logo" src="img/bar_file.png"></img>
+                    </td>
+                    <td colspan="2" >
+                        File Manager
+                    </td>
+                </tr>
+                <tr onclick="javascript:window.location = '/play';">
+                    <td>
+                        <img alt="logo" src="img/bar_play.png"></img>
+                    </td>
+                    <td colspan="2" >
+                        Media Player
+                    </td>
+                </tr>
+                <tr onclick="javascript:window.location = '/utils';">
+                    <td>
+                        <img alt="logo" src="img/bar_utils.png"></img>
+                    </td>
+                    <td colspan="2" >
+                        Utils
+                    </td>
+                </tr>
+                <tr onclick="javascript:window.location = '/expand';">
+                    <td>
+                        <img alt="logo" src="img/bar_expand.png"></img>
+                    </td>
+                    <td colspan="2" >
+                        Expand
+                    </td>
+                </tr>
+                <tr onclick="javascript:submitSyncConfirm('Are you sure you want to reboot?', 'reboot');">
+                    <td>
+                        <img alt="logo" src="img/bar_reboot.png"></img>
+                    </td>
+                    <td colspan="2" >
+                        Reboot
+                    </td>
+                </tr>
+                <tr onclick="javascript:submitSyncConfirm('Are you sure you want to shutdown?', 'shutdown');">
+                    <td>
+                        <img alt="logo" src="img/bar_shutdown.png"></img>
+                    </td>
+                    <td colspan="2" >
+                        Shutdown
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="flow">
+            <div class="layer" id="error">
+                <span class="error" id="download_error"></span>
+                <br/><br/>
+                Errors occurred, this is probably because the download manager is not active.<br/>
+                Do you want to activate it?<br/>
+                <button onclick="javascript:submitSync('download_activate');">Activade download manager</button>
+            </div>
+            <div class="layer" id="main">
+                Here you can download <span class="highlight">HTTP</span>, <span class="highlight">FTP</span> and <span class="highlight">BitTorrent</span> Magnet URI.<br/>
+                The download directory is <span class="highlight" id="download_directory"></span>
+                <br/><br/>
+                <button id="add_link"  onclick="javascript:submitSyncFromPrompt('download_new', 'HTTP/FTP/BitTorrent Magnet URI', '');">Start new download</button>
+                <br/><br/>
+                <table id="download_list_active" class="list">
+                    <thead>
+                        <tr>
+                            <th colspan="3">Active downloads</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="3"></td></tr>
+                    </tbody>
+                </table>
+                <br/>
+                <table id="download_list_paused" class="list">
+                    <thead>
+                        <tr>
+                            <th colspan="3">Paused/waiting downloads</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="3"></td></tr>
+                    </tbody>
+                </table>
+                <br/>
+                <table id="download_list_stopped" class="list">
+                    <thead>
+                        <tr>
+                            <th colspan="3">Completed downloads</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="3"></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </body>
+</html>
