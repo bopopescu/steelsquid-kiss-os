@@ -59,14 +59,14 @@ import steelsquid_pi
 import steelsquid_kiss_global
 
 
-# Is this enabled (on_enable has executed)
-# This is set by the system automaticaly
+# Is this functionality enabled (if on_enable has executed)
+# This is set by the system automatically
 is_enabled = False
 
 
 def activate():
     '''
-    Return True/False if this functionality is to be enabled (execute on_enable)
+    Return True/False if this functionality is to be enabled (execute on_enable or not)
     return: True/False
     '''    
     return False
@@ -100,7 +100,7 @@ class SYSTEM(object):
         '''
         This will execute over and over again untill it return None or -1
         If it return a number larger than 0 it will sleep for that number of seconds before execute again.
-        If it return 0 it will not not sleep, will execute again imediately.
+        If it return 0 it will not not sleep, will execute again immediately.
         '''    
         return -1
 
@@ -121,7 +121,7 @@ class SYSTEM(object):
     @staticmethod
     def on_bluetooth(status):
         '''
-        Execute when bluetooth is enabled
+        Execute when bluetooth is enabled/disabled
         status = True/False
         '''    
         pass
@@ -145,7 +145,10 @@ class WEB(object):
     1. Make a call from the browser (GET) and a html page is returned back.
     2. This html page then make AJAX (POST) call to the server to retrieve or update data.
     3. The data sent to and from the server can just be a simple list of strings.
-    See steelsquid_http_server.py for more examples how it work
+    For more examples how it work:
+     - steelsquid_http_server.py
+     - steelsquid_kiss_http_server.py
+     - web/index.html
     '''
 
 
@@ -232,6 +235,7 @@ class GLOBAL(object):
     Maybe the same methods is used from the WEB, SOCKET or other part, then put that method her.
     It is not necessary to put it her, you can also put it direcly in the module (but i think it is kind of nice to have it inside this class)
     '''
+
     
     
     

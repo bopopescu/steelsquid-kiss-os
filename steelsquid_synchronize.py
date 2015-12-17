@@ -29,6 +29,7 @@ Will check for changes in this files:
    Will be copied to /opt/steelsquid/web
  - Files under the img directory
    Will be copied to /opt/steelsquid/web/img
+ - The file test.py will be copied to /root
 
 Will also check config.txt 6 row and forward for files.
 Local file|Remote file
@@ -163,8 +164,12 @@ def listener():
             file_change = os.path.getmtime(file_name)
             if file_change != file_last:
                 o[1] = file_change
-                transmit(file_name, "/opt/steelsquid/python/"+file_name)
-                send_command("chmod +x /opt/steelsquid/python/"+file_name)
+                if file_name == "test.py":
+                    transmit(file_name, "/root/"+file_name)
+                    send_command("chmod +x /root/"+file_name)
+                else:
+                    transmit(file_name, "/opt/steelsquid/python/"+file_name)
+                    send_command("chmod +x /opt/steelsquid/python/"+file_name)
         for o in expand_files:
             file_name = o[0]
             file_last = o[1]
@@ -259,8 +264,7 @@ def send_command(command):
             ssh[x].exec_command(command)
         except:
             try:
-                connect()
-                ssh[x].exec_command(command)
+                ssh[x].exec_command("export PYTHONPATH=/opt/steelsquid/python:/usr/lib/python3/dist-packages;"+command)
             except:
                 pass
 
@@ -270,7 +274,7 @@ def send_command_read_answer(command):
     '''
     for x in range(0, len(base_remote_server)):
         try:
-            stdin, stdout, stderr = ssh[x].exec_command(command)
+            stdin, stdout, stderr = ssh[x].exec_command("export PYTHONPATH=/opt/steelsquid/python:/usr/lib/python3/dist-packages;"+command)
             printempty = True
             for line in stdout.readlines():
                 line = line.strip().replace("\n","").replace("\r","")
@@ -391,9 +395,11 @@ def print_menu():
     print " S : server : Reload ..uid_kiss_http_server.py ..uid_kiss_socket_connection.py"
     print " A : all    : Start/Restart steelsquid service (implememt all changes)"
     print " K : kill   : Stop steelsquid service"
+    print " T : test   : Execute the /root/test.py script"
     print " R : reboot : Reboot the remote machine"
     print "------------------------------------------------------------------------------"
-    print "You can also send any other ordinary terminal line command (ls, mkdir...)"
+    print "You can also send any other simple terminal line command (ls, pwd, mkdir...)"
+    print "But you can not use any commands that read input (nano, read, passwd)"
     print "------------------------------------------------------------------------------"
 
 
@@ -436,6 +442,9 @@ if __name__ == '__main__':
         elif answer == "K" or answer == "k" or answer == "kill":
             log("Request stop steelsquid daemon")
             send_command("systemctl stop steelsquid")
+        elif answer == "T" or answer == "t" or answer == "test":
+            log("Execute /root/test.py")
+            send_command_read_answer("/root/test.py")
         elif answer == "R" or answer == "r" or answer == "reboot":
             log("Request roboot")
             send_command("reboot &")

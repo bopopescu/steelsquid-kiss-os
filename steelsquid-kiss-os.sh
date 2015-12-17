@@ -804,7 +804,7 @@ function help_files()
     echo "USB disks will automatically be installed here."
     echo 
     echb "/root/test.py"
-    echo "A puthon file to test stuff in..."
+    echo "A python file to test stuff in..."
     echo 
     echb "/opt/steelsquid/steelsquid-kiss-os.sh"
     echo "The steelsquid install and update script"
@@ -4552,13 +4552,15 @@ chmod +x /usr/bin/aria2shoutok
 # Generate test python file
 ##################################################################################
 log "Generate test python file"
-echo "#"\!"/usr/bin/python -OO" > /root/test.py
-echo "import steelsquid_utils" >> /root/test.py
-echo "import steelsquid_event" >> /root/test.py
-echo "import steelsquid_pi" >> /root/test.py
-echo "import steelsquid_kiss_global" >> /root/test.py
-echo "" >> /root/test.py
-chmod +x /root/test.py
+if [ $(get-flag "expanded") == "false" ]; then
+    echo "#"\!"/usr/bin/python -OO" > /root/test.py
+    echo "import steelsquid_utils" >> /root/test.py
+    echo "import steelsquid_event" >> /root/test.py
+    echo "import steelsquid_pi" >> /root/test.py
+    echo "import steelsquid_kiss_global" >> /root/test.py
+    echo "" >> /root/test.py
+    chmod +x /root/test.py
+fi
 
 
 ##################################################################################

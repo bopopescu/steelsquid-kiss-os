@@ -20,6 +20,7 @@ import steelsquid_utils
 import steelsquid_event
 import steelsquid_pi
 import steelsquid_boot
+import steelsquid_kiss_expand
 import time
 import threading
 import thread
@@ -64,7 +65,10 @@ def get_expand_module(name):
     Only return modules that has bean activated
     return: The module
     '''    
-    return sys.modules['expand.'+name]
+    if name == "steelsquid_kiss_expand":
+        return steelsquid_kiss_expand
+    else:
+        return sys.modules['expand.'+name]
 
 
 def is_expand_module(name):
@@ -72,34 +76,13 @@ def is_expand_module(name):
     Check if a module is imported and active
     return: True/False
     '''    
-    if 'expand.'+name in sys.modules:
+    if name == "steelsquid_kiss_expand":
+        return hasattr(steelsquid_kiss_expand, "activate") and steelsquid_kiss_expand.activate() and steelsquid_kiss_expand.is_enabled
+    elif 'expand.'+name in sys.modules:
         mod = sys.modules['expand.'+name]
         return hasattr(mod, "activate") and mod.activate() and mod.is_enabled
     else:
         return False
-
-       
-def add_event_data_callback(method):
-    '''
-    Add event callback method
-    This method will fire when data is changed
-    def method(key, value):
-    '''    
-    with lock:
-        if len(event_data_callback_methods)==0:
-            thread.start_new_thread(__event_data_handler, ()) 
-        event_data_callback_methods.append(method)
-        
-
-def remove_event_data_callback(method):
-    '''
-    Remove event callback method
-    '''    
-    with lock:
-        try:
-            event_data_callback_methods.remove(method)
-        except ValueError:
-            pass        
 
            
 def get_event_data(key):
@@ -137,6 +120,29 @@ def del_event_data(key, value):
         pass
     if event_data_queue.qsize() < max_pending_events:
         event_data_queue.put((key, None))
+
+
+def add_event_data_callback(method):
+    '''
+    Add event callback method
+    This method will fire when data is changed
+    def method(key, value):
+    '''    
+    with lock:
+        if len(event_data_callback_methods)==0:
+            thread.start_new_thread(__event_data_handler, ()) 
+        event_data_callback_methods.append(method)
+        
+
+def remove_event_data_callback(method):
+    '''
+    Remove event callback method
+    '''    
+    with lock:
+        try:
+            event_data_callback_methods.remove(method)
+        except ValueError:
+            pass        
 
 
 def __event_data_handler():
