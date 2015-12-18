@@ -478,6 +478,34 @@ if __name__ == '__main__':
                 send_command_read_answer("rm /opt/steelsquid/python/expand/"+name)
             else:
                 log("A module with that name not found!")
+        elif answer == "W" or answer == "w" or answer == "web":
+            name = raw_input('Enter name of html file to create: ')
+            if not name.endswith(".html"):
+                name = name+".html"
+            if not os.path.isfile("web/"+name):
+                log("Creating new html file "+name +" in web/")
+                shutil.copy("web/template.html", "web/"+name)
+                web_files.append(["web/"+name, 0])
+            else:
+                log("A html file with that name already exists!")
+        elif answer == "V" or answer == "v" or answer == "delweb":
+            name = raw_input('Enter name of html file to delete: ')
+            if not name.endswith(".html"):
+                name = name+".html"
+            if os.path.isfile("web/"+name):
+                log("Delete html file "+name +" in web/")
+                i = 0
+                deli = -1
+                for p in web_files:
+                    if p[0]=="web/"+name:
+                        deli = i
+                    i=i+1
+                if deli!=-1:
+                    del web_files[deli]
+                os.remove("web/"+name)
+                send_command_read_answer("rm /opt/steelsquid/web/"+name)
+            else:
+                log("A html file with that name not found!")
         elif answer == "R" or answer == "r" or answer == "reboot":
             log("Request roboot")
             send_command("reboot &")
