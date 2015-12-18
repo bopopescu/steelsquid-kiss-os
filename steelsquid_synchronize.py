@@ -59,6 +59,7 @@ import os
 import paramiko
 import select
 import traceback
+import shutil
 from datetime import datetime
 try:
     import readline
@@ -396,6 +397,8 @@ def print_menu():
     print " A : all    : Start/Restart steelsquid service (implememt all changes)"
     print " K : kill   : Stop steelsquid service"
     print " T : test   : Execute the /root/test.py script"
+    print " N : new    : Create new module in expand/ (copy steelsquid_kiss_expand.py)"
+    print " D : delete : Delete a module in expand/ (You can not undo this!!!)"
     print " R : reboot : Reboot the remote machine"
     print "------------------------------------------------------------------------------"
     print "You can also send any other simple terminal line command (ls, pwd, mkdir...)"
@@ -445,6 +448,34 @@ if __name__ == '__main__':
         elif answer == "T" or answer == "t" or answer == "test":
             log("Execute /root/test.py")
             send_command_read_answer("/root/test.py")
+        elif answer == "N" or answer == "n" or answer == "new":
+            name = raw_input('Enter name of module to create: ')
+            if not name.endswith(".py"):
+                name = name+".py"
+            if not os.path.isfile("expand/"+name):
+                log("Creating new module "+name +" in expand/\nRestart the steelsquid service for this to take effect (type A and enter)")
+                shutil.copy("steelsquid_kiss_expand.py", "expand/"+name)
+                expand_files.append(["expand/"+name, 0])
+            else:
+                log("A module with that name already exists!")
+        elif answer == "D" or answer == "d" or answer == "delete":
+            name = raw_input('Enter name of module to delete: ')
+            if not name.endswith(".py"):
+                name = name+".py"
+            if os.path.isfile("expand/"+name):
+                log("Delete module "+name +" in expand/\nRestart the steelsquid service for this to take effect (type A and enter)")
+                i = 0
+                deli = -1
+                for p in expand_files:
+                    if p[0]=="expand/"+name:
+                        deli = i
+                    i=i+1
+                if deli!=-1:
+                    del expand_files[deli]
+                os.remove("expand/"+name)
+                send_command_read_answer("rm /opt/steelsquid/python/expand/"+name)
+            else:
+                log("A module with that name not found!")
         elif answer == "R" or answer == "r" or answer == "reboot":
             log("Request roboot")
             send_command("reboot &")
