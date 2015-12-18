@@ -399,6 +399,8 @@ def print_menu():
     print " T : test   : Execute the /root/test.py script"
     print " N : new    : Create new module in expand/ (copy steelsquid_kiss_expand.py)"
     print " D : delete : Delete a module in expand/ (You can not undo this!!!)"
+    print " W : web    : Create new HTML-file in web/ (copy template.html)"
+    print " V : delweb : Delete a HTML-file in web/ (You can not undo this!!!)"
     print " R : reboot : Reboot the remote machine"
     print "------------------------------------------------------------------------------"
     print "You can also send any other simple terminal line command (ls, pwd, mkdir...)"

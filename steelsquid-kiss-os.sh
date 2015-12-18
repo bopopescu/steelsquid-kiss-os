@@ -113,6 +113,7 @@ web_root_downloads[4]="$base/web/download.html"
 web_root_downloads[5]="$base/web/file.html"
 web_root_downloads[6]="$base/web/utils.html"
 web_root_downloads[7]="$base/web/expand.html"
+web_root_downloads[8]="$base/web/template.html"
 
 # Download to web img folder
 web_img_downloads[1]="$base/img/back.png"

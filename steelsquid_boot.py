@@ -282,7 +282,7 @@ def on_shutdown(args, para):
         for name in steelsquid_kiss_global.expand_modules:
             met = steelsquid_kiss_global.__get_expand_module_method(name, "SYSTEM", "on_event_data")
             if met != None:
-                steelsquid_kiss_global.remove_event_data_callback(mod)
+                steelsquid_kiss_global.remove_event_data_callback(met)
             mod = steelsquid_kiss_global.__get_expand_module(name, "SYSTEM", "on_disable")
             if mod != None:
                 mod.is_enabled=False
