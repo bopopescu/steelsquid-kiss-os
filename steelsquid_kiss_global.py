@@ -28,6 +28,7 @@ import sys
 import importlib
 import expand
 import Queue
+import exceptions
 from importlib import import_module
 
 
@@ -225,6 +226,9 @@ def __get_expand_module_method(module_name, class_name, method_name):
             return getattr(mod, method_name)
         else:
             return None
+    except exceptions.SyntaxError:
+        steelsquid_utils.shout()
+        return None
     except:
         return None
 
@@ -234,12 +238,12 @@ def __execute_expand_module_method(module_name, class_name, method_name, method_
     Execute a method in a module or class(classmethod) if exists
     Will also check if method activate return true on the module
     '''
-    mod = __get_expand_module_method(module_name, class_name, method_name)
-    if mod != None:
-        try:
+    try:
+        mod = __get_expand_module_method(module_name, class_name, method_name)
+        if mod != None:
             mod(*method_args)
-        except:
-            steelsquid_utils.shout()
+    except:
+        steelsquid_utils.shout()
     
                 
 
