@@ -1280,6 +1280,7 @@ def set_parameter(name, value):
     Save parameter to disk
     This value is stored on disk so it's persist between reboots
     '''
+    value = str(value)
     cache_para[name] = value
     write_to_file(STEELSQUID_FOLDER+"/parameters/" + name, value)
     

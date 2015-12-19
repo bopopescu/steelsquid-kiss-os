@@ -334,6 +334,10 @@ def import_expand(reloadit=True):
             if 'steelsquid_kiss_expand' in sys.modules:
                 met = steelsquid_kiss_global.__get_expand_module_method(steelsquid_kiss_expand, "SYSTEM", "on_event_data")
                 steelsquid_kiss_global.remove_event_data_callback(met)
+                mod = steelsquid_kiss_global.__get_expand_module(steelsquid_kiss_expand, "SYSTEM", "on_disable")
+                if mod!=None:
+                    mod.SYSTEM.on_disable()
+                    mod.is_enabled=False
                 reload(steelsquid_kiss_expand)
             else:
                 import steelsquid_kiss_expand
@@ -392,10 +396,13 @@ def reload_file_dyn(name):
     '''
     try:
         steelsquid_utils.shout("Reload custom module: " + 'expand.'+name)
-
         mod = steelsquid_kiss_global.__get_expand_module(name, "SYSTEM", "on_event_data")
         if mod!=None:
-            teelsquid_kiss_global.remove_event_data_callback(mod)
+            steelsquid_kiss_global.remove_event_data_callback(mod)
+        mod = steelsquid_kiss_global.__get_expand_module(name, "SYSTEM", "on_disable")
+        if mod!=None:
+            mod.SYSTEM.on_disable()
+            mod.is_enabled=False
         the_lib = importlib.import_module('expand.'+name)
         reload(the_lib)
         mod = steelsquid_kiss_global.__get_expand_module(name, "SYSTEM", "on_enable")
