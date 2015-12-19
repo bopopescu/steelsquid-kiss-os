@@ -345,14 +345,6 @@ def import_expand(reloadit=True):
         if mod!=None:
             mod.SYSTEM.on_enable()
             mod.is_enabled=True
-        if steelsquid_kiss_global.http_server!=None:
-            mod = steelsquid_kiss_global.__get_expand_module_class(steelsquid_kiss_expand, "WEB")
-            if mod!=None:
-                steelsquid_kiss_global.http_server.external_objects.append(mod)
-        if steelsquid_kiss_global.socket_connection!=None:
-            mod = steelsquid_kiss_global.__get_expand_module_class(steelsquid_kiss_expand, "SOCKET")
-            if mod!=None:
-                steelsquid_kiss_global.socket_connection.external_objects.append(mod)
         mod = steelsquid_kiss_global.__get_expand_module_method(steelsquid_kiss_expand, "SYSTEM", "on_event_data")
         if mod!=None:
             steelsquid_kiss_global.add_event_data_callback(mod)
@@ -372,14 +364,6 @@ def import_file_dyn(name):
         if mod!=None:
             mod.SYSTEM.on_enable()
             mod.is_enabled=True
-        if steelsquid_kiss_global.http_server!=None:
-            mod = steelsquid_kiss_global.__get_expand_module_class(name, "WEB")
-            if mod!=None:
-                steelsquid_kiss_global.http_server.external_objects.append(mod)
-        if steelsquid_kiss_global.socket_connection!=None:
-            mod = steelsquid_kiss_global.__get_expand_module_class(name, "SOCKET")
-            if mod!=None:
-                steelsquid_kiss_global.socket_connection.external_objects.append(mod)
         mod = steelsquid_kiss_global.__get_expand_module_method(name, "SYSTEM", "on_event_data")
         if mod!=None:
             steelsquid_kiss_global.add_event_data_callback(mod)
@@ -482,18 +466,42 @@ def import_my_stuff():
             if steelsquid_utils.has_parameter("web_port"):
                 port = steelsquid_utils.get_parameter("web_port")
             steelsquid_kiss_global.http_server = steelsquid_kiss_http_server.SteelsquidKissHttpServer(port, steelsquid_utils.STEELSQUID_FOLDER+"/web/", steelsquid_utils.get_flag("web_authentication"), steelsquid_utils.get_flag("web_local"), steelsquid_utils.get_flag("web_authentication"), steelsquid_utils.get_flag("web_https"))
+            mod = steelsquid_kiss_global.__get_expand_module_class(steelsquid_kiss_expand, "WEB")
+            if mod!=None:
+                steelsquid_kiss_global.http_server.external_objects.append(mod)
+            pkgpath = os.path.dirname(expand.__file__)
+            for name in pkgutil.iter_modules([pkgpath]):
+                mod = steelsquid_kiss_global.__get_expand_module_class(name[1], "WEB")
+                if mod!=None:
+                    steelsquid_kiss_global.http_server.external_objects.append(mod)                
             steelsquid_kiss_global.http_server.start_server()
         except:
             steelsquid_utils.shout("Fatal error when start steelsquid_kiss_http_server", is_error=True)
     if steelsquid_utils.get_flag("socket_server"):
         try:
             steelsquid_kiss_global.socket_connection = steelsquid_kiss_socket_connection.SteelsquidKissSocketConnection(True)
+            mod = steelsquid_kiss_global.__get_expand_module_class(steelsquid_kiss_expand, "SOCKET")
+            if mod!=None:
+                steelsquid_kiss_global.socket_connection.external_objects.append(mod)
+            pkgpath = os.path.dirname(expand.__file__)
+            for name in pkgutil.iter_modules([pkgpath]):
+                mod = steelsquid_kiss_global.__get_expand_module_class(name[1], "SOCKET")
+                if mod!=None:
+                    steelsquid_kiss_global.socket_connection.external_objects.append(mod)
             steelsquid_kiss_global.socket_connection.start()
         except:
             steelsquid_utils.shout("Fatal error when start steelsquid_kiss_socket_connection as server", is_error=True)
     elif steelsquid_utils.has_parameter("socket_client"):
         try:
             steelsquid_kiss_global.socket_connection = steelsquid_kiss_socket_connection.SteelsquidKissSocketConnection(False, steelsquid_utils.get_parameter("socket_client"))
+            mod = steelsquid_kiss_global.__get_expand_module_class(steelsquid_kiss_expand, "SOCKET")
+            if mod!=None:
+                steelsquid_kiss_global.socket_connection.external_objects.append(mod)
+            pkgpath = os.path.dirname(expand.__file__)
+            for name in pkgutil.iter_modules([pkgpath]):
+                mod = steelsquid_kiss_global.__get_expand_module_class(name[1], "SOCKET")
+                if mod!=None:
+                    steelsquid_kiss_global.socket_connection.external_objects.append(mod)
             steelsquid_kiss_global.socket_connection.start()
         except:
             steelsquid_utils.shout("Fatal error when start steelsquid_kiss_socket_connection as server", is_error=True)            
