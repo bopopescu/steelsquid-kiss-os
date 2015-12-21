@@ -265,7 +265,7 @@ def send_command(command):
             ssh[x].exec_command(command)
         except:
             try:
-                ssh[x].exec_command("export PYTHONPATH=/opt/steelsquid/python:/usr/lib/python3/dist-packages;"+command)
+                ssh[x].exec_command("export TERM=xterm;export PYTHONPATH=/opt/steelsquid/python:/usr/lib/python3/dist-packages;"+command)
             except:
                 pass
 
@@ -275,7 +275,7 @@ def send_command_read_answer(command):
     '''
     for x in range(0, len(base_remote_server)):
         try:
-            stdin, stdout, stderr = ssh[x].exec_command("export PYTHONPATH=/opt/steelsquid/python:/usr/lib/python3/dist-packages;"+command)
+            stdin, stdout, stderr = ssh[x].exec_command("export TERM=xterm;export PYTHONPATH=/opt/steelsquid/python:/usr/lib/python3/dist-packages;"+command)
             printempty = True
             for line in stdout.readlines():
                 line = line.strip().replace("\n","").replace("\r","")

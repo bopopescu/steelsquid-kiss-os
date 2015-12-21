@@ -128,15 +128,25 @@ def cleanup():
     '''
     Clean all event detection 
     '''
+    gpio_event_remove(None)
     gpio_cleanup()
+    event_notificatin_cleanup()
+    mcp23017_cleanup()
     
 
-def gpio_event_remove(gpio):
+def gpio_event_remove(gpio=None):
     '''
     Remove listening for input event
-    @param gpio: GPIO number
+    @param gpio: GPIO number (None remove all)
     '''
-    GPIO.remove_event_detect(gpio)
+    if gpio==None:
+        for i in range(4, 27, 1):
+            try:
+                GPIO.remove_event_detect(i)
+            except:
+                pass
+    else:
+        GPIO.remove_event_detect(gpio)
 
 
 def gpio_cleanup():
@@ -146,6 +156,7 @@ def gpio_cleanup():
     global setup
     setup = [SETUP_NONE] * 32    
     GPIO.cleanup()
+    GPIO.setmode(GPIO.BCM)
 
 
 def gpio_setup_out(gpio):
@@ -210,13 +221,6 @@ def gpio_get(gpio, resistor=PULL_DOWN):
         return True
     else:
         return False
-
-
-def gpio_event_remove(gpio):
-    '''
-    Remove event and clock on raspberry GPIO
-    '''
-    GPIO.remove_event_detect(gpio)
 
 
 def gpio_event(gpio, callback_method, bouncetime_ms=60, resistor=PULL_DOWN, edge=EDGE_BOTH):
@@ -663,6 +667,36 @@ def mcp23017_click(address, gpio, callback_method, pullup=True, rpi_gpio=26):
             gpio_event(rpi_gpio, mcp23017_call, bouncetime_ms=0, resistor=PULL_DOWN, edge=EDGE_RISING)
         else: 
             mcp23017_events[address].append(post)
+
+
+def mcp23017_event_remove(address, gpio):
+    '''
+    Remove listen for event or click on the MCP23017
+    The MCP23017 has 16 pins - A0 thru A7 + B0 thru B7. A0 is called 0 in the library, and A7 is called 7, then B0 continues from there as is called 8 and finally B7 is pin 15
+    @param Address: 20, 21, 22, 23, 24, 25, 26, 27
+    @param gpio: 0 to 15
+    '''
+    global mcp23017_events
+    gpio = int(gpio)
+    address = int(address)
+    with(lock_mcp):
+        e_list = mcp23017_events[address]
+        for i in xrange(len(e_list) - 1, -1, -1):
+            post = e_list[i]
+            if post[0]==gpio:
+                del e_list[i]
+
+
+def mcp23017_cleanup():
+    '''
+    Remove all listener on the MCP23017
+    The MCP23017 has 16 pins - A0 thru A7 + B0 thru B7. A0 is called 0 in the library, and A7 is called 7, then B0 continues from there as is called 8 and finally B7 is pin 15
+    '''
+    global mcp23017_events
+    with(lock_mcp):
+        for key, e_list in mcp23017_events.items():
+            for i in xrange(len(e_list) - 1, -1, -1):
+                del e_list[i]
 
 
 def ads1015(address, gpio, gain=GAIN_6_144_V):
@@ -1258,6 +1292,30 @@ def mpu6050_rotation_event(callback_method, min_change=2, sample_sleep=0.2):
         else:
             event_notificatin_list.append(post)
 
+
+def mpu6050_event_remove():
+    '''
+    Stop listen for movements on mpu-6050 and execute method on change.
+    SparkFun Triple Axis Accelerometer and Gyro Breakout - MPU-6050
+    https://www.sparkfun.com/products/11028
+    '''
+    global event_notificatin_list
+    with(lock_event):
+        for i in xrange(len(event_notificatin_list) - 1, -1, -1):
+            post = event_notificatin_list[i]
+            if post[0]==2:
+                del event_notificatin_list[i]
+
+
+def event_notificatin_cleanup():
+    '''
+    Stop listen for notification on alot of stuff
+    '''
+    global event_notificatin_list
+    with(lock_event):
+        for i in xrange(len(event_notificatin_list) - 1, -1, -1):
+            del event_notificatin_list[i]
+
     
 def __event_notificatin_thread():
     '''
@@ -1484,6 +1542,7 @@ def po12_adc_event(channel, callback_method, min_change=0.01, sample_sleep=0.2, 
     global event_sample_sleep
     event_sample_sleep = sample_sleep
     post = [None] * 6
+    channel = int(channel)
     post[0] = 3  #po12_adc_event
     post[1] = callback_method
     post[2] = min_change
@@ -1496,6 +1555,21 @@ def po12_adc_event(channel, callback_method, min_change=0.01, sample_sleep=0.2, 
             thread.start_new_thread(__event_notificatin_thread, ()) 
         else:
             event_notificatin_list.append(post)
+
+
+def po12_adc_event_remove(channel):
+    '''
+    Stop listen for analog voltage in on the P011/12 ADC and execute method if it change
+    http://www.pichips.co.uk/index.php/P011_ADC#rpii2c
+    channel = 1 to 8
+     '''
+    global event_notificatin_list
+    channel = int(channel)
+    with(lock_event):
+        for i in xrange(len(event_notificatin_list) - 1, -1, -1):
+            post = event_notificatin_list[i]
+            if post[0]==3 and post[3] == channel:
+                del event_notificatin_list[i]
 
 
 def po16_gpio_pullup(gpio, use_pullup): 
@@ -1569,6 +1643,7 @@ def po16_gpio_click(gpio, callback_method, sample_sleep=0.2):
     global event_notificatin_list
     global event_sample_sleep
     event_sample_sleep = sample_sleep
+    gpio = int(gpio)
     post = [None] * 4
     post[0] = 5  #po16_gpio_click
     post[1] = callback_method
@@ -1580,6 +1655,21 @@ def po16_gpio_click(gpio, callback_method, sample_sleep=0.2):
             thread.start_new_thread(__event_notificatin_thread, ()) 
         else:
             event_notificatin_list.append(post)
+    
+    
+def po16_gpio_event_remove(gpio):
+    '''
+    Stop listen for the state of gpio pin on the PO16 and execute method if it change from low to hight (click)
+    http://www.pichips.co.uk/index.php/P015_GPIO_with_PWM
+    gpio = 1 to 8
+     '''
+    global event_notificatin_list
+    gpio = int(gpio)
+    with(lock_event):
+        for i in xrange(len(event_notificatin_list) - 1, -1, -1):
+            post = event_notificatin_list[i]
+            if post[0]==5 and post[2]==gpio:
+                del event_notificatin_list[i]
     
 
 def po16_gpio_set(gpio, status): 

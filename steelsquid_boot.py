@@ -169,8 +169,8 @@ def on_network(args, para):
     
     stat = net=="up"
     for name in steelsquid_kiss_global.expand_modules:
-        steelsquid_kiss_global.__execute_expand_module_method(name, "SYSTEM", "on_network", (stat, wired, access_point, wifi, wan,))
-    steelsquid_kiss_global.__execute_expand_module_method(steelsquid_kiss_expand, "SYSTEM", "on_network", (stat, wired, access_point, wifi, wan,))
+        steelsquid_kiss_global._execute_expand_module_method(name, "SYSTEM", "on_network", (stat, wired, access_point, wifi, wan,))
+    steelsquid_kiss_global._execute_expand_module_method(steelsquid_kiss_expand, "SYSTEM", "on_network", (stat, wired, access_point, wifi, wan,))
     if steelsquid_utils.get_flag("ssd") or steelsquid_pi.lcd_auto == 1:
         if steelsquid_utils.get_flag("bluetooth_pairing"):
             answer = steelsquid_utils.execute_system_command(["hciconfig", "-a"])
@@ -210,7 +210,8 @@ def on_network(args, para):
                         shout_string.append(bluetooth)
                 if steelsquid_utils.get_flag("piio"):
                     shout_string.append("\nVOLTAGE: ")
-                    shout_string.append("---")
+                    import steelsquid_piio
+                    shout_string.append(str(steelsquid_piio.volt(2, 4)))
                     shout_string.append("\n")
                 mes = "".join(shout_string)
                 steelsquid_utils.shout(mes, leave_on_lcd = True)
@@ -280,17 +281,17 @@ def on_shutdown(args, para):
     import steelsquid_kiss_expand
     try:
         for name in steelsquid_kiss_global.expand_modules:
-            met = steelsquid_kiss_global.__get_expand_module_method(name, "SYSTEM", "on_event_data")
+            met = steelsquid_kiss_global._get_expand_module_method(name, "SYSTEM", "on_event_data")
             if met != None:
                 steelsquid_kiss_global.remove_event_data_callback(met)
-            mod = steelsquid_kiss_global.__get_expand_module(name, "SYSTEM", "on_disable")
+            mod = steelsquid_kiss_global._get_expand_module(name, "SYSTEM", "on_disable")
             if mod != None:
                 mod.is_enabled=False
                 mod.SYSTEM.on_disable()
-        met = steelsquid_kiss_global.__get_expand_module_method(steelsquid_kiss_expand, "SYSTEM", "on_event_data")
+        met = steelsquid_kiss_global._get_expand_module_method(steelsquid_kiss_expand, "SYSTEM", "on_event_data")
         if met != None:
             steelsquid_kiss_global.remove_event_data_callback(mod)
-        mod = steelsquid_kiss_global.__get_expand_module(steelsquid_kiss_expand, "SYSTEM", "on_disable")
+        mod = steelsquid_kiss_global._get_expand_module(steelsquid_kiss_expand, "SYSTEM", "on_disable")
         if mod != None:
             mod.is_enabled=False
             mod.SYSTEM.on_disable()
@@ -332,23 +333,23 @@ def import_expand(reloadit=True):
     try:
         if reloadit:
             if 'steelsquid_kiss_expand' in sys.modules:
-                met = steelsquid_kiss_global.__get_expand_module_method(steelsquid_kiss_expand, "SYSTEM", "on_event_data")
+                met = steelsquid_kiss_global._get_expand_module_method(steelsquid_kiss_expand, "SYSTEM", "on_event_data")
                 steelsquid_kiss_global.remove_event_data_callback(met)
-                mod = steelsquid_kiss_global.__get_expand_module(steelsquid_kiss_expand, "SYSTEM", "on_disable")
+                mod = steelsquid_kiss_global._get_expand_module(steelsquid_kiss_expand, "SYSTEM", "on_disable")
                 if mod!=None:
                     mod.SYSTEM.on_disable()
                     mod.is_enabled=False
                 reload(steelsquid_kiss_expand)
             else:
                 import steelsquid_kiss_expand
-        mod = steelsquid_kiss_global.__get_expand_module(steelsquid_kiss_expand, "SYSTEM", "on_enable")
+        mod = steelsquid_kiss_global._get_expand_module(steelsquid_kiss_expand, "SYSTEM", "on_enable")
         if mod!=None:
             mod.SYSTEM.on_enable()
             mod.is_enabled=True
-        mod = steelsquid_kiss_global.__get_expand_module_method(steelsquid_kiss_expand, "SYSTEM", "on_event_data")
+        mod = steelsquid_kiss_global._get_expand_module_method(steelsquid_kiss_expand, "SYSTEM", "on_event_data")
         if mod!=None:
             steelsquid_kiss_global.add_event_data_callback(mod)
-        met = steelsquid_kiss_global.__get_expand_module_method(steelsquid_kiss_expand, "SYSTEM", "on_loop")
+        met = steelsquid_kiss_global._get_expand_module_method(steelsquid_kiss_expand, "SYSTEM", "on_loop")
         if met!=None:
             do_on_loop(met) 
     except:
@@ -360,14 +361,14 @@ def import_file_dyn(name):
     Load custom module
     '''
     try:
-        mod = steelsquid_kiss_global.__get_expand_module(name, "SYSTEM", "on_enable")
+        mod = steelsquid_kiss_global._get_expand_module(name, "SYSTEM", "on_enable")
         if mod!=None:
             mod.SYSTEM.on_enable()
             mod.is_enabled=True
-        mod = steelsquid_kiss_global.__get_expand_module_method(name, "SYSTEM", "on_event_data")
+        mod = steelsquid_kiss_global._get_expand_module_method(name, "SYSTEM", "on_event_data")
         if mod!=None:
             steelsquid_kiss_global.add_event_data_callback(mod)
-        met = steelsquid_kiss_global.__get_expand_module_method(name, "SYSTEM", "on_loop")
+        met = steelsquid_kiss_global._get_expand_module_method(name, "SYSTEM", "on_loop")
         if met!=None:
             do_on_loop(met) 
     except:
@@ -380,31 +381,31 @@ def reload_file_dyn(name):
     '''
     try:
         steelsquid_utils.shout("Reload custom module: " + 'expand.'+name)
-        mod = steelsquid_kiss_global.__get_expand_module(name, "SYSTEM", "on_event_data")
+        mod = steelsquid_kiss_global._get_expand_module(name, "SYSTEM", "on_event_data")
         if mod!=None:
             steelsquid_kiss_global.remove_event_data_callback(mod)
-        mod = steelsquid_kiss_global.__get_expand_module(name, "SYSTEM", "on_disable")
+        mod = steelsquid_kiss_global._get_expand_module(name, "SYSTEM", "on_disable")
         if mod!=None:
             mod.SYSTEM.on_disable()
             mod.is_enabled=False
         the_lib = importlib.import_module('expand.'+name)
         reload(the_lib)
-        mod = steelsquid_kiss_global.__get_expand_module(name, "SYSTEM", "on_enable")
+        mod = steelsquid_kiss_global._get_expand_module(name, "SYSTEM", "on_enable")
         if mod!=None:
             mod.SYSTEM.on_enable()
             mod.is_enabled=True
         if steelsquid_kiss_global.http_server!=None:
-            mod = steelsquid_kiss_global.__get_expand_module_class(name, "WEB")
+            mod = steelsquid_kiss_global._get_expand_module_class(name, "WEB")
             if mod!=None:
                 steelsquid_kiss_global.http_server.external_objects.append(mod)
         if steelsquid_kiss_global.socket_connection!=None:
-            mod = steelsquid_kiss_global.__get_expand_module_class(name, "SOCKET")
+            mod = steelsquid_kiss_global._get_expand_module_class(name, "SOCKET")
             if mod!=None:
                 steelsquid_kiss_global.socket_connection.external_objects.append(mod)
-        mod = steelsquid_kiss_global.__get_expand_module_method(name, "SYSTEM", "on_event_data")
+        mod = steelsquid_kiss_global._get_expand_module_method(name, "SYSTEM", "on_event_data")
         if mod!=None:
             steelsquid_kiss_global.add_event_data_callback(mod)
-        met = steelsquid_kiss_global.__get_expand_module_method(name, "SYSTEM", "on_loop")
+        met = steelsquid_kiss_global._get_expand_module_method(name, "SYSTEM", "on_loop")
         if met!=None:
             do_on_loop(met) 
     except:
@@ -466,12 +467,12 @@ def import_my_stuff():
             if steelsquid_utils.has_parameter("web_port"):
                 port = steelsquid_utils.get_parameter("web_port")
             steelsquid_kiss_global.http_server = steelsquid_kiss_http_server.SteelsquidKissHttpServer(port, steelsquid_utils.STEELSQUID_FOLDER+"/web/", steelsquid_utils.get_flag("web_authentication"), steelsquid_utils.get_flag("web_local"), steelsquid_utils.get_flag("web_authentication"), steelsquid_utils.get_flag("web_https"))
-            mod = steelsquid_kiss_global.__get_expand_module_class(steelsquid_kiss_expand, "WEB")
+            mod = steelsquid_kiss_global._get_expand_module_class(steelsquid_kiss_expand, "WEB")
             if mod!=None:
                 steelsquid_kiss_global.http_server.external_objects.append(mod)
             pkgpath = os.path.dirname(expand.__file__)
             for name in pkgutil.iter_modules([pkgpath]):
-                mod = steelsquid_kiss_global.__get_expand_module_class(name[1], "WEB")
+                mod = steelsquid_kiss_global._get_expand_module_class(name[1], "WEB")
                 if mod!=None:
                     steelsquid_kiss_global.http_server.external_objects.append(mod)                
             steelsquid_kiss_global.http_server.start_server()
@@ -480,12 +481,12 @@ def import_my_stuff():
     if steelsquid_utils.get_flag("socket_server"):
         try:
             steelsquid_kiss_global.socket_connection = steelsquid_kiss_socket_connection.SteelsquidKissSocketConnection(True)
-            mod = steelsquid_kiss_global.__get_expand_module_class(steelsquid_kiss_expand, "SOCKET")
+            mod = steelsquid_kiss_global._get_expand_module_class(steelsquid_kiss_expand, "SOCKET")
             if mod!=None:
                 steelsquid_kiss_global.socket_connection.external_objects.append(mod)
             pkgpath = os.path.dirname(expand.__file__)
             for name in pkgutil.iter_modules([pkgpath]):
-                mod = steelsquid_kiss_global.__get_expand_module_class(name[1], "SOCKET")
+                mod = steelsquid_kiss_global._get_expand_module_class(name[1], "SOCKET")
                 if mod!=None:
                     steelsquid_kiss_global.socket_connection.external_objects.append(mod)
             steelsquid_kiss_global.socket_connection.start()
@@ -494,12 +495,12 @@ def import_my_stuff():
     elif steelsquid_utils.has_parameter("socket_client"):
         try:
             steelsquid_kiss_global.socket_connection = steelsquid_kiss_socket_connection.SteelsquidKissSocketConnection(False, steelsquid_utils.get_parameter("socket_client"))
-            mod = steelsquid_kiss_global.__get_expand_module_class(steelsquid_kiss_expand, "SOCKET")
+            mod = steelsquid_kiss_global._get_expand_module_class(steelsquid_kiss_expand, "SOCKET")
             if mod!=None:
                 steelsquid_kiss_global.socket_connection.external_objects.append(mod)
             pkgpath = os.path.dirname(expand.__file__)
             for name in pkgutil.iter_modules([pkgpath]):
-                mod = steelsquid_kiss_global.__get_expand_module_class(name[1], "SOCKET")
+                mod = steelsquid_kiss_global._get_expand_module_class(name[1], "SOCKET")
                 if mod!=None:
                     steelsquid_kiss_global.socket_connection.external_objects.append(mod)
             steelsquid_kiss_global.socket_connection.start()
@@ -551,8 +552,8 @@ def bluetooth_agent():
             steelsquid_utils.shout("Start bluetooth: " + bluetooth)
             steelsquid_event.broadcast_event("network")
             for name in steelsquid_kiss_global.expand_modules:
-                steelsquid_kiss_global.__execute_expand_module_method(name, "SYSTEM", "on_bluetooth", (True,))
-            steelsquid_kiss_global.__execute_expand_module_method(steelsquid_kiss_expand, "SYSTEM", "on_bluetooth", (True,))
+                steelsquid_kiss_global._execute_expand_module_method(name, "SYSTEM", "on_bluetooth", (True,))
+            steelsquid_kiss_global._execute_expand_module_method(steelsquid_kiss_expand, "SYSTEM", "on_bluetooth", (True,))
             try:
                 proc=Popen("bluetoothctl", stdout=PIPE, stdin=PIPE, stderr=PIPE)
                 proc.stdin.write('power on\n')
@@ -578,8 +579,8 @@ def bluetooth_agent():
             except:
                 steelsquid_utils.shout("Error on start bluetoothctl", is_error=True)
         for name in steelsquid_kiss_global.expand_modules:
-            steelsquid_kiss_global.__execute_expand_module_method(name, "SYSTEM", "on_bluetooth", (False,))
-        steelsquid_kiss_global.__execute_expand_module_method(steelsquid_kiss_expand, "SYSTEM", "on_bluetooth", (False,))
+            steelsquid_kiss_global._execute_expand_module_method(name, "SYSTEM", "on_bluetooth", (False,))
+        steelsquid_kiss_global._execute_expand_module_method(steelsquid_kiss_expand, "SYSTEM", "on_bluetooth", (False,))
         time.sleep(20)    
 
 
@@ -751,11 +752,6 @@ def main():
                 steelsquid_i2c.enable_locking(False)
             steelsquid_utils.execute_system_command_blind(["steelsquid", "keyboard", steelsquid_utils.get_parameter("keyboard")], wait_for_finish=False)
             steelsquid_utils.shout("Steelsquid Kiss OS "+steelsquid_utils.steelsquid_kiss_os_version()[1], False)
-            if steelsquid_utils.get_flag("bluetooth_pairing"):
-                steelsquid_utils.execute_system_command_blind(["hciconfig", "hci0", "piscan"], wait_for_finish=False)
-                if not steelsquid_utils.has_parameter("bluetooth_pin"):
-                    steelsquid_utils.set_parameter("bluetooth_pin", "1234")
-                thread.start_new_thread(bluetooth_agent, ()) 
             if steelsquid_utils.is_raspberry_pi():
                 if steelsquid_utils.get_flag("disable_monitor"):
                     steelsquid_utils.execute_system_command_blind(["/opt/vc/bin/tvservice", "-o"])
@@ -785,6 +781,11 @@ def main():
                 thread.start_new_thread(import_file_dyn, (name[1],)) 
             thread.start_new_thread(import_expand, (False,)) 
             import_my_stuff()
+            if steelsquid_utils.get_flag("bluetooth_pairing"):
+                steelsquid_utils.execute_system_command_blind(["hciconfig", "hci0", "piscan"], wait_for_finish=False)
+                if not steelsquid_utils.has_parameter("bluetooth_pin"):
+                    steelsquid_utils.set_parameter("bluetooth_pin", "1234")
+                thread.start_new_thread(bluetooth_agent, ()) 
             steelsquid_utils.shout("Listen for events", debug=True)
             steelsquid_event.broadcast_event("network")
             steelsquid_event.activate_event_handler(create_ner_thread=False)

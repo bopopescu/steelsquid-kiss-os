@@ -40,20 +40,6 @@ last_voltage = 0
 # Last voltage read
 last_print_voltage = 0
 
-# Expand has on_button_info method
-expand_on_button_info = False
-# Expand has on_button method
-expand_on_button = False
-# Expand has on_switch method
-expand_on_switch = False
-
-# Custom has on_button_info method
-steel_expand_on_button_info = False
-# Custom has on_button method
-steel_expand_on_button = False
-# Custom has on_switch method
-steel_expand_on_switch = False
-
 
 def activate():
     '''
@@ -74,31 +60,8 @@ class SYSTEM(object):
         This will execute when system starts
         Do not execute long running stuff here, do it in on_loop...
         '''
-        global last_voltage
-        global last_print_voltage
-        global expand_on_button_info
-        global expand_on_button
-        global expand_on_switch
-        global steel_expand_on_button_info
-        global steel_expand_on_button
-        global steel_expand_on_switch
         steelsquid_utils.shout("Steelsquid PIIO board enabled")
-        for name in steelsquid_boot.expand_modules:
-            mod = sys.modules['expand.'+name]
-            if hasattr(mod, "activate") and mod.activate():
-                if hasattr(mod, "on_button_info") and callable(getattr(mod, "on_button_info")):
-                    expand_on_button_info=True
-                if hasattr(mod, "on_button") and callable(getattr(mod, "on_button")):
-                    expand_on_button=True
-                if hasattr(mod, "on_switch") and callable(getattr(mod, "on_switch")):
-                    expand_on_switch=True
-        if steelsquid_kiss_expand.activate():
-            if hasattr(steelsquid_kiss_expand, "on_button_info") and callable(getattr(steelsquid_kiss_expand, "on_button_info")):
-                steel_expand_on_button_info=True
-            if hasattr(steelsquid_kiss_expand, "on_button") and callable(getattr(steelsquid_kiss_expand, "on_button")):
-                steel_expand_on_button=True
-            if hasattr(steelsquid_kiss_expand, "on_switch") and callable(getattr(steelsquid_kiss_expand, "on_switch")):
-                steel_expand_on_switch=True
+        # Reset all LED
         steelsquid_piio.led(1, False)
         steelsquid_piio.led(2, False)
         steelsquid_piio.led(3, False)
@@ -109,22 +72,24 @@ class SYSTEM(object):
         steelsquid_piio.error(False)    
         steelsquid_piio.ok(False)    
         steelsquid_piio.bt(False)    
-        steelsquid_piio.power_off_click(on_poweroff_button_click)
-        steelsquid_piio.info_click(on_button_info)
-        if expand_on_button or steel_expand_on_button:
-            steelsquid_piio.button_click(1, on_button)
-            steelsquid_piio.button_click(2, on_button)
-            steelsquid_piio.button_click(3, on_button)
-            steelsquid_piio.button_click(4, on_button)
-            steelsquid_piio.button_click(5, on_button)
-            steelsquid_piio.button_click(6, on_button)
-        if expand_on_switch or steel_expand_on_switch:
-            steelsquid_piio.switch_event(1, on_switch)
-            steelsquid_piio.switch_event(2, on_switch)
-            steelsquid_piio.switch_event(3, on_switch)
-            steelsquid_piio.switch_event(4, on_switch)
-            steelsquid_piio.switch_event(5, on_switch)
-            steelsquid_piio.switch_event(6, on_switch)
+        # Listen for clicka on power off button
+        steelsquid_piio.power_off_click(SYSTEM.on_button_poweroff)
+        # Listen for clicka on info button
+        steelsquid_piio.info_click(SYSTEM.on_button_info)
+        # Listen for clicka on buttons
+        steelsquid_piio.button_click(1, SYSTEM.on_button)
+        steelsquid_piio.button_click(2, SYSTEM.on_button)
+        steelsquid_piio.button_click(3, SYSTEM.on_button)
+        steelsquid_piio.button_click(4, SYSTEM.on_button)
+        steelsquid_piio.button_click(5, SYSTEM.on_button)
+        steelsquid_piio.button_click(6, SYSTEM.on_button)
+        # Listen for event on switch
+        steelsquid_piio.switch_event(1, SYSTEM.on_switch)
+        steelsquid_piio.switch_event(2, SYSTEM.on_switch)
+        steelsquid_piio.switch_event(3, SYSTEM.on_switch)
+        steelsquid_piio.switch_event(4, SYSTEM.on_switch)
+        steelsquid_piio.switch_event(5, SYSTEM.on_switch)
+        steelsquid_piio.switch_event(6, SYSTEM.on_switch)
         
 
     @staticmethod
@@ -133,6 +98,7 @@ class SYSTEM(object):
         This will execute when system stops
         Do not execute long running stuff here
         '''
+        # Reset all LED
         steelsquid_piio.buz_flash(None, 0.1)
         steelsquid_piio.low_bat(False)
         steelsquid_piio.bt(False)
@@ -143,6 +109,8 @@ class SYSTEM(object):
         steelsquid_piio.led(4, False)
         steelsquid_piio.led(5, False)
         steelsquid_piio.led(6, False)
+        # Clean all event listening
+        steelsquid_pi.cleanup()
         
         
     @staticmethod
@@ -154,12 +122,6 @@ class SYSTEM(object):
         '''    
         global last_voltage
         global last_print_voltage
-        global expand_on_button_info
-        global expand_on_button
-        global expand_on_switch
-        global steel_expand_on_button_info
-        global steel_expand_on_button
-        global steel_expand_on_switch
         new_voltage = steelsquid_piio.volt(2, 4)
         voltage_waring = int(steelsquid_utils.get_parameter("voltage_waring", "10"))
         voltage_poweroff = int(steelsquid_utils.get_parameter("voltage_poweroff", "8"))
@@ -167,22 +129,7 @@ class SYSTEM(object):
         if new_voltage<voltage_waring:
             v_warn=" (Warning)"
             steelsquid_piio.low_bat(True)
-            try:
-                on_low_bat(new_voltage)
-                if steelsquid_utils.get_flag("rover"):
-                    steelsquid_kiss_global.Rover.on_low_bat(new_voltage)
-                if steelsquid_utils.get_flag("alarm"):
-                    steelsquid_kiss_global.Alarm.on_low_bat(new_voltage)
-                for name in steelsquid_kiss_global.expand_modules:
-                    mod = sys.modules['expand.'+name]
-                    if hasattr(mod, "activate") and mod.activate():
-                        if hasattr(mod, "on_low_bat") and callable(getattr(mod, "on_low_bat")):
-                            mod.on_low_bat(new_voltage)
-                if steelsquid_kiss_expand.activate():
-                    if hasattr(steelsquid_kiss_expand, "on_low_bat") and callable(getattr(steelsquid_kiss_expand, "on_low_bat")):
-                        steelsquid_kiss_expand.on_low_bat(new_voltage)
-            except:
-                steelsquid_utils.shout()
+            steelsquid_kiss_global._execute_all_expand_modules("PIIO", "on_low_bat", (new_voltage,))
         else:
             steelsquid_piio.low_bat(False)
         if new_voltage<voltage_poweroff:
@@ -243,22 +190,6 @@ class SYSTEM(object):
         value=The value of the data
         '''    
         pass
-        
-        
-class PIIO(object):
-    '''
-    Methods in this class will be executed by the system if activate() return True and this is a PIIO board
-    '''
-
-    @staticmethod
-    def on_low_bat(voltage):
-        '''
-        THIS ONLY WORKS ON THE PIIO BOARD...
-        Execute when voltage is to low.
-        Is set with the paramater: voltage_waring
-        voltage = Current voltage
-        '''    
-        pass
 
 
     @staticmethod
@@ -269,19 +200,7 @@ class PIIO(object):
         '''    
         steelsquid_piio.buz_flash(None, 0.1)
         steelsquid_event.broadcast_event("network")
-        if expand_on_button_info:
-            try:
-                for name in steelsquid_kiss_global.expand_modules:
-                    mod = sys.modules['expand.'+name]
-                    mod.on_button_info()
-            except:
-                steelsquid_utils.shout("Fatal error in expand."+name+" on_button_info", is_error=True)
-
-        if steel_expand_on_button_info:
-            try:
-                steelsquid_kiss_expand.on_button_info()
-            except:
-                steelsquid_utils.shout("Fatal error in steelsquid_kiss_expand on_button_info", is_error=True)
+        steelsquid_kiss_global._execute_all_expand_modules("PIIO", "on_button_info")
         
 
     @staticmethod
@@ -291,19 +210,7 @@ class PIIO(object):
         Execute when button 1 to 6 is clicken on the PIIO board
         button_nr = button 1 to 6
         '''    
-        if expand_on_button:
-            try:
-                for name in steelsquid_boot.expand_modules:
-                    mod = sys.modules['expand.'+name]
-                    mod.on_button(button_nr)
-            except:
-                steelsquid_utils.shout("Fatal error in expand."+name+" on_button", is_error=True)
-
-        if steel_expand_on_button:
-            try:
-                steelsquid_kiss_expand.on_button(button_nr)
-            except:
-                steelsquid_utils.shout("Fatal error in steelsquid_kiss_expand on_button", is_error=True)
+        steelsquid_kiss_global._execute_all_expand_modules("PIIO", "on_button", (button_nr,))
 
 
     @staticmethod
@@ -314,27 +221,16 @@ class PIIO(object):
         dip_nr = DIP switch nr 1 to 6
         status = True/False   (on/off)
         '''    
-        if expand_on_switch:
-            try:
-                for name in steelsquid_boot.expand_modules:
-                    mod = sys.modules['expand.'+name]
-                    mod.on_switch(dip_nr, status)
-            except:
-                steelsquid_utils.shout("Fatal error in expand."+name+" on_switch", is_error=True)
-        if steel_expand_on_switch:
-            try:
-                steelsquid_kiss_expand.on_switch(dip_nr, status)
-            except:
-                steelsquid_utils.shout("Fatal error in steelsquid_kiss_expand on_switch", is_error=True)
+        steelsquid_kiss_global._execute_all_expand_modules("PIIO", "on_switch", (dip_nr, status,))
 
 
     @staticmethod
-    def on_poweroff_button_click():
+    def on_button_poweroff():
         '''
         Power off the system
         '''
         steelsquid_piio.shutdown()    
-    
+            
     
 class GLOBAL(object):
     '''

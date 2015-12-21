@@ -186,6 +186,7 @@ class SOCKET(object):
 class PIIO(object):
     '''
     Methods in this class will be executed by the system if activate() return True and this is a PIIO board
+    And that the PIIO board is enabled: steelsquid piio-on
     '''
         
     @staticmethod

@@ -56,7 +56,6 @@ def shutdown():
     '''
     Shutdown and power off the PIIO board
     '''
-    steelsquid_kiss_global.PIIO.on_disable()
     steelsquid_pi.po16_gpio_set(1, True)
     steelsquid_utils.execute_system_command_blind(['shutdown', 'now', '-h'])
 
@@ -85,6 +84,13 @@ def volt_event(callback_method, min_change=0.01, sample_sleep=0.2, samples=1):
     def inner_callback_method(ch, voltage):
         callback_method(voltage / float(steelsquid_utils.get_parameter("voltage_divider", "0.1179")))
     return steelsquid_pi.po12_adc_event(3, inner_callback_method, min_change, sample_sleep, samples=samples)
+
+
+def volt_event_remove():
+    '''
+    Stop listen for change in voltage to the PIIO board
+    '''
+    return steelsquid_pi.po12_adc_event_remove(3)
 
 
 def button(button_nr):
@@ -125,6 +131,15 @@ def button_click(button_nr, callback_method):
     steelsquid_pi.mcp23017_click(21, button_nr-1, mcp_event_callback_method, rpi_gpio=26)
 
 
+def button_event_remove(button_nr):
+    '''
+    Listen for click on the 6 buttons on the PIIO board
+    button_nr = 1 to 6
+    '''
+    button_nr = int(button_nr)
+    steelsquid_pi.mcp23017_event_remove(21, button_nr-1)
+
+
 def switch(dip_nr):
     '''
     Read status of the 6 dip switch on the PIIO board
@@ -147,6 +162,15 @@ def switch_event(dip_nr, callback_method):
     def mcp_event_callback_method(address, pin, status): 
         callback_method(dip_nr, not status)
     steelsquid_pi.mcp23017_event(21, ndip_nr, mcp_event_callback_method, rpi_gpio=26)
+
+
+def switch_event_remove(dip_nr):
+    '''
+    Stop listen for changes on the 6 dip switches on the PIIO board
+    dip_nr = 1 to 6
+    '''
+    ndip_nr = (int(dip_nr)-14)*-1
+    steelsquid_pi.mcp23017_event_remove(21, ndip_nr)
 
 
 def led(led_nr, status):
@@ -305,6 +329,21 @@ def gpio_click(gpio, callback_method, bouncetime_ms=60, resistor=PULL_DOWN, use_
         callback_method(gpio)
     steelsquid_pi.gpio_click(ngpio, inner_callback_method, bouncetime_ms, resistor)
     
+    
+def gpio_event_remove(gpio, use_piio_pin_nr=True):
+    '''
+    Stop listen for changes on a GPIO
+    This is marked with GPIO and GPIO_5V on the PIIO board.
+    @param gpio: GPIO number (Raspberry GPIO or piio pin nr)
+    @param use_piio_pin_nr: Use PIIO pin nr or Raspberry GPIO nr.
+    '''
+    gpio = int(gpio)
+    if use_piio_pin_nr:
+        ngpio = __convert_to_gpio(gpio)
+    else:
+        ngpio=int(gpio)
+    steelsquid_pi.gpio_event_remove(ngpio)
+    
 
 def __convert_to_gpio(pin):
     pin = int(pin)
@@ -421,6 +460,16 @@ def xgpio_click(gpio, callback_method, pullup=True):
     steelsquid_pi.mcp23017_click(20, ngpio, inner_callback_method, pullup, 19)
 
 
+def xgpio_event_remove(gpio):
+    '''
+    Stop listen for changes on the XGPIO pins.
+    @param gpio: 1 to 8
+    '''
+    gpio = int(gpio)
+    ngpio = __convert_to_xgpio(gpio)
+    steelsquid_pi.mcp23017_event_remove(20, ngpio)
+
+
 def __convert_to_xgpio(pin):
     pin = int(pin)
     if pin == 1:
@@ -522,6 +571,29 @@ def adc_event(channel, callback_method, min_change=0.01, sample_sleep=0.2, sampl
     def inner_callback_method(ch, voltage):
         callback_method(channel, voltage)
     return steelsquid_pi.po12_adc_event(nchannel, inner_callback_method, min_change, sample_sleep, samples=samples)
+
+
+def adc_event(channel):
+    '''
+    Stop listen for changes in the analog voltage in on the ADC pins
+    channel = 1 to 7
+    '''
+    channel = int(channel)
+    if channel==1:
+        nchannel=4
+    elif channel==2:
+        nchannel=5
+    elif channel==3:
+        nchannel=6
+    elif channel==4:
+        nchannel=7
+    elif channel==5:
+        nchannel=2
+    elif channel==6:
+        nchannel=8
+    elif channel==7:
+        nchannel=1
+    return steelsquid_pi.po12_adc_event_remove(nchannel)
 
 
 def dac(volt_1, volt_2, volt_3, volt_4):
@@ -633,6 +705,22 @@ def rotation_event(callback_method, min_change=2, sample_sleep=0.2):
     sample_sleep: Sleep ths long between sample (only one thread handle all events so the last set sleep time is in use)
     '''
     steelsquid_pi.mpu6050_rotation_event(callback_method, min_change, sample_sleep)
+
+
+def rotation_event():
+    '''
+    Stop listen for for mpu-6050 rotation angle in degrees for both the X & Y changes
+    SparkFun Triple Axis Accelerometer and Gyro Breakout - MPU-6050
+    '''
+    steelsquid_pi.mpu6050_event_remove()
+
+
+def movement_event():
+    '''
+    Stop listen for for mpu-6050 rotation angle in degrees for both the X & Y changes
+    SparkFun Triple Axis Accelerometer and Gyro Breakout - MPU-6050
+    '''
+    steelsquid_pi.mpu6050_event_remove()
 
 
 def bt(status):
@@ -762,6 +850,13 @@ def info_click(callback_method):
     def inner_callback_method(address, pin):
         callback_method()
     steelsquid_pi.mcp23017_click(21, 14, inner_callback_method, True, rpi_gpio=26)
+
+
+def info_event_remove(): 
+    ''' 
+    Stoplisten for event on the info button.
+    '''
+    steelsquid_pi.mcp23017_event_remove(21, 14)
     
 
 def power_off():
@@ -794,6 +889,13 @@ def power_off_click(callback_method):
     def inner_callback_method(address, pin):
         callback_method()
     steelsquid_pi.mcp23017_click(21, 15, inner_callback_method, True, rpi_gpio=26)
+
+
+def power_off_event_remove(): 
+    ''' 
+    Stoplisten for event on the power off button.
+    '''
+    steelsquid_pi.mcp23017_event_remove(21, 15)
 
 
 def gpio_event_callback_method(pin, status): 

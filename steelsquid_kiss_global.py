@@ -131,7 +131,7 @@ def add_event_data_callback(method):
     '''    
     with lock:
         if len(event_data_callback_methods)==0:
-            thread.start_new_thread(__event_data_handler, ()) 
+            thread.start_new_thread(_event_data_handler, ()) 
         event_data_callback_methods.append(method)
         
 
@@ -146,7 +146,7 @@ def remove_event_data_callback(method):
             pass        
 
 
-def __event_data_handler():
+def _event_data_handler():
     '''
     Fire the event data events
     '''    
@@ -160,7 +160,7 @@ def __event_data_handler():
 
     
     
-def __get_expand_module(module_name, class_name=None, method_name=None):
+def _get_expand_module(module_name, class_name=None, method_name=None):
     '''
     Get a module or class(classmethod) if exists
     Will also check if method activate return true on the module
@@ -186,7 +186,7 @@ def __get_expand_module(module_name, class_name=None, method_name=None):
         return None
 
 
-def __get_expand_module_class(module_name, class_name):
+def _get_expand_module_class(module_name, class_name):
     '''
     Get a module or class(classmethod) if exists
     Will also check if method activate return true on the module
@@ -208,7 +208,7 @@ def __get_expand_module_class(module_name, class_name):
         return None
     
 
-def __get_expand_module_method(module_name, class_name, method_name):
+def _get_expand_module_method(module_name, class_name, method_name):
     '''
     Get a method in a module or class(classmethod) if exists
     Will also check if method activate return true on the module
@@ -233,17 +233,32 @@ def __get_expand_module_method(module_name, class_name, method_name):
         return None
 
 
-def __execute_expand_module_method(module_name, class_name, method_name, method_args):
+def _execute_expand_module_method(module_name, class_name, method_name, method_args=None):
     '''
     Execute a method in a module or class(classmethod) if exists
     Will also check if method activate return true on the module
     '''
     try:
-        mod = __get_expand_module_method(module_name, class_name, method_name)
+        mod = _get_expand_module_method(module_name, class_name, method_name)
         if mod != None:
-            mod(*method_args)
+            if method_args==None:
+                mod()
+            else:
+                mod(*method_args)
     except:
         steelsquid_utils.shout()
     
+
+def _execute_all_expand_modules(class_name, method_name, method_args=None):
+    '''
+    Execute on alla available expand modules (in expand/ and steelsquid_kiss_expand)
+    Execute a method in a module or class(classmethod) if exists
+    Will also check if method activate return true on the module
+    '''
+    import steelsquid_kiss_expand
+    _execute_expand_module_method(steelsquid_kiss_expand, class_name, method_name, method_args)
+    for mod in expand_modules:
+        _execute_expand_module_method(mod, class_name, method_name, method_args)
+        
                 
 
