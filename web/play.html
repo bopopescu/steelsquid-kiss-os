@@ -15,16 +15,8 @@
         <script type="text/javascript" src="steelsquid.js"></script>
         <script type="text/javascript">
             //<![CDATA[ 
-            submitNoPW('device_info');
- 
-            /**
-             * Get info on device to print on top of page
-             */
-            function on_device_info(paramaters){
-                $("#device_info_name").html(paramaters[0]);
-            }
 
-             function on_media_list(paramaters){
+            function on_media_list(paramaters){
                 tbody = $("#dir_list").find('tbody');
                 tbody.empty();
                 if(paramaters.length > 1){
@@ -221,90 +213,7 @@
     </head>
     <body>
         <div class="fill">
-            <table class="bar">
-                <thead>
-                    <tr>
-                        <td>
-                            <img alt="logo" src="img/bar_steelsquid.png"></img>
-                        </td>
-                        <td>
-                            Kiss OS Media Player
-                        </td>
-                        <td>
-                            <div class="device_info" id="device_info_name"></div>
-                        </td>
-                        <td>
-                            <img alt="logo" src="img/bar_menu.png"></img>
-                        </td>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr onclick="javascript:window.location = 'http://www.steelsquid.org/steelsquid-kiss-os';">
-                        <td>
-                            <img alt="logo" src="img/bar_help.png"></img>
-                        </td>
-                        <td colspan="2" >
-                            Help
-                        </td>
-                    </tr>
-                    <tr onclick="javascript:window.location = '/';">
-                        <td>
-                            <img alt="logo" src="img/bar_admin.png"></img>
-                        </td>
-                        <td colspan="2" >
-                            Administrator
-                        </td>
-                    </tr>
-                    <tr onclick="javascript:window.location = '/file';">
-                        <td>
-                            <img alt="logo" src="img/bar_file.png"></img>
-                        </td>
-                        <td colspan="2" >
-                            File Manager
-                        </td>
-                    </tr>
-                    <tr onclick="javascript:window.location = '/download';">
-                        <td>
-                            <img alt="logo" src="img/bar_download.png"></img>
-                        </td>
-                        <td colspan="2" >
-                            Download Manager
-                        </td>
-                    </tr>
-                    <tr onclick="javascript:window.location = '/utils';">
-                        <td>
-                            <img alt="logo" src="img/bar_utils.png"></img>
-                        </td>
-                        <td colspan="2" >
-                            Utils
-                        </td>
-                    </tr>
-                    <tr onclick="javascript:window.location = '/expand';">
-                        <td>
-                            <img alt="logo" src="img/bar_expand.png"></img>
-                        </td>
-                        <td colspan="2" >
-                            Expand
-                        </td>
-                    </tr>
-                    <tr onclick="javascript:submitSyncConfirm('Are you sure you want to reboot?', 'reboot');">
-                        <td>
-                            <img alt="logo" src="img/bar_reboot.png"></img>
-                        </td>
-                        <td colspan="2" >
-                            Reboot
-                        </td>
-                    </tr>
-                    <tr onclick="javascript:submitSyncConfirm('Are you sure you want to shutdown?', 'shutdown');">
-                        <td>
-                            <img alt="logo" src="img/bar_shutdown.png"></img>
-                        </td>
-                        <td colspan="2" >
-                            Shutdown
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            <div id="included_top_bar">Kiss OS Media Player</div>
             <div class="layer" id="share">
                 The Media Player is not enabled on this system.<br/>
                 If you enable the Media Player you will expose <span class="highlight">/root</span> on this web interface.<br/>

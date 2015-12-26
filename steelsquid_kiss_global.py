@@ -20,19 +20,23 @@ import steelsquid_utils
 import steelsquid_event
 import steelsquid_pi
 import steelsquid_boot
-import steelsquid_kiss_expand
 import time
 import threading
 import thread
 import sys
 import importlib
-import expand
 import Queue
 import exceptions
+import os
 from importlib import import_module
 
+# Number of eventdata handler threads
+NUMBER_OF_EVENT_DATA_HANDERS = 3
 
-# All loaded custom expand files (python module names in the expand directory that has bean imported)
+# Names of python module names in the expand directory
+expand_module_names=[]
+
+# All loades exapnd modules in the expand directory
 expand_modules=[]
 
 # The socket connection, if enabled (not enabled = None)
@@ -63,29 +67,44 @@ max_pending_events=128
 def get_expand_module(name):
     '''
     Get a module from the expand directory
-    Only return modules that has bean activated
-    return: The module
+    Only return modules that has bean enabled
+    return: The module or None
     '''    
-    if name == "steelsquid_kiss_expand":
-        return steelsquid_kiss_expand
-    else:
-        return sys.modules['expand.'+name]
+    try:
+        index = expand_module_names.index(name)
+        return expand_modules[index]
+    except:
+        return None
 
 
 def is_expand_module(name):
     '''
-    Check if a module is imported and active
+    Check if a module is imported and enabled
     return: True/False
     '''    
-    if name == "steelsquid_kiss_expand":
-        return hasattr(steelsquid_kiss_expand, "activate") and steelsquid_kiss_expand.activate() and steelsquid_kiss_expand.is_enabled
-    elif 'expand.'+name in sys.modules:
-        mod = sys.modules['expand.'+name]
-        return hasattr(mod, "activate") and mod.activate() and mod.is_enabled
+    if name in expand_module_names:
+        return True
     else:
         return False
 
-           
+
+def expand_module(name, status, restart=True):
+    '''
+    Enable or disable a expand module
+    name: Name of the mopule
+    status: True/False
+    restart: restart the steelsquid daemon
+    '''    
+    if restart:
+        restart="True"
+    else:
+        restart="False"
+    if status:
+        steelsquid_boot.on_module_on(None, [name, restart])
+    else:
+        steelsquid_boot.on_module_off(None, [name, restart])
+
+
 def get_event_data(key):
     '''
     Get event data.
@@ -131,7 +150,8 @@ def add_event_data_callback(method):
     '''    
     with lock:
         if len(event_data_callback_methods)==0:
-            thread.start_new_thread(_event_data_handler, ()) 
+            for i in range(NUMBER_OF_EVENT_DATA_HANDERS):
+                thread.start_new_thread(_event_data_handler, ()) 
         event_data_callback_methods.append(method)
         
 
@@ -144,6 +164,30 @@ def remove_event_data_callback(method):
             event_data_callback_methods.remove(method)
         except ValueError:
             pass        
+
+
+def stream_usb():
+    '''
+    Enable streaming of USB camera
+    This will trigger a restart of the stealsquid daemon
+    '''    
+    os.system("steelsquid stream-on")
+
+
+def stream_pi():
+    '''
+    Enable streaming of Raspberry PI camera
+    This will trigger a restart of the stealsquid daemon
+    '''    
+    os.system("steelsquid stream-pi-on")
+
+
+def stream_off():
+    '''
+    Disable streaming of camera (Pi or USB)
+    This will trigger a restart of the stealsquid daemon
+    '''    
+    os.system("steelsquid stream-off")
 
 
 def _event_data_handler():
@@ -159,29 +203,21 @@ def _event_data_handler():
             steelsquid_utils.shout("Fatal error in event_data_handler: "+key, is_error=True)            
 
     
-    
 def _get_expand_module(module_name, class_name=None, method_name=None):
     '''
     Get a module or class(classmethod) if exists
-    Will also check if method activate return true on the module
-    Return None if method not found or activate=False
+    Will also check if module is enabled
+    Return None if method not found or not enabled
     '''
-    import steelsquid_kiss_expand
     try:
-        mod = None
-        if module_name == steelsquid_kiss_expand:
-            mod = steelsquid_kiss_expand
-        else:
-            mod = import_module('expand.'+module_name)
-        if mod.activate():
-            if class_name!=None and method_name!=None:
-                m = getattr(mod, class_name)
-                getattr(m, method_name)
-            elif class_name!=None:
-                getattr(mod, class_name)
-            return mod
-        else:
-            return None
+        index = expand_module_names.index(module_name)
+        mod = expand_modules[index]
+        if class_name!=None and method_name!=None:
+            m = getattr(mod, class_name)
+            getattr(m, method_name)
+        elif class_name!=None:
+            getattr(mod, class_name)
+        return mod
     except:
         return None
 
@@ -189,21 +225,13 @@ def _get_expand_module(module_name, class_name=None, method_name=None):
 def _get_expand_module_class(module_name, class_name):
     '''
     Get a module or class(classmethod) if exists
-    Will also check if method activate return true on the module
-    Return None if method not found or activate=False
+    Will also check if module is enabled
+    Return None if method not found or not enabled
     '''
-    import steelsquid_kiss_expand
     try:
-        mod = None
-        if module_name == steelsquid_kiss_expand:
-            mod = steelsquid_kiss_expand
-        else:
-            mod = import_module('expand.'+module_name)
-        if mod.activate():
-            mod = getattr(mod, class_name)
-            return mod
-        else:
-            return None
+        index = expand_module_names.index(module_name)
+        mod = expand_modules[index]
+        return getattr(mod, class_name)
     except:
         return None
     
@@ -211,24 +239,14 @@ def _get_expand_module_class(module_name, class_name):
 def _get_expand_module_method(module_name, class_name, method_name):
     '''
     Get a method in a module or class(classmethod) if exists
-    Will also check if method activate return true on the module
-    Return None if method not found or activate=False
+    Will also check if module is enabled
+    Return None if method not found or not enabled
     '''
-    import steelsquid_kiss_expand
     try:
-        mod = None
-        if module_name == steelsquid_kiss_expand:
-            mod = steelsquid_kiss_expand
-        else:
-            mod = import_module('expand.'+module_name)
-        if mod.activate():
-            mod = getattr(mod, class_name)
-            return getattr(mod, method_name)
-        else:
-            return None
-    except exceptions.SyntaxError:
-        steelsquid_utils.shout()
-        return None
+        index = expand_module_names.index(module_name)
+        mod = expand_modules[index]
+        mod = getattr(mod, class_name)
+        return getattr(mod, method_name)
     except:
         return None
 
@@ -236,27 +254,25 @@ def _get_expand_module_method(module_name, class_name, method_name):
 def _execute_expand_module_method(module_name, class_name, method_name, method_args=None):
     '''
     Execute a method in a module or class(classmethod) if exists
-    Will also check if method activate return true on the module
+    Will also check if module is enabled
     '''
-    try:
-        mod = _get_expand_module_method(module_name, class_name, method_name)
-        if mod != None:
+    mod = _get_expand_module_method(module_name, class_name, method_name)
+    if mod!=None:
+        try:
             if method_args==None:
                 mod()
             else:
                 mod(*method_args)
-    except:
-        steelsquid_utils.shout()
+        except:
+            steelsquid_utils.shout()
     
 
 def _execute_all_expand_modules(class_name, method_name, method_args=None):
     '''
-    Execute on alla available expand modules (in expand/ and steelsquid_kiss_expand)
+    Execute on alla available expand modules (in expand/)
     Execute a method in a module or class(classmethod) if exists
-    Will also check if method activate return true on the module
+    Will also check if module is enable
     '''
-    import steelsquid_kiss_expand
-    _execute_expand_module_method(steelsquid_kiss_expand, class_name, method_name, method_args)
     for mod in expand_modules:
         _execute_expand_module_method(mod, class_name, method_name, method_args)
         

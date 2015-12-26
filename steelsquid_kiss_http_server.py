@@ -1858,3 +1858,21 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         else:
             return [steelsquid_utils.get_parameter("stream_frames"), ""]
 
+
+    def alarm(self, session_id, parameters):
+        '''
+        Enable or disable alarm
+        '''
+        if len(parameters) > 0:
+            if parameters[0] == "true":
+                proc=Popen(['steelsquid', 'alarm-on'], stdout = PIPE, stderr = STDOUT)  
+                proc.wait()
+                steelsquid_utils.set_flag("alarm")
+            else:
+                proc=Popen(['steelsquid', 'alarm-off'], stdout = PIPE, stderr = STDOUT)  
+                proc.wait()
+                steelsquid_utils.del_flag("alarm")
+        if steelsquid_utils.get_flag("alarm"):
+            return "true"
+        else:
+            return "false"

@@ -379,10 +379,16 @@ def shout(string=None, to_lcd=True, debug=False, is_error=False, always_show=Fal
             exc_type, exc_value, exc_tb = sys.exc_info()
             ex = traceback.format_exception(exc_type, exc_value, exc_tb)
             if string == None:
-                string = str(exc_type) + ": " + str(exc_value) +"\n"+str(ex)
+                if exc_type==None:
+                    string = repr(traceback.format_stack())
+                else:
+                    string = str(exc_type) + ": " + str(exc_value) +"\n"+str(ex)
             else:
                 string = str(string)
-                string = string + "\n" + str(exc_type) + ": " + str(exc_value) +"\n"+str(ex)
+                if exc_type==None:
+                    string = string + "\n" + repr(traceback.format_stack())
+                else:
+                    string = string + "\n" + str(exc_type) + ": " + str(exc_value) +"\n"+str(ex)
             del exc_tb
         elif string != None:
             string = str(string)
@@ -405,7 +411,7 @@ def shout(string=None, to_lcd=True, debug=False, is_error=False, always_show=Fal
             except:
                 pass
             if to_lcd and is_raspberry_pi():
-                if get_flag("piio"):
+                if get_flag("module_steelsquid_kiss_piio"):
                     import steelsquid_piio
                     if is_error:
                         try:
@@ -890,7 +896,7 @@ def system_info():
 
 
     # PIIO Board
-    if get_flag("piio"):
+    if get_flag("module_steelsquid_kiss_piio"):
         p_io = "Enabled"
     else:
         p_io = "Disabled"
@@ -908,7 +914,7 @@ def system_info():
         p_modem = "Disabled"
 
     #Voltage
-    if get_flag("piio"):
+    if get_flag("module_steelsquid_kiss_piio"):
         import steelsquid_piio
         p_io_voltage = steelsquid_piio.voltage()
     else:

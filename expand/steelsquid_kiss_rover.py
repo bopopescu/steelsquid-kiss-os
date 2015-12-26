@@ -3,7 +3,7 @@
 
 '''.
 Fuctionality for my rover controller
-Also see utils.html
+Also see rover.html (called from utils.html)
 
 @organization: Steelsquid
 @author: Andreas Nilsson
@@ -18,43 +18,56 @@ import steelsquid_event
 import steelsquid_pi
 import steelsquid_piio
 import steelsquid_kiss_global
+import time
 
 
-# Is this enabled (on_enable has executed)
-# This is set by the system automaticaly
-is_enabled = False
+# Is this module started
+# This is set by the system automatically.
+is_started = False
 
 
-def activate():
+def enable():
     '''
-    Return True/False if this functionality is to be enabled (execute on_enable)
-    return: True/False
-    '''    
-    return steelsquid_utils.get_flag("rover")
+    When this module is enabled what needs to be done (execute: steelsquid module XXX on)
+    Maybe you need create some files or enable other stuff.
+    '''
+    steelsquid_kiss_global.expand_module("steelsquid_kiss_piio", True, restart=False)
+    steelsquid_kiss_global.stream_pi() #Will trigger reboot
+
+
+def disable():
+    '''
+    When this module is disabled what needs to be done (execute: steelsquid module XXX off)
+    Maybe you need remove some files or disable other stuff.
+    '''
+    steelsquid_kiss_global.stream_off() #Will trigger reboot
 
 
 class SYSTEM(object):
     '''
-    Methods in this class will be executed by the system if activate() return True
+    Methods in this class will be executed by the system if module is activated
     '''
 
     @staticmethod
-    def on_enable():
+    def on_start():
         '''
         This will execute when system starts
         Do not execute long running stuff here, do it in on_loop...
         '''
         steelsquid_utils.shout("Steelsquid Rover enabled")
-        steelsquid_piio.servo_position = steelsquid_utils.get_parameter("servo_position", steelsquid_piio.servo_position)
-        steelsquid_piio.servo_position_max = steelsquid_utils.get_parameter("servo_position_max", steelsquid_piio.servo_position_max)
-        steelsquid_piio.servo_position_min = steelsquid_utils.get_parameter("servo_position_min", steelsquid_piio.servo_position_min)
-        steelsquid_piio.motor_forward = steelsquid_utils.get_parameter("motor_forward", steelsquid_piio.motor_forward)
-        steelsquid_piio.motor_backward = steelsquid_utils.get_parameter("motor_backward", steelsquid_piio.motor_backward)
-        steelsquid_piio.servo(1, steelsquid_piio.servo_position)       
+        # Load servo start, max and min position
+        GLOBAL.servo_position_start = steelsquid_utils.get_parameter("servo_position_start", GLOBAL.servo_position_start)
+        GLOBAL.servo_position_max = steelsquid_utils.get_parameter("servo_position_max", GLOBAL.servo_position_max)
+        GLOBAL.servo_position_min = steelsquid_utils.get_parameter("servo_position_min", GLOBAL.servo_position_min)
+        # Set the sevo to start position
+        steelsquid_piio.servo(1, GLOBAL.servo_position_start)       
+        # Load DC motor max forward and backward speed
+        GLOBAL.motor_forward_max = steelsquid_utils.get_parameter("motor_forward_max", GLOBAL.motor_forward_max)
+        GLOBAL.motor_backward_max = steelsquid_utils.get_parameter("motor_backward_max", GLOBAL.motor_backward_max)
         
 
     @staticmethod
-    def on_disable():
+    def on_stop():
         '''
         This will execute when system stops
         Do not execute long running stuff here
@@ -69,12 +82,6 @@ class SYSTEM(object):
         If it return a number larger than 0 it will sleep for that number of seconds before execute again.
         If it return 0 it will not not sleep, will execute again imediately.
         '''    
-        now = time.time()*1000
-        if now - steelsquid_piio.trex_motor_last_change() > 1000:
-            try:
-                steelsquid_piio.trex_motor(0,0)
-            except:
-                pass
         return 1
 
 
@@ -112,7 +119,7 @@ class SYSTEM(object):
 
 class WEB(object):
     '''
-    Methods in this class will be executed by the webserver if activate() return True and the webserver is enabled
+    Methods in this class will be executed by the webserver if module is activated and the webserver is enabled
     If is a GET it will return files and if it is a POST it executed commands.
     It is meant to be used as follows.
     1. Make a call from the browser (GET) and a html page is returned back.
@@ -124,105 +131,14 @@ class WEB(object):
     @staticmethod
     def rover_info(session_id, parameters):
         '''
-        
+        Get info on the rover
         '''
-        return steelsquid_kiss_global.Rover.info()
-
-
-    @staticmethod
-    def rover_enable(session_id, parameters):
-        '''
-        
-        '''
-        if not steelsquid_utils.authenticate("root", parameters[0]):
-            raise Exception("Incorrect password for user root!")
-        else:
-            steelsquid_utils.execute_system_command(['steelsquid', 'rover-on']) 
-        return steelsquid_utils.get_flag("rover")
-
-
-    @staticmethod
-    def rover_disable(session_id, parameters):
-        '''
-        
-        '''
-        if not steelsquid_utils.authenticate("root", parameters[0]):
-            raise Exception("Incorrect password for user root!")
-        else:
-            steelsquid_utils.execute_system_command(['steelsquid', 'rover-off']) 
-        return steelsquid_utils.get_flag("rover")
-
-    @staticmethod
-    def rover_light(session_id, parameters):
-        '''
-        
-        '''
-        return steelsquid_kiss_global.Rover.light()
-
-
-    @staticmethod
-    def rover_alarm(session_id, parameters):
-        '''
-        
-        '''
-        return steelsquid_kiss_global.Rover.alarm()
-
-
-    @staticmethod
-    def rover_tilt(session_id, parameters):
-        '''
-        
-        '''
-        import steelsquid_io
-        if parameters[0]=="True":
-            steelsquid_kiss_global.Rover.tilt(True)
-        else:
-            steelsquid_kiss_global.Rover.tilt(False)
-            
-
-    @staticmethod
-    def rover_stop(session_id, parameters):
-        '''
-        
-        '''
-        steelsquid_kiss_global.Rover.drive(0, 0)
-
-
-    @staticmethod
-    def rover_left(session_id, parameters):
-        '''
-        
-        '''
-        steelsquid_kiss_global.Rover.drive(-40, 40)
-
-
-    @staticmethod
-    def rover_right(session_id, parameters):
-        '''
-        
-        '''
-        steelsquid_kiss_global.Rover.drive(40, -40)
-
-
-    @staticmethod
-    def rover_forward(session_id, parameters):
-        '''
-        
-        '''
-        steelsquid_kiss_global.Rover.drive(40, 40)
-
-
-    @staticmethod
-    def rover_backward(session_id, parameters):
-        '''
-        
-        '''
-        steelsquid_kiss_global.Rover.drive(-40, -40)
+        pass
 
 
 class SOCKET(object):
     '''
-    Methods in this class will be executed by the socket connection if activate() return True and the socket connection is enabled
+    Methods in this class will be executed by the socket connection if module is activated and the socket connection is enabled
     A simple class that i use to sen async socket command to and from client/server.
     A request can be made from server to client or from client to server
     See steelsquid_connection.py and steelsquid_socket_connection.py
@@ -248,117 +164,12 @@ class SOCKET(object):
         Will also execute on connection lost or no connection
         @param error_message: I a error (Can be None)
         '''
-        steelsquid_pi_board.sabertooth_set_speed(0, 0) 
-    
-    
-    @staticmethod
-    def rover_info_request(remote_address, parameters):
-        '''
-        '''
-        return steelsquid_kiss_global.Rover.info()
-        
+        pass 
 
-    @staticmethod
-    def rover_info_response(remote_address, parameters):
-        '''
-        '''
-        pass
-        
-
-    @staticmethod
-    def rover_info_error(remote_address, parameters):
-        '''
-        '''
-        pass
-
-
-    @staticmethod
-    def rover_light_request(remote_address, parameters):
-        '''
-        '''
-        return steelsquid_kiss_global.Rover.light()
-        
-
-    @staticmethod
-    def rover_light_response(remote_address, parameters):
-        '''
-        '''
-        pass
-        
-
-    @staticmethod
-    def rover_light_error(remote_address, parameters):
-        '''
-        '''
-        pass
-
-
-    @staticmethod
-    def rover_alarm_request(remote_address, parameters):
-        '''
-        '''
-        return steelsquid_kiss_global.Rover.alarm()
-        
-
-    @staticmethod
-    def rover_alarm_response(remote_address, parameters):
-        '''
-        '''
-        pass
-        
-
-    @staticmethod
-    def rover_alarm_error(remote_address, parameters):
-        '''
-        '''
-        pass
-
-
-    @staticmethod
-    def rover_tilt_request(remote_address, parameters):
-        '''
-        '''
-        steelsquid_kiss_global.Rover.tilt(parameters[0])
-        
-
-    @staticmethod
-    def rover_tilt_response(remote_address, parameters):
-        '''
-        '''
-        pass
-        
-
-    @staticmethod
-    def rover_tilt_error(remote_address, parameters):
-        '''
-        '''
-        pass
-
-
-    @staticmethod
-    def rover_drive_request(remote_address, parameters):
-        '''
-        '''
-        steelsquid_kiss_global.Rover.drive(parameters[0], parameters[1])
-        
-
-    @staticmethod
-    def rover_drive_response(remote_address, parameters):
-        '''
-        '''
-        pass
-        
-
-    @staticmethod
-    def rover_drive_error( remote_address, parameters):
-        '''
-        '''
-        pass
-    
         
 class PIIO(object):
     '''
-    Methods in this class will be executed by the system if activate() return True and this is a PIIO board
+    Methods in this class will be executed by the system if module is activated and this is a PIIO board
     '''
 
     @staticmethod
@@ -408,63 +219,24 @@ class GLOBAL(object):
     Maybe the same methods is used from the WEB, SOCKET or other part, then put that method her.
     It is not necessary to put it her, you can also put it direcly in the module (but i think it is kind of nice to have it inside this class)
     '''
+    # Servo start position
+    servo_position_start = 200
+    # Max Servo position
+    servo_position_max = 230
+    # Min Servo position
+    servo_position_min = 80
+    # Motor max forward
+    motor_forward_max = 200
+    # Motor max backward
+    motor_backward_max = -200
 
     @staticmethod
-    def info():
+    def dummy():
         '''
-        Get info on rover functionality
+        Dummy
         '''
-        enabled = steelsquid_utils.get_flag("rover")
-        if enabled:
-            import steelsquid_piio
-            battery_voltage, _, _, _, _, _, _, _, _ = steelsquid_piio.trex_status()
-            battery_voltage = float(battery_voltage)/100
-            return [True, battery_voltage, steelsquid_piio.gpio_22_xv_toggle_current(2), steelsquid_piio.gpio_22_xv_toggle_current(1), steelsquid_piio.servo_position, steelsquid_piio.servo_position_min, steelsquid_piio.servo_position_max, steelsquid_piio.motor_backward, steelsquid_piio.motor_forward]
-        else:
-            return False
+        pass
 
-
-    @staticmethod
-    def light():
-        '''
-        Light on and off (toggle)
-        '''
-        status = steelsquid_piio.gpio_22_xv_toggle(2)
-        steelsquid_piio.gpio_22_xv(3, status)
-        return status
-
-
-    @staticmethod
-    def alarm():
-        '''
-        Alarm on and off (toggle)
-        '''
-        return steelsquid_piio.gpio_22_xv_toggle(1)
-
-
-    @staticmethod
-    def tilt(value):
-        '''
-        Tilt the camera
-        '''
-        import steelsquid_piio
-        if value == True:
-            steelsquid_piio.servo_move(1, 10)
-        elif value == False:
-            steelsquid_piio.servo_move(1, -10)
-        else:
-            value = int(value)
-            steelsquid_piio.servo(1, value)
-
-
-    @staticmethod
-    def drive(left, right):
-        '''
-        Tilt the camera
-        '''
-        left = int(left)
-        right = int(right)
-        steelsquid_piio.trex_motor(left, right)
 
     
     

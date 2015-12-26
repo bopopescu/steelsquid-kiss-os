@@ -19,7 +19,6 @@ import steelsquid_pi
 import steelsquid_piio
 import steelsquid_kiss_global
 import steelsquid_boot
-import steelsquid_kiss_expand
 import time
 from datetime import datetime
 from datetime import timedelta
@@ -30,9 +29,9 @@ import thread
 import sys
 
 
-# Is this enabled (on_enable has executed)
-# This is set by the system automaticaly
-is_enabled = False
+# Is this module started
+# This is set by the system automatically.
+is_started = False
 
 # Last voltage read
 last_voltage = 0
@@ -41,21 +40,32 @@ last_voltage = 0
 last_print_voltage = 0
 
 
-def activate():
+def enable():
     '''
-    Return True/False if this functionality is to be enabled (execute on_enable)
-    return: True/False
-    '''    
-    return steelsquid_utils.get_flag("piio")
+    When this module is enabled what needs to be done (execute: steelsquid module XXX on)
+    Maybe you need create some files or enable other stuff.
+    '''
+    steelsquid_utils.set_flag("auto")
+    steelsquid_utils.del_flag("nokia")
+    steelsquid_utils.del_flag("hdd")
+    steelsquid_utils.del_flag("ssd")
+
+
+def disable():
+    '''
+    When this module is disabled what needs to be done (execute: steelsquid module XXX off)
+    Maybe you need remove some files or disable other stuff.
+    '''
+    pass
 
 
 class SYSTEM(object):
     '''
-    Methods in this class will be executed by the system if activate() return True
+    Methods in this class will be executed by the system if module is activated
     '''
 
     @staticmethod
-    def on_enable():
+    def on_start():
         '''
         This will execute when system starts
         Do not execute long running stuff here, do it in on_loop...
@@ -93,7 +103,7 @@ class SYSTEM(object):
         
 
     @staticmethod
-    def on_disable():
+    def on_stop():
         '''
         This will execute when system stops
         Do not execute long running stuff here

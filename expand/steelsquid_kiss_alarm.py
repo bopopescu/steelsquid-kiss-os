@@ -28,26 +28,34 @@ import sys
 import importlib
 
 
-# Is this enabled (on_enable has executed)
-# This is set by the system automaticaly
-is_enabled = False
+# Is this module started
+# This is set by the system automatically.
+is_started = False
 
 
-def activate():
+def enable():
     '''
-    Return True/False if this functionality is to be enabled (execute on_enable)
-    return: True/False
-    '''    
-    return steelsquid_utils.get_flag("alarm")
+    When this module is enabled what needs to be done? (execute: steelsquid module XXX on)
+    Maybe you need create some files or enable other stuff.
+    '''
+    steelsquid_kiss_global.stream_pi()
+
+
+def disable():
+    '''
+    When this module is disabled what needs to be done? (execute: steelsquid module XXX off)
+    Maybe you need remove some files or disable other stuff.
+    '''
+    steelsquid_kiss_global.stream_off()
 
 
 class SYSTEM(object):
     '''
-    Methods in this class will be executed by the system if activate() return True
+    Methods in this class will be executed by the system if module is activated
     '''
 
     @staticmethod
-    def on_enable():
+    def on_start():
         '''
         This will execute when system starts
         Do not execute long running stuff here, do it in on_loop...
@@ -68,7 +76,7 @@ class SYSTEM(object):
         
 
     @staticmethod
-    def on_disable():
+    def on_stop():
         '''
         This will execute when system stops
         Do not execute long running stuff here
@@ -181,7 +189,7 @@ class SYSTEM(object):
 
 class WEB(object):
     '''
-    Methods in this class will be executed by the webserver if activate() return True and the webserver is enabled
+    Methods in this class will be executed by the webserver if module is activated and the webserver is enabled
     If is a GET it will return files and if it is a POST it executed commands.
     It is meant to be used as follows.
     1. Make a call from the browser (GET) and a html page is returned back.
@@ -189,25 +197,6 @@ class WEB(object):
     3. The data sent to and from the server can just be a simple list of strings.
     See steelsquid_http_server.py for more examples how it work
     '''
-
-    @staticmethod
-    def alarm(session_id, parameters):
-        '''
-        Enable or disable alarm
-        '''
-        if len(parameters) > 0:
-            if parameters[0] == "true":
-                proc=Popen(['steelsquid', 'alarm-on'], stdout = PIPE, stderr = STDOUT)  
-                proc.wait()
-                steelsquid_utils.set_flag("alarm")
-            else:
-                proc=Popen(['steelsquid', 'alarm-off'], stdout = PIPE, stderr = STDOUT)  
-                proc.wait()
-                steelsquid_utils.del_flag("alarm")
-        if steelsquid_utils.get_flag("alarm"):
-            return "true"
-        else:
-            return "false"
 
 
     @staticmethod
@@ -407,7 +396,7 @@ class WEB(object):
 
 class SOCKET(object):
     '''
-    Methods in this class will be executed by the socket connection if activate() return True and the socket connection is enabled
+    Methods in this class will be executed by the socket connection if module is activated and the socket connection is enabled
     A simple class that i use to sen async socket command to and from client/server.
     A request can be made from server to client or from client to server
     See steelsquid_connection.py and steelsquid_socket_connection.py

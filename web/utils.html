@@ -4,7 +4,7 @@
         <title>Kiss OS Utils</title>
         <meta http-equiv="Content-Language" content="en" />
         <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
-        <meta name="Steelsquid Kiss OS" content="Controll a rover from the web." />
+        <meta name="Steelsquid Kiss OS" content="Some extra stuff." />
         <meta name="keywords" content="steelsquid, steelsquid-kiss-os, raspberry, pi, debian, linux, distribution, administrator, configure" />
         <meta name="author" content="Andreas Nilsson (Steelsquid)" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
@@ -34,17 +34,6 @@
         <script type="text/javascript">
             //<![CDATA[ 
             
-            
-            submitNoPW('device_info');
- 
-            /**
-             * Get info on device to print on top of page
-             */
-            function on_device_info(paramaters){
-                $("#device_info_name").html(paramaters[0]);
-            }
-
-            
             var stream_port="8080";
             
             $(document).ready(function(){
@@ -65,7 +54,7 @@
              * When the page is in front
              */
             function onVisible(){
-                if (isLayerShowing('stream') || isLayerShowing('rover')){
+                if (isLayerShowing('stream')){
                     $("#stream_img").attr("src", "http://"+window.location.hostname+":"+stream_port+"/?action=stream");         
                 }
                 else if (isLayerShowing('alarm')){
@@ -77,7 +66,7 @@
              * When the page is in background
              */
             function onHidden(){
-                if (isLayerShowing('stream') || isLayerShowing('rover')){
+                if (isLayerShowing('stream')){
                     $("#stream_img").attr("src", "");         
                 }
                 else if (isLayerShowing('alarm')){
@@ -116,7 +105,7 @@
              */
             function onEvery05s(){
                 if(isVisible()){
-                    if (isLayerShowing('stream') || isLayerShowing('rover')){
+                    if (isLayerShowing('stream')){
                         $("#stream_img").attr("src", "http://"+window.location.hostname+":"+stream_port+"/?action=stream");         
                     }
                     else if (isLayerShowing('alarm')){
@@ -136,9 +125,6 @@
              */
             function onEvery30s(){
                 if(isVisible()){
-                    if (isLayerShowing('rover')){
-                        submitNoPW('rover_info');
-                    }
                 }
             }
 
@@ -149,11 +135,6 @@
                 if(layer == "stream"){
                     submitNoPW('stream_port');
                     submitNoPW('stream');
-                }
-                else if(layer == "rover"){
-                    submitNoPW('stream_port');
-                    submitNoPW('rover_info');
-                    $("#rover_img").attr("src", "http://"+window.location.hostname+":"+stream_port+"/?action=stream");       
                 }
                 else if(layer == "alarm"){
                     submitNoPW('stream_port');
@@ -228,6 +209,18 @@
             }
 
 
+            /**
+             * On alarm error
+             */
+            function on_alarm_status_err(err){
+            }
+            
+            /**
+             * On alarm error
+             */
+            function on_alarm_status_err(err){
+            }
+            
             /**
              * On alarm
              */
@@ -657,161 +650,12 @@
                 showAlertMedium("A test mail is sent, check you mailbox", false);
             }
 
-            
-            /**
-             * On rover
-             */
-            function on_rover_info(paramaters){
-                if(paramaters[0] == "True"){
-                    show('rover_enabled');
-                    hide('rover_disabled');
-                    $("#rover_voltage").html(paramaters[1]);
-                    if(paramaters[2] == "True"){
-                        $("#rover_light").html("Enabled");
-                    }
-                    else{
-                        $("#rover_light").html("Disabled");
-                    }
-                    if(paramaters[3] == "True"){
-                        $("#rover_alarm").html("Enabled");
-                    }
-                    else{
-                        $("#rover_alarm").html("Disabled");
-                    }
-                }
-                else{
-                    hide('rover_enabled');
-                    show('rover_disabled');
-                }
-            }
-
-            /**
-             * On rover
-             */
-            function on_rover_light(paramaters){
-                if(paramaters[0] == "True"){
-                    $("#rover_light").html("Enabled");
-                }
-                else{
-                    $("#rover_light").html("Disabled");
-                }
-            }
-
-            /**
-             * On rover
-             */
-            function on_rover_alarm(paramaters){
-                if(paramaters[0] == "True"){
-                    $("#rover_alarm").html("Enabled");
-                }
-                else{
-                    $("#rover_alarm").html("Disabled");
-                }
-            }
-            
-            /**
-             * On rover
-             */
-            function on_rover_enable(paramaters){
-                on_rover(paramaters);
-            }
-            
-            /**
-             * On rover
-             */
-            function on_rover_disable(paramaters){
-                on_rover(paramaters);
-            }
-
             //]]>
         </script>
         
     </head>
     <body>
-        <table class="bar">
-            <thead>
-                <tr>
-                    <td>
-                        <img alt="logo" src="img/bar_steelsquid.png"></img>
-                    </td>
-                    <td>
-                        Kiss OS Utils
-                    </td>
-                    <td>
-                        <div class="device_info" id="device_info_name"></div>
-                    </td>
-                    <td>
-                        <img alt="logo" src="img/bar_menu.png"></img>
-                    </td>
-                </tr>
-            </thead>
-            <tbody>
-                <tr onclick="javascript:window.location = 'http://www.steelsquid.org/steelsquid-kiss-os';">
-                    <td>
-                        <img alt="logo" src="img/bar_help.png"></img>
-                    </td>
-                    <td colspan="2" >
-                        Help
-                    </td>
-                </tr>
-                <tr onclick="javascript:window.location = '/';">
-                    <td>
-                        <img alt="logo" src="img/bar_admin.png"></img>
-                    </td>
-                    <td colspan="2" >
-                        Administrator
-                    </td>
-                </tr>
-                <tr onclick="javascript:window.location = '/file';">
-                    <td>
-                        <img alt="logo" src="img/bar_file.png"></img>
-                    </td>
-                    <td colspan="2" >
-                        File Manager
-                    </td>
-                </tr>
-                <tr onclick="javascript:window.location = '/download';">
-                    <td>
-                        <img alt="logo" src="img/bar_download.png"></img>
-                    </td>
-                    <td colspan="2" >
-                        Download Manager
-                    </td>
-                </tr>
-                <tr onclick="javascript:window.location = '/play';">
-                    <td>
-                        <img alt="logo" src="img/bar_play.png"></img>
-                    </td>
-                    <td colspan="2" >
-                        Media Player
-                    </td>
-                </tr>
-                <tr onclick="javascript:window.location = '/expand';">
-                    <td>
-                        <img alt="logo" src="img/bar_expand.png"></img>
-                    </td>
-                    <td colspan="2" >
-                        Expand
-                    </td>
-                </tr>
-                <tr onclick="javascript:submitSyncConfirm('Are you sure you want to reboot?', 'reboot');">
-                    <td>
-                        <img alt="logo" src="img/bar_reboot.png"></img>
-                    </td>
-                    <td colspan="2" >
-                        Reboot
-                    </td>
-                </tr>
-                <tr onclick="javascript:submitSyncConfirm('Are you sure you want to shutdown?', 'shutdown');">
-                    <td>
-                        <img alt="logo" src="img/bar_shutdown.png"></img>
-                    </td>
-                    <td colspan="2" >
-                        Shutdown
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+        <div id="included_top_bar">Kiss OS Utils</div>
         <div class="flow">
             <div class="layer" id="main">
                 <table class="menu">
@@ -840,7 +684,7 @@
                                 Alarm/Surveillance Server
                             </td>
                         </tr>
-                        <tr onclick="javascript:showLayer('rover');">
+                        <tr onclick="javascript:location.href='/rover'">
                             <td>
                                 <img alt="logo" src="img/rover.png"></img>
                             </td>
@@ -1367,88 +1211,6 @@
                         </td>
                         <td>
                             Back to Alarm/Surveillance
-                        </td>
-                    </tr>
-                </table>
-            </div>
-            <!--####################################################################################################-->
-            <div class="layer" id="rover">
-                <table class="sheader">
-                    <tr onclick="javascript:onBack();">
-                        <th>
-                            <img alt="logo" src="img/rover.png"></img>
-                        </th>
-                        <th>Rover Controller</th>
-                    </tr>
-                </table>
-                <div id="rover_disabled" class="hide">
-                    The Rover Controller is not enabled on this system.<br/>
-                    Enable Rover Controller may take a minute to perform and you need to reload this page afterwards (you may get connection error).<br/>
-                    <br/>
-                    <table>
-                        <tr>
-                            <td><button onclick="javascript:submitSyncFromPrompt('rover_enable', 'Please enter password for the user root?', '');">Enable Rover Controller</button></td>
-                        </tr>
-                    </table>
-                </div>
-                <div id="rover_enabled" class="hide">
-                    The Rover Controller is enabled on this system.
-                    <br/><br/>
-                    <table class="keyvalue">
-                        <tr>
-                            <td>Battery voltage:</td><td id="rover_voltage">---</td>
-                        <tr>
-                        </tr>
-                            <td>Light:</td><td id="rover_light">---</td>
-                        <tr>
-                        </tr>
-                            <td>Alarm:</td><td id="rover_alarm">---</td>
-                        </tr>
-                    </table>
-                    <table>
-                        <tr>
-                            <td style="width:50%"><button id="rov_normal" onclick="javascript:$('#rover_img').removeClass('rotate-180');$('#rov_normal').css({'text-decoration':'underline'});;$('#rov_flip').css({'text-decoration':'none'});">Cam norm</button></td>
-                            <td style="width:50%"><button id="rov_flip" style="text-decoration: underline;" onclick="javascript:$('#rover_img').removeClass('rotate-180').addClass('rotate-180');$('#rov_normal').css({'text-decoration':'none'});;$('#rov_flip').css({'text-decoration':'underline'});">Came rotate</button></td>
-                        </tr>
-                    </table>
-                    <br/>
-                    Below you should see the video from the USB camera.
-                    <br/>
-                    <img alt="The stream" id="rover_img" style="max-width: 100%; min-width: 100%" src="" class="rotate-180"/>
-                    <br/><br/>
-                    <table style="width:100%">
-                        <tr>
-                            <td style="width:33%"><button onclick="javascript:submitAsync('rover_tilt', 'True');">Tilt up</button></td>
-                            <td style="width:33%"><button style="font-weight:bold" onclick="javascript:submitAsync('rover_forward');">Forward</button></td>
-                            <td style="width:33%"><button onclick="javascript:submitSync('rover_light');">Toggle light</button></td>
-                        </tr>
-                        <tr>
-                            <td style="width:33%"><button style="font-weight:bold" onclick="javascript:submitAsync('rover_left');">Left</button></td>
-                            <td style="width:33%"><button style="font-weight:bold" onclick="javascript:submitAsync('rover_stop');">Stop</button></td>
-                            <td style="width:33%"><button style="font-weight:bold" onclick="javascript:submitAsync('rover_right');">Right</button></td>
-                        </tr>
-                        <tr>
-                            <td style="width:33%"><button onclick="javascript:submitAsync('rover_tilt', 'false');">Tilt down</button></td>
-                            <td style="width:33%"><button style="font-weight:bold" onclick="javascript:submitAsync('rover_backward');">Backward</button></td>
-                            <td style="width:33%"><button onclick="javascript:submitSync('rover_alarm');">Toggle alarm</button></td>
-                        </tr>
-                    </table>
-                    <br/><br/>
-                    Disable Rover Controller may take a minute to perform and you need to reload this page afterwards (you may get connection error).<br/>
-                    <table>
-                        <tr>
-                            <td><button onclick="javascript:submitSyncFromPrompt('rover_disable', 'Please enter password for the user root?', '');">Disable Rover Controller</button></td>
-                        </tr>
-                    </table>
-                </div>
-                <br />
-                <table class="footer">
-                    <tr onclick="javascript:onBack();">
-                        <td>
-                            <img alt="logo" src="img/back.png"></img>
-                        </td>
-                        <td>
-                            Back to main menu
                         </td>
                     </tr>
                 </table>

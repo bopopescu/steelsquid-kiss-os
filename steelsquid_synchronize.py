@@ -389,19 +389,23 @@ def print_menu():
     print "Listen for changes and commit to following server(s)"
     print ', '.join(base_remote_server)
     print "------------------------------------------------------------------------------"
-    print " H : help   : Show this help"
-    print " Q : quit   : This program will terminate"
-    print " C : custom : Reload the custom modules (/opt/steelsquid/python/expand/...)"
-    print " E : expand : Reload steelsquid_kiss_expand.py"
-    print " S : server : Reload ..uid_kiss_http_server.py ..uid_kiss_socket_connection.py"
-    print " A : all    : Start/Restart steelsquid service (implememt all changes)"
-    print " K : kill   : Stop steelsquid service"
-    print " T : test   : Execute the /root/test.py script"
-    print " N : new    : Create new module in expand/ (copy steelsquid_kiss_expand.py)"
-    print " D : delete : Delete a module in expand/ (You can not undo this!!!)"
-    print " W : web    : Create new HTML-file in web/ (copy template.html)"
-    print " V : delweb : Delete a HTML-file in web/ (You can not undo this!!!)"
-    print " R : reboot : Reboot the remote machine"
+    print " H : help    : Show this help"
+    print " Q : quit    : This program will terminate"
+    print " T : test    : Execute the /root/test.py script"
+    print " M : module  : Reload the expand modules (/opt/steelsquid/python/expand/...)"
+    print " S : service : Start/Restart steelsquid service (implememt all changes)"
+    print " K : kill    : Stop steelsquid service"
+    print " R : reboot  : Reboot the remote machine"
+
+    print " L : list    : List modules in expand/ (see if enabled or not)"
+    print " N : new     : Create new module in expand/ (copy steelsquid_kiss_expand.py)"
+    print " A : annul   : Delete a module in expand/ (You can not undo this!!!)"
+
+    print " E : enable  : Enable a module in expand/ (will start on boot)"
+    print " D : disable : Disable a module in expand/ (will not start on boot)"
+
+    print " W : web     : Create new HTML-file in web/ (copy template.html)"
+    print " V : delweb  : Delete a HTML-file in web/ (You can not undo this!!!)"
     print "------------------------------------------------------------------------------"
     print "You can also send any other simple terminal line command (ls, pwd, mkdir...)"
     print "But you can not use any commands that read input (nano, read, passwd)"
@@ -432,16 +436,10 @@ if __name__ == '__main__':
             print_menu()
         elif answer == "Q" or answer == "q" or answer == "quit":
             cont = False
-        elif answer == "C" or answer == "c" or answer == "custom":
-            log("Request reload of custom modules")
-            send_command("event reload custom")
-        elif answer == "E" or answer == "e" or answer == "expand":
-            log("Request reload of steelsquid_kiss_expand.py")
+        elif answer == "M" or answer == "m" or answer == "module":
+            log("Request reload of custom expand modules")
             send_command("event reload expand")
-        elif answer == "S" or answer == "s" or answer == "server":
-            log("Request reload of ...uid_kiss_http_expand.py, ...uid_kiss_socket_expand.py")
-            send_command("event reload server")
-        elif answer == "A" or answer == "a" or answer == "all":
+        elif answer == "S" or answer == "s" or answer == "service":
             log("Request service restart")
             send_command("steelsquid restart")
         elif answer == "K" or answer == "k" or answer == "kill":
@@ -456,11 +454,11 @@ if __name__ == '__main__':
                 name = name+".py"
             if not os.path.isfile("expand/"+name):
                 log("Creating new module "+name +" in expand/\nRestart the steelsquid service for this to take effect (type A and enter)")
-                shutil.copy("steelsquid_kiss_expand.py", "expand/"+name)
+                shutil.copy("expand/steelsquid_kiss_expand.py", "expand/"+name)
                 expand_files.append(["expand/"+name, 0])
             else:
                 log("A module with that name already exists!")
-        elif answer == "D" or answer == "d" or answer == "delete":
+        elif answer == "A" or answer == "a" or answer == "annul":
             name = raw_input('Enter name of module to delete: ')
             if not name.endswith(".py"):
                 name = name+".py"
@@ -509,6 +507,14 @@ if __name__ == '__main__':
         elif answer == "R" or answer == "r" or answer == "reboot":
             log("Request roboot")
             send_command("reboot &")
+        elif answer == "L" or answer == "l" or answer == "list":
+            send_command_read_answer("steelsquid module-list")
+        elif answer == "E" or answer == "e" or answer == "enable":
+            name = raw_input('Enter name of module to enable: ')
+            send_command_read_answer("steelsquid module "+name+" on")
+        elif answer == "D" or answer == "d" or answer == "disable":
+            name = raw_input('Enter name of module to disable: ')
+            send_command_read_answer("steelsquid module "+name+" off")
         elif len(answer.strip())>0:
             send_command_read_answer(answer)
     disconnect()

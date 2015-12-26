@@ -37,17 +37,6 @@ GAIN_1_024_V = 1024
 GAIN_0_512_V = 512
 GAIN_0_256_V = 256
 
-# Max Servo position
-servo_position_max = 400
-# Min Servo position
-servo_position_min = 140
-# Servo start position
-servo_position = 260
-# Motor max forward
-motor_forward = 255
-# Motor max backward
-motor_backward = -255
-
 counter=0
 version = "1.0"
 

@@ -70,7 +70,7 @@ lcd_last_text = ""
 lock = threading.Lock()
 lock_mcp = threading.Lock()
 lock_event = threading.Lock()
-distance_created = False
+distances_created = []
 pwm = None
 ads_48 = None
 ads_49 = None
@@ -101,7 +101,6 @@ mcp_27 = None
 sabertooth = None
 dac = None
 vref_voltage = 3.3
-lock_hcsr04 = threading.Lock()
 nokia_lcd = None
 font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 9)
 image = Image.new('1', (LCD.LCDWIDTH, LCD.LCDHEIGHT))
@@ -1024,37 +1023,64 @@ def hcsr04_distance(trig_gpio, echo_gpio, force_setup = False):
     @param force_setup: Force setup of pins
     @return: The distance in cm (-1 = unable to mesure)
     '''
-    with lock_hcsr04:
-        trig_gpio = int(trig_gpio)
-        echo_gpio = int(echo_gpio)
-        global distance_created
-        if not distance_created or force_setup:
-            gpio_setup_out(trig_gpio)
-            gpio_setup_in(echo_gpio, resistor=PULL_UP)
-            gpio_set(trig_gpio, False)
-            distance_created = True
+    trig_gpio = int(trig_gpio)
+    echo_gpio = int(echo_gpio)
+    global distances_created
+    if not trig_gpio in distances_created or force_setup:
+        gpio_setup_out(trig_gpio)
+        gpio_setup_in(echo_gpio, resistor=PULL_UP)
         gpio_set(trig_gpio, False)
-        time.sleep(0.001)
-        gpio_set(trig_gpio, True)
-        time.sleep(0.001)
-        gpio_set(trig_gpio, False)
+        distances_created.append(trig_gpio)
+    gpio_set(trig_gpio, False)
+    time.sleep(0.001)
+    gpio_set(trig_gpio, True)
+    time.sleep(0.001)
+    gpio_set(trig_gpio, False)
+    countdown = TIMEOUT
+    while (gpio_get(echo_gpio) == False and countdown > 0):
+        countdown = countdown - 1
+    if countdown > 0:
+        echostart = time.time()
         countdown = TIMEOUT
-        while (gpio_get(echo_gpio) == False and countdown > 0):
+        while (gpio_get(echo_gpio) == True and countdown > 0):
             countdown = countdown - 1
         if countdown > 0:
-            echostart = time.time()
-            countdown = TIMEOUT
-            while (gpio_get(echo_gpio) == True and countdown > 0):
-                countdown = countdown - 1
-            if countdown > 0:
-                echoend = time.time()
-                echoduration = echoend - echostart
-                distance = echoduration * 17000
-                return int(round(distance, 0))
-            else:
-                return -1
+            echoend = time.time()
+            echoduration = echoend - echostart
+            distance = echoduration * 17000
+            return int(round(distance, 0))
         else:
             return -1
+    else:
+        return -1
+
+
+def hcsr04_event(trig_gpio, echo_gpio, callback_method, min_change=10, sample_sleep=0.2):
+    '''
+    Listen for distance change with HC-SR04 and execute method on change.
+    def callback_method(cm):
+       ...do stuff
+    The distance in cm (-1 = unable to mesure)
+    callback_method: Execute this method on change
+    min_change: Only execute method if value change this mutch from last time
+    sample_sleep: Sleep ths long between sample (only one thread handle all events so the last set sleep time is in use)
+    '''
+    global event_notificatin_list
+    global event_sample_sleep
+    event_sample_sleep = sample_sleep
+    post = [None] * 5
+    post[0] = 7  #hcsr04_event
+    post[1] = callback_method
+    post[2] = min_change
+    post[3] = None
+    post[4] = trig_gpio
+    post[5] = echo_gpio
+    with(lock_event):
+        if len(event_notificatin_list) == 0: 
+            event_notificatin_list.append(post)
+            thread.start_new_thread(__event_notificatin_thread, ()) 
+        else:
+            event_notificatin_list.append(post)
 
 
 def pca9685_move(servo, value):
@@ -1387,11 +1413,20 @@ def __event_notificatin_thread():
                         post[3] = new_v
                         if new_v==True:
                             callback_method(gpio, new_v)
+                elif type_of_event==6: #hcsr04_event
+                    min_change = post[2]
+                    old_v = post[3]
+                    trig_gpio = post[4]
+                    echo_gpio = post[5]
+                    new_v = hcsr04_distance(trig_gpio, echo_gpio)
+                    if old_v == None or old_v!=new_v:
+                        post[3] = new_v
+                        callback_method(new_v)
             time.sleep(event_sample_sleep)
         except:
             steelsquid_utils.shout()
             time.sleep(10)
-
+    
 
 def read_word(address, adr):
     high = steelsquid_i2c.read_8_bit(address, adr)

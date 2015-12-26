@@ -62,17 +62,17 @@ python_downloads[9]="$base/steelsquid_socket_connection.py"
 python_downloads[10]="$base/steelsquid_server.py"
 python_downloads[11]="$base/steelsquid_http_server.py"
 python_downloads[12]="$base/steelsquid_kiss_global.py"
-python_downloads[13]="$base/steelsquid_kiss_expand.py"
-python_downloads[14]="$base/steelsquid_kiss_http_server.py"
-python_downloads[15]="$base/steelsquid_kiss_socket_connection.py"
-python_downloads[16]="$base/steelsquid_lcd_hdd44780.py"
-python_downloads[17]="$base/steelsquid_omx.py"
-python_downloads[18]="$base/steelsquid_sabertooth.py"
-python_downloads[19]="$base/steelsquid_trex.py"
-python_downloads[20]="$base/steelsquid_oled_ssd1306.py"
-python_downloads[21]="$base/steelsquid_bluetooth_connection.py"
-python_downloads[22]="$base/steelsquid_i2c.py"
-python_downloads[23]="$base/MCP23017.py"
+python_downloads[13]="$base/steelsquid_kiss_http_server.py"
+python_downloads[14]="$base/steelsquid_kiss_socket_connection.py"
+python_downloads[15]="$base/steelsquid_lcd_hdd44780.py"
+python_downloads[16]="$base/steelsquid_omx.py"
+python_downloads[17]="$base/steelsquid_sabertooth.py"
+python_downloads[18]="$base/steelsquid_trex.py"
+python_downloads[19]="$base/steelsquid_oled_ssd1306.py"
+python_downloads[20]="$base/steelsquid_bluetooth_connection.py"
+python_downloads[21]="$base/steelsquid_i2c.py"
+python_downloads[22]="$base/MCP23017.py"
+python_downloads[23]="$base/expand/steelsquid_kiss_expand.py"
 python_downloads[24]="$base/expand/steelsquid_kiss_alarm.py"
 python_downloads[25]="$base/expand/steelsquid_kiss_piio.py"
 python_downloads[26]="$base/expand/steelsquid_kiss_rover.py"
@@ -106,14 +106,16 @@ python_links[25]="/usr/bin/dummy"
 python_links[26]="/usr/bin/dummy"
 
 # Download to web root folder
-web_root_downloads[1]="$base/web/index.html"
-web_root_downloads[2]="$base/web/favicon.ico"
-web_root_downloads[3]="$base/web/play.html"
-web_root_downloads[4]="$base/web/download.html"
-web_root_downloads[5]="$base/web/file.html"
-web_root_downloads[6]="$base/web/utils.html"
-web_root_downloads[7]="$base/web/expand.html"
-web_root_downloads[8]="$base/web/template.html"
+web_root_downloads[1]="$base/web/top_bar.html"
+web_root_downloads[2]="$base/web/index.html"
+web_root_downloads[3]="$base/web/favicon.ico"
+web_root_downloads[4]="$base/web/play.html"
+web_root_downloads[5]="$base/web/download.html"
+web_root_downloads[6]="$base/web/file.html"
+web_root_downloads[7]="$base/web/utils.html"
+web_root_downloads[8]="$base/web/rover.html"
+web_root_downloads[9]="$base/web/expand.html"
+web_root_downloads[10]="$base/web/template.html"
 
 # Download to web img folder
 web_img_downloads[1]="$base/img/back.png"
@@ -835,6 +837,9 @@ function help_files()
     echb "/usr/lib/python3/dist-packages"
     echo "External python 3 libraries (quick2wire)"
     echo 
+    echb "/opt/steelsquid/web/top_bar.html"
+    echo "The black top bar that is on most pages"
+    echo 
     echb "/opt/steelsquid/web/download.html"
     echo "HTML-file for the download manager"
     echo 
@@ -874,7 +879,7 @@ function help_files()
     echb "/opt/steelsquid/python/steelsquid_i2c.py"
     echo "Use this to communicate with i2c devices."
     echo 
-    echb "/opt/steelsquid/python/steelsquid_kiss_expand.py"
+    echb "/opt/steelsquid/python/expand/steelsquid_kiss_expand.py"
     echo "Use this file to implement you own stuff..."
     echo 
     echb "/opt/steelsquid/python/steelsquid_kiss_global.py"
@@ -961,10 +966,23 @@ function help_develop()
     echb "set-flag expanded"
     echo "It will tell the upgrade script not to overwrite:"
     echo " - steelsquid_kiss_expand.py"
-    echo " - steelsquid_kiss_http_expand.py"
-    echo " - steelsquid_kiss_socket_expand.py"
     echo " - expand.html"
     echo "This is useful if you have expanded functionality. otherwise, the changes will be overwritten when you execute upgrade."
+    echo 
+    echb "steelsquid module-list"
+    echo "List all modules in expand direcory"
+    echo 
+    echb "steelsquid module <name>"
+    echo "Is a module activated."
+    echo "A module is the python files under expand directory"
+    echo "name = The name of the file in expand directory"
+    echo 
+    echb "steelsquid module <name> <on/off>"
+    echo "Enable or disable a module."
+    echo "When a module is enabled it will start on boot."
+    echo "A module is the python files under expand directory"
+    echo "name = The name of the file in expand directory"
+    echo "on/off = On enable the module and off will disable"
     echo 
     echb "steelsquid download-img"
     echo "Download a steelsquid-kiss-os.img file."
@@ -1217,17 +1235,15 @@ function help_utils()
     echo 
     echb "steelsquid alarm-off"
     echo "Disable the Alarm/Surveillance functionality."
-    if [ $(is-raspberry-pi) == "true" ]; then
-        echo 
-        echb "steelsquid rover"
-        echo "Is rover functionality enabled."
-        echo 
-        echb "steelsquid rover-on"
-        echo "Enable rover functionality."
-        echo 
-        echb "steelsquid rover-off"
-        echo "Disable rover functionality."
-    fi
+    echo 
+    echb "steelsquid rover"
+    echo "Is rover functionality enabled."
+    echo 
+    echb "steelsquid rover-on"
+    echo "Enable rover functionality."
+    echo 
+    echb "steelsquid rover-off"
+    echo "Disable rover functionality."
 }
 if [ "$in_parameter_1" == "help-utils" ]; then
     help_utils
@@ -1939,6 +1955,60 @@ fi
 
 
 ##################################################################################
+# Enable or disable a module
+##################################################################################
+function module()
+{
+    if [[ $in_parameter_3 == "" ]]; then
+        if [[ $(get-flag "module_$in_parameter_2") == "true" ]]; then
+            log "Enabled"
+        else
+            log "Disabled"
+        fi
+    else
+        if [[ $in_parameter_3 == "on" ]]; then
+            log "Enable module $in_parameter_2"
+            event module_on $in_parameter_2
+        else
+            log "Disable module $in_parameter_2"
+            event module_off $in_parameter_2
+        fi
+    fi
+}
+if [ "$in_parameter_1" == "module" ]; then
+	module
+	exit 0
+fi
+
+
+##################################################################################
+# List modules
+##################################################################################
+function module_list()
+{
+    echo ""
+    echo "STATUS     MODULE NAME"
+    echo "-----------------------------------------------"
+    for f in /opt/steelsquid/python/expand/*.py
+    do
+        f=$(basename "$f")
+        f="${f%.*}"
+        if [[ $f != "__init__" ]]; then
+            if [[ $(get-flag "module_$f") == "true" ]]; then
+                echo "[Enabled]  $f"
+            else
+                echo "[Disabled] $f"
+            fi
+        fi
+    done
+}
+if [ "$in_parameter_1" == "module-list" ]; then
+	module_list
+	exit 0
+fi
+
+
+##################################################################################
 # Set stream port
 ##################################################################################
 function stream_port()
@@ -1994,14 +2064,11 @@ if [ "$in_parameter_1" == "stream-on" ]; then
 	exit 0
 fi
 
-
-
 ##################################################################################
 # Enable streaming of USB camera
 ##################################################################################
-function stream_on_pi()
+function stream_on_pi_no_restart()
 {
-	log "Enable streaming of Raspberry PI camera"
     dat=$(get-parameter "stream_frames")
     del-flag "stream"
     set-flag "stream-pi"
@@ -2026,6 +2093,16 @@ function stream_on_pi()
     systemctl --system daemon-reload
     systemctl enable mjpgstreamerpi
     systemctl start mjpgstreamerpi
+}
+
+
+##################################################################################
+# Enable streaming of USB camera
+##################################################################################
+function stream_on_pi()
+{
+	log "Enable streaming of Raspberry PI camera"
+    stream_on_pi_no_restart
 	systemctl restart steelsquid
 	log-ok    
 }
@@ -2034,18 +2111,27 @@ if [ "$in_parameter_1" == "stream-pi-on" ]; then
 	exit 0
 fi
 
+
 ##################################################################################
 # Disable streaming of USB camera
 ##################################################################################
-function stream_off()
+function stream_off_no_restart()
 {
-	log "Disable streaming of USB camera"
     del-flag "stream"
     del-flag "stream-pi"
     systemctl stop mjpgstreamer
     systemctl disable mjpgstreamer
     systemctl stop mjpgstreamerpi
     systemctl disable mjpgstreamerpi
+}
+
+##################################################################################
+# Disable streaming of USB camera
+##################################################################################
+function stream_off()
+{
+	log "Disable streaming of USB camera"
+    stream_off_no_restart
 	systemctl restart steelsquid
 	log-ok
 }
@@ -2060,7 +2146,7 @@ fi
 ##################################################################################
 function alarm_info()
 {
-    if [ $(get-flag "alarm") == "true" ]; then
+    if [ $(get-flag "module_steelsquid_kiss_alarm") == "true" ]; then
         echo
         echo "Alarm/Surveillance: Enabled"
         echo "For this to work you need a Raspberry PI camera connected."
@@ -2085,8 +2171,7 @@ fi
 function alarm_on()
 {
 	log "Enable Alarm/Surveillance"
-    set-flag "alarm"
-    stream_on_pi
+    steelsquid module steelsquid_kiss_alarm on
 	log-ok
 }
 if [ "$in_parameter_1" == "alarm-on" ]; then
@@ -2101,8 +2186,7 @@ fi
 function alarm_off()
 {
 	log "Disable Alarm/Surveillance"
-    del-flag "alarm"
-	systemctl restart steelsquid
+    steelsquid module steelsquid_kiss_alarm off
 	log-ok
 }
 if [ "$in_parameter_1" == "alarm-off" ]; then
@@ -2263,7 +2347,7 @@ fi
 ##################################################################################
 function rover_info()
 {
-    if [ $(get-flag "rover") == "true" ]; then
+    if [ $(get-flag "module_steelsquid_kiss_rover") == "true" ]; then
         echo
         echo "Rover functionality: Enabled"
         echo
@@ -2285,12 +2369,7 @@ fi
 function rover_on()
 {
 	log "Enable rover"
-    set-flag "rover"
-    set-flag "piio"
-    stream_on
-    socket_on
-    bluetooth_on
-    enable_lcd_ssd
+    steelsquid module steelsquid_kiss_rover on
     log-ok
 }
 if [ "$in_parameter_1" == "rover-on" ]; then
@@ -2305,8 +2384,7 @@ fi
 function rover_off()
 {
 	log "Disable rover"
-    del-flag "rover"
-	systemctl restart steelsquid
+    steelsquid module steelsquid_kiss_rover off
     log-ok
 }
 if [ "$in_parameter_1" == "rover-off" ]; then
@@ -2320,7 +2398,7 @@ fi
 ##################################################################################
 function piio_info()
 {
-    if [ $(get-flag "piio") == "true" ]; then
+    if [ $(get-flag "module_steelsquid_kiss_piio") == "true" ]; then
         echo
         echo "Steelsquid PIIO Board: Enabled"
         echo
@@ -2342,9 +2420,7 @@ fi
 function piio_on()
 {
 	log "Enable Steelsquid PIIO Board"
-    set-flag "piio"
-    enable_lcd_ssd
-	systemctl restart steelsquid
+    steelsquid module steelsquid_kiss_piio on
     log-ok
 }
 if [ "$in_parameter_1" == "piio-on" ]; then
@@ -2359,8 +2435,7 @@ fi
 function piio_off()
 {
 	log "Disable Steelsquid PIIO Board"
-    del-flag "piio"
-	systemctl restart steelsquid
+    steelsquid module steelsquid_kiss_piio off
     log-ok
 }
 if [ "$in_parameter_1" == "piio-off" ]; then
