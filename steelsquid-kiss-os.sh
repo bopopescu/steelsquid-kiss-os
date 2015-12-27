@@ -1261,11 +1261,11 @@ function help_build()
     echb "############################################################################"
     echo 
     echb "1.  Download and extract the installer image"
-    echo "wget https://github.com/debian-pi/raspbian-ua-netinst/releases/download/v1.0.8/raspbian-ua-netinst-v1.0.8.img.xz"
-    echo "unxz raspbian-ua-netinst-v1.0.8.img.xz"
+    echo "wget https://github.com/debian-pi/raspbian-ua-netinst/releases/download/v1.0.8.1/raspbian-ua-netinst-v1.0.8.1.img.xz"
+    echo "unxz raspbian-ua-netinst-v1.0.8.1.img.xz"
     echo 
     echb "2.  Copy to sdcard"
-    echo "dd bs=4M if=raspbian-ua-netinst-v1.0.8.img of=/dev/sdb"
+    echo "dd bs=4M if=raspbian-ua-netinst-v1.0.8.1.img of=/dev/sdb"
     echo 
     echb "3.  Insert sdcard into raspberry and boot"
     echo "Must have the networkcabel connected (internet access)"
