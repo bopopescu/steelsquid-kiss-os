@@ -887,6 +887,41 @@ def power_off_event_remove():
     steelsquid_pi.mcp23017_event_remove(21, 15)
 
 
+
+def hcsr04_distance(trig_gpio, echo_gpio, force_setup = False, use_piio_pin_nr=True):
+    '''
+    Measure_distance with a with HC-SR04.
+    @param trig_gpio: The trig gpio
+    @param echo_gpio: The echo gpio
+    @param force_setup: Force setup of pins
+    @return: The distance in cm (-1 = unable to mesure)
+    '''
+    trig_gpio = int(trig_gpio)
+    echo_gpio = int(echo_gpio)
+    if use_piio_pin_nr:
+        trig_gpio = __convert_to_gpio(trig_gpio)
+        echo_gpio = __convert_to_gpio(echo_gpio)
+    return steelsquid_pi.hcsr04_distance(trig_gpio, echo_gpio, force_setup)
+
+
+def hcsr04_event(trig_gpio, echo_gpio, callback_method, min_change=2, sample_sleep=0.2, use_piio_pin_nr=True):
+    '''
+    Listen for distance change with HC-SR04 and execute method on change.
+    def callback_method(cm):
+       ...do stuff
+    The distance in cm (-1 = unable to mesure)
+    callback_method: Execute this method on change
+    min_change: Only execute method if value change this mutch from last time
+    sample_sleep: Sleep ths long between sample (only one thread handle all events so the last set sleep time is in use)
+    '''
+    trig_gpio = int(trig_gpio)
+    echo_gpio = int(echo_gpio)
+    if use_piio_pin_nr:
+        trig_gpio = __convert_to_gpio(trig_gpio)
+        echo_gpio = __convert_to_gpio(echo_gpio)
+    steelsquid_pi.hcsr04_event(trig_gpio, echo_gpio, callback_method, min_change, sample_sleep)
+
+
 def gpio_event_callback_method(pin, status): 
     '''
     To test the gpio event handler

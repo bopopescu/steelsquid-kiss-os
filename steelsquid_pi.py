@@ -1031,10 +1031,9 @@ def hcsr04_distance(trig_gpio, echo_gpio, force_setup = False):
         gpio_setup_in(echo_gpio, resistor=PULL_UP)
         gpio_set(trig_gpio, False)
         distances_created.append(trig_gpio)
-    gpio_set(trig_gpio, False)
-    time.sleep(0.001)
+        time.sleep(0.00001)
     gpio_set(trig_gpio, True)
-    time.sleep(0.001)
+    time.sleep(0.00001)
     gpio_set(trig_gpio, False)
     countdown = TIMEOUT
     while (gpio_get(echo_gpio) == False and countdown > 0):
@@ -1047,7 +1046,7 @@ def hcsr04_distance(trig_gpio, echo_gpio, force_setup = False):
         if countdown > 0:
             echoend = time.time()
             echoduration = echoend - echostart
-            distance = echoduration * 17000
+            distance = echoduration * 17150
             return int(round(distance, 0))
         else:
             return -1
@@ -1055,7 +1054,7 @@ def hcsr04_distance(trig_gpio, echo_gpio, force_setup = False):
         return -1
 
 
-def hcsr04_event(trig_gpio, echo_gpio, callback_method, min_change=10, sample_sleep=0.2):
+def hcsr04_event(trig_gpio, echo_gpio, callback_method, min_change=2, sample_sleep=0.2):
     '''
     Listen for distance change with HC-SR04 and execute method on change.
     def callback_method(cm):
@@ -1068,8 +1067,8 @@ def hcsr04_event(trig_gpio, echo_gpio, callback_method, min_change=10, sample_sl
     global event_notificatin_list
     global event_sample_sleep
     event_sample_sleep = sample_sleep
-    post = [None] * 5
-    post[0] = 7  #hcsr04_event
+    post = [None] * 6
+    post[0] = 6  #hcsr04_event
     post[1] = callback_method
     post[2] = min_change
     post[3] = None

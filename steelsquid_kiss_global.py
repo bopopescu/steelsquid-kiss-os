@@ -31,7 +31,10 @@ import os
 from importlib import import_module
 
 # Number of eventdata handler threads
-NUMBER_OF_EVENT_DATA_HANDERS = 3
+NUMBER_OF_EVENT_HANDLERS = 3
+
+# If more than this events pending for execution dropp new events
+MAX_PENDING_EVENTS=128
 
 # Names of python module names in the expand directory
 expand_module_names=[]
@@ -48,6 +51,9 @@ socket_connection = None
 # Flag: web
 http_server = None
 
+# Lock object for add to event_data_callback_methods
+lock = threading.Lock()
+
 # Global data (key, Value)
 event_data={}
 
@@ -57,11 +63,11 @@ event_data_callback_methods=[]
 # List with events that is to be fire by thread...
 event_data_queue=Queue.Queue()
 
-# Lock object for add to event_data_callback_methods
-lock = threading.Lock()
+# If broadcast_event is executed, a method with the event name will execute in this class object
+broadcast_event_callback_classes=[]
 
-# If more than this events pending for execution dropp new events
-max_pending_events=128
+# List with events that is to be fire by thread...
+broadcast_event_queue=Queue.Queue()
 
 
 def get_expand_module(name):
@@ -105,6 +111,42 @@ def expand_module(name, status, restart=True):
         steelsquid_boot.on_module_off(None, [name, restart])
 
 
+def broadcast_event(event, parameters_to_event=None):
+    '''
+    Will broadcast a event, execute methods in the classes inside "broadcast_event_callback_classes"
+    OBS! Classes named EVENTS in every expand module will automatically be added to "broadcast_event_callback_classes"
+    event = The name of the method in the EVENT class to execute.
+    parameters_to_event = Paramaters to that event
+    '''    
+    if len(broadcast_event_callback_classes)>0 and broadcast_event_queue.qsize() < MAX_PENDING_EVENTS:
+        broadcast_event_queue.put((event, parameters_to_event))
+
+
+def add_broadcast_event_callback(aclass):
+    '''
+    Add broadcast event callback method
+    OBS! Classes named EVENTS in every expand module will automatically be added to "broadcast_event_callback_classes"
+    '''    
+    with lock:
+        if len(broadcast_event_callback_classes)==0:
+            broadcast_event_callback_classes.append(aclass)
+            for i in range(NUMBER_OF_EVENT_HANDLERS):
+                thread.start_new_thread(_broadcast_event_handler, ()) 
+        else:
+            broadcast_event_callback_classes.append(aclass)
+        
+
+def remove_broadcast_event_callback(aclass):
+    '''
+    Remove broadcast event callback method
+    '''    
+    with lock:
+        try:
+            broadcast_event_callback_classes.remove(aclass)
+        except ValueError:
+            pass        
+
+
 def get_event_data(key):
     '''
     Get event data.
@@ -120,11 +162,12 @@ def set_event_data(key, value):
     '''
     Set event data.
     When eventdata is set methods in event_data_callback_methods will fire
+    OBS!The method on_event_data(key, value) in the SYSTEM class in all expand modules is automatically added to event_data_callback_methods
     key: Key for the data
     value: Value for the data
     '''    
     event_data[key]=value
-    if len(event_data_callback_methods)>0 and event_data_queue.qsize() < max_pending_events:
+    if len(event_data_callback_methods)>0 and event_data_queue.qsize() < MAX_PENDING_EVENTS:
         event_data_queue.put((key, value))
 
 
@@ -138,7 +181,7 @@ def del_event_data(key, value):
         del event_data[key]
     except:
         pass
-    if event_data_queue.qsize() < max_pending_events:
+    if len(event_data_callback_methods)>0 and event_data_queue.qsize() < MAX_PENDING_EVENTS:
         event_data_queue.put((key, None))
 
 
@@ -147,12 +190,15 @@ def add_event_data_callback(method):
     Add event callback method
     This method will fire when data is changed
     def method(key, value):
+    OBS!The method on_event_data(key, value) in the SYSTEM class in all expand modules is automatically added to event_data_callback_methods
     '''    
     with lock:
         if len(event_data_callback_methods)==0:
-            for i in range(NUMBER_OF_EVENT_DATA_HANDERS):
+            event_data_callback_methods.append(method)
+            for i in range(NUMBER_OF_EVENT_HANDLERS):
                 thread.start_new_thread(_event_data_handler, ()) 
-        event_data_callback_methods.append(method)
+        else:
+            event_data_callback_methods.append(method)
         
 
 def remove_event_data_callback(method):
@@ -190,17 +236,39 @@ def stream_off():
     os.system("steelsquid stream-off")
 
 
+def _broadcast_event_handler():
+    '''
+    Fire the broadcast event 
+    '''    
+    while len(broadcast_event_callback_classes)>0:
+        event, parameters_to_event = broadcast_event_queue.get()
+        last = "Unknown"
+        try:
+            for aclass in broadcast_event_callback_classes:
+                last = aclass
+                if hasattr(aclass, event):
+                    m = getattr(aclass, event)
+                    if parameters_to_event==None:
+                        m()
+                    else:
+                        m(*parameters_to_event)
+        except:
+            steelsquid_utils.shout("Fatal error in broadcast_event_handler: "+last, is_error=True)            
+
+
 def _event_data_handler():
     '''
     Fire the event data events
     '''    
-    while True:
+    while len(event_data_callback_methods)>0:
         key, value = event_data_queue.get()
+        last = "Unknown"
         try:
             for method in event_data_callback_methods:
+                last = method
                 method(key, value)
         except:
-            steelsquid_utils.shout("Fatal error in event_data_handler: "+key, is_error=True)            
+            steelsquid_utils.shout("Fatal error in event_data_handler: "+last, is_error=True)            
 
     
 def _get_expand_module(module_name, class_name=None, method_name=None):
@@ -274,7 +342,18 @@ def _execute_all_expand_modules(class_name, method_name, method_args=None):
     Will also check if module is enable
     '''
     for mod in expand_modules:
-        _execute_expand_module_method(mod, class_name, method_name, method_args)
+        try:
+            mod = getattr(mod, class_name)
+            mod = getattr(mod, method_name)
+            try:
+                if method_args==None:
+                    mod()
+                else:
+                    mod(*method_args)
+            except:
+                steelsquid_utils.shout()
+        except:
+            pass
         
                 
 

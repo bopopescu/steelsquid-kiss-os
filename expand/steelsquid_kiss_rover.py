@@ -45,7 +45,13 @@ def disable():
 
 class SYSTEM(object):
     '''
-    Methods in this class will be executed by the system if module is activated
+    Methods in this class will be executed by the system if module is enabled
+    on_start() exist it will be executed when system starts (boot)
+    on_stop() exist it will be executed when system stops (shutdown)
+    on_network(status, wired, wifi_ssid, wifi, wan) exist it will be execute on network up or down
+    on_bluetooth(status) exist it will be execute on bluetooth enabled
+    on_loop() exist it will execute over and over again untill it return None or -1
+    on_event_data(key, value) exist it will execute when data is changed with steelsquid_kiss_global.set_event_data(key, value)
     '''
 
     @staticmethod
@@ -117,15 +123,30 @@ class SYSTEM(object):
         pass
 
 
+class EVENTS(object):
+    '''
+    Create staticmethods in this class to listen for asynchronous events.
+    Example: If you have a method like this:
+      @staticmethod
+      def this_is_a_event(a_parameter, another_parameter):
+         print a_parameter+":"+another_parameter
+    Then if a thread somewhere in the system execute this: steelsquid_kiss_global.broadcast_event("this_is_a_event", ("para1", "para2",))
+    The method def this_is_a_event will execute asynchronous
+    '''
+
+
 class WEB(object):
     '''
-    Methods in this class will be executed by the webserver if module is activated and the webserver is enabled
+    Methods in this class will be executed by the webserver if module is enabled and the webserver is enabled
     If is a GET it will return files and if it is a POST it executed commands.
     It is meant to be used as follows.
     1. Make a call from the browser (GET) and a html page is returned back.
     2. This html page then make AJAX (POST) call to the server to retrieve or update data.
     3. The data sent to and from the server can just be a simple list of strings.
-    See steelsquid_http_server.py for more examples how it work
+    For more examples how it work:
+     - steelsquid_http_server.py
+     - steelsquid_kiss_http_server.py
+     - web/index.html
     '''
 
     @staticmethod
@@ -142,7 +163,9 @@ class SOCKET(object):
     A simple class that i use to sen async socket command to and from client/server.
     A request can be made from server to client or from client to server
     See steelsquid_connection.py and steelsquid_socket_connection.py
-    '''
+     - on_connect(remote_address): When a connection is enabled
+     - on_disconnect(error_message): When a connection is lost
+   '''
     
     #Is this connection a server
     #This is set by the system

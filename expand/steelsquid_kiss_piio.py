@@ -61,7 +61,13 @@ def disable():
 
 class SYSTEM(object):
     '''
-    Methods in this class will be executed by the system if module is activated
+    Methods in this class will be executed by the system if module is enabled
+    on_start() exist it will be executed when system starts (boot)
+    on_stop() exist it will be executed when system stops (shutdown)
+    on_network(status, wired, wifi_ssid, wifi, wan) exist it will be execute on network up or down
+    on_bluetooth(status) exist it will be execute on bluetooth enabled
+    on_loop() exist it will execute over and over again untill it return None or -1
+    on_event_data(key, value) exist it will execute when data is changed with steelsquid_kiss_global.set_event_data(key, value)
     '''
 
     @staticmethod
@@ -240,6 +246,18 @@ class SYSTEM(object):
         Power off the system
         '''
         steelsquid_piio.shutdown()    
+
+
+class EVENTS(object):
+    '''
+    Create staticmethods in this class to listen for asynchronous events.
+    Example: If you have a method like this:
+      @staticmethod
+      def this_is_a_event(a_parameter, another_parameter):
+         print a_parameter+":"+another_parameter
+    Then if a thread somewhere in the system execute this: steelsquid_kiss_global.broadcast_event("this_is_a_event", ("para1", "para2",))
+    The method def this_is_a_event will execute asynchronous
+    '''     
             
     
 class GLOBAL(object):

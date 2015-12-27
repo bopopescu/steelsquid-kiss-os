@@ -329,6 +329,9 @@ def import_file_dyn(name):
         mod = steelsquid_kiss_global._get_expand_module_method(name, "SYSTEM", "on_event_data")
         if mod!=None:
             steelsquid_kiss_global.add_event_data_callback(mod)
+        mod = steelsquid_kiss_global._get_expand_module_class(name, "EVENTS")
+        if mod!=None:
+            steelsquid_kiss_global.add_broadcast_event_callback(mod)
         met = steelsquid_kiss_global._get_expand_module(name, "SYSTEM", "on_loop")
         if met!=None:
             do_on_loop(met) 
@@ -345,6 +348,9 @@ def reload_file_dyn(name):
         mod = steelsquid_kiss_global._get_expand_module(name, "SYSTEM", "on_event_data")
         if mod!=None:
             steelsquid_kiss_global.remove_event_data_callback(mod)
+        mod = steelsquid_kiss_global._get_expand_module_class(name, "EVENTS")
+        if mod!=None:
+            steelsquid_kiss_global.remove_broadcast_event_callback(mod)
         steelsquid_kiss_global._execute_expand_module_method(name, "SYSTEM", "on_stop")
         mod = steelsquid_kiss_global._get_expand_module(name)
         if mod != None:
@@ -358,6 +364,9 @@ def reload_file_dyn(name):
         mod = steelsquid_kiss_global._get_expand_module_method(name, "SYSTEM", "on_event_data")
         if mod!=None:
             steelsquid_kiss_global.add_event_data_callback(mod)
+        mod = steelsquid_kiss_global._get_expand_module_class(name, "EVENTS")
+        if mod!=None:
+            steelsquid_kiss_global.add_broadcast_event_callback(mod)
         met = steelsquid_kiss_global._get_expand_module(name, "SYSTEM", "on_loop")
         if met!=None:
             do_on_loop(met) 
