@@ -139,7 +139,7 @@ class SYSTEM(object):
         global last_voltage
         global last_print_voltage
         new_voltage = steelsquid_piio.volt(2, 4)
-        voltage_waring = int(steelsquid_utils.get_parameter("voltage_waring", "10"))
+        voltage_waring = int(steelsquid_utils.get_parameter("voltage_warning", "10"))
         voltage_poweroff = int(steelsquid_utils.get_parameter("voltage_poweroff", "8"))
         v_warn=""
         if new_voltage<voltage_waring:
@@ -151,22 +151,23 @@ class SYSTEM(object):
         if new_voltage<voltage_poweroff:
             steelsquid_piio.shutdown()
             
-        if not steelsquid_utils.get_flag("no_lcd_voltage"):
-            if new_voltage != last_voltage:
-                if abs(new_voltage - last_print_voltage)>=0.1:
-                    if last_print_voltage == 0:
-                        steelsquid_utils.shout("Voltage is: " + str(new_voltage), to_lcd=False)
-                    last_print_voltage = new_voltage
-                last = steelsquid_pi.lcd_last_text
-                if last != None and "VOLTAGE: " in last:
-                    i1 = last.find("VOLTAGE: ", 0) + 9
-                    if i1 != -1:
-                        i2 = last.find("\n", i1)
-                        if i2 == -1:
-                            news = last[:i1]+str(new_voltage)+v_warn
-                        else:
-                            news = last[:i1]+str(new_voltage)+v_warn+last[i2:]
-                        steelsquid_piio.lcd(news, number_of_seconds = 0)
+        if new_voltage != last_voltage:
+            if abs(new_voltage - last_print_voltage)>=0.1:
+                if last_print_voltage == 0:
+                    steelsquid_utils.shout("Voltage is: " + str(new_voltage), to_lcd=False)
+                last_print_voltage = new_voltage
+                steelsquid_kiss_global._execute_all_expand_modules("PIIO", "on_voltage_change", (new_voltage,))
+                if not steelsquid_utils.get_flag("no_lcd_voltage"):
+                    last = steelsquid_pi.lcd_last_text
+                    if last != None and "VOLTAGE: " in last:
+                        i1 = last.find("VOLTAGE: ", 0) + 9
+                        if i1 != -1:
+                            i2 = last.find("\n", i1)
+                            if i2 == -1:
+                                news = last[:i1]+str(new_voltage)+v_warn
+                            else:
+                                news = last[:i1]+str(new_voltage)+v_warn+last[i2:]
+                            steelsquid_piio.lcd(news, number_of_seconds = 0)
         return 1
 
 
@@ -246,25 +247,5 @@ class SYSTEM(object):
         Power off the system
         '''
         steelsquid_piio.shutdown()    
-
-
-class EVENTS(object):
-    '''
-    Create staticmethods in this class to listen for asynchronous events.
-    Example: If you have a method like this:
-      @staticmethod
-      def this_is_a_event(a_parameter, another_parameter):
-         print a_parameter+":"+another_parameter
-    Then if a thread somewhere in the system execute this: steelsquid_kiss_global.broadcast_event("this_is_a_event", ("para1", "para2",))
-    The method def this_is_a_event will execute asynchronous
-    '''     
-            
-    
-class GLOBAL(object):
-    '''
-    Put global staticmethods in this class, methods you use from different part of the system.
-    Maybe the same methods is used from the WEB, SOCKET or other part, then put that method her.
-    It is not necessary to put it her, you can also put it direcly in the module (but i think it is kind of nice to have it inside this class)
-    '''
     
     

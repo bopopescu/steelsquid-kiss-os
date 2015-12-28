@@ -1266,6 +1266,17 @@ def mpu6050_rotation(address=0x69):
     return x, y
 
 
+def mpu6050_temp(address=0x69):
+    '''
+    Read the temperatur from mpu-6050 gyro.
+    SparkFun Triple Axis Accelerometer and Gyro Breakout - MPU-6050
+    https://www.sparkfun.com/products/11028
+    Returns: temperatur in C
+    '''
+    mpu6050_init(address)
+    return read_word_2c(address, 0x41) / 340.00+36.53
+
+
 def mpu6050_movement_event(callback_method, min_change=10, sample_sleep=0.2):
     '''
     Listen for movements on mpu-6050 and execute method on change.

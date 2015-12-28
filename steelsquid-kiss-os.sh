@@ -3995,15 +3995,15 @@ mkdir /opt/steelsquid/python/expand
 echo "" >> /opt/steelsquid/python/expand/__init__.py
 
 
-
+# No need to do this anymore
 ##################################################################################
 # Update firmware
 ##################################################################################
-if [ $(is-raspberry-pi) == "true" ]; then
-    log "Update firmware"
-    sudo curl -L --output /usr/bin/rpi-update https://raw.github.com/Hexxeh/rpi-update/master/rpi-update && sudo chmod +x /usr/bin/rpi-update
-    rpi-update
-fi
+#if [ $(is-raspberry-pi) == "true" ]; then
+#    log "Update firmware"
+#    sudo curl -L --output /usr/bin/rpi-update https://raw.github.com/Hexxeh/rpi-update/master/rpi-update && sudo chmod +x /usr/bin/rpi-update
+#    rpi-update
+#fi
 
 
 ##################################################################################
