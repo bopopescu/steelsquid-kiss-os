@@ -3995,15 +3995,14 @@ mkdir /opt/steelsquid/python/expand
 echo "" >> /opt/steelsquid/python/expand/__init__.py
 
 
-# No need to do this anymore
 ##################################################################################
 # Update firmware
 ##################################################################################
-#if [ $(is-raspberry-pi) == "true" ]; then
-#    log "Update firmware"
-#    sudo curl -L --output /usr/bin/rpi-update https://raw.github.com/Hexxeh/rpi-update/master/rpi-update && sudo chmod +x /usr/bin/rpi-update
-#    rpi-update
-#fi
+if [ $(is-raspberry-pi) == "true" ]; then
+    log "Update firmware"
+    sudo curl -L --output /usr/bin/rpi-update https://raw.github.com/Hexxeh/rpi-update/master/rpi-update && sudo chmod +x /usr/bin/rpi-update
+    rpi-update
+fi
 
 
 ##################################################################################
@@ -4535,6 +4534,7 @@ echo "disable_splash=1" >> /boot/config.txt
 echo "boot_delay=0" >> /boot/config.txt
 
 echo "dtparam=i2c1=on" >> /boot/config.txt
+echo "dtparam=i2c_arm=on" >> /boot/config.txt
 echo "dtparam=spi=on" >> /boot/config.txt
 echo "dtparam=i2s=on" >> /boot/config.txt
 
