@@ -175,7 +175,7 @@ class SYSTEM(object):
         Execute when button 1 to 6 is clicken on the PIIO board
         button_nr = button 1 to 6
         '''    
-        steelsquid_kiss_global._execute_all_modules("PIIO", "on_button", (button_nr,))
+        steelsquid_kiss_global._execute_all_modules("PIIO", "on_button", (button_nr,)) 
 
 
     @staticmethod
