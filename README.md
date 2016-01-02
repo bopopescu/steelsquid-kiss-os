@@ -67,21 +67,19 @@ Messages and errors on the Steelsquid Kiss OS will also appear on the developmen
 If you for example execute print Olle on Steelsquid KISS OS the text "Olle" will appear on the development machine.<br>
 <br>
 <b>Make stuff execute on boot</b><br>
-If you want to implement new functionality I suggest you do it in the following files<br>
-Python files added under /opt/steelsquid/python/modules/ is imported (executed) automatically when the steelsquid service starts (system boots).<br>
-This execute in its own thread so no problem with long running stuff.<br>
-/opt/steelsquid/python/modules/kiss_expand.py<br>
-To execute stuff at boot you can use this file. It will be imported (executed) in its own thread.<br>
+If you want to implement new functionality I suggest you do it in the following files
+ - Python files added under /opt/steelsquid/python/modules/ is imported (executed) automatically when the steelsquid service     starts (system boots).<br>
+   This execute in its own thread so no problem with long running stuff.
+ - /opt/steelsquid/python/modules/kiss_expand.py<br>
+   To execute stuff at boot you can use this file. It will be imported (executed) in its own thread.
 The intention is that if you want to quickly add a feature do that in kiss_expand.py.<br>
-But if you want to add several different features, create a new file in modules/ for every feature.<br>
-I suggest that if you want to create a new feature copy the kiss_expand.py and give it a suitable name (You will then get all the help comments in kiss_expand.py to your new file).<br>
-You do this in the synchronization program by press N and then enter the name of the new module.<br>
-<br>
-Then you need to enable that module:<br>
- - Command line: steelsquid module kiss_expand on
- - Python: steelsquid_kiss_global.module_status("kiss_expand", True)
- - Syncrinization program: Press E and then select the module.
-See this example project for more info...<br>
+But if you want to add several different features, create a new file in modules/ for every feature.
+ - I suggest that if you want to create a new feature copy the kiss_expand.py and give it a suitable name (You will then get     all the help comments in kiss_expand.py to your new file).<br>
+   You do this in the synchronization program by press N and then enter the name of the new module.
+ - Then you need to enable that module:<br>
+   Command line: steelsquid module kiss_expand on<br>
+   Python: steelsquid_kiss_global.module_status("kiss_expand", True)<br>
+   Syncrinization program: Press E and then select the module.<br>
 <br>
 The files under modules/ can also listen to events and handle web requests.<br>
  - If the module have 2 methods enable and disable this will execute when the module is enabled /disabled.
