@@ -5,8 +5,8 @@
 Use this file to implement you own stuff...
 
 For this to start on boot you need to enable it, you can do it like this:
-Command line: steelsquid module steelsquid_kiss_expand on
-Python: steelsquid_kiss_global.expand_module("steelsquid_kiss_expand", True)
+Command line: steelsquid module kiss_expand on
+Python: steelsquid_kiss_global.module_status("kiss_expand", True)
 Syncrinization program: Press E and then enter
 
 You can omit all the undelaying methods and classes and this module will just be imported...
