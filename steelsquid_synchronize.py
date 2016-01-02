@@ -559,7 +559,7 @@ if __name__ == '__main__':
             an = send_command_return_answer("steelsquid module-list-nr")
             for line in an:
                 print line
-            nr = raw_input('Enter number of the module to enable (1, 2, 3...: ')
+            nr = raw_input('Enter number of the module to enable (1, 2, 3...): ')
             for line in an:
                 if len(line)>0:
                     if line[0]==nr:
@@ -570,7 +570,7 @@ if __name__ == '__main__':
             an = send_command_return_answer("steelsquid module-list-nr")
             for line in an:
                 print line
-            nr = raw_input('Enter number of the module to disable (1, 2, 3...: ')
+            nr = raw_input('Enter number of the module to disable (1, 2, 3...): ')
             for line in an:
                 if len(line)>0:
                     if line[0]==nr:
