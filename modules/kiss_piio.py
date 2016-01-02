@@ -18,7 +18,6 @@ import steelsquid_event
 import steelsquid_pi
 import steelsquid_piio
 import steelsquid_kiss_global
-import steelsquid_boot
 import time
 from datetime import datetime
 from datetime import timedelta

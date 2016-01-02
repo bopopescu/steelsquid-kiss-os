@@ -5,7 +5,7 @@
 Handles requests from index.html, download.html, file.html, play.html, utils.html
 Do not execute long running stuff or the system won't start properly.
 This will always execute with root privilege.
-The web-server will be started by steelsquid_boot.py
+The web-server will be started by steelsquid_kiss_boot.py
 
 -Administartot
 -Download manager
@@ -32,7 +32,6 @@ import time
 import pwd
 import grp
 import xmlrpclib
-import steelsquid_boot
 import steelsquid_kiss_global
 from pprint import pprint
 
