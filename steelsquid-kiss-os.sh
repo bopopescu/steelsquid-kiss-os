@@ -50,40 +50,39 @@ download=$base/$project_name.sh
 img_iso=https://googledrive.com/host/0B2XmU-Cgji4bcDFmV25xM3Vic3c
 
 # Python downloads (install this pyton scripts)
-python_downloads[1]="$base/steelsquid_boot.py"
-python_downloads[2]="$base/steelsquid_event.py"
-python_downloads[3]="$base/steelsquid_nm.py"
-python_downloads[4]="$base/steelsquid_pi.py"
-python_downloads[5]="$base/steelsquid_piio.py"
-python_downloads[6]="$base/steelsquid_synchronize.py"
-python_downloads[7]="$base/steelsquid_utils.py"
-python_downloads[8]="$base/steelsquid_connection.py"
-python_downloads[9]="$base/steelsquid_socket_connection.py"
-python_downloads[10]="$base/steelsquid_server.py"
-python_downloads[11]="$base/steelsquid_http_server.py"
-python_downloads[12]="$base/steelsquid_kiss_global.py"
-python_downloads[13]="$base/steelsquid_kiss_http_server.py"
-python_downloads[14]="$base/steelsquid_kiss_socket_connection.py"
-python_downloads[15]="$base/steelsquid_lcd_hdd44780.py"
-python_downloads[16]="$base/steelsquid_omx.py"
-python_downloads[17]="$base/steelsquid_sabertooth.py"
-python_downloads[18]="$base/steelsquid_trex.py"
-python_downloads[19]="$base/steelsquid_oled_ssd1306.py"
-python_downloads[20]="$base/steelsquid_bluetooth_connection.py"
-python_downloads[21]="$base/steelsquid_i2c.py"
-python_downloads[22]="$base/MCP23017.py"
-python_downloads[23]="$base/expand/steelsquid_kiss_expand.py"
-python_downloads[24]="$base/expand/steelsquid_kiss_alarm.py"
-python_downloads[25]="$base/expand/steelsquid_kiss_piio.py"
-python_downloads[26]="$base/expand/steelsquid_kiss_rover.py"
+python_downloads[1]="$base/steelsquid_kiss_boot.py"
+python_downloads[2]="$base/steelsquid_nm.py"
+python_downloads[3]="$base/steelsquid_pi.py"
+python_downloads[4]="$base/steelsquid_piio.py"
+python_downloads[5]="$base/steelsquid_synchronize.py"
+python_downloads[6]="$base/steelsquid_utils.py"
+python_downloads[7]="$base/steelsquid_connection.py"
+python_downloads[8]="$base/steelsquid_socket_connection.py"
+python_downloads[9]="$base/steelsquid_server.py"
+python_downloads[10]="$base/steelsquid_http_server.py"
+python_downloads[11]="$base/steelsquid_kiss_global.py"
+python_downloads[12]="$base/steelsquid_kiss_http_server.py"
+python_downloads[13]="$base/steelsquid_kiss_socket_connection.py"
+python_downloads[14]="$base/steelsquid_lcd_hdd44780.py"
+python_downloads[15]="$base/steelsquid_omx.py"
+python_downloads[16]="$base/steelsquid_sabertooth.py"
+python_downloads[17]="$base/steelsquid_trex.py"
+python_downloads[18]="$base/steelsquid_oled_ssd1306.py"
+python_downloads[19]="$base/steelsquid_bluetooth_connection.py"
+python_downloads[20]="$base/steelsquid_i2c.py"
+python_downloads[21]="$base/MCP23017.py"
+python_downloads[22]="$base/modules/kiss_expand.py"
+python_downloads[23]="$base/modules/kiss_alarm.py"
+python_downloads[24]="$base/modules/kiss_piio.py"
+python_downloads[25]="$base/modules/kiss_rover.py"
 
 # Links to python_downloads
 python_links[1]="/usr/bin/steelsquid-boot"
-python_links[2]="/usr/bin/event"
-python_links[3]="/usr/bin/net"
-python_links[4]="/usr/bin/pi"
-python_links[5]="/usr/bin/piio"
-python_links[6]="/usr/bin/synchronize"
+python_links[2]="/usr/bin/net"
+python_links[3]="/usr/bin/pi"
+python_links[4]="/usr/bin/piio"
+python_links[5]="/usr/bin/synchronize"
+python_links[6]="/usr/bin/dummy"
 python_links[7]="/usr/bin/dummy"
 python_links[8]="/usr/bin/dummy"
 python_links[9]="/usr/bin/dummy"
@@ -103,7 +102,6 @@ python_links[22]="/usr/bin/dummy"
 python_links[23]="/usr/bin/dummy"
 python_links[24]="/usr/bin/dummy"
 python_links[25]="/usr/bin/dummy"
-python_links[26]="/usr/bin/dummy"
 
 # Download to web root folder
 web_root_downloads[1]="$base/web/top_bar.html"
@@ -824,10 +822,13 @@ function help_files()
     echb "/opt/steelsquid/python"
     echo "Home for all python files"
     echo 
-    echb "/usr/bin/steelsquid-boot -> /opt/steelsquid/python/steelsquid_boot.py"
+    echb "/usr/bin/steelsquid-boot -> /opt/steelsquid/python/steelsquid_kiss_boot.py"
     echo "Python script that execute on boot and shutdown"
     echo 
-    echb "/opt/steelsquid/python/expand"
+    echb "/usr/bin/event -> /opt/steelsquid/python/steelsquid_kiss_boot.py"
+    echo "The steelsquid_kiss_boot.py also handles events from the OS...(using the name event in some old scripts)"
+    echo 
+    echb "/opt/steelsquid/python/modules"
     echo "All python scrips in this folder will be imported (executed) on boot."
     echo "Use this to inmplement your own stuff."
     echo 
@@ -864,14 +865,12 @@ function help_files()
     echb "/opt/steelsquid/python/steelsquid_bluetooth_connection.py"
     echo "Bluetooth implementation of steelsquid_connection..."
     echo 
-    echb "/opt/steelsquid/python/steelsquid_boot.py"
+    echb "/opt/steelsquid/python/steelsquid_kiss_boot.py"
     echo "This will execute when steelsquid-kiss-os starts"
+    echo "Also listen for events from the OS"
     echo 
     echb "/opt/steelsquid/python/steelsquid_connection.py"
     echo "A simple module that i use to sen async command to and from client/server."
-    echo 
-    echb "/opt/steelsquid/python/steelsquid_event.py"
-    echo "Broadcast and subscribe to events, to use this you first must execute activate_event_handler(...)"
     echo 
     echb "/opt/steelsquid/python/steelsquid_http_server.py"
     echo "This server will listen for http requests."
@@ -879,7 +878,7 @@ function help_files()
     echb "/opt/steelsquid/python/steelsquid_i2c.py"
     echo "Use this to communicate with i2c devices."
     echo 
-    echb "/opt/steelsquid/python/expand/steelsquid_kiss_expand.py"
+    echb "/opt/steelsquid/python/modules/kiss_expand.py"
     echo "Use this file to implement you own stuff..."
     echo 
     echb "/opt/steelsquid/python/steelsquid_kiss_global.py"
@@ -927,13 +926,13 @@ function help_files()
     echb "/opt/steelsquid/python/steelsquid_utils.py"
     echo "Some useful functions."
     echo 
-    echb "/opt/steelsquid/python/expand/steelsquid_kiss_alarm.py"
+    echb "/opt/steelsquid/python/modules/kiss_alarm.py"
     echo "This is functionality for my alarm."
     echo 
-    echb "/opt/steelsquid/python/expand/steelsquid_kiss_rover.py"
+    echb "/opt/steelsquid/python/modules/kiss_rover.py"
     echo "Fuctionality for my rover controller"
     echo 
-    echb "/opt/steelsquid/python/expand/steelsquid_kiss_piio.py"
+    echb "/opt/steelsquid/python/modules/kiss_piio.py"
     echo "Fuctionality for my PIIO board"
 }
 if [ "$in_parameter_1" == "help-files" ]; then
@@ -965,23 +964,24 @@ function help_develop()
     echo 
     echb "set-flag expanded"
     echo "It will tell the upgrade script not to overwrite:"
-    echo " - steelsquid_kiss_expand.py"
+    echo " - kiss_expand.py"
     echo " - expand.html"
+    echo " - test.py"
     echo "This is useful if you have expanded functionality. otherwise, the changes will be overwritten when you execute upgrade."
     echo 
     echb "steelsquid module-list"
-    echo "List all modules in expand direcory"
+    echo "List all modules in modules direcory"
     echo 
     echb "steelsquid module <name>"
     echo "Is a module activated."
-    echo "A module is the python files under expand directory"
-    echo "name = The name of the file in expand directory"
+    echo "A module is the python files under modules directory"
+    echo "name = The name of the file in modules directory"
     echo 
     echb "steelsquid module <name> <on/off>"
     echo "Enable or disable a module."
     echo "When a module is enabled it will start on boot."
-    echo "A module is the python files under expand directory"
-    echo "name = The name of the file in expand directory"
+    echo "A module is the python files under modules directory"
+    echo "name = The name of the file in modules directory"
     echo "on/off = On enable the module and off will disable"
     echo 
     echb "steelsquid download-img"
@@ -1123,23 +1123,15 @@ function help_develop()
     echb "event <event> <parameter1> <parameter2>..."
     echo "Broadcast event with paramaters"
     echo 
-    echb "event start <name>"
-    echo "Start execute (loop) a function with name <name>"
-    echo 
-    echb "event stop"
-    echo "Stop execute (loop) all functions"
-    echo 
-    echb "event stop <name>"
-    echo "Stop execute (loop) a function with name <name>"
-    echo 
-    echb "steelsquid power"
+    echb "steelsquid power-gpio"
     echo "Is the power off functionality enabled"
     echo "Connect a button to the raspberry to shut down cleanly"
     echo 
-    echb "steelsquid power-on"
+    echb "steelsquid power-gpio <gpio>"
     echo "Enable power off functionality"
+    echo "<gpio> = use this GPIO (connect button to 3V3, using PULL_DOWN)"
     echo 
-    echb "steelsquid power-off"
+    echb "steelsquid power-gpio-off"
     echo "Disable power off functionality"
     echo 
     echb "steelsquid i2c-lock"
@@ -1504,33 +1496,25 @@ fi
 ##################################################################################
 function power_info()
 {
-    if [ $(get-flag "power") == "true" ]; then
-        echo
-        echo "Clean power off: Eabled"
-        echo
+
+    if [ "$in_parameter_2" == "" ]; then
+        if [ $(has-parameter "power_gpio") == "true" ]; then
+            dat=$(get-parameter "power_gpio")
+            echo
+            echo "Clean power off: Eabled ($dat)"
+            echo
+        else
+            echo
+            echo "Clean power off: Disabled"
+            echo
+        fi
     else
-        echo
-        echo "Clean power off: Disabled"
-        echo
+        set-parameter "power_gpio" $in_parameter_2
+        systemctl restart steelsquid
     fi
 }
-if [ "$in_parameter_1" == "power" ]; then
+if [ "$in_parameter_1" == "power-gpio" ]; then
 	power_info
-	exit 0
-fi
-
-
-##################################################################################
-# Enable clean power off enabled
-##################################################################################
-function power_on()
-{
-	log "Enable clean power off"
-    set-flag "power"
-	log-reboot
-}
-if [ "$in_parameter_1" == "power-on" ]; then
-	power_on
 	exit 0
 fi
 
@@ -1541,10 +1525,10 @@ fi
 function power_off()
 {
 	log "Disable clean power off"
-    del-flag "power"
-	log-reboot
+    del-parameter "power_gpio"
+    systemctl restart steelsquid
 }
-if [ "$in_parameter_1" == "power-off" ]; then
+if [ "$in_parameter_1" == "power-gpio-off" ]; then
 	power_off
 	exit 0
 fi
@@ -1989,7 +1973,7 @@ function module_list()
     echo ""
     echo "STATUS     MODULE NAME"
     echo "-----------------------------------------------"
-    for f in /opt/steelsquid/python/expand/*.py
+    for f in /opt/steelsquid/python/modules/*.py
     do
         f=$(basename "$f")
         f="${f%.*}"
@@ -2004,6 +1988,35 @@ function module_list()
 }
 if [ "$in_parameter_1" == "module-list" ]; then
 	module_list
+	exit 0
+fi
+
+
+##################################################################################
+# List modules
+##################################################################################
+function module_list_nr()
+{
+    echo ""
+    echo "  STATUS     MODULE NAME"
+    echo "-----------------------------------------------"
+    COUNTER=1
+    for f in /opt/steelsquid/python/modules/*.py
+    do
+        f=$(basename "$f")
+        f="${f%.*}"
+        if [[ $f != "__init__" ]]; then
+            if [[ $(get-flag "module_$f") == "true" ]]; then
+                echo "$COUNTER [Enabled]  $f"
+            else
+                echo "$COUNTER [Disabled] $f"
+            fi
+            COUNTER=$[$COUNTER +1]
+        fi
+    done
+}
+if [ "$in_parameter_1" == "module-list-nr" ]; then
+	module_list_nr
 	exit 0
 fi
 
@@ -2146,7 +2159,7 @@ fi
 ##################################################################################
 function alarm_info()
 {
-    if [ $(get-flag "module_steelsquid_kiss_alarm") == "true" ]; then
+    if [ $(get-flag "module_kiss_alarm") == "true" ]; then
         echo
         echo "Alarm/Surveillance: Enabled"
         echo "For this to work you need a Raspberry PI camera connected."
@@ -2171,7 +2184,7 @@ fi
 function alarm_on()
 {
 	log "Enable Alarm/Surveillance"
-    steelsquid module steelsquid_kiss_alarm on
+    steelsquid module kiss_alarm on
 	log-ok
 }
 if [ "$in_parameter_1" == "alarm-on" ]; then
@@ -2186,7 +2199,7 @@ fi
 function alarm_off()
 {
 	log "Disable Alarm/Surveillance"
-    steelsquid module steelsquid_kiss_alarm off
+    steelsquid module kiss_alarm off
 	log-ok
 }
 if [ "$in_parameter_1" == "alarm-off" ]; then
@@ -2347,7 +2360,7 @@ fi
 ##################################################################################
 function rover_info()
 {
-    if [ $(get-flag "module_steelsquid_kiss_rover") == "true" ]; then
+    if [ $(get-flag "module_kiss_rover") == "true" ]; then
         echo
         echo "Rover functionality: Enabled"
         echo
@@ -2369,7 +2382,7 @@ fi
 function rover_on()
 {
 	log "Enable rover"
-    steelsquid module steelsquid_kiss_rover on
+    steelsquid module kiss_rover on
     log-ok
 }
 if [ "$in_parameter_1" == "rover-on" ]; then
@@ -2384,7 +2397,7 @@ fi
 function rover_off()
 {
 	log "Disable rover"
-    steelsquid module steelsquid_kiss_rover off
+    steelsquid module kiss_rover off
     log-ok
 }
 if [ "$in_parameter_1" == "rover-off" ]; then
@@ -2398,7 +2411,7 @@ fi
 ##################################################################################
 function piio_info()
 {
-    if [ $(get-flag "module_steelsquid_kiss_piio") == "true" ]; then
+    if [ $(get-flag "module_kiss_piio") == "true" ]; then
         echo
         echo "Steelsquid PIIO Board: Enabled"
         echo
@@ -2420,7 +2433,7 @@ fi
 function piio_on()
 {
 	log "Enable Steelsquid PIIO Board"
-    steelsquid module steelsquid_kiss_piio on
+    steelsquid module kiss_piio on
     log-ok
 }
 if [ "$in_parameter_1" == "piio-on" ]; then
@@ -2435,7 +2448,7 @@ fi
 function piio_off()
 {
 	log "Disable Steelsquid PIIO Board"
-    steelsquid module steelsquid_kiss_piio off
+    steelsquid module kiss_piio off
     log-ok
 }
 if [ "$in_parameter_1" == "piio-off" ]; then
@@ -2962,29 +2975,27 @@ function install_steelsquid_python()
 {
 	log "Download and install python scripts"
     mkdir -p /opt/steelsquid/python/
-    mkdir -p /opt/steelsquid/python/expand/
+    mkdir -p /opt/steelsquid/python/modules/
 	index=1
 	for var in "${python_downloads[@]}"
 	do
         expandf=""
-        if [[ $var == */expand/* ]]; then
-            expandf="/expand"
+        if [[ $var == */modules/* ]]; then
+            expandf="/modules"
         fi
         
         if [ $(get-flag "expanded") == "true" ]; then
             if [[ $var != *_expand* ]]; then
-                if [ $expandf == "" ]; then
-                    sudo wget --progress=dot:giga --no-check-certificate -O /opt/steelsquid/python$expandf/$(basename $var) $var
-                    if [ $? -ne 0 ]; then
-                        do-err-exit "Unable to download from $var"
-                    else
-                        sudo chmod 755 /opt/steelsquid/python$expandf/$(basename $var)
-                        rm ${python_links[$index]} > /dev/null 2>&1
-                        sudo ln -s /opt/steelsquid/python$expandf/$(basename $var) ${python_links[$index]}
-                        index=$[$index +1]
-                        log "$var downloaded and installed"
-                    fi
-                fi        
+                sudo wget --progress=dot:giga --no-check-certificate -O /opt/steelsquid/python$expandf/$(basename $var) $var
+                if [ $? -ne 0 ]; then
+                    do-err-exit "Unable to download from $var"
+                else
+                    sudo chmod 755 /opt/steelsquid/python$expandf/$(basename $var)
+                    rm ${python_links[$index]} > /dev/null 2>&1
+                    sudo ln -s /opt/steelsquid/python$expandf/$(basename $var) ${python_links[$index]}
+                    index=$[$index +1]
+                    log "$var downloaded and installed"
+                fi
             fi        
         else
             sudo wget --progress=dot:giga --no-check-certificate -O /opt/steelsquid/python$expandf/$(basename $var) $var
@@ -3006,8 +3017,8 @@ function install_steelsquid_python_one()
 	log "Download and install python script"
     var=${python_downloads[$in_parameter_2]}
     expandf=""
-    if [[ $var == */expand/* ]]; then
-        expandf="/expand"
+    if [[ $var == */modules/* ]]; then
+        expandf="/modules"
     fi
     sudo wget --progress=dot:giga --no-check-certificate -O /opt/steelsquid/python$expandf/$(basename $var) $var
     if [ $? -ne 0 ]; then
@@ -3588,8 +3599,8 @@ function local_commit()
 	for var in "${python_downloads[@]}"
 	do
         expand_folder=""
-        if [[ $var == */expand/* ]]; then
-            expand_folder="expand/"
+        if [[ $var == */modules/* ]]; then
+            expand_folder="modules/"
         fi
         cp $expandf/$(basename $var) /opt/steelsquid/python$expandf/$(basename $var)
         chmod 755 /opt/steelsquid/python$expandf/$(basename $var)
@@ -3648,7 +3659,7 @@ function remote_commit()
 
     for var in "${python_downloads[@]}"
 	do
-        if [[ $var != */expand/* ]]; then
+        if [[ $var != */modules/* ]]; then
             cstring="$cstring $(basename $var)"
         fi
     done
@@ -3706,7 +3717,7 @@ function remote_commit_install()
 	for var in "${python_downloads[@]}"
 	do
         expand_folder=""
-        if [[ $var != */expand/* ]]; then
+        if [[ $var != */modules/* ]]; then
             cp /var/tmp/$(basename $var) /opt/steelsquid/python/$(basename $var)
             chmod 755 /opt/steelsquid/python/$(basename $var)
             rm ${python_links[$index]} > /dev/null 2>&1
@@ -3876,8 +3887,8 @@ if [ $(get_installed) == "false" ]; then
     aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install build-essential python-dbus python-pexpect python-dev python-setuptools python-pip python-pam python-smbus psmisc git libudev-dev libmount-dev python-imaging pkg-config libglib2.0-dev whois
     aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install build-essential python-dbus python-pexpect python-dev python-setuptools python-pip python-pam python-smbus psmisc git libudev-dev libmount-dev python-imaging pkg-config libglib2.0-dev whois
     exit-check 
-    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install deborphan network-manager dash nano sudo aptitude udev ntfs-3g console-setup beep ecryptfs-utils alsa-utils alsa-base va-driver-all vdpau-va-driver
-    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install deborphan network-manager dash nano sudo aptitude udev ntfs-3g console-setup beep ecryptfs-utils alsa-utils alsa-base va-driver-all vdpau-va-driver
+    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install deborphan network-manager network-manager-openvpn dash nano sudo aptitude udev ntfs-3g console-setup beep ecryptfs-utils alsa-utils alsa-base va-driver-all vdpau-va-driver
+    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install deborphan network-manager network-manager-openvpn dash nano sudo aptitude udev ntfs-3g console-setup beep ecryptfs-utils alsa-utils alsa-base va-driver-all vdpau-va-driver
     exit-check 
     aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install telnet secure-delete beep sysstat openssh-client cifs-utils smbclient keyutils sshfs curl samba-common lsof mc fgetty ftp htop elinks screenie nload mtr-tiny lzma zip unzip unrar-free p7zip-full bzip2 whiptail parted lua5.1 aria2 python-serial python-numpy python2.7-numpy python-paramiko zlib1g zlib1g-dev libfreetype6-dev ttf-anonymous-pro
     aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install telnet secure-delete beep sysstat openssh-client cifs-utils smbclient keyutils sshfs curl samba-common lsof mc fgetty ftp htop elinks screenie nload mtr-tiny lzma zip unzip unrar-free p7zip-full bzip2 whiptail parted lua5.1 aria2 python-serial python-numpy python2.7-numpy python-paramiko zlib1g zlib1g-dev libfreetype6-dev ttf-anonymous-pro
@@ -3925,6 +3936,22 @@ log "Install PIL"
 easy_install -U distribute
 pip install pillow 
 pip install --upgrade pillow 
+
+
+##################################################################################
+# Install inotifyx
+##################################################################################
+log "Install inotifyx"
+pip install inotifyx
+
+
+
+##################################################################################
+# event link
+##################################################################################
+log "event link"
+rm /usr/bin/event
+ln -s /opt/steelsquid/python/steelsquid_kiss_boot.py /usr/bin/event
 
 
 
@@ -3991,8 +4018,8 @@ fi
 log "Set pythonpath"
 mkdir /opt/steelsquid/python
 echo "export PYTHONPATH=/opt/steelsquid/python:/usr/lib/python3/dist-packages" > /etc/profile.d/pythonpath.sh
-mkdir /opt/steelsquid/python/expand
-echo "" >> /opt/steelsquid/python/expand/__init__.py
+mkdir /opt/steelsquid/python/modules
+echo "" >> /opt/steelsquid/python/modules/__init__.py
 
 
 ##################################################################################
@@ -4454,10 +4481,12 @@ sed -i '/T0:23:respawn:\/sbin\/getty -L ttyAMA0 115200 vt100/d' /etc/inittab
 log "Enable startup service"
 echo "[Unit]" > /etc/systemd/system/steelsquid.service
 echo "Description=Steelsquid" >> /etc/systemd/system/steelsquid.service
+echo "Before=shutdown.target reboot.target halt.target" >> /etc/systemd/system/steelsquid.service
 echo "" >> /etc/systemd/system/steelsquid.service
 echo "[Service]" >> /etc/systemd/system/steelsquid.service
 echo "ExecStart=/usr/bin/steelsquid-boot start" >> /etc/systemd/system/steelsquid.service
-echo "ExecStop=/usr/bin/shout \"Steelsquid service closed.\nIf you shutdown the computer or restart the steelsquid service this is OK.\nIf this is a error (nothing more happens) it is probably in steelsquid-boot.py\nYou can enable logging for more info: steelsquid log-on\nAlso sheck if steelsquid-boot proces is running: ps -ef|grep steelsquid-boot\nIf not try: steelsquid-boot start\nAnd check for errors...\"" >> /etc/systemd/system/steelsquid.service
+echo "ExecStopPost=/usr/bin/shout \"Steelsquid service closed.\nIf you shutdown the computer or restart the steelsquid service this is OK.\nIf this is a error (nothing more happens) it is probably in steelsquid-boot.py\nYou can enable logging for more info: steelsquid log-on\nAlso sheck if steelsquid-boot proces is running: ps -ef|grep steelsquid-boot\nIf not try: steelsquid-boot start\nAnd check for errors...\"" >> /etc/systemd/system/steelsquid.service
+echo "KillSignal=SIGINT" >> /etc/systemd/system/steelsquid.service
 echo "TimeoutStopSec=2" >> /etc/systemd/system/steelsquid.service
 echo "" >> /etc/systemd/system/steelsquid.service
 echo "[Install]" >> /etc/systemd/system/steelsquid.service
@@ -4466,13 +4495,12 @@ systemctl --system daemon-reload
 systemctl enable steelsquid
 
 
-
 ##################################################################################
 # Enable networkmanager
 ##################################################################################
 log "Enable networkmanager"
 rm /etc/network/interfaces > /dev/null 2>&1
-echo "auto lo" >> /etc/network/interfaces
+echo "auto lo" >> /etc/network/interfaceshttps://www.google.se/url?sa=t&rct=j&q=&esrc=s&source=web&cd=8&ved=0ahUKEwj159XnkYbKAhViEHIKHaMgBLMQFghdMAc&url=https%3A%2F%2Flists.fedoraproject.org%2Fpipermail%2Fusers%2F2011-December%2F409819.html&usg=AFQjCNGweT-aPtj2CT9-aTZfrq9H0tsj2g&sig2=icCdFBTACT3to6OCf_fIZg
 echo "iface lo inet loopback" >> /etc/network/interfaces
 echo "[Adding or changing system-wide NetworkManager connections]" > /etc/polkit-1/localauthority/10-vendor.d/org.freedesktop.NetworkManager.pkla
 echo "Identity=unix-group:netdev;unix-group:sudo" >> /etc/polkit-1/localauthority/10-vendor.d/org.freedesktop.NetworkManager.pkla
@@ -4630,10 +4658,14 @@ chmod +x /usr/bin/aria2shoutok
 log "Generate test python file"
 if [ $(get-flag "expanded") == "false" ]; then
     echo "#"\!"/usr/bin/python -OO" > /root/test.py
-    echo "import steelsquid_utils" >> /root/test.py
-    echo "import steelsquid_event" >> /root/test.py
-    echo "import steelsquid_pi" >> /root/test.py
     echo "import steelsquid_kiss_global" >> /root/test.py
+    echo "import steelsquid_utils" >> /root/test.py
+    echo "import steelsquid_pi" >> /root/test.py
+    echo "import thread" >> /root/test.py
+    echo "import time" >> /root/test.py
+    echo "import sys" >> /root/test.py
+    echo "import os" >> /root/test.py
+    echo "" >> /root/test.py
     echo "" >> /root/test.py
     chmod +x /root/test.py
 fi

@@ -4,9 +4,7 @@
 '''
 Global stuff for steelsquid kiss os
 Reach the http server and Socket connection.
-I also add some extra stuff here like data events
-
-Use this to add functionality that my be used from different part of the system... example http server and socket server...
+I also add some extra stuff here like events and modules
 
 @organization: Steelsquid
 @author: Andreas Nilsson
@@ -17,9 +15,9 @@ Use this to add functionality that my be used from different part of the system.
 
 
 import steelsquid_utils
-import steelsquid_event
 import steelsquid_pi
-import steelsquid_boot
+import steelsquid_kiss_boot
+import os.path, pkgutil
 import time
 import threading
 import thread
@@ -28,6 +26,7 @@ import importlib
 import Queue
 import exceptions
 import os
+import modules
 from importlib import import_module
 
 # Number of eventdata handler threads
@@ -36,11 +35,8 @@ NUMBER_OF_EVENT_HANDLERS = 3
 # If more than this events pending for execution dropp new events
 MAX_PENDING_EVENTS=128
 
-# Names of python module names in the expand directory
-expand_module_names=[]
-
-# All loades exapnd modules in the expand directory
-expand_modules=[]
+# All loaded modules (python files in the modules directory)
+loaded_modules={}
 
 # The socket connection, if enabled (not enabled = None)
 # Flag: socket_server
@@ -70,53 +66,75 @@ broadcast_event_callback_classes=[]
 broadcast_event_queue=Queue.Queue()
 
 
-def get_expand_module(name):
+def get_module(name):
     '''
-    Get a module from the expand directory
+    Get a module from the modules directory
     Only return modules that has bean enabled
     return: The module or None
     '''    
-    try:
-        index = expand_module_names.index(name)
-        return expand_modules[index]
-    except:
-        return None
+    return loaded_modules.get(name)
 
 
-def is_expand_module(name):
+def is_module(name):
     '''
     Check if a module is imported and enabled
     return: True/False
     '''    
-    if name in expand_module_names:
+    if name in loaded_modules:
         return True
     else:
         return False
 
 
-def expand_module(name, status, restart=True):
+def get_modules():
     '''
-    Enable or disable a expand module
+    Get a dict with all modules
+    '''    
+    return loaded_modules
+
+
+def module_status(name, status, restart=True):
+    '''
+    Enable or disable a module
     name: Name of the mopule
     status: True/False
     restart: restart the steelsquid daemon
     '''    
-    if restart:
-        restart="True"
-    else:
-        restart="False"
-    if status:
-        steelsquid_boot.on_module_on(None, [name, restart])
-    else:
-        steelsquid_boot.on_module_off(None, [name, restart])
+    try:
+        pkgpath = os.path.dirname(modules.__file__)
+        doit=False
+        for f in pkgutil.iter_modules([pkgpath]):
+            if f[1]==name:
+                doit=True
+        if doit:
+            if status:
+                steelsquid_utils.set_flag("module_"+name)
+                mod = import_module('modules.'+name)
+                try:
+                    mod.enable()
+                except:
+                    steelsquid_utils.shout()
+            else:
+                steelsquid_utils.del_flag("module_"+name)
+                mod = import_module('modules.'+name)
+                try:
+                    mod.disable()
+                except:
+                    steelsquid_utils.shout()
+            if restart:
+                os.system('systemctl restart steelsquid')
+        else:
+            steelsquid_utils.shout(string="Module not found")
+    except:
+        steelsquid_utils.shout(string="Module not found")
 
 
 def broadcast_event(event, parameters_to_event=None):
     '''
     Will broadcast a event, execute methods in the classes inside "broadcast_event_callback_classes"
-    OBS! Classes named EVENTS in every expand module will automatically be added to "broadcast_event_callback_classes"
+    OBS! Classes named EVENTS in every module will automatically be added to "broadcast_event_callback_classes"
     event = The name of the method in the EVENT class to execute.
-    parameters_to_event = Paramaters to that event
+    parameters_to_event = Paramaters to that event (tuple)
     '''    
     if len(broadcast_event_callback_classes)>0 and broadcast_event_queue.qsize() < MAX_PENDING_EVENTS:
         broadcast_event_queue.put((event, parameters_to_event))
@@ -125,7 +143,7 @@ def broadcast_event(event, parameters_to_event=None):
 def add_broadcast_event_callback(aclass):
     '''
     Add broadcast event callback method
-    OBS! Classes named EVENTS in every expand module will automatically be added to "broadcast_event_callback_classes"
+    OBS! Classes named EVENTS in every module will automatically be added to "broadcast_event_callback_classes"
     '''    
     with lock:
         if len(broadcast_event_callback_classes)==0:
@@ -162,7 +180,7 @@ def set_event_data(key, value):
     '''
     Set event data.
     When eventdata is set methods in event_data_callback_methods will fire
-    OBS!The method on_event_data(key, value) in the SYSTEM class in all expand modules is automatically added to event_data_callback_methods
+    OBS!The method on_event_data(key, value) in the SYSTEM class in all modules is automatically added to event_data_callback_methods
     key: Key for the data
     value: Value for the data
     '''    
@@ -190,7 +208,7 @@ def add_event_data_callback(method):
     Add event callback method
     This method will fire when data is changed
     def method(key, value):
-    OBS!The method on_event_data(key, value) in the SYSTEM class in all expand modules is automatically added to event_data_callback_methods
+    OBS!The method on_event_data(key, value) in the SYSTEM class in all modules is automatically added to event_data_callback_methods
     '''    
     with lock:
         if len(event_data_callback_methods)==0:
@@ -270,80 +288,65 @@ def _event_data_handler():
         except:
             steelsquid_utils.shout("Fatal error in event_data_handler: "+last, is_error=True)            
 
-    
-def _get_expand_module(module_name, class_name=None, method_name=None):
+
+def _get_object(obj, name):
     '''
-    Get a module or class(classmethod) if exists
-    Will also check if module is enabled
-    Return None if method not found or not enabled
+    Get a class or method from object
+    Return None if not found
     '''
     try:
-        index = expand_module_names.index(module_name)
-        mod = expand_modules[index]
-        if class_name!=None and method_name!=None:
-            m = getattr(mod, class_name)
-            getattr(m, method_name)
-        elif class_name!=None:
-            getattr(mod, class_name)
-        return mod
+        return getattr(obj, name)
     except:
-        return None
+        pass
 
 
-def _get_expand_module_class(module_name, class_name):
+def _exec_method(obj, name, method_args=None):
     '''
-    Get a module or class(classmethod) if exists
-    Will also check if module is enabled
-    Return None if method not found or not enabled
+    Execute a method inside a object
     '''
     try:
-        index = expand_module_names.index(module_name)
-        mod = expand_modules[index]
-        return getattr(mod, class_name)
-    except:
-        return None
-    
-
-def _get_expand_module_method(module_name, class_name, method_name):
-    '''
-    Get a method in a module or class(classmethod) if exists
-    Will also check if module is enabled
-    Return None if method not found or not enabled
-    '''
-    try:
-        index = expand_module_names.index(module_name)
-        mod = expand_modules[index]
-        mod = getattr(mod, class_name)
-        return getattr(mod, method_name)
-    except:
-        return None
-
-
-def _execute_expand_module_method(module_name, class_name, method_name, method_args=None):
-    '''
-    Execute a method in a module or class(classmethod) if exists
-    Will also check if module is enabled
-    '''
-    mod = _get_expand_module_method(module_name, class_name, method_name)
-    if mod!=None:
+        obj = getattr(obj, name)
         try:
             if method_args==None:
-                mod()
+                obj()
             else:
-                mod(*method_args)
+                obj(*method_args)
         except:
-            steelsquid_utils.shout()
-    
+            steelsquid_utils.shout("Module error: " + name + "("+str(method_args)+")", is_error=True)
+    except:
+        pass
 
-def _execute_all_expand_modules(class_name, method_name, method_args=None):
+
+def _exec_method_set_started(obj, name, method_args=None, is_started=True):
     '''
-    Execute on alla available expand modules (in expand/)
-    Execute a method in a module or class(classmethod) if exists
-    Will also check if module is enable
+    Execute a method inside a object
+    Also try to set the is_started variable
     '''
-    for mod in expand_modules:
+    try:
+        obj = getattr(obj, name)
+        ok = True
         try:
-            mod = getattr(mod, class_name)
+            if method_args==None:
+                obj()
+            else:
+                obj(*method_args)
+        except:
+            ok=False
+            steelsquid_utils.shout("Module error: " + name + "("+str(method_args)+")", is_error=True)
+        if ok:
+            obj.is_started = is_started
+    except:
+        pass
+
+def _execute_all_modules(class_name, method_name, method_args=None):
+    '''
+    Execute on alla available modules (in modules/)
+    Execute a method in a module or class(classmethod) if exists
+    '''
+    for name, mod in loaded_modules.iteritems():
+        try:
+            if class_name != None:
+                mod = getattr(mod, class_name)
             mod = getattr(mod, method_name)
             try:
                 if method_args==None:
@@ -351,7 +354,10 @@ def _execute_all_expand_modules(class_name, method_name, method_args=None):
                 else:
                     mod(*method_args)
             except:
-                steelsquid_utils.shout()
+                if class_name == None:
+                    steelsquid_utils.shout("Module error: " + name+ "." + method_name + "("+str(method_args)+")", is_error=True)
+                else:
+                    steelsquid_utils.shout("Module error: " + name+ "." + class_name + "." + method_name + "("+str(method_args)+")", is_error=True)
         except:
             pass
         

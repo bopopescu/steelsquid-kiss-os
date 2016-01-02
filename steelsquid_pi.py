@@ -28,7 +28,6 @@ Some useful stuff for Raspberry Pi
 import steelsquid_i2c
 import steelsquid_utils
 import steelsquid_trex
-import steelsquid_event
 import sys
 import time
 import os
@@ -1840,29 +1839,16 @@ def mcp_event_callback_method(address, pin, status):
 if __name__ == '__main__':
     if len(sys.argv)==1:
         from steelsquid_utils import printb
-        printb("IO commands for SteelsquidKissOS. Commands to get/set gpio and other stuff...")
+        printb("IO commands for Steelsquid Kiss OS. Commands to get/set gpio and other stuff...")
         print("This is mostly for test purpuse, all logic should be made in the Steelsquid daemon")
-        print("(e.g. steelsquid_kiss_global.py, expand.py...)")
+        print("(e.g. kiss_expand.py...)")
+        print("This may interrupt for example the LCD, DAC, ADC...(this is only for test)")
         print("")
-        print("You can execute the commands in two ways: direct or event")
-        print("Direct execute the command in a own process outside of Steelsquid daemon, and may ")
-        print("interrupt for example the LCD, DAC, ADC or extra GPIO.")
-        print("Event send a command to the Steelsquid daemon witch in turn execute the command.")
-        print("")
-        print("Event is the preferred way if you want to make test from the command line.")
-        print("Results from a event will not be return from the command itself, will be shouted")
-        print("to all terminals... (events can only send command not receive answers.)")
-        print("This events is mostly ment for test purpuse, inside Steelsquid daemon")
-        print("you should use direct method.")
-        print("")
-        printb("d=direct")
-        printb("e=event")
-        print("")
-        printb("pi <d/e> gpio_get <gpio>")
+        printb("pi gpio_get <gpio>")
         print("Get status of RaspberryPI GPIO")
         print("gpio: 4-26")
         print("")
-        printb("pi <d/e> gpio_set <gpio> <true/false>")
+        printb("pi gpio_set <gpio> <true/false>")
         print("Set status of RaspberryPI GPIO")
         print("gpio: 4-26")
         print("")
@@ -1870,13 +1856,13 @@ if __name__ == '__main__':
         print("Listen for changes on RaspberryPI GPIO")
         print("gpio: 4-26")
         print("")
-        printb("pi <d/e> mcp23017_get <address> <gpio>")
+        printb("pi mcp23017_get <address> <gpio>")
         print("Get status gpio on a MCP23017")
         print("Connect GPIO to gnd (using internal pull-up)")
         print("address: 20-27")
         print("gpio: 0-15")
         print("")
-        printb("pi <d/e> mcp23017_set <address> <gpio> <true/false>")
+        printb("pi mcp23017_set <address> <gpio> <true/false>")
         print("Set a gpio hight or low on a MCP23017")
         print("address: 20-27")
         print("gpio: 0-15")
@@ -1888,83 +1874,83 @@ if __name__ == '__main__':
         print("address: 20-27")
         print("gpio: 0-15")
         print("")
-        printb("pi <d/e> ads1015 <address> <gpio>")
+        printb("pi ads1015 <address> <gpio>")
         print("Read analog in from ADS1015 (0 to 5 v)")
         print("address: 48, 49, 4A, 4B ")
         print("gpio: 0-3")
         print("")
-        printb("pi <d/e> mcp4725 <address> <value>")
+        printb("pi mcp4725 <address> <value>")
         print("Write analog out from MCP4725")
         print("address: 60 ")
         print("value: 0 and 4095")
         print("")
-        printb("pi <d/e> mcp4728 <address> <volt0> <volt1> <volt2> <volt3>")
+        printb("pi mcp4728 <address> <volt0> <volt1> <volt2> <volt3>")
         print("Write analog out from MCP4728")
         print("address: 61")
         print("volt0-3: 0 and 4095")
         print("")
-        printb("pi <d/e> hdd44780 <is_i2c> <text>")
+        printb("pi hdd44780 <is_i2c> <text>")
         print("Print text to HDD44780 compatible LCD (\n or \\ = new line)")
         print("is_i2c: Is the LCD connected by I2C (true/false)")
         print("")
-        printb("pi <d/e> nokia5110 <text>")
+        printb("pi nokia5110 <text>")
         print("Print text to nokia5110  LCD (\n or \\ = new line)")
         print("")
-        printb("pi <d/e> ssd1306 <text>")
+        printb("pi ssd1306 <text>")
         print("Print text to ssd1306 oled LCD (\n or \\ = new line)")
         print("")
-        printb("pi <d/e> hcsr04 <trig_gpio> <echo_gpio>")
+        printb("pi hcsr04 <trig_gpio> <echo_gpio>")
         print("Measure_distance with a with HC-SR04.")
         print("trig_gpio: The trig gpio")
         print("echo_gpio: The echo gpio")
         print("")
-        printb("pi <d/e> pca9685 <servo> <value>")
+        printb("pi pca9685 <servo> <value>")
         print("Move Adafruit 16-channel I2c servo to position (pwm value).")
         print("servo: 0 to 15")
         print("value: min=150, max=600 (may differ between servos)")
         print("")
-        printb("pi <d/e> sabertooth <port> <left> <right>")
+        printb("pi sabertooth <port> <left> <right>")
         print("Set the speed on a sabertooth dc motor controller..")
         print("port: /dev/ttyAMA0, the_port=/dev/ttyUSB0")
         print("left and right: -100% to +100%")
         print("")
-        printb("pi <d/e> trex_motor <left> <right>")
+        printb("pi trex_motor <left> <right>")
         print("Set TREX speed of the dc motors")
         print("left and right: -255 to 255")
         print("")
-        printb("pi <d/e> trex_servo <servo> <position>")
+        printb("pi trex_servo <servo> <position>")
         print("Set TREX servo position")
         print("servo: 1 to 6")
         print("Position: Typically the servo position should be a value between 1000 and 2000 although it will vary depending on the servos used")
         print("")
-        printb("pi <d/e> trex_status")
+        printb("pi trex_status")
         print("Get status from trex")
         print(" - Battery voltage:   An integer that is 100x the actual voltage")
         print(" - Motor current:  Current drawn by the motor in mA")
         print(" - Accelerometer")
         print(" - Impact")
         print("")
-        printb("pi <d/e> diablo <left> <right>")
+        printb("pi diablo <left> <right>")
         print("Drive Piborg diablo motor board")
         print("left and right: -1000 to 1000")
         print("")
-        printb("pi <d/e> servo12c <servo> <position>")
+        printb("pi servo12c <servo> <position>")
         print("Move servo on a 12 servos with I2C Servo Controller IC.")
         print("http://www.hobbytronics.co.uk/arduino-servo-controller")
         print("Servo: 0 to 11")
         print("Position: 0 to 255")
         print("")
-        printb("pi <d/e> mpu6050_accel")
+        printb("pi mpu6050_accel")
         print("Read mpu-6050 accelerometer data.")
         print("SparkFun Triple Axis Accelerometer and Gyro Breakout - MPU-6050")
         print("https://www.sparkfun.com/products/11028")
         print("")
-        printb("pi <d/e> mpu6050_movement")
+        printb("pi mpu6050_movement")
         print("Read mpu-6050 gyro data.")
         print("SparkFun Triple Axis Accelerometer and Gyro Breakout - MPU-6050")
         print("https://www.sparkfun.com/products/11028")
         print("")
-        printb("pi <d/e> mpu6050_rotation")
+        printb("pi mpu6050_rotation")
         print("Read mpu-6050 rotation angle in degrees for both the X & Y.")
         print("SparkFun Triple Axis Accelerometer and Gyro Breakout - MPU-6050")
         print("https://www.sparkfun.com/products/11028")
@@ -1979,18 +1965,18 @@ if __name__ == '__main__':
         print("SparkFun Triple Axis Accelerometer and Gyro Breakout - MPU-6050")
         print("https://www.sparkfun.com/products/11028")
         print("")
-        printb("pi <d/e> po12_digital_out <channel> <status>")
+        printb("pi po12_digital_out <channel> <status>")
         print("Set the digital out channel to hight or low on the P011/12 ADC")
         print("http://www.pichips.co.uk/index.php/P011_ADC#rpii2c")
         print("channel = 1 to 3")
         print("status = True/False")
         print("")
-        printb("pi <d/e> po12_adc_pullup <enable>")
+        printb("pi po12_adc_pullup <enable>")
         print("By default there are weak pull up resistors internally attached to the ADC lines")
         print("http://www.pichips.co.uk/index.php/P011_ADC#rpii2c")
         print("enable = true/false")
         print("")
-        printb("pi <d/e> po12_adc_vref <vref>")
+        printb("pi po12_adc_vref <vref>")
         print("Set Reference Voltage")
         print("http://www.pichips.co.uk/index.php/P011_ADC#rpii2c")
         print("vref = 1.024")
@@ -1998,13 +1984,13 @@ if __name__ == '__main__':
         print("       4.096")
         print("       Voltage on the +V pin")
         print("")
-        printb("pi <d/e> po12_adc <channel>")
+        printb("pi po12_adc <channel>")
         print("Read the analog value in on the P011/12 ADC")
         print("http://www.pichips.co.uk/index.php/P011_ADC#rpii2c")
         print("channel = 1 to 8")
         print("Return: 0 to 1023")
         print("")
-        printb("pi <d/e> po12_adc_volt <channel>")
+        printb("pi po12_adc_volt <channel>")
         print("Read the analog voltage in on the P011/12 ADC")
         print("http://www.pichips.co.uk/index.php/P011_ADC#rpii2c")
         print("channel = 1 to 8")
@@ -2015,13 +2001,13 @@ if __name__ == '__main__':
         print("http://www.pichips.co.uk/index.php/P011_ADC#rpii2c")
         print("channel = 1 to 8")
         print("")
-        printb("pi <d/e> po16_gpio_pullup <gpio> <use_pullup>")
+        printb("pi po16_gpio_pullup <gpio> <use_pullup>")
         print("Sets a weak pull up on the specified pin on the PO16")
         print("http://www.pichips.co.uk/index.php/P015_GPIO_with_PWM")
         print("gpio = 1 to 8")
         print("use_pullup: True/False")
         print("")
-        printb("pi <d/e> po16_gpio_get <gpio>")
+        printb("pi po16_gpio_get <gpio>")
         print("Read the state of gpio pin on the PO16")
         print("This will return true if the gpio is connectid to ground")
         print("http://www.pichips.co.uk/index.php/P015_GPIO_with_PWM")
@@ -2033,357 +2019,173 @@ if __name__ == '__main__':
         print("Set the state of gpio pin on the PO16")
         print("gpio = 1 to 8")
         print("")
-        printb("pi <d/e> po16_gpio_set <gpio> <status>")
+        printb("pi po16_gpio_set <gpio> <status>")
         print("Set the state of gpio pin on the PO16")
         print("http://www.pichips.co.uk/index.php/P015_GPIO_with_PWM")
         print("gpio = 1 to 8")
         print("status = True/False")
         print("")
-        printb("pi <d/e> po16_pwm <channel> <value>")
+        printb("pi po16_pwm <channel> <value>")
         print("Set PWM value on channel on the PO16")
         print("http://www.pichips.co.uk/index.php/P015_GPIO_with_PWM")
         print("channel = 1 to 4")
         print("value = 0 to 1023")
         print("")
-        printb("pi <d/e> pcf8591_read <pin>")
+        printb("pi pcf8591_read <pin>")
         print("Read analog value from pcf8591")
         print("http://dx.com/p/pcf8591-8-bit-a-d-d-a-converter-module-150190")
         print("pin = 0 to 3")
         print("")
-        printb("pi <d/e> pcf8591_write <value>")
+        printb("pi pcf8591_write <value>")
         print("Set analog out value on pcf8591")
         print("http://dx.com/p/pcf8591-8-bit-a-d-d-a-converter-module-150190")
         print("value = 0 to 255")
         print("")
-        printb("pi <d/e> hdc1008")
+        printb("pi hdc1008")
         print("Read Temperature + Humidity from HDC1008")
         print("https://learn.adafruit.com/adafruit-hdc1008-temperature-and-humidity-sensor-breakout/overview")
         print("Temperatur in celsius and humidity in %")
     else:
-        manner = sys.argv[1]
-        command = sys.argv[2]
+        command = sys.argv[1]
+        if len(sys.argv)>2:
+            para1 = sys.argv[2]
         if len(sys.argv)>3:
-            para1 = sys.argv[3]
+            para2 = sys.argv[3]
         if len(sys.argv)>4:
-            para2 = sys.argv[4]
+            para3 = sys.argv[4]
         if len(sys.argv)>5:
-            para3 = sys.argv[5]
+            para4 = sys.argv[5]
         if len(sys.argv)>6:
-            para4 = sys.argv[6]
-        if len(sys.argv)>7:
-            para5 = sys.argv[7]
+            para5 = sys.argv[6]
         if command == "gpio_get":
-            if manner == "d" or manner == "direct":
-                print gpio_get(para1)
-            elif manner == "e" or manner == "event":
-                steelsquid_event.broadcast_event_external("pi_io_event", ["gpio_get", para1])
-            else:
-                print "Expected: direct (d), event (e)"
+            print gpio_get(para1)
         elif command == "gpio_set":
-            if manner == "d" or manner == "direct":
-                gpio_set(para1, steelsquid_utils.to_boolean(para2))
-            elif manner == "e" or manner == "event":
-                steelsquid_event.broadcast_event_external("pi_io_event", ["gpio_set", para1, para2])
-            else:
-                print "Expected: direct (d), event (e)"
+            gpio_set(para1, steelsquid_utils.to_boolean(para2))
         elif command == "gpio_event":
-            if manner == "d" or manner == "direct":
-                gpio_event(para1, gpio_event_callback_method)
-                raw_input("Press any key to exit!")
-            else:
-                print "Expected: direct (d)"
+            gpio_event(para1, gpio_event_callback_method)
+            raw_input("Press any key to exit!")
         elif command == "mcp23017_get":
-            if manner == "d" or manner == "direct":
-                print mcp23017_get(para1, para2)
-            elif manner == "e" or manner == "event":
-                steelsquid_event.broadcast_event_external("pi_io_event", ["mcp23017_get", para1, para2])
-            else:
-                print "Expected: direct (d), event (e)"
+            print mcp23017_get(para1, para2)
         elif command == "mcp23017_set":
-            if manner == "d" or manner == "direct":
-                mcp23017_set(para1, para2, steelsquid_utils.to_boolean(para3))
-            elif manner == "e" or manner == "event":
-                steelsquid_event.broadcast_event_external("pi_io_event", ["mcp23017_set", para1, para2, para3])
-            else:
-                print "Expected: direct (d), event (e)"
+            mcp23017_set(para1, para2, steelsquid_utils.to_boolean(para3))
         elif command == "mcp23017_event":
-            if manner == "d" or manner == "direct":
-                mcp23017_event(para1, para2, mcp_event_callback_method)
-                raw_input("Press any key to exit!")
-            else:
-                print "Expected: direct (d)"
+            mcp23017_event(para1, para2, mcp_event_callback_method)
+            raw_input("Press any key to exit!")
         elif command == "ads1015":
-            if manner == "d" or manner == "direct":
-                print ads1015(para1, para2)
-            elif manner == "e" or manner == "event":
-                steelsquid_event.broadcast_event_external("pi_io_event", ["ads1015", para1, para2])
-            else:
-                print "Expected: direct (d), event (e)"
+            print ads1015(para1, para2)
         elif command == "mcp4725":
-            if manner == "d" or manner == "direct":
-                mcp4725(para1, para2)
-            elif manner == "e" or manner == "event":
-                steelsquid_event.broadcast_event_external("pi_io_event", ["mcp4725", para1, para2])
-            else:
-                print "Expected: direct (d), event (e)"
+            mcp4725(para1, para2)
         elif command == "mcp4728":
-            if manner == "d" or manner == "direct":
-                mcp4728(para1, para2, para3, para4, para5)
-            elif manner == "e" or manner == "event":
-                steelsquid_event.broadcast_event_external("pi_io_event", ["mcp4728", para1, para2, para3, para4, para5])
-            else:
-                print "Expected: direct (d), event (e)"
+            mcp4728(para1, para2, para3, para4, para5)
         elif command == "hdd44780":
-            if manner == "d" or manner == "direct":
-                if steelsquid_utils.to_boolean(para1):
-                    hdd44780_write(para2, number_of_seconds = 10, is_i2c=True)
-                else:
-                    hdd44780_write(para2, number_of_seconds = 10, is_i2c=False)
-            elif manner == "e" or manner == "event":
-                steelsquid_event.broadcast_event_external("pi_io_event", ["hdd44780", para1, para2])
+            if steelsquid_utils.to_boolean(para1):
+                hdd44780_write(para2, number_of_seconds = 10, is_i2c=True)
             else:
-                print "Expected: direct (d), event (e)"
+                hdd44780_write(para2, number_of_seconds = 10, is_i2c=False)
         elif command == "nokia5110":
-            if manner == "d" or manner == "direct":
-                 nokia5110_write(para1, number_of_seconds = 10)
-            elif manner == "e" or manner == "event":
-                steelsquid_event.broadcast_event_external("pi_io_event", ["nokia5110", para1])
-            else:
-                print "Expected: direct (d), event (e)"
+            nokia5110_write(para1, number_of_seconds = 10)
         elif command == "ssd1306":
-            if manner == "d" or manner == "direct":
-                 ssd1306_write(para1, number_of_seconds = 10)
-            elif manner == "e" or manner == "event":
-                steelsquid_event.broadcast_event_external("pi_io_event", ["ssd1306", para1])
-            else:
-                print "Expected: direct (d), event (e)"
+            ssd1306_write(para1, number_of_seconds = 10)
         elif command == "hcsr04":
-            if manner == "d" or manner == "direct":
-                 print hcsr04_distance(para1, para2)
-            elif manner == "e" or manner == "event":
-                steelsquid_event.broadcast_event_external("pi_io_event", ["hcsr04", para1, para2])
-            else:
-                print "Expected: direct (d), event (e)"
+            print hcsr04_distance(para1, para2)
         elif command == "pca9685":
-            if manner == "d" or manner == "direct":
-                 pca9685_move(para1, para2)
-            elif manner == "e" or manner == "event":
-                steelsquid_event.broadcast_event_external("pi_io_event", ["pca9685", para1, para2])
-            else:
-                print "Expected: direct (d), event (e)"
+            pca9685_move(para1, para2)
         elif command == "sabertooth":
-            if manner == "d" or manner == "direct":
-                 sabertooth_motor_speed(para2, para3, para1)
-            elif manner == "e" or manner == "event":
-                steelsquid_event.broadcast_event_external("pi_io_event", ["sabertooth", para1, para2, para3])
-            else:
-                print "Expected: direct (d), event (e)"
+            sabertooth_motor_speed(para2, para3, para1)
         elif command == "trex_motor":
-            if manner == "d" or manner == "direct":
-                 trex_motor(para1, para2)
-            elif manner == "e" or manner == "event":
-                steelsquid_event.broadcast_event_external("pi_io_event", ["trex_motor", para1, para2])
-            else:
-                print "Expected: direct (d), event (e)"
+            trex_motor(para1, para2)
         elif command == "trex_servo":
-            if manner == "d" or manner == "direct":
-                 trex_servo(para1, para2)
-            elif manner == "e" or manner == "event":
-                steelsquid_event.broadcast_event_external("pi_io_event", ["trex_servo", para1, para2])
-            else:
-                print "Expected: direct (d), event (e)"
+            trex_servo(para1, para2)
         elif command == "trex_status":
-            if manner == "d" or manner == "direct":
-                battery_voltage, left_motor_current, right_motor_current, accelerometer_x, accelerometer_y, accelerometer_z, impact_x, impact_y, impact_z = trex_status()
-                answer = []
-                answer.append("battery_voltage: ")
-                answer.append(str(battery_voltage))
-                answer.append("\n")
-                answer.append("left_motor_current: ")
-                answer.append(str(left_motor_current))
-                answer.append("\n")
-                answer.append("right_motor_current: ")
-                answer.append(str(right_motor_current))
-                answer.append("\n")
-                answer.append("accelerometer_x: ")
-                answer.append(str(accelerometer_x))
-                answer.append("\n")
-                answer.append("accelerometer_y: ")
-                answer.append(str(accelerometer_y))
-                answer.append("\n")
-                answer.append("accelerometer_z: ")
-                answer.append(str(accelerometer_z))
-                answer.append("\n")
-                answer.append("impact_x: ")
-                answer.append(str(impact_x))
-                answer.append("\n")
-                answer.append("impact_y: ")
-                answer.append(str(impact_y))
-                answer.append("\n")
-                answer.append("impact_z: ")
-                answer.append(str(impact_z))
-                print "".join(answer)
-            elif manner == "e" or manner == "event":
-                steelsquid_event.broadcast_event_external("pi_io_event", ["trex_status"])
-            else:
-                print "Expected: direct (d), event (e)"
+            battery_voltage, left_motor_current, right_motor_current, accelerometer_x, accelerometer_y, accelerometer_z, impact_x, impact_y, impact_z = trex_status()
+            answer = []
+            answer.append("battery_voltage: ")
+            answer.append(str(battery_voltage))
+            answer.append("\n")
+            answer.append("left_motor_current: ")
+            answer.append(str(left_motor_current))
+            answer.append("\n")
+            answer.append("right_motor_current: ")
+            answer.append(str(right_motor_current))
+            answer.append("\n")
+            answer.append("accelerometer_x: ")
+            answer.append(str(accelerometer_x))
+            answer.append("\n")
+            answer.append("accelerometer_y: ")
+            answer.append(str(accelerometer_y))
+            answer.append("\n")
+            answer.append("accelerometer_z: ")
+            answer.append(str(accelerometer_z))
+            answer.append("\n")
+            answer.append("impact_x: ")
+            answer.append(str(impact_x))
+            answer.append("\n")
+            answer.append("impact_y: ")
+            answer.append(str(impact_y))
+            answer.append("\n")
+            answer.append("impact_z: ")
+            answer.append(str(impact_z))
+            print "".join(answer)
         elif command == "diablo":
-            if manner == "d" or manner == "direct":
-                 diablo_motor_1(para1)
-                 diablo_motor_2(para2)
-            elif manner == "e" or manner == "event":
-                steelsquid_event.broadcast_event_external("pi_io_event", ["diablo", para1, para2])
-            else:
-                print "Expected: direct (d), event (e)"
+            diablo_motor_1(para1)
+            diablo_motor_2(para2)
         elif command == "servo12c":
-            if manner == "d" or manner == "direct":
-                 servo12c(para1, para2)
-            elif manner == "e" or manner == "event":
-                steelsquid_event.broadcast_event_external("pi_io_event", ["servo12c", para1, para2])
-            else:
-                print "Expected: direct (d), event (e)"
+            servo12c(para1, para2)
         elif command == "mpu6050_accel":
-            if manner == "d" or manner == "direct":
-                 print mpu6050_accel()
-            elif manner == "e" or manner == "event":
-                steelsquid_event.broadcast_event_external("pi_io_event", ["mpu6050_accel"])
-            else:
-                print "Expected: direct (d), event (e)"
+            print mpu6050_accel()
         elif command == "mpu6050_movement":
-            if manner == "d" or manner == "direct":
-                 print mpu6050_movement()
-            elif manner == "e" or manner == "event":
-                steelsquid_event.broadcast_event_external("pi_io_event", ["mpu6050_movement"])
-            else:
-                print "Expected: direct (d), event (e)"
+            print mpu6050_movement()
         elif command == "mpu6050_rotation":
-            if manner == "d" or manner == "direct":
-                 print mpu6050_rotation()
-            elif manner == "e" or manner == "event":
-                steelsquid_event.broadcast_event_external("pi_io_event", ["mpu6050_rotation"])
-            else:
-                print "Expected: direct (d), event (e)"
+            print mpu6050_rotation()
         elif command == "mpu6050_movement_event":
-            if manner == "d" or manner == "direct":
-                def movment_change(x, y, z):
-                    sys.stdout.write("X="+str(x).ljust(8)+"Y="+str(y).ljust(8)+"Z="+str(z).ljust(8) + "\r")
-                    sys.stdout.flush()
-                mpu6050_movement_event(movment_change)
-                raw_input()
-            else:
-                print "Expected: direct (d)"
+            def movment_change(x, y, z):
+                sys.stdout.write("X="+str(x).ljust(8)+"Y="+str(y).ljust(8)+"Z="+str(z).ljust(8) + "\r")
+                sys.stdout.flush()
+            mpu6050_movement_event(movment_change)
+            raw_input()
         elif command == "mpu6050_rotation_event":
-            if manner == "d" or manner == "direct":
-                def rotation_changed(x, y):
-                    sys.stdout.write("X="+str(x).ljust(20)+"Y="+str(y).ljust(20) + "\r")
-                    sys.stdout.flush()
-                mpu6050_rotation_event(rotation_changed)
-                raw_input()
-            else:
-                print "Expected: direct (d)"
+            def rotation_changed(x, y):
+                sys.stdout.write("X="+str(x).ljust(20)+"Y="+str(y).ljust(20) + "\r")
+                sys.stdout.flush()
+            mpu6050_rotation_event(rotation_changed)
+            raw_input()
         elif command == "po12_digital_out":
-            if manner == "d" or manner == "direct":
-                 po12_digital_out(para1, para2)
-            elif manner == "e" or manner == "event":
-                steelsquid_event.broadcast_event_external("pi_io_event", ["po12_digital_out", para1, para2])
-            else:
-                print "Expected: direct (d), event (e)"
+            po12_digital_out(para1, para2)
         elif command == "po12_adc_pullup":
-            if manner == "d" or manner == "direct":
-                 po12_adc_pullup(para1)
-            elif manner == "e" or manner == "event":
-                steelsquid_event.broadcast_event_external("pi_io_event", ["po12_adc_pullup", para1])
-            else:
-                print "Expected: direct (d), event (e)"
+            po12_adc_pullup(para1)
         elif command == "po12_adc_vref":
-            if manner == "d" or manner == "direct":
-                 po12_adc_vref(para1)
-            elif manner == "e" or manner == "event":
-                steelsquid_event.broadcast_event_external("pi_io_event", ["po12_adc_vref", para1])
-            else:
-                print "Expected: direct (d), event (e)"
+            po12_adc_vref(para1)
         elif command == "po12_adc":
-            if manner == "d" or manner == "direct":
-                 print po12_adc(para1)
-            elif manner == "e" or manner == "event":
-                steelsquid_event.broadcast_event_external("pi_io_event", ["po12_adc", para1])
-            else:
-                print "Expected: direct (d), event (e)"
+            print po12_adc(para1)
         elif command == "po12_adc_volt":
-            if manner == "d" or manner == "direct":
-                 print po12_adc_volt(para1)
-            elif manner == "e" or manner == "event":
-                steelsquid_event.broadcast_event_external("pi_io_event", ["po12_adc_volt", para1])
-            else:
-                print "Expected: direct (d), event (e)"
+            print po12_adc_volt(para1)
         elif command == "po12_adc_event":
-            if manner == "d" or manner == "direct":
-                def on_change(channel, voltage):
-                    sys.stdout.write("Voltage="+str(voltage).ljust(20) + "\r")
-                    sys.stdout.flush()
-                po12_adc_event(para1, on_change)
-                raw_input()                
-            else:
-                print "Expected: direct (d)"
+            def on_change(channel, voltage):
+                sys.stdout.write("Voltage="+str(voltage).ljust(20) + "\r")
+                sys.stdout.flush()
+            po12_adc_event(para1, on_change)
+            raw_input()                
         elif command == "po16_gpio_pullup":
-            if manner == "d" or manner == "direct":
-                 po16_gpio_pullup(para1, para2)
-            elif manner == "e" or manner == "event":
-                steelsquid_event.broadcast_event_external("pi_io_event", ["po16_gpio_pullup", para1, para2])
-            else:
-                print "Expected: direct (d), event (e)"
+            po16_gpio_pullup(para1, para2)
         elif command == "po16_gpio_get":
-            if manner == "d" or manner == "direct":
-                 print po16_gpio_get(para1)
-            elif manner == "e" or manner == "event":
-                steelsquid_event.broadcast_event_external("pi_io_event", ["po16_gpio_get", para1])
-            else:
-                print "Expected: direct (d), event (e)"
+            print po16_gpio_get(para1)
         elif command == "po16_gpio_event":
-            if manner == "d" or manner == "direct":
-                def on_change(gpio, value):
-                    sys.stdout.write(gpio + "="+str(value).ljust(10) + "\r")
-                    sys.stdout.flush()
-                po16_gpio_event(para1, on_change)
-                raw_input()                
-            else:
-                print "Expected: direct (d)"
+            def on_change(gpio, value):
+                sys.stdout.write(gpio + "="+str(value).ljust(10) + "\r")
+                sys.stdout.flush()
+            po16_gpio_event(para1, on_change)
+            raw_input()                
         elif command == "po16_gpio_set":
-            if manner == "d" or manner == "direct":
-                 po16_gpio_set(para1, para2)
-            elif manner == "e" or manner == "event":
-                steelsquid_event.broadcast_event_external("pi_io_event", ["po16_gpio_set", para1, para2])
-            else:
-                print "Expected: direct (d), event (e)"
+            po16_gpio_set(para1, para2)
         elif command == "po16_pwm":
-            if manner == "d" or manner == "direct":
-                 po16_pwm(para1, para2)
-            elif manner == "e" or manner == "event":
-                steelsquid_event.broadcast_event_external("pi_io_event", ["po16_pwm", para1, para2])
-            else:
-                print "Expected: direct (d), event (e)"
+            po16_pwm(para1, para2)
         elif command == "pcf8591_read":
-            if manner == "d" or manner == "direct":
-                 print pcf8591_read(para1)
-            elif manner == "e" or manner == "event":
-                steelsquid_event.broadcast_event_external("pi_io_event", ["pcf8591_read", para1])
-            else:
-                print "Expected: direct (d), event (e)"
+            print pcf8591_read(para1)
         elif command == "pcf8591_write":
-            if manner == "d" or manner == "direct":
-                 pcf8591_write(para1)
-            elif manner == "e" or manner == "event":
-                steelsquid_event.broadcast_event_external("pi_io_event", ["pcf8591_write", para1])
-            else:
-                print "Expected: direct (d), event (e)"
+            pcf8591_write(para1)
         elif command == "hdc1008":
-            if manner == "d" or manner == "direct":
-                 temp, hum = hdc1008()
-                 print "Temperature: " + str(round(temp, 1)) + "C\nHumidity: " + str(round(hum, 1)) + "%"
-            elif manner == "e" or manner == "event":
-                steelsquid_event.broadcast_event_external("pi_io_event", ["hdc1008"])
-            else:
-                print "Expected: direct (d), event (e)"
+            temp, hum = hdc1008()
+            print "Temperature: " + str(round(temp, 1)) + "C\nHumidity: " + str(round(hum, 1)) + "%"
         else:
             print "Unknown command!!!"
             

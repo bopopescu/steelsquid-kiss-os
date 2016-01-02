@@ -81,7 +81,6 @@ Can also be a file upload: like this:
 import steelsquid_server
 import BaseHTTPServer
 import steelsquid_utils
-import steelsquid_event
 import os
 import urllib
 import datetime

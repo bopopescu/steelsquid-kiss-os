@@ -18,8 +18,6 @@ http://www.steelsquid.org/steelsquid-piio-board
 import steelsquid_utils
 import steelsquid_pi
 import steelsquid_trex
-import steelsquid_event
-import steelsquid_kiss_global
 from decimal import Decimal
 import time
 
@@ -956,7 +954,7 @@ if __name__ == '__main__':
         from steelsquid_utils import printb
         printb("Send commands to the Steelsquid PIIO board from the command line.")
         printb("This is mostly ment for test purpuse.")
-        printb("You should use it from example steelsquid_kiss_expand.py running inside the steelsquid daemon.")
+        printb("You should use it from example kiss_expand.py running inside the steelsquid daemon.")
         printb("This may interupt the steelsquid daemon so for example the power off button stop working.")
         print("")
         printb("steelsquid piio")
@@ -1148,8 +1146,7 @@ if __name__ == '__main__':
         elif command == "buz":
             buz(para1)
         elif command == "lcd":
-            #Sending a event to the steelsquid daemon instead of executing it directly
-            steelsquid_event.broadcast_event_external("pi_io_event", ["ssd1306", para1])
+            lcd(para1)
         elif command == "gpio_get":
             print gpio_get(para1)
         elif command == "gpio_set":

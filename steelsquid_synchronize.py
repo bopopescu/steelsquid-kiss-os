@@ -23,8 +23,8 @@ Will check for changes in this files:
  - steelsquid-kiss-os.sh
  - Files (.py) in the directory this script execute from
    Will be copied to /opt/steelsquid/python
- - Files (.py) under the expand directory
-   Will be copied to /opt/steelsquid/python/expand
+ - Files (.py) under the modules directory
+   Will be copied to /opt/steelsquid/python/modules
  - Files in the web directory
    Will be copied to /opt/steelsquid/web
  - Files under the img directory
@@ -75,7 +75,7 @@ python_files = []
 web_files = []
 extra_files = []
 img_files = []
-expand_files = []
+module_files = []
 
 ssh = []
 sftp = []
@@ -95,7 +95,7 @@ def load_data():
     global web_files
     global extra_files
     global img_files
-    global expand_files
+    global module_files
     global ssh
     global sftp
     global channel
@@ -105,10 +105,10 @@ def load_data():
     for tfile in os.listdir("."):
         if tfile.endswith(".py"):
             python_files.append([tfile, 0])
-    if os.path.isdir("expand"):
-        for tfile in os.listdir("expand"):
+    if os.path.isdir("modules"):
+        for tfile in os.listdir("modules"):
             if tfile.endswith(".py"):
-                expand_files.append(["expand/"+tfile, 0])
+                module_files.append(["modules/"+tfile, 0])
     if os.path.isdir("web"):
         for tfile in os.listdir("web"):
             web_files.append(["web/"+tfile, 0])
@@ -171,7 +171,7 @@ def listener():
                 else:
                     transmit(file_name, "/opt/steelsquid/python/"+file_name)
                     send_command("chmod +x /opt/steelsquid/python/"+file_name)
-        for o in expand_files:
+        for o in module_files:
             file_name = o[0]
             file_last = o[1]
             file_change = os.path.getmtime(file_name)
@@ -262,9 +262,10 @@ def send_command(command):
     '''
     for x in range(0, len(base_remote_server)):
         try:
-            ssh[x].exec_command(command)
+            ssh[x].exec_command("export TERM=xterm;export PYTHONPATH=/opt/steelsquid/python:/usr/lib/python3/dist-packages;"+command)
         except:
             try:
+                connect()
                 ssh[x].exec_command("export TERM=xterm;export PYTHONPATH=/opt/steelsquid/python:/usr/lib/python3/dist-packages;"+command)
             except:
                 pass
@@ -296,18 +297,51 @@ def send_command_read_answer(command):
         except:
             try:
                 connect()
-                stdin, stdout, stderr = ssh[x].exec_command(command)
+                stdin, stdout, stderr = ssh[x].exec_command("export TERM=xterm;export PYTHONPATH=/opt/steelsquid/python:/usr/lib/python3/dist-packages;"+command)
+                printempty = True
                 for line in stdout.readlines():
                     line = line.strip().replace("\n","").replace("\r","")
                     if len(line)>0:
+                        printempty = True
                         print line
+                    elif printempty:
+                        printempty = False
+                        print
+                printempty = True
                 for line in stderr.readlines():
-                    line = line.strip().replace("\n","").replace("\r","")
                     if len(line)>0:
+                        printempty = True
                         print line
+                    elif printempty:
+                        printempty = False
+                        print
             except:
                 pass
-
+            
+            
+def send_command_return_answer(command):
+    '''
+    '''
+    answer = []
+    if len(base_remote_server) > 0:
+        try:
+            stdin, stdout, stderr = ssh[0].exec_command("export TERM=xterm;export PYTHONPATH=/opt/steelsquid/python:/usr/lib/python3/dist-packages;"+command)
+            for line in stdout.readlines():
+                line = line.replace("\n","").replace("\r","")
+                answer.append(line)
+        except:
+            try:
+                answer = []
+                connect()
+                stdin, stdout, stderr = ssh[0].exec_command("export TERM=xterm;export PYTHONPATH=/opt/steelsquid/python:/usr/lib/python3/dist-packages;"+command)
+                for line in stdout.readlines():
+                    line = line.replace("\n","").replace("\r","")
+                    answer.append(line)
+            except:
+                import steelsquid_utils
+                steelsquid_utils.shout()
+    return answer
+                    
 
 def listen_for_std(x):
     '''
@@ -392,17 +426,17 @@ def print_menu():
     print " H : help    : Show this help"
     print " Q : quit    : This program will terminate"
     print " T : test    : Execute the /root/test.py script"
-    print " M : module  : Reload the expand modules (/opt/steelsquid/python/expand/...)"
+    print " M : module  : Reload the modules (/opt/steelsquid/python/modules/...)"
     print " S : service : Start/Restart steelsquid service (implememt all changes)"
     print " K : kill    : Stop steelsquid service"
     print " R : reboot  : Reboot the remote machine"
 
-    print " L : list    : List modules in expand/ (see if enabled or not)"
-    print " N : new     : Create new module in expand/ (copy steelsquid_kiss_expand.py)"
-    print " A : annul   : Delete a module in expand/ (You can not undo this!!!)"
+    print " L : list    : List modules in modules/ (see if enabled or not)"
+    print " N : new     : Create new module in modules/ (copy kiss_expand.py)"
+    print " A : annul   : Delete a module in modules/ (You can not undo this!!!)"
 
-    print " E : enable  : Enable a module in expand/ (will start on boot)"
-    print " D : disable : Disable a module in expand/ (will not start on boot)"
+    print " E : enable  : Enable a module in modules/ (will start on boot)"
+    print " D : disable : Disable a module in modules/ (will not start on boot)"
 
     print " W : web     : Create new HTML-file in web/ (copy template.html)"
     print " V : delweb  : Delete a HTML-file in web/ (You can not undo this!!!)"
@@ -437,8 +471,20 @@ if __name__ == '__main__':
         elif answer == "Q" or answer == "q" or answer == "quit":
             cont = False
         elif answer == "M" or answer == "m" or answer == "module":
-            log("Request reload of custom expand modules")
-            send_command("event reload expand")
+            an = send_command_return_answer("steelsquid module-list-nr")
+            for line in an:
+                print line
+            nr = raw_input('Enter number of the module to reload (1, 2, 3, ..., empty=all): ')
+            if nr == "":
+                log("Request reload of all modules")
+                send_command("event reload")
+            else:
+                for line in an:
+                    if len(line)>0:
+                        if line[0]==nr:
+                            mod=line.rsplit(None, 1)[-1]
+                            log("Request reload of module: " + mod)
+                            send_command("event reload " + mod)
         elif answer == "S" or answer == "s" or answer == "service":
             log("Request service restart")
             send_command("steelsquid restart")
@@ -452,28 +498,28 @@ if __name__ == '__main__':
             name = raw_input('Enter name of module to create: ')
             if not name.endswith(".py"):
                 name = name+".py"
-            if not os.path.isfile("expand/"+name):
-                log("Creating new module "+name +" in expand/\nRestart the steelsquid service for this to take effect (type A and enter)")
-                shutil.copy("expand/steelsquid_kiss_expand.py", "expand/"+name)
-                expand_files.append(["expand/"+name, 0])
+            if not os.path.isfile("modules/"+name):
+                log("Creating new module "+name +" in modules/\nRestart the steelsquid service for this to take effect (type A and enter)")
+                shutil.copy("modules/kiss_expand.py", "modules/"+name)
+                module_files.append(["modules/"+name, 0])
             else:
                 log("A module with that name already exists!")
         elif answer == "A" or answer == "a" or answer == "annul":
             name = raw_input('Enter name of module to delete: ')
             if not name.endswith(".py"):
                 name = name+".py"
-            if os.path.isfile("expand/"+name):
-                log("Delete module "+name +" in expand/\nRestart the steelsquid service for this to take effect (type A and enter)")
+            if os.path.isfile("modules/"+name):
+                log("Delete module "+name +" in modules/\nRestart the steelsquid service for this to take effect (type A and enter)")
                 i = 0
                 deli = -1
-                for p in expand_files:
-                    if p[0]=="expand/"+name:
+                for p in module_files:
+                    if p[0]=="modules/"+name:
                         deli = i
                     i=i+1
                 if deli!=-1:
-                    del expand_files[deli]
-                os.remove("expand/"+name)
-                send_command_read_answer("rm /opt/steelsquid/python/expand/"+name)
+                    del module_files[deli]
+                os.remove("modules/"+name)
+                send_command_read_answer("rm /opt/steelsquid/python/modules/"+name)
             else:
                 log("A module with that name not found!")
         elif answer == "W" or answer == "w" or answer == "web":
@@ -510,11 +556,27 @@ if __name__ == '__main__':
         elif answer == "L" or answer == "l" or answer == "list":
             send_command_read_answer("steelsquid module-list")
         elif answer == "E" or answer == "e" or answer == "enable":
-            name = raw_input('Enter name of module to enable: ')
-            send_command_read_answer("steelsquid module "+name+" on")
+            an = send_command_return_answer("steelsquid module-list-nr")
+            for line in an:
+                print line
+            nr = raw_input('Enter number of the module to enable (1, 2, 3...: ')
+            for line in an:
+                if len(line)>0:
+                    if line[0]==nr:
+                        mod=line.rsplit(None, 1)[-1]
+                        log("Request enable of module: " + mod)
+                        send_command("steelsquid module "+mod+" on")
         elif answer == "D" or answer == "d" or answer == "disable":
-            name = raw_input('Enter name of module to disable: ')
-            send_command_read_answer("steelsquid module "+name+" off")
+            an = send_command_return_answer("steelsquid module-list-nr")
+            for line in an:
+                print line
+            nr = raw_input('Enter number of the module to disable (1, 2, 3...: ')
+            for line in an:
+                if len(line)>0:
+                    if line[0]==nr:
+                        mod=line.rsplit(None, 1)[-1]
+                        log("Request disable of module: " + mod)
+                        send_command("steelsquid module "+mod+" off")
         elif len(answer.strip())>0:
             send_command_read_answer(answer)
     disconnect()

@@ -12,7 +12,6 @@ Some useful functions.
 '''
 
 
-import steelsquid_event
 import subprocess
 from subprocess import Popen, PIPE, STDOUT
 import uuid
@@ -36,6 +35,7 @@ from email import Encoders
 import re
 from sets import Set
 import types
+
 
 STEELSQUID_FOLDER = "/opt/steelsquid"
 cach_credentionals = []
@@ -341,12 +341,12 @@ def printb(string):
     print('\033[1m' + string + '\033[0m')
 
 
-def shout_time(message, to_lcd=True, debug=False, is_error=False, always_show=False, leave_on_lcd = False):
+def shout_time(message, to_lcd=True, debug=False, is_error=False, always_show=False, leave_on_lcd = False, wait_for_finish=True):
     '''
     Shout with time
     '''
     message = str(message)
-    shout(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "\n" + message, to_lcd, debug, is_error, always_show, leave_on_lcd)
+    shout(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "\n" + message, to_lcd, debug, is_error, always_show, leave_on_lcd, wait_for_finish)
 
 
 def debug(message):
@@ -358,7 +358,7 @@ def debug(message):
     shout(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " " + message, to_lcd=False, debug=True, is_error=False, always_show=True, leave_on_lcd = False)
 
 
-def shout(string=None, to_lcd=True, debug=False, is_error=False, always_show=False, leave_on_lcd = False):
+def shout(string=None, to_lcd=True, debug=False, is_error=False, always_show=False, leave_on_lcd = False, wait_for_finish=True):
     '''
     Send message to tty1, wall notify-send
     If a raspberry-pi try to write to LCD
@@ -370,6 +370,7 @@ def shout(string=None, to_lcd=True, debug=False, is_error=False, always_show=Fal
                         If false the sam message within 1 minut will not be shown
     @param leave_on_lcd: Leave the message on the LCD
                          If False the message will disepare after 10 seconds (last permanent message shows) 
+    @param wait_for_finish: Wait for the system command to exit
     '''
     if debug==False or development() or always_show:
         global last_shout_message
@@ -406,10 +407,7 @@ def shout(string=None, to_lcd=True, debug=False, is_error=False, always_show=Fal
         if do_it:
             last_shout_time = now
             last_shout_message = string
-            try:
-                execute_system_command(['shout', string])
-            except:
-                pass
+            execute_system_command_blind(['shout', string], wait_for_finish=wait_for_finish)
             if to_lcd and is_raspberry_pi():
                 if get_flag("module_steelsquid_kiss_piio"):
                     import steelsquid_piio
@@ -1061,7 +1059,7 @@ def umount(local, the_type="unknown", ip="unknown", remote="unknown"):
     execute_system_command_blind(["umount", local])
     execute_system_command_blind(["umount", "-f", local])
     execute_system_command_blind(["umount", "-f", "-l", local])
-    steelsquid_event.broadcast_event("umount", [the_type, ip+remote, local])
+    broadcast_task_event("umount", [the_type, ip+remote, local])
 
 
 def mount_sshfs(ip, port, user, password, remote, local):
@@ -1073,7 +1071,7 @@ def mount_sshfs(ip, port, user, password, remote, local):
     answer = stdout_and_stderr.read()
     if len(answer)>5:
         raise Exception(answer)
-    steelsquid_event.broadcast_event("mount", ['ssh', ip+remote, local])
+    broadcast_task_event("mount", ["ssh", ip+remote, local])
 
 
 def mount_samba(ip, user, password, remote, local):
@@ -1090,7 +1088,42 @@ def mount_samba(ip, user, password, remote, local):
     out = proc.stdout.read()
     if len(out)>5:
         raise Exception(out)
-    steelsquid_event.broadcast_event("mount", ['samba', ip+remote, local])
+    broadcast_task_event("mount", ["samba", ip+remote, local])
+
+
+def broadcast_task_event(event, parameters_to_event=None):
+    '''
+    Broadcast a event to the steelsquid daemon (steelsquid program)
+    Will first try all system events, like mount, umount, shutdown...
+    and then send the event to the modules...
+    
+    @param event: The event name
+    @param parameters_to_event: List of parameters that accompany the event (None or 0 length list if no paramaters)
+    '''
+    try:
+        os.makedirs("/run/shm/steelsquid")
+    except:
+        pass
+    if parameters_to_event != None:
+        pa = os.path.join("/run/shm/steelsquid", event)
+        f = open(pa, "w")
+        try:
+            f.write("\n".join(parameters_to_event))
+        finally:
+            try:
+                f.close()
+            except:
+                pass
+    else:
+        pa = os.path.join("/run/shm/steelsquid", event)
+        f = open(pa, "w")
+        try:
+            f.write("")
+        finally:
+            try:
+                f.close()
+            except:
+                pass
 
 
 def list_samba(ip, user, password):
@@ -1212,7 +1245,7 @@ def get_net_interfaces():
     Get all network interfaces
     '''
     answer = []
-    interfaces = steelsquid_utils.execute_system_command(['ifconfig'])
+    interfaces = execute_system_command(['ifconfig'])
     for inter in interfaces:
         if inter.startswith("eth") or inter.startswith("wlan"):
             answer.append(inter.split()[0])
@@ -1478,170 +1511,6 @@ def del_list(name):
     '''
     try:
         os.remove(STEELSQUID_FOLDER+"/lists/" + name)
-    except:
-        pass
-
-
-def clear_tmp():
-    '''
-    Clear all tmp data
-    '''
-    with lock:
-        run_flags.clear()
-        run_parameters.clear()
-        run_lists.clear()
-
-
-def set_flag_tmp(flag):
-    '''
-    Save flag
-    This value is stored in RAM memory so it is deleted between reboots
-    The information will also be cleaned daily if steelsquid_event is configured
-    '''
-    run_flags.add(flag)
-    
-
-def get_flag_tmp(flag):
-    '''
-    Get flag 
-    This value is stored in RAM memory so it is deleted between reboots
-    The information will also be cleaned daily if steelsquid_event is configured
-    @return: True/False
-    '''
-    return flag in run_flags
-    
-
-def del_flag_tmp(flag):
-    '''
-    Remove flag
-    This value is stored in RAM memory so it is deleted between reboots
-    The information will also be cleaned daily if steelsquid_event is configured
-    '''
-    run_flags.discard(flag)
-
-
-def set_parameter_tmp(name, value):
-    '''
-    Save parameter
-    This value is stored in RAM memory so it is deleted between reboots
-    The information will also be cleaned daily if steelsquid_event is configured
-    '''
-    run_parameters[name] = value
-    
-
-def get_parameter_tmp(name):
-    '''
-    Get parameter
-    This value is stored in RAM memory so it is deleted between reboots
-    The information will also be cleaned daily if steelsquid_event is configured
-    @return: parameter (None not found)
-    '''
-    return run_parameters.get(name)
-
-
-def has_parameter_tmp(name):
-    '''
-    Has parameter
-    This value is stored in RAM memory so it is deleted between reboots
-    The information will also be cleaned daily if steelsquid_event is configured
-    @return: True/False
-    '''
-    return run_parameters.has_key(name)
-    
-
-def del_parameter_tmp(name):
-    '''
-    Remove parameter
-    This value is stored in RAM memory so it is deleted between reboots
-    The information will also be cleaned daily if steelsquid_event is configured
-    '''
-    try:
-        del run_parameters[name] 
-    except:
-        pass
-
-
-def add_to_list_tmp(name, row):
-    '''
-    Add to list
-    This value is stored in RAM memory so it is deleted between reboots
-    The information will also be cleaned daily if steelsquid_event is configured
-    '''
-    with lock:
-        li = run_lists.get(name)
-        if li == None:
-            li = []
-        li.append(row)
-        run_lists[name] = li
-
-
-def del_from_list_tmp(name, row):
-    '''
-    Delte row numer from list
-    row = 0,1,2...
-    This value is stored in RAM memory so it is deleted between reboots
-    The information will also be cleaned daily if steelsquid_event is configured
-    '''
-    with lock:
-        try:
-            li = run_lists[name]
-            del li[row]
-        except:
-            pass
-
-
-def del_values_from_list_tmp(name, value):
-    '''
-    Delete all occurrences if value from list
-    This value is stored in RAM memory so it is deleted between reboots
-    The information will also be cleaned daily if steelsquid_event is configured
-    '''
-    with lock:
-        try:
-            li = run_lists[name]
-            count = li.count(value)
-            if count > 0:
-                for i in range(count):
-                    li.remove(value)
-        except:
-            pass
-
-
-def get_from_list_tmp(name, row):
-    '''
-    Get value from list
-    row = 0,1,2...
-    This value is stored in RAM memory so it is deleted between reboots
-    The information will also be cleaned daily if steelsquid_event is configured
-    return None = not found
-    '''
-    with lock:
-        try:
-            li = run_lists[name]
-            return li[row]
-        except:
-            return None
-    
-
-def get_list_tmp(name):
-    '''
-    get whole list
-    This value is stored in RAM memory so it is deleted between reboots
-    The information will also be cleaned daily if steelsquid_event is configured
-    @return: the list (None=not found)
-    '''
-    with lock:
-        return run_lists.get(name)
-
-
-def del_list_tmp(name):
-    '''
-    Delete a list
-    The information will also be cleaned daily if steelsquid_event is configured
-    '''
-    try:
-        with lock:
-            del run_lists[name]
     except:
         pass
 

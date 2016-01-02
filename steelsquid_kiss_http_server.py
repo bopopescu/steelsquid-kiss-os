@@ -1527,23 +1527,24 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
             answer.append(" ")
             answer.append(the_dir + "/" + filename)
         for filename in files:
-            answer.append(" ")
-            answer.append(filename)
-            f_size = os.path.getsize(the_dir + "/" + filename) >> 30
-            if f_size != 0:
-                answer.append(str(f_size) + " GB" )
-            else:
-                f_size = os.path.getsize(the_dir + "/" + filename) >> 20
+            if steelsquid_utils.is_file_ok(the_dir + "/" + filename, ALLOWED):
+                answer.append(" ")
+                answer.append(filename)
+                f_size = os.path.getsize(the_dir + "/" + filename) >> 30
                 if f_size != 0:
-                    answer.append(str(f_size) + " MB" )
+                    answer.append(str(f_size) + " GB" )
                 else:
-                    f_size = os.path.getsize(the_dir + "/" + filename) >> 10
+                    f_size = os.path.getsize(the_dir + "/" + filename) >> 20
                     if f_size != 0:
-                        answer.append(str(f_size) + " kB" )
+                        answer.append(str(f_size) + " MB" )
                     else:
-                        f_size = os.path.getsize(the_dir + "/" + filename)
-                        answer.append(str(f_size) + " B" )
-            answer.append(the_dir + "/" + filename)
+                        f_size = os.path.getsize(the_dir + "/" + filename) >> 10
+                        if f_size != 0:
+                            answer.append(str(f_size) + " kB" )
+                        else:
+                            f_size = os.path.getsize(the_dir + "/" + filename)
+                            answer.append(str(f_size) + " B" )
+                answer.append(the_dir + "/" + filename)
         return answer
 
 
