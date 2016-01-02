@@ -1,3 +1,6 @@
+The easiest way to understand the Steelsquid Kiss OS is to reading this python module:<br>
+https://github.com/steelsquid/steelsquid-kiss-os/blob/master/modules/kiss_expand.py<br>
+<br>
 <b>You can extend the functionality of Steelsquid Kiss OS in 3 ways</b>
 <br>
 I recommend that you use the syncrionisation script.
@@ -103,6 +106,8 @@ The files under modules/ can also listen to events and handle web requests.<br>
  - Logic used from different places (Class: GLOBAL)
    Put global staticmethods in this class, methods you use from different part of the system.
 
-More info see https://sites.google.com/site/steelsquid/extend
+More info see<br>
+https://sites.google.com/site/steelsquid/extend<br>
+https://github.com/steelsquid/steelsquid-kiss-os/blob/master/modules/kiss_expand.py
 
 
