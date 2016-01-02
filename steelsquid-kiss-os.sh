@@ -4500,7 +4500,7 @@ systemctl enable steelsquid
 ##################################################################################
 log "Enable networkmanager"
 rm /etc/network/interfaces > /dev/null 2>&1
-echo "auto lo" >> /etc/network/interfaceshttps://www.google.se/url?sa=t&rct=j&q=&esrc=s&source=web&cd=8&ved=0ahUKEwj159XnkYbKAhViEHIKHaMgBLMQFghdMAc&url=https%3A%2F%2Flists.fedoraproject.org%2Fpipermail%2Fusers%2F2011-December%2F409819.html&usg=AFQjCNGweT-aPtj2CT9-aTZfrq9H0tsj2g&sig2=icCdFBTACT3to6OCf_fIZg
+echo "auto lo" >> /etc/network/interfaces
 echo "iface lo inet loopback" >> /etc/network/interfaces
 echo "[Adding or changing system-wide NetworkManager connections]" > /etc/polkit-1/localauthority/10-vendor.d/org.freedesktop.NetworkManager.pkla
 echo "Identity=unix-group:netdev;unix-group:sudo" >> /etc/polkit-1/localauthority/10-vendor.d/org.freedesktop.NetworkManager.pkla
