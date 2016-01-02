@@ -4553,6 +4553,7 @@ echo "level=ERR" >> /etc/NetworkManager/NetworkManager.conf
 log "Fix config.txt"
 echo "[pi1]" > /boot/config.txt
 echo "kernel=/vmlinuz-3.18.0-trunk-rpi" >> /boot/config.txt
+echo "dtparam=i2c0=on" >> /boot/config.txt
 echo "[pi2]" >> /boot/config.txt
 echo "kernel=/vmlinuz-3.18.0-trunk-rpi2" >> /boot/config.txt
 echo "[all]" >> /boot/config.txt
