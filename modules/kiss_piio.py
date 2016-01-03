@@ -14,10 +14,10 @@ steelsquid_PIIO.py
 
 
 import steelsquid_utils
-import steelsquid_event
 import steelsquid_pi
 import steelsquid_piio
 import steelsquid_kiss_global
+import steelsquid_kiss_boot
 import time
 from datetime import datetime
 from datetime import timedelta
@@ -163,7 +163,7 @@ class SYSTEM(object):
         Execute when info button clicken on the PIIO board
         '''    
         steelsquid_piio.buz_flash(None, 0.1)
-        steelsquid_event.broadcast_event("network")
+        steelsquid_kiss_boot.execute_task_event("network")
         steelsquid_kiss_global._execute_all_modules("PIIO", "on_button_info")
         
 

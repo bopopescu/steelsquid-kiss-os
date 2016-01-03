@@ -87,7 +87,6 @@ The class with name GLOBAL
 
 
 import steelsquid_utils
-import steelsquid_event
 import steelsquid_pi
 import steelsquid_kiss_global
 
