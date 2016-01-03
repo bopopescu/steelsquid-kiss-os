@@ -30,7 +30,7 @@ def enable():
     When this module is enabled what needs to be done (execute: steelsquid module XXX on)
     Maybe you need create some files or enable other stuff.
     '''
-    steelsquid_kiss_global.module_status("steelsquid_kiss_piio", True, restart=False)
+    steelsquid_kiss_global.module_status("kiss_piio", True, restart=False)
     steelsquid_kiss_global.stream_pi() #Will trigger reboot
 
 
@@ -39,6 +39,7 @@ def disable():
     When this module is disabled what needs to be done (execute: steelsquid module XXX off)
     Maybe you need remove some files or disable other stuff.
     '''
+    steelsquid_kiss_global.module_status("kiss_piio", False, restart=False)
     steelsquid_kiss_global.stream_off() #Will trigger reboot
 
 

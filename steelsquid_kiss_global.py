@@ -108,25 +108,27 @@ def module_status(name, status, restart=True):
                 doit=True
         if doit:
             if status:
-                steelsquid_utils.set_flag("module_"+name)
                 mod = import_module('modules.'+name)
+                steelsquid_utils.set_flag("module_"+name)
                 try:
                     mod.enable()
                 except:
+                    steelsquid_utils.del_flag("module_"+name)
                     steelsquid_utils.shout()
             else:
-                steelsquid_utils.del_flag("module_"+name)
                 mod = import_module('modules.'+name)
+                steelsquid_utils.del_flag("module_"+name)
                 try:
                     mod.disable()
                 except:
+                    steelsquid_utils.set_flag("module_"+name)
                     steelsquid_utils.shout()
             if restart:
                 os.system('systemctl restart steelsquid')
         else:
             steelsquid_utils.shout(string="Module not found")
     except:
-        steelsquid_utils.shout(string="Module not found")
+        steelsquid_utils.shout(string="Module not found", is_error=False)
 
 
 def broadcast_event(event, parameters_to_event=None):
