@@ -1515,12 +1515,13 @@ def del_list(name):
         pass
 
 
-def execute_delay(seconds, function, paramters, name=None, dummy=False):
+def execute_delay(seconds, function, paramters, name=None, print_error=True, dummy=False):
     '''
     Execute a function after number of seconds
     @param seconds: Delay for this number of seconds
     @param function: Execute this funcyion
     @param paramters: Paramater to the function (tuple)
+    @param name: If delay starts within a noter delay with the same name, it will not be executed
     @param name: If delay starts within a noter delay with the same name, it will not be executed
     '''
     global delay_name_list
@@ -1538,13 +1539,14 @@ def execute_delay(seconds, function, paramters, name=None, dummy=False):
                 function()
         else:
             if name==None:
-                thread.start_new_thread(execute_delay, (seconds, function, paramters, name, True)) 
+                thread.start_new_thread(execute_delay, (seconds, function, paramters, name, print_error, True)) 
             else:
                 if not name in delay_name_list:
                     delay_name_list.append(name)
-                    thread.start_new_thread(execute_delay, (seconds, function, paramters, name, True)) 
+                    thread.start_new_thread(execute_delay, (seconds, function, paramters, name, print_error, True)) 
     except:
-        shout()
+        if print_error:
+            shout()
         
         
 def execute_flash(name, status, seconds, function1, paramters1, function2, paramters2):

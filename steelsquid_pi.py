@@ -809,7 +809,7 @@ def hdd44780_write(text, number_of_seconds = 0, force_setup = False, is_i2c=True
     global lcd
     global lcd_last_text
     if number_of_seconds > 0 and len(lcd_last_text) > 0:
-        steelsquid_utils.execute_delay(number_of_seconds, hdd44780_write, (None))
+        steelsquid_utils.execute_delay(number_of_seconds, hdd44780_write, (None), print_error=False)
         hdd44780_write(text, -111, force_setup)
     else:
         with lock:
@@ -891,7 +891,7 @@ def nokia5110_write(text, number_of_seconds = 0, force_setup = False):
     SPI_PORT = 0
     SPI_DEVICE = 0
     if number_of_seconds > 0 and len(lcd_last_text) > 0:
-        steelsquid_utils.execute_delay(number_of_seconds, nokia5110_write, (None))
+        steelsquid_utils.execute_delay(number_of_seconds, nokia5110_write, (None), print_error=False)
         nokia5110_write(text, -111, force_setup)
     else:
         with lock:
@@ -949,7 +949,7 @@ def ssd1306_write(text=None, number_of_seconds = 0):
     import steelsquid_oled_ssd1306
     global lcd_last_text
     if number_of_seconds > 0 and len(lcd_last_text) > 0:
-        steelsquid_utils.execute_delay(number_of_seconds, ssd1306_write, (None))
+        steelsquid_utils.execute_delay(number_of_seconds, ssd1306_write, (None), print_error=False)
         ssd1306_write(text, -111)
     else:
         with lock:

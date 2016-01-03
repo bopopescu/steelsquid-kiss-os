@@ -1287,7 +1287,7 @@ function help_build()
     echb "8.  Fix config"
     echb "echo \"\" > /boot/config.txt"
     echo 
-    echb "9.  ???"
+    echb "9.  "
     echb ""
     echo 
     echb "10.  Clean"
