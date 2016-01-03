@@ -233,25 +233,41 @@ def remove_event_data_callback(method):
 def stream_usb():
     '''
     Enable streaming of USB camera
-    This will trigger a restart of the stealsquid daemon
+    This will trigger a restart of the raspberry Pi
     '''    
     os.system("steelsquid stream-on")
+    os.system("reboot")
 
 
 def stream_pi():
     '''
     Enable streaming of Raspberry PI camera
-    This will trigger a restart of the stealsquid daemon
+    This will trigger a restart of the raspberry Pi
     '''    
     os.system("steelsquid stream-pi-on")
+    os.system("reboot")
 
 
 def stream_off():
     '''
     Disable streaming of camera (Pi or USB)
-    This will trigger a restart of the stealsquid daemon
+    This will trigger a restart of the raspberry Pi
     '''    
     os.system("steelsquid stream-off")
+    os.system("reboot")
+
+
+def camera_status(status):
+    '''
+    Enable or disable the Raspberry Pi camera
+    This will trigger a restart of the raspberry Pi
+    status = True/False  (enable or disable)
+    '''    
+    if status:
+        os.system("steelsquid camera-on")
+    else:
+        os.system("steelsquid camera-off")
+    os.system("reboot")
 
 
 def _broadcast_event_handler():

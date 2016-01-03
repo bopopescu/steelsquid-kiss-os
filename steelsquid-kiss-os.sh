@@ -1272,22 +1272,25 @@ function help_build()
     echo "passwd  (raspberry)"
     echo 
     echb "7.  Change to jessie and uppgrade"
-    echo "echo \"http://archive.raspbian.org/raspbian jessie main contrib non-free firmware rpi\" > /etc/apt/sources.list"
-    echo "echo \"deb http://archive.raspberrypi.org/debian jessie main untested staging ui\" >> /etc/apt/sources.list"
+    echo "echo \"deb http://mirrordirector.raspbian.org/raspbian/ jessie main contrib non-free rpi firmware\" > /etc/apt/sources.list"
+    echo "echo \"deb http://archive.raspberrypi.org/debian/ jessie main ui\" > /etc/apt/sources.list"
     echo "apt-get update"
-    echo "apt-get --no-install-recommends install sudo nano aptitude linux-image-rpi-rpfv linux-image-rpi2-rpfv"
+    echo "apt-get install sudo nano aptitude linux-image-rpi-rpfv linux-image-rpi2-rpfv libraspberrypi0 libraspberrypi-{bin,dev}"
     echo "aptitude update"
     echo "aptitude full-upgrade"
     echo "dpkg --configure -a"
     echo 
-    echb "8.  Fix kernal"
+    echb "8.  Fix config"
     echb "echo \"[pi1]\" > /boot/config.txt"
     echb "echo \"kernel=/vmlinuz-3.18.0-trunk-rpi\" >> /boot/config.txt"
     echb "echo \"[pi2]\" >> /boot/config.txt"
     echb "echo \"kernel=/vmlinuz-3.18.0-trunk-rpi2\" >> /boot/config.txt"
     echb "echo \"[all]\" >> /boot/config.txt"
     echo 
-    echb "9.  Clean"
+    echb "9.  Fix kernel"
+    echb ""
+    echo 
+    echb "10.  Clean"
     echo "aptitude autoclean"
     echo "aptitude clean"
     echo "apt-get clean"
@@ -1295,45 +1298,45 @@ function help_build()
     echo "rm /root/.bash_history"
     echo "rm /root/.nano_history"
     echo 
-    echb "10. Shutdown and mount on computer"
+    echb "11. Shutdown and mount on computer"
     echo 
-    echb "11. Resize to 3.4G with gparted"
+    echb "12. Resize to 3.4G with gparted"
     echo 
-    echb "12. Boot the raspberry pi again."
+    echb "13. Boot the raspberry pi again."
     echo 
-    echb "13. Download script"
+    echb "14. Download script"
     echo "wget --no-check-certificate http://www.steelsquid.org/steelsquid-kiss-os.sh"
     echo 
-    echb "14. Make executable"
+    echb "15. Make executable"
     echo "chmod +x steelsquid-kiss-os.sh"
     echo 
-    echb "15. Execute the stcript"
+    echb "16. Execute the stcript"
     echo "./steelsquid-kiss-os.sh upgrade"
     echo 
-    echb "16. Take a nap :-)"
+    echb "17. Take a nap :-)"
     echo "May have to answer some questions"
     echo 
-    echb "17. Remove script"
+    echb "18. Remove script"
     echo "rm steelsquid-kiss-os.sh"
     echo 
-    echb "18. Shutdown raspberry"
+    echb "19. Shutdown raspberry"
     echo 
-    echb "19. Insert sdcard in other computer and mount"
+    echb "20. Insert sdcard in other computer and mount"
     echo "rm -R var/log/*"
     echo "rm -R var/tmp/*"
     echo "rm -R tmp/*"
     echo 
-    echb "20. Make a img of it"
+    echb "21. Make a img of it"
     echo "./steelsquid-kiss-os.sh read /dev/sdb"
     echo 
-    echb "21. Compress image to gz"
+    echb "22. Compress image to gz"
     echo "./steelsquid-kiss-os.sh compress"
     echo 
-    echb "22. On new image remember to:"
+    echb "23. On new image remember to:"
     echo "Upload steelsquid-kiss-os.sh to http://www.steelsquid.org"
     echo "Clear the ssh keys"
     echo 
-    echb "23. GIT and github"
+    echb "24. GIT and github"
     echo "git init"
     echo "git add *.html"
     echo "git commit -m \"Initial commit\""
@@ -2069,8 +2072,7 @@ function stream_on()
     systemctl --system daemon-reload
     systemctl enable mjpgstreamer
     systemctl start mjpgstreamer
-	systemctl restart steelsquid
-	log-ok    
+    log-reboot
 }
 if [ "$in_parameter_1" == "stream-on" ]; then
 	stream_on
@@ -2116,8 +2118,7 @@ function stream_on_pi()
 {
 	log "Enable streaming of Raspberry PI camera"
     stream_on_pi_no_restart
-	systemctl restart steelsquid
-	log-ok    
+    log-reboot
 }
 if [ "$in_parameter_1" == "stream-pi-on" ]; then
 	stream_on_pi
@@ -2145,8 +2146,7 @@ function stream_off()
 {
 	log "Disable streaming of USB camera"
     stream_off_no_restart
-	systemctl restart steelsquid
-	log-ok
+    log-reboot
 }
 if [ "$in_parameter_1" == "stream-off" ]; then
 	stream_off
@@ -3881,8 +3881,8 @@ log "Repository updated"
 ##################################################################################
 if [ $(get_installed) == "false" ]; then
 	log "Remove and install packages"
-    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv linux-image-rpi-rpfv raspberrypi-bootloader-nokernel i2c-tools alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-ti-connectivity libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer zd1211-firmware libraspberrypi-bin fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw console-data read-edid bluetooth apt-utils
-    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv linux-image-rpi-rpfv raspberrypi-bootloader-nokernel i2c-tools alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-ti-connectivity libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer zd1211-firmware libraspberrypi-bin fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw console-data read-edid bluetooth apt-utils
+    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv linux-image-rpi-rpfv i2c-tools alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-ti-connectivity libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer libraspberrypi-bin libraspberrypi-dev fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw console-data read-edid bluetooth apt-utils libraspberrypi0
+    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv linux-image-rpi-rpfv i2c-tools alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-ti-connectivity libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer libraspberrypi-bin libraspberrypi-dev fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw console-data read-edid bluetooth apt-utils libraspberrypi0
     exit-check 
     aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install build-essential python-dbus python-pexpect python-dev python-setuptools python-pip python-pam python-smbus psmisc git libudev-dev libmount-dev python-imaging pkg-config libglib2.0-dev whois
     aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install build-essential python-dbus python-pexpect python-dev python-setuptools python-pip python-pam python-smbus psmisc git libudev-dev libmount-dev python-imaging pkg-config libglib2.0-dev whois
@@ -3890,8 +3890,8 @@ if [ $(get_installed) == "false" ]; then
     aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install deborphan network-manager network-manager-openvpn dash nano sudo aptitude udev ntfs-3g console-setup beep ecryptfs-utils alsa-utils alsa-base va-driver-all vdpau-va-driver
     aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install deborphan network-manager network-manager-openvpn dash nano sudo aptitude udev ntfs-3g console-setup beep ecryptfs-utils alsa-utils alsa-base va-driver-all vdpau-va-driver
     exit-check 
-    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install telnet secure-delete beep sysstat openssh-client cifs-utils smbclient keyutils sshfs curl samba-common lsof mc fgetty ftp htop elinks screenie nload mtr-tiny lzma zip unzip unrar-free p7zip-full bzip2 whiptail parted lua5.1 aria2 python-serial python-numpy python2.7-numpy python-paramiko zlib1g zlib1g-dev libfreetype6-dev ttf-anonymous-pro
-    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install telnet secure-delete beep sysstat openssh-client cifs-utils smbclient keyutils sshfs curl samba-common lsof mc fgetty ftp htop elinks screenie nload mtr-tiny lzma zip unzip unrar-free p7zip-full bzip2 whiptail parted lua5.1 aria2 python-serial python-numpy python2.7-numpy python-paramiko zlib1g zlib1g-dev libfreetype6-dev ttf-anonymous-pro
+    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install telnet secure-delete beep sysstat openssh-client cifs-utils smbclient keyutils sshfs curl samba-common lsof mc fgetty ftp htop elinks screenie nload mtr-tiny lzma zip unzip unrar-free p7zip-full bzip2 whiptail parted lua5.1 aria2 python-serial python-numpy python2.7-numpy python-paramiko zlib1g zlib1g-dev libfreetype6-dev ttf-anonymous-pro python-picamera
+    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install telnet secure-delete beep sysstat openssh-client cifs-utils smbclient keyutils sshfs curl samba-common lsof mc fgetty ftp htop elinks screenie nload mtr-tiny lzma zip unzip unrar-free p7zip-full bzip2 whiptail parted lua5.1 aria2 python-serial python-numpy python2.7-numpy python-paramiko zlib1g zlib1g-dev libfreetype6-dev ttf-anonymous-pro python-picamera
     exit-check 
     aptitude -y purge cron ifupdown rsyslog vim-common vim-tiny hdparm keyboard-configuration console-setup console-setup-linux
     aptitude -y purge cron ifupdown rsyslog vim-common vim-tiny hdparm keyboard-configuration console-setup console-setup-linux
@@ -3917,6 +3917,21 @@ log "System upgraded"
 
 
 ##################################################################################
+# Update firmware
+##################################################################################
+#aptitude install -y raspberrypi-bootloader libraspberrypi0 libraspberrypi-{bin,dev}
+#aptitude reinstall -y linux-image-rpi-rpfv raspberrypi-bootloader-nokernel libraspberrypi0 libraspberrypi-{bin,dev,doc}
+#apt-get install --reinstall linux-image-rpi-rpfv raspberrypi-bootloader-nokernel libraspberrypi0 libraspberrypi-{bin,dev,doc}
+#if [ $(is-raspberry-pi) == "true" ]; then
+#    log "Update firmware"
+#    sudo curl -L --output /usr/bin/rpi-update https://raw.github.com/Hexxeh/rpi-update/master/rpi-update && sudo chmod +x /usr/bin/rpi-update
+#    rpi-update
+#fi
+
+
+
+
+##################################################################################
 # Install rpi GPIO
 ##################################################################################
 if [ $(is-raspberry-pi) == "true" ]; then
@@ -3926,7 +3941,6 @@ if [ $(is-raspberry-pi) == "true" ]; then
     pip install --upgrade rpi.gpio
     log "Rpi GPIO installed"
 fi
-
 
 
 ##################################################################################
@@ -4021,15 +4035,6 @@ echo "export PYTHONPATH=/opt/steelsquid/python:/usr/lib/python3/dist-packages" >
 mkdir /opt/steelsquid/python/modules
 echo "" >> /opt/steelsquid/python/modules/__init__.py
 
-
-##################################################################################
-# Update firmware
-##################################################################################
-if [ $(is-raspberry-pi) == "true" ]; then
-    log "Update firmware"
-    sudo curl -L --output /usr/bin/rpi-update https://raw.github.com/Hexxeh/rpi-update/master/rpi-update && sudo chmod +x /usr/bin/rpi-update
-    rpi-update
-fi
 
 
 ##################################################################################
