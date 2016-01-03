@@ -1282,10 +1282,11 @@ function help_build()
     echo 
     echb "8.  Fix config"
     echb "echo \"[pi1]\" > /boot/config.txt"
-    echb "echo \"kernel=/vmlinuz-3.18.0-trunk-rpi\" >> /boot/config.txt"
+    echb "echo \"kernel=vmlinuz-3.18.0-trunk-rpi\" >> /boot/config.txt"
+    echb "echo \"initramfs initrd.img-3.18.0-trunk-rpi followkernel\" >> /boot/config.txt"
     echb "echo \"[pi2]\" >> /boot/config.txt"
-    echb "echo \"kernel=/vmlinuz-3.18.0-trunk-rpi2\" >> /boot/config.txt"
-    echb "echo \"[all]\" >> /boot/config.txt"
+    echb "echo \"kernel=vmlinuz-3.18.0-trunk-rpi2\" >> /boot/config.txt"
+    echb "echo \"initramfs initrd.img-3.18.0-trunk-rpi2 followkernel\" >> /boot/config.txt"
     echo 
     echb "9.  Fix kernel"
     echb ""
@@ -4557,11 +4558,12 @@ echo "level=ERR" >> /etc/NetworkManager/NetworkManager.conf
 ##################################################################################
 log "Fix config.txt"
 echo "[pi1]" > /boot/config.txt
-echo "kernel=/vmlinuz-3.18.0-trunk-rpi" >> /boot/config.txt
+echo "kernel=vmlinuz-3.18.0-trunk-rpi" >> /boot/config.txt
+echo "initramfs initrd.img-3.18.0-trunk-rpi followkernel" >> /boot/config.txt
 echo "dtparam=i2c0=on" >> /boot/config.txt
 echo "[pi2]" >> /boot/config.txt
-echo "kernel=/vmlinuz-3.18.0-trunk-rpi2" >> /boot/config.txt
-echo "[all]" >> /boot/config.txt
+echo "kernel=vmlinuz-3.18.0-trunk-rpi2" >> /boot/config.txt
+echo "initramfs initrd.img-3.18.0-trunk-rpi2 followkernel" >> /boot/config.txt
 
 echo "disable_overscan=1" >> /boot/config.txt
 echo "disable_splash=1" >> /boot/config.txt
