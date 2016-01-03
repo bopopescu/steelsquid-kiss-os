@@ -82,7 +82,7 @@ def get_pi_i2c_bus_number():
 def steelsquid_kiss_os_version():
     '''
     '''
-    return 1.0, "v1.0"
+    return 1.1, "v1.1"
     
 
 def is_raspberry_pi():

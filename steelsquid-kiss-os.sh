@@ -1271,24 +1271,23 @@ function help_build()
     echb "5.  Set password"
     echo "passwd  (raspberry)"
     echo 
-    echb "7.  Change to jessie and uppgrade"
-    echo "echo \"deb http://mirrordirector.raspbian.org/raspbian/ jessie main contrib non-free rpi firmware\" > /etc/apt/sources.list"
-    echo "echo \"deb http://archive.raspberrypi.org/debian/ jessie main ui\" > /etc/apt/sources.list"
+    echb "7.  Change to 4.1 and uppgrade"
+    echo "echo \"deb http://mirrordirector.raspbian.org/raspbian/ jessie main contrib non-free rpi\" > /etc/apt/sources.list"
+    echo "echo \"deb http://archive.raspberrypi.org/debian/ jessie main ui untested staging\" >> /etc/apt/sources.list"
     echo "apt-get update"
-    echo "apt-get install sudo nano aptitude linux-image-rpi-rpfv linux-image-rpi2-rpfv libraspberrypi0 libraspberrypi-{bin,dev}"
+    echo "apt-get purge linux-image-rpi-rpfv linux-image-rpi2-rpfv libraspberrypi0 libraspberrypi-{bin,dev} raspberrypi-bootloader-nokernel"
+    echo "apt-get --no-install-recommends install sudo nano aptitude"
+    echo "apt-get install raspberrypi-bootloader libraspberrypi0 libraspberrypi-{bin,dev}"
+    echo "cd /boot/"
+    echo "rm initrd.img-3.18.0-trunk-rpi2 config-3.18.0-trunk-rpi2 kernel-rpi1_install.img kernel-rpi2_install.img"
     echo "aptitude update"
     echo "aptitude full-upgrade"
     echo "dpkg --configure -a"
     echo 
     echb "8.  Fix config"
-    echb "echo \"[pi1]\" > /boot/config.txt"
-    echb "echo \"kernel=vmlinuz-3.18.0-trunk-rpi\" >> /boot/config.txt"
-    echb "echo \"initramfs initrd.img-3.18.0-trunk-rpi followkernel\" >> /boot/config.txt"
-    echb "echo \"[pi2]\" >> /boot/config.txt"
-    echb "echo \"kernel=vmlinuz-3.18.0-trunk-rpi2\" >> /boot/config.txt"
-    echb "echo \"initramfs initrd.img-3.18.0-trunk-rpi2 followkernel\" >> /boot/config.txt"
+    echb "echo \"\" > /boot/config.txt"
     echo 
-    echb "9.  Fix kernel"
+    echb "9.  ???"
     echb ""
     echo 
     echb "10.  Clean"
@@ -1622,7 +1621,7 @@ function log_on()
     set-flag "log"
     sed -i '/VERBOSE=/c\VERBOSE=yes' /etc/default/rcS
     rm /boot/cmdline.txt > /dev/null 2>&1
-    echo "dwc_otg.fiq_fix_enable dwc_otg.lpm_enable=0 root=/dev/mmcblk0p2 rootfstype=ext4 rootflags=commit=120,data=writeback elevator=noop noatime nodiratime data=writeback rootwait quiet logo.nologo" >> /boot/cmdline.txt
+    echo "dwc_otg.fiq_fix_enable dwc_otg.lpm_enable=0 root=/dev/mmcblk0p2 rootfstype=ext4 rootflags=commit=120,data=writeback elevator=noop noatime nodiratime data=writeback rootwait console=null quiet logo.nologo" >> /boot/cmdline.txt
     sed -i 's/^Storage.*/#Storage=auto/' /etc/systemd/journald.conf
     sed -i 's/^LogLevel.*/#LogLevel=/' /etc/systemd/system.conf
     sed -i 's/^LogTarget.*/#LogTarget=/' /etc/systemd/system.conf
@@ -3882,8 +3881,8 @@ log "Repository updated"
 ##################################################################################
 if [ $(get_installed) == "false" ]; then
 	log "Remove and install packages"
-    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv linux-image-rpi-rpfv i2c-tools alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-ti-connectivity libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer libraspberrypi-bin libraspberrypi-dev fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw console-data read-edid bluetooth apt-utils libraspberrypi0
-    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv linux-image-rpi-rpfv i2c-tools alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-ti-connectivity libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer libraspberrypi-bin libraspberrypi-dev fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw console-data read-edid bluetooth apt-utils libraspberrypi0
+    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv i2c-tools alsa-firmware-loaders alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree expeyes-firmware-dev firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-samsung firmware-ti-connectivity firmware-zd1211 libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer sigrok-firmware-fx2lafw libraspberrypi-bin libraspberrypi-dev fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw console-data read-edid bluetooth apt-utils libraspberrypi0
+    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv i2c-tools alsa-firmware-loaders alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree expeyes-firmware-dev firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-samsung firmware-ti-connectivity firmware-zd1211 libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer sigrok-firmware-fx2lafw libraspberrypi-bin libraspberrypi-dev fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw console-data read-edid bluetooth apt-utils libraspberrypi0
     exit-check 
     aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install build-essential python-dbus python-pexpect python-dev python-setuptools python-pip python-pam python-smbus psmisc git libudev-dev libmount-dev python-imaging pkg-config libglib2.0-dev whois
     aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install build-essential python-dbus python-pexpect python-dev python-setuptools python-pip python-pam python-smbus psmisc git libudev-dev libmount-dev python-imaging pkg-config libglib2.0-dev whois
@@ -3910,9 +3909,6 @@ aptitude -y -o Dpkg::Options::="--force-confnew" full-upgrade
 exit-check
 dpkg --configure -a
 exit-check
-if [ $(is-raspberry-pi) == "true" ]; then
-    cp /vmlinuz /boot/kernel.img
-fi
 log "System upgraded"
 
 
@@ -4557,19 +4553,9 @@ echo "level=ERR" >> /etc/NetworkManager/NetworkManager.conf
 # Fix config.txt
 ##################################################################################
 log "Fix config.txt"
-echo "[pi1]" > /boot/config.txt
-echo "kernel=vmlinuz-3.18.0-trunk-rpi" >> /boot/config.txt
-echo "initramfs initrd.img-3.18.0-trunk-rpi followkernel" >> /boot/config.txt
-echo "dtparam=i2c0=on" >> /boot/config.txt
-echo "[pi2]" >> /boot/config.txt
-echo "kernel=vmlinuz-3.18.0-trunk-rpi2" >> /boot/config.txt
-echo "initramfs initrd.img-3.18.0-trunk-rpi2 followkernel" >> /boot/config.txt
-
-echo "disable_overscan=1" >> /boot/config.txt
+echo "disable_overscan=1" > /boot/config.txt
 echo "disable_splash=1" >> /boot/config.txt
 echo "boot_delay=0" >> /boot/config.txt
-
-echo "dtparam=i2c1=on" >> /boot/config.txt
 echo "dtparam=i2c_arm=on" >> /boot/config.txt
 echo "dtparam=spi=on" >> /boot/config.txt
 echo "dtparam=i2s=on" >> /boot/config.txt
