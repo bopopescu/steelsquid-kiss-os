@@ -409,5 +409,14 @@ def _execute_all_modules(class_name, method_name, method_args=None):
         except:
             pass
         
-                
+def _has_modules_method(class_name, method_name):
+    '''
+    Check if any modules has a method
+    '''
+    for name, mod in loaded_modules.iteritems():
+        if class_name != None and hasattr(mod, class_name):
+            mod = getattr(mod, class_name)
+        if hasattr(mod, method_name):
+            return True
+    return False
 

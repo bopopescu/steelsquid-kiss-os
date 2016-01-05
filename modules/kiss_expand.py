@@ -68,10 +68,13 @@ Class with name SOCKET:
 If this is a PIIO board
 Methods in this class will be executed by the system if module is enabled and this is a PIIO board
 Enebale this module like this: steelsquid piio-on
+ on_voltage_change(voltage) Will fire when in voltage to the PIIO board i changed 
  on_low_bat(voltage) exist it will execute when voltage is to low.
  on_button(button_nr) exist it will execute when button 1 to 6 is clicken on the PIIO board
  on_button_info() exist it will execute when info button clicken on the PIIO board
  on_switch(dip_nr, status) exist it will execute when switch 1 to 6 is is changed on the PIIO board
+ on_movement(x, y, z) will execute if Geeetech MPU-6050 is connected and the device is moved.
+ on_rotation(x, y) will execute if Geeetech MPU-6050 is connected and the device is tilted.
 
 The class with name GLOBAL
  Put global staticmethods in this class, methods you use from different part of the system.
@@ -301,6 +304,8 @@ class PIIO(object):
      on_button(button_nr) Will execute when button 1 to 6 is clicken on the PIIO board
      on_button_info() Will execute when info button clicken on the PIIO board
      on_switch(dip_nr, status) Will execute when switch 1 to 6 is is changed on the PIIO board
+     on_movement(x, y, z) will execute if Geeetech MPU-6050 is connected and the device is moved.
+     on_rotation(x, y) will execute if Geeetech MPU-6050 is connected and the device is tilted.
     '''
         
         
@@ -351,6 +356,24 @@ class PIIO(object):
         Execute when switch 1 to 6 is is changed on the PIIO board
         dip_nr = DIP switch nr 1 to 6
         status = True/False   (on/off)
+        '''    
+        pass
+
+
+    @staticmethod
+    def on_movement(x, y, z):
+        '''
+        THIS ONLY WORKS ON THE PIIO BOARD...
+        Execute if Geeetech MPU-6050 is connected and the device is moved.
+        '''    
+        pass
+
+
+    @staticmethod
+    def on_rotation(x, y):
+        '''
+        THIS ONLY WORKS ON THE PIIO BOARD...
+        Execute if Geeetech MPU-6050 is connected and the device is tilted.
         '''    
         pass
 

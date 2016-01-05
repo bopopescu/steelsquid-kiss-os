@@ -560,7 +560,7 @@ def adc_event(channel, callback_method, min_change=0.01, sample_sleep=0.2, sampl
     return steelsquid_pi.po12_adc_event(nchannel, inner_callback_method, min_change, sample_sleep, samples=samples)
 
 
-def adc_event(channel):
+def adc_event_remove(channel):
     '''
     Stop listen for changes in the analog voltage in on the ADC pins
     channel = 1 to 7
@@ -694,7 +694,7 @@ def rotation_event(callback_method, min_change=2, sample_sleep=0.2):
     steelsquid_pi.mpu6050_rotation_event(callback_method, min_change, sample_sleep)
 
 
-def rotation_event():
+def rotation_event_remove():
     '''
     Stop listen for for mpu-6050 rotation angle in degrees for both the X & Y changes
     SparkFun Triple Axis Accelerometer and Gyro Breakout - MPU-6050
@@ -702,7 +702,7 @@ def rotation_event():
     steelsquid_pi.mpu6050_event_remove()
 
 
-def movement_event():
+def movement_event_remove():
     '''
     Stop listen for for mpu-6050 rotation angle in degrees for both the X & Y changes
     SparkFun Triple Axis Accelerometer and Gyro Breakout - MPU-6050

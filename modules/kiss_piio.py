@@ -91,20 +91,30 @@ class SYSTEM(object):
         steelsquid_piio.power_off_click(SYSTEM.on_button_poweroff)
         # Listen for clicka on info button
         steelsquid_piio.info_click(SYSTEM.on_button_info)
-        # Listen for clicka on buttons
-        steelsquid_piio.button_click(1, SYSTEM.on_button)
-        steelsquid_piio.button_click(2, SYSTEM.on_button)
-        steelsquid_piio.button_click(3, SYSTEM.on_button)
-        steelsquid_piio.button_click(4, SYSTEM.on_button)
-        steelsquid_piio.button_click(5, SYSTEM.on_button)
-        steelsquid_piio.button_click(6, SYSTEM.on_button)
-        # Listen for event on switch
-        steelsquid_piio.switch_event(1, SYSTEM.on_switch)
-        steelsquid_piio.switch_event(2, SYSTEM.on_switch)
-        steelsquid_piio.switch_event(3, SYSTEM.on_switch)
-        steelsquid_piio.switch_event(4, SYSTEM.on_switch)
-        steelsquid_piio.switch_event(5, SYSTEM.on_switch)
-        steelsquid_piio.switch_event(6, SYSTEM.on_switch)
+        
+        # Listen for clicka on buttons if there is some modules that listen
+        if steelsquid_kiss_global._has_modules_method("PIIO", "on_button"):
+            steelsquid_piio.button_click(1, SYSTEM.on_button)
+            steelsquid_piio.button_click(2, SYSTEM.on_button)
+            steelsquid_piio.button_click(3, SYSTEM.on_button)
+            steelsquid_piio.button_click(4, SYSTEM.on_button)
+            steelsquid_piio.button_click(5, SYSTEM.on_button)
+            steelsquid_piio.button_click(6, SYSTEM.on_button)
+        # Listen for event on switch if there is some modules that listen
+        if steelsquid_kiss_global._has_modules_method("PIIO", "on_switch"):
+            steelsquid_piio.switch_event(1, SYSTEM.on_switch)
+            steelsquid_piio.switch_event(2, SYSTEM.on_switch)
+            steelsquid_piio.switch_event(3, SYSTEM.on_switch)
+            steelsquid_piio.switch_event(4, SYSTEM.on_switch)
+            steelsquid_piio.switch_event(5, SYSTEM.on_switch)
+            steelsquid_piio.switch_event(6, SYSTEM.on_switch)
+        # Listen for movement if there is some modules that listen
+        if steelsquid_kiss_global._has_modules_method("PIIO", "on_movement"):
+            steelsquid_piio.movement_event(SYSTEM.on_movement)
+        # Listen for rotation if there is some modules that listen
+        if steelsquid_kiss_global._has_modules_method("PIIO", "on_rotation"):
+            steelsquid_piio.rotation_event(SYSTEM.on_rotation)
+        
         
 
     @staticmethod
@@ -194,6 +204,22 @@ class SYSTEM(object):
         Power off the system
         '''
         steelsquid_piio.shutdown()    
+
+
+    @staticmethod
+    def on_movement(x, y, z):
+        '''
+        Movement
+        '''    
+        steelsquid_kiss_global._execute_all_modules("PIIO", "on_movement", (x, y, z,))
+
+
+    @staticmethod
+    def on_rotation(x, y):
+        '''
+        Rotaton
+        '''    
+        steelsquid_kiss_global._execute_all_modules("PIIO", "on_rotation", (x, y,))
     
 
 class LOOP(object):
