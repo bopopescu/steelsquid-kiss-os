@@ -59,8 +59,10 @@ class SYSTEM(object):
     on_start() exist it will be executed when system starts (boot)
     on_stop() exist it will be executed when system stops (shutdown)
     on_network(status, wired, wifi_ssid, wifi, wan) exist it will be execute on network up or down
+    on_vpn(status, name, ip) This will fire when a VPN connection is enabled/disabled.
     on_bluetooth(status) exist it will be execute on bluetooth enabled
-    on_loop() exist it will execute over and over again untill it return None or -1
+    on_mount(type_of_mount, remote, local) This will fire when USB, Samba(windows share) or SSH is mounted.
+    on_umount(type_of_mount, remote, local) This will fire when USB, Samba(windows share) or SSH is unmounted.
     on_event_data(key, value) exist it will execute when data is changed with steelsquid_kiss_global.set_event_data(key, value)
     '''
 
@@ -91,15 +93,6 @@ class SYSTEM(object):
         wifi_ssid = Cnnected to this wifi
         wifi = Wifi ip number
         wan = Ip on the internet
-        '''    
-        pass
-        
-        
-    @staticmethod
-    def on_bluetooth(status):
-        '''
-        Execute when bluetooth is enabled
-        status = True/False
         '''    
         pass
         
@@ -207,8 +200,11 @@ class PIIO(object):
      on_button(button_nr) Will execute when button 1 to 6 is clicken on the PIIO board
      on_button_info() Will execute when info button clicken on the PIIO board
      on_switch(dip_nr, status) Will execute when switch 1 to 6 is is changed on the PIIO board
+     on_movement(x, y, z) will execute if Geeetech MPU-6050 is connected and the device is moved.
+     on_rotation(x, y) will execute if Geeetech MPU-6050 is connected and the device is tilted.
     '''
-
+        
+        
     @staticmethod
     def on_voltage_change(voltage):
         '''
@@ -218,7 +214,7 @@ class PIIO(object):
         '''    
         pass
 
-
+        
     @staticmethod
     def on_low_bat(voltage):
         '''
@@ -256,6 +252,24 @@ class PIIO(object):
         Execute when switch 1 to 6 is is changed on the PIIO board
         dip_nr = DIP switch nr 1 to 6
         status = True/False   (on/off)
+        '''    
+        pass
+
+
+    @staticmethod
+    def on_movement(x, y, z):
+        '''
+        THIS ONLY WORKS ON THE PIIO BOARD...
+        Execute if Geeetech MPU-6050 is connected and the device is moved.
+        '''    
+        pass
+
+
+    @staticmethod
+    def on_rotation(x, y):
+        '''
+        THIS ONLY WORKS ON THE PIIO BOARD...
+        Execute if Geeetech MPU-6050 is connected and the device is tilted.
         '''    
         pass
 

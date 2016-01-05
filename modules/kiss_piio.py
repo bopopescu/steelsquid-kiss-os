@@ -64,8 +64,10 @@ class SYSTEM(object):
     on_start() exist it will be executed when system starts (boot)
     on_stop() exist it will be executed when system stops (shutdown)
     on_network(status, wired, wifi_ssid, wifi, wan) exist it will be execute on network up or down
+    on_vpn(status, name, ip) This will fire when a VPN connection is enabled/disabled.
     on_bluetooth(status) exist it will be execute on bluetooth enabled
-    on_loop() exist it will execute over and over again untill it return None or -1
+    on_mount(type_of_mount, remote, local) This will fire when USB, Samba(windows share) or SSH is mounted.
+    on_umount(type_of_mount, remote, local) This will fire when USB, Samba(windows share) or SSH is unmounted.
     on_event_data(key, value) exist it will execute when data is changed with steelsquid_kiss_global.set_event_data(key, value)
     '''
 
