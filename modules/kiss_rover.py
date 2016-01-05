@@ -30,8 +30,14 @@ def enable():
     When this module is enabled what needs to be done (execute: steelsquid module XXX on)
     Maybe you need create some files or enable other stuff.
     '''
-    steelsquid_kiss_global.module_status("kiss_piio", True, restart=False)
-    steelsquid_kiss_global.stream_pi() #Will trigger reboot
+    reboot = False
+    if not steelsquid_kiss_global.is_module_enabled() and not steelsquid_kiss_global.stream()
+        steelsquid_kiss_global.module_status("kiss_piio", True, restart=False) # Not trigger reboot
+    elif not steelsquid_kiss_global.is_module_enabled() and steelsquid_kiss_global.stream()
+        steelsquid_kiss_global.module_status("kiss_piio", True, restart=True) # Trigger reboot
+    if not steelsquid_kiss_global.stream() == "pi":
+        steelsquid_kiss_global.stream_pi() #Will trigger reboot
+        
 
 
 def disable():
@@ -39,8 +45,12 @@ def disable():
     When this module is disabled what needs to be done (execute: steelsquid module XXX off)
     Maybe you need remove some files or disable other stuff.
     '''
-    steelsquid_kiss_global.module_status("kiss_piio", False, restart=False)
-    steelsquid_kiss_global.stream_off() #Will trigger reboot
+    if steelsquid_kiss_global.is_module_enabled() and steelsquid_kiss_global.stream()
+        steelsquid_kiss_global.module_status("kiss_piio", False, restart=False) # Not trigger reboot
+    elif steelsquid_kiss_global.is_module_enabled() and steelsquid_kiss_global.stream()
+        steelsquid_kiss_global.module_status("kiss_piio", False, restart=True) # Trigger reboot
+    if steelsquid_kiss_global.stream() == "pi":
+        steelsquid_kiss_global.stream_off() #Will trigger reboot
 
 
 class SYSTEM(object):

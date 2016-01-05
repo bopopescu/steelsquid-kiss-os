@@ -282,7 +282,7 @@ def on_network(net, wired, wifi, access_point, wan):
                 shout_string.append(wan)
             if len(bluetooth)!=0:
                 shout_string.append(bluetooth)
-        if steelsquid_kiss_global.is_module("kiss_piio"):
+        if steelsquid_kiss_global.is_module_enabled("kiss_piio"):
             shout_string.append("\nVOLTAGE: ")
             import steelsquid_piio
             shout_string.append(str(steelsquid_piio.volt(2, 4)))

@@ -4489,7 +4489,7 @@ echo "[Service]" >> /etc/systemd/system/steelsquid.service
 echo "ExecStart=/usr/bin/steelsquid-boot start" >> /etc/systemd/system/steelsquid.service
 echo "ExecStopPost=/usr/bin/shout \"Steelsquid service closed.\nIf you shutdown the computer or restart the steelsquid service this is OK.\nIf this is a error (nothing more happens) it is probably in steelsquid-boot.py\nYou can enable logging for more info: steelsquid log-on\nAlso sheck if steelsquid-boot proces is running: ps -ef|grep steelsquid-boot\nIf not try: steelsquid-boot start\nAnd check for errors...\"" >> /etc/systemd/system/steelsquid.service
 echo "KillSignal=SIGINT" >> /etc/systemd/system/steelsquid.service
-echo "TimeoutStopSec=2" >> /etc/systemd/system/steelsquid.service
+echo "TimeoutStopSec=4" >> /etc/systemd/system/steelsquid.service
 echo "" >> /etc/systemd/system/steelsquid.service
 echo "[Install]" >> /etc/systemd/system/steelsquid.service
 echo "WantedBy=multi-user.target" >> /etc/systemd/system/steelsquid.service

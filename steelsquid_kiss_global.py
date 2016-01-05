@@ -77,6 +77,17 @@ def get_module(name):
 
 def is_module(name):
     '''
+    Check if a name is a module
+    return: True/False
+    '''    
+    if steelsquid_utils.get_flag("module_"+name):
+        return True
+    else:
+        return False
+
+
+def is_module_enabled(name):
+    '''
     Check if a module is imported and enabled
     return: True/False
     '''    
@@ -232,6 +243,22 @@ def remove_event_data_callback(method):
             pass        
 
 
+def stream():
+    '''
+    Is camera streaming enabled.
+    This will trigger a restart of the raspberry Pi
+    Return: None=not enabled
+            "usb" = USB camera streaming enabled
+            "pi" = PI camera streaming enabled
+    '''    
+    if steelsquid_utils.get_flag("stream"):
+        return "usb"
+    elif steelsquid_utils.get_flag("stream-pi"):
+        return "pi"
+    else:
+        return None
+
+
 def stream_usb():
     '''
     Enable streaming of USB camera
@@ -259,18 +286,21 @@ def stream_off():
     os.system("reboot")
 
 
-def camera_status(status):
+def camera_status(status=None):
     '''
     Enable or disable the Raspberry Pi camera
     This will trigger a restart of the raspberry Pi
     status = True/False  (enable or disable)
+    if status = None only return current camera status
     '''    
-    if status:
-        os.system("steelsquid camera-on")
-    else:
-        os.system("steelsquid camera-off")
-    os.system("reboot")
-
+    if status != None:
+        if status:
+            os.system("steelsquid camera-on")
+        else:
+            os.system("steelsquid camera-off")
+        os.system("reboot")
+    return steelsquid_utils.get_flag("camera")
+    
 
 def _broadcast_event_handler():
     '''

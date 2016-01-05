@@ -44,7 +44,7 @@ def shutdown():
     Shutdown and power off the PIIO board
     '''
     steelsquid_pi.po16_gpio_set(1, True)
-    steelsquid_utils.execute_system_command_blind(['shutdown', 'now', '-h'])
+    steelsquid_utils.execute_system_command_blind(['shutdown', '-h', 'now'], wait_for_finish=False)
 
 
 def volt(number_of_decimals=-1, samples=1):

@@ -37,7 +37,8 @@ def enable():
     When this module is enabled what needs to be done? (execute: steelsquid module XXX on)
     Maybe you need create some files or enable other stuff.
     '''
-    steelsquid_kiss_global.stream_pi()
+    if not steelsquid_kiss_global.stream() == "pi":
+        steelsquid_kiss_global.stream_pi()
 
 
 def disable():
@@ -45,7 +46,8 @@ def disable():
     When this module is disabled what needs to be done? (execute: steelsquid module XXX off)
     Maybe you need remove some files or disable other stuff.
     '''
-    steelsquid_kiss_global.stream_off()
+    if steelsquid_kiss_global.stream() == "pi":
+        steelsquid_kiss_global.stream_off()
 
 
 class SYSTEM(object):
