@@ -30,10 +30,10 @@ def enable():
     When this module is enabled what needs to be done (execute: steelsquid module XXX on)
     Maybe you need create some files or enable other stuff.
     '''
-    reboot = False
-    if not steelsquid_kiss_global.is_module_enabled() and not steelsquid_kiss_global.stream()
+    # Enable the PIIO board and PI camera streaming (if necessary)
+    if not steelsquid_kiss_global.is_module_enabled("kiss_piio") and not steelsquid_kiss_global.stream():
         steelsquid_kiss_global.module_status("kiss_piio", True, restart=False) # Not trigger reboot
-    elif not steelsquid_kiss_global.is_module_enabled() and steelsquid_kiss_global.stream()
+    elif not steelsquid_kiss_global.is_module_enabled("kiss_piio") and steelsquid_kiss_global.stream():
         steelsquid_kiss_global.module_status("kiss_piio", True, restart=True) # Trigger reboot
     if not steelsquid_kiss_global.stream() == "pi":
         steelsquid_kiss_global.stream_pi() #Will trigger reboot
@@ -45,9 +45,10 @@ def disable():
     When this module is disabled what needs to be done (execute: steelsquid module XXX off)
     Maybe you need remove some files or disable other stuff.
     '''
-    if steelsquid_kiss_global.is_module_enabled() and steelsquid_kiss_global.stream()
+    # Disable the PIIO board and PI camera streaming (if necessary)
+    if steelsquid_kiss_global.is_module_enabled("kiss_piio") and steelsquid_kiss_global.stream():
         steelsquid_kiss_global.module_status("kiss_piio", False, restart=False) # Not trigger reboot
-    elif steelsquid_kiss_global.is_module_enabled() and steelsquid_kiss_global.stream()
+    elif steelsquid_kiss_global.is_module_enabled("kiss_piio") and steelsquid_kiss_global.stream():
         steelsquid_kiss_global.module_status("kiss_piio", False, restart=True) # Trigger reboot
     if steelsquid_kiss_global.stream() == "pi":
         steelsquid_kiss_global.stream_off() #Will trigger reboot
@@ -73,7 +74,7 @@ class SYSTEM(object):
         Do not execute long running stuff here, do it in on_loop...
         '''
         steelsquid_utils.shout("Steelsquid Rover enabled")
-        # Load servo start, max and min position
+        # Set servo max and min position
         GLOBAL.servo_position_start = steelsquid_utils.get_parameter("servo_position_start", GLOBAL.servo_position_start)
         GLOBAL.servo_position_max = steelsquid_utils.get_parameter("servo_position_max", GLOBAL.servo_position_max)
         GLOBAL.servo_position_min = steelsquid_utils.get_parameter("servo_position_min", GLOBAL.servo_position_min)
@@ -183,7 +184,9 @@ class SOCKET(object):
     @staticmethod
     def on_disconnect(error_message):
         '''
-        When a connection is closed
+        When a connection is closedecho "deb http://mirrordirector.raspbian.org/raspbian/ jessie main contrib non-free rpi" > /etc/apt/sources.list
+echo "deb http://archive.raspberrypi.org/debian/ jessie main ui untested staging" >> /etc/apt/sources.list
+
         Will also execute on connection lost or no connection
         @param error_message: I a error (Can be None)
         '''
