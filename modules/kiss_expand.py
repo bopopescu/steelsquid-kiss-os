@@ -23,6 +23,23 @@ If a method named disable exist:
  When this module is disabled what needs to be done (execute: steelsquid module XXX off)
  Maybe you need remove some files or disable other stuff.
 
+If Class with name SETTINGS exist:
+ The system will try to load settings with the same name as all variables in the class SETTINGS.
+ If the variable value is Boolean: steelsquid_utils.get_flag("variable_name")
+ If the variable value is Integer, Float, String: steelsquid_utils.get_parameter("variable_name")
+ If the variable value is Array []: steelsquid_utils.get_list("variable_name")
+ The variable value will also be used as default value if the paramater or list not is found
+ When the system shutdowen the value of the variable will also be saved to disk
+ EX: 
+   class SETTINGS(object):
+       this_is_a_flag = False
+       this_is_a_parameter = "a_default_value"
+       this_is_a_list = []
+   System try to read: steelsquid_utils.get_flag("this_is_a_flag")
+   System try to read: steelsquid_utils.get_parameter("this_is_a_parameter", "a_default_value")
+   System try to read: steelsquid_utils.get_list("this_is_a_list", [])
+ To sum up: Variables in class SETTINGS that has value: Boolean, Array, Integer, Float, String will be persistent.
+
 If Class with name SYSTEM has this staticmethods
  on_start() exist it will be executed when system starts (boot)
  on_stop() exist it will be executed when system stops (shutdown)
@@ -113,6 +130,24 @@ def disable():
     Maybe you need remove some files or disable other stuff.
     '''
     pass
+
+
+class SETTINGS(object):
+    '''
+    The system will try to load settings with the same name as all variables in the class SETTINGS.
+    If the variable value is Boolean: steelsquid_utils.get_flag("variable_name")
+    If the variable value is Integer, Float, String: steelsquid_utils.get_parameter("variable_name")
+    If the variable value is Array []: steelsquid_utils.get_list("variable_name")
+    The variable value will also be used as default value if the paramater or list not is found
+    When the system shutdowen the value of the variable will also be saved to disk
+    EX: this_is_a_flag = False
+        this_is_a_parameter = "a_default_value"
+        this_is_a_list = []
+    System try to read: steelsquid_utils.get_flag("this_is_a_flag")
+    System try to read: steelsquid_utils.get_parameter("this_is_a_parameter", "a_default_value")
+    System try to read: steelsquid_utils.get_list("this_is_a_list", [])
+    To sum up: Variables in class SETTINGS that has value: Boolean, Array, Integer, Float, String will be persistent.
+    '''
 
 
 class SYSTEM(object):

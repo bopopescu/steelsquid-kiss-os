@@ -65,6 +65,26 @@ def import_file_dyn(obj):
     Load custom module
     '''
     try:
+        class_settings = steelsquid_kiss_global._get_object(obj, "SETTINGS")
+        if class_settings!=None:
+            members = [attr for attr in dir(class_settings) if not callable(getattr(class_settings, attr)) and not attr.startswith("__")]
+            for var_name in members:
+                the_var = getattr(class_settings, var_name, None)
+                if isinstance(the_var, (bool)):
+                    the_var = steelsquid_utils.get_flag(var_name)
+                    setattr(class_settings, var_name, the_var)
+                elif isinstance(the_var, list):
+                    the_var = steelsquid_utils.get_list(var_name, the_var)
+                    setattr(class_settings, var_name, the_var)
+                elif isinstance(the_var, int):
+                    the_var = steelsquid_utils.get_parameter(var_name, str(the_var))
+                    setattr(class_settings, var_name, int(the_var))
+                elif isinstance(the_var, float):
+                    the_var = steelsquid_utils.get_parameter(var_name, str(the_var))
+                    setattr(class_settings, var_name, float(the_var))
+                else:
+                    the_var = steelsquid_utils.get_parameter(var_name, str(the_var))
+                    setattr(class_settings, var_name, the_var)
         class_system = steelsquid_kiss_global._get_object(obj, "SYSTEM")
         if class_system!=None:
             steelsquid_kiss_global._exec_method_set_started(class_system, "on_start", is_started=True)
@@ -101,7 +121,41 @@ def reload_file_dyn(obj):
             steelsquid_kiss_global.remove_broadcast_event_callback(class_events)
         if class_system!=None:
             steelsquid_kiss_global._exec_method_set_started(class_system, "on_stop", is_started=False)
+        class_settings = steelsquid_kiss_global._get_object(obj, "SETTINGS")
+        if class_settings!=None:
+            members = [attr for attr in dir(class_settings) if not callable(getattr(class_settings, attr)) and not attr.startswith("__")]
+            for var_name in members:
+                the_var = getattr(class_settings, var_name, None)
+                if isinstance(the_var, (bool)):
+                    if the_var:
+                        steelsquid_utils.set_flag(var_name)
+                    else:
+                        steelsquid_utils.del_flag(var_name)
+                elif isinstance(the_var, list):
+                    steelsquid_utils.set_list(var_name, the_var)
+                else:
+                    steelsquid_utils.set_parameter(var_name, str(the_var))
         reload(obj)
+        class_settings = steelsquid_kiss_global._get_object(obj, "SETTINGS")
+        if class_settings!=None:
+            members = [attr for attr in dir(class_settings) if not callable(getattr(class_settings, attr)) and not attr.startswith("__")]
+            for var_name in members:
+                the_var = getattr(class_settings, var_name, None)
+                if isinstance(the_var, (bool)):
+                    the_var = steelsquid_utils.get_flag(var_name)
+                    setattr(class_settings, var_name, the_var)
+                elif isinstance(the_var, list):
+                    the_var = steelsquid_utils.get_list(var_name, the_var)
+                    setattr(class_settings, var_name, the_var)
+                elif isinstance(the_var, int):
+                    the_var = steelsquid_utils.get_parameter(var_name, str(the_var))
+                    setattr(class_settings, var_name, int(the_var))
+                elif isinstance(the_var, float):
+                    the_var = steelsquid_utils.get_parameter(var_name, str(the_var))
+                    setattr(class_settings, var_name, float(the_var))
+                else:
+                    the_var = steelsquid_utils.get_parameter(var_name, str(the_var))
+                    setattr(class_settings, var_name, the_var)
         class_system = steelsquid_kiss_global._get_object(obj, "SYSTEM")
         if class_system!=None:
             steelsquid_kiss_global._exec_method_set_started(class_system, "on_start", is_started=True)
@@ -334,6 +388,20 @@ def _cleanup():
                 steelsquid_kiss_global.remove_broadcast_event_callback(class_events)
             if class_system!=None:
                 steelsquid_kiss_global._exec_method_set_started(class_system, "on_stop", is_started=False)
+            class_settings = steelsquid_kiss_global._get_object(obj, "SETTINGS")
+            if class_settings!=None:
+                members = [attr for attr in dir(class_settings) if not callable(getattr(class_settings, attr)) and not attr.startswith("__")]
+                for var_name in members:
+                    the_var = getattr(class_settings, var_name, None)
+                    if isinstance(the_var, (bool)):
+                        if the_var:
+                            steelsquid_utils.set_flag(var_name)
+                        else:
+                            steelsquid_utils.del_flag(var_name)
+                    elif isinstance(the_var, list):
+                        steelsquid_utils.set_list(var_name, the_var)
+                    else:
+                        steelsquid_utils.set_parameter(var_name, str(the_var))
     except:
         steelsquid_utils.shout()
     if steelsquid_utils.get_flag("socket_connection"):
@@ -520,6 +588,8 @@ def main():
             command = sys.argv[1]
             # Start the system
             if command == "start":
+                # Set keyboard to use
+                steelsquid_utils.execute_system_command_blind(["/usr/bin/termfix", steelsquid_utils.get_parameter("keyboard")], wait_for_finish=True)
                 # Redirect sys.stdout to shout
                 sys.stdout = Logger()
                 # Create the task event dir 
@@ -531,8 +601,6 @@ def main():
                     steelsquid_i2c.enable_locking(True)
                 else:
                     steelsquid_i2c.enable_locking(False)
-                # Set keyboard to use
-                steelsquid_utils.execute_system_command_blind(["steelsquid", "keyboard", steelsquid_utils.get_parameter("keyboard")], wait_for_finish=False)
                 # Disable the monitor
                 if steelsquid_utils.get_flag("disable_monitor"):
                     steelsquid_utils.execute_system_command_blind(["/opt/vc/bin/tvservice", "-o"], wait_for_finish=False)

@@ -240,8 +240,8 @@ class LOOP(object):
         global last_voltage
         global last_print_voltage
         new_voltage = steelsquid_piio.volt(2, 4)
-        voltage_waring = int(steelsquid_utils.get_parameter("voltage_warning", "10"))
-        voltage_poweroff = int(steelsquid_utils.get_parameter("voltage_poweroff", "8"))
+        voltage_waring = int(steelsquid_utils.get_parameter("voltage_warning", "-1"))
+        voltage_poweroff = int(steelsquid_utils.get_parameter("voltage_poweroff", "-1"))
         v_warn=""
         if new_voltage<voltage_waring:
             v_warn=" (Warning)"

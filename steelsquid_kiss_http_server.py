@@ -48,6 +48,17 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         super(SteelsquidKissHttpServer, self).__init__(port, root, authorization, only_localhost, local_web_password, use_https)
         self.root_dir = "/root"
     
+    def module_status(self, session_id, parameters):
+        '''
+        Set status of a module
+        If no True/False inparamater only return status of a module
+        '''
+        if len(parameters)==2:            
+            status = steelsquid_kiss_global.module_status(parameters[0], steelsquid_utils.to_boolean(parameters[1]))
+            if not status:
+                raise Exception("Unable to enable/disable module!")
+        return steelsquid_kiss_global.is_module_enabled(parameters[0])
+
     def is_localhost(self, session_id, parameters):
         '''
         Is the client localhost
@@ -845,11 +856,7 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         '''
         Shutdown the computer
         '''
-        if steelsquid_utils.get_flag("io"):
-            import steelsquid_io
-            steelsquid_io.power_off()
-        else:
-            os.system('shutdown -h now')
+        os.system('shutdown -h now')
         return "System shutting down"
 
     def reboot(self, session_id, parameters):

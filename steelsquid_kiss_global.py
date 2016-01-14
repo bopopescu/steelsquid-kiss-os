@@ -29,13 +29,13 @@ import os
 import modules
 from importlib import import_module
 
-# Number of eventdata handler threads
+# Number of eventdata and brodecast handler threads
 NUMBER_OF_EVENT_HANDLERS = 3
 
 # If more than this events pending for execution dropp new events
 MAX_PENDING_EVENTS=128
 
-# All loaded modules (python files in the modules directory)
+# All loaded modules (python files in the modules/ directory)
 loaded_modules={}
 
 # The socket connection, if enabled (not enabled = None)
@@ -110,6 +110,7 @@ def module_status(name, status, restart=True):
     name: Name of the mopule
     status: True/False
     restart: restart the steelsquid daemon
+    Return: Is it found
     '''    
     try:
         pkgpath = os.path.dirname(modules.__file__)
@@ -127,7 +128,7 @@ def module_status(name, status, restart=True):
                     except:
                         steelsquid_utils.del_flag("module_"+name)
                         steelsquid_utils.shout(string="Enable module error", is_error=True)
-                        restart=False
+                        return False
                 else:
                     steelsquid_utils.del_flag("module_"+name)
                     try:
@@ -135,15 +136,19 @@ def module_status(name, status, restart=True):
                     except:
                         steelsquid_utils.set_flag("module_"+name)
                         steelsquid_utils.shout(string="Disable module error", is_error=True)
-                        restart=False
+                        return False
                 if restart:
                     os.system('systemctl restart steelsquid')
+                return True
             except:
                 steelsquid_utils.shout(string="Import module error", is_error=True)
+                return False
         else:
-            steelsquid_utils.shout(string="Module not found1")
+            return False
+            steelsquid_utils.shout(string="Module not found")
     except:
-        steelsquid_utils.shout(string="Module not found")
+        steelsquid_utils.shout()
+        return False
 
 
 def broadcast_event(event, parameters_to_event=None):

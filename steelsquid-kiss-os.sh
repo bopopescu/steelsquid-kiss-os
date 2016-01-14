@@ -1095,18 +1095,21 @@ function help_develop()
     echo 
     echb "set-flag <flagName>"
     echo "Set flag"
+    echo "The steelsquid daemon must be running for this to work"
     echo 
     echb "get-flag <flagName>"
     echo "Has flag"
     echo 
     echb "del-flag <flagName>"
     echo "Delete flag"
+    echo "The steelsquid daemon must be running for this to work"
     echo 
     echb "list-parameters"
     echo "Set flag"
     echo 
     echb "set-parameter <name> <value>"
     echo "Set paramater value"
+    echo "The steelsquid daemon must be running for this to work"
     echo 
     echb "get-parameter <name>"
     echo "Get paramater value"
@@ -1116,6 +1119,7 @@ function help_develop()
     echo 
     echb "del-parameter <name>"
     echo "Delete a parameter"
+    echo "The steelsquid daemon must be running for this to work"
     echo 
     echb "event <event>"
     echo "Broadcast event without parameters"
@@ -1928,12 +1932,6 @@ fi
 function stream_frames()
 {
     set-parameter "stream_frames" $in_parameter_2
-    if [ $(get-flag "stream") == "true" ]; then
-        stream_on
-    fi
-    if [ $(get-flag "stream-pi") == "true" ]; then
-        stream_on_pi
-    fi
 }
 if [ "$in_parameter_1" == "stream-frames" ]; then
 	stream_frames
@@ -4293,7 +4291,7 @@ echo "LC_TYPE=en_US.UTF-8" >> /etc/environment
 ##################################################################################
 log "Optimize boot"
 rm /boot/cmdline.txt > /dev/null 2>&1
-echo "dwc_otg.fiq_fix_enable dwc_otg.lpm_enable=0 root=/dev/mmcblk0p2 rootfstype=ext4 rootflags=commit=120,data=writeback elevator=noop noatime nodiratime data=writeback rootwait quiet loglevel=0 logo.nologo" >> /boot/cmdline.txt
+echo "dwc_otg.fiq_fix_enable dwc_otg.lpm_enable=0 root=/dev/mmcblk0p2 rootfstype=ext4 rootflags=commit=120,data=writeback elevator=noop noatime nodiratime data=writeback rootwait quiet loglevel=0 logo.nologo consoleblank=0" >> /boot/cmdline.txt
 log "Boot optimized"
 
 
@@ -4647,6 +4645,23 @@ chmod +x /usr/bin/aria2shoutok
 
 
 ##################################################################################
+# Generate termfix script
+##################################################################################
+log "Generate termfix script"
+echo "#"\!"/bin/bash" > /usr/bin/termfix
+echo "export TERM=\"linux\"" >> /usr/bin/termfix
+echo "setterm --reset > /dev/tty1" >> /usr/bin/termfix
+#echo "setterm --powersave off > /dev/tty1" >> /usr/bin/termfix
+echo "setterm --blank 0 > /dev/tty1" >> /usr/bin/termfix
+echo "setterm --powerdown 0 > /dev/tty1" >> /usr/bin/termfix
+echo "setterm --bold on > /dev/tty1" >> /usr/bin/termfix
+echo "setterm --cursor off > /dev/tty1" >> /usr/bin/termfix
+echo "loadkeys \$1" >> /usr/bin/termfix
+echo "exit 0" >> /usr/bin/termfix
+chmod +x /usr/bin/termfix
+
+
+##################################################################################
 # Generate test python file
 ##################################################################################
 log "Generate test python file"
@@ -4833,6 +4848,7 @@ echo "if [ -z \"\$1\" ]; then" >> /usr/bin/set-flag
 echo "    echo " >> /usr/bin/set-flag
 echo "    echb \"set-flag <name-of-flag>\"" >> /usr/bin/set-flag
 echo "    echo \"Set a system flag\"" >> /usr/bin/set-flag
+echo "    echo \"The steelsquid daemon must be running for this to work\"" >> /usr/bin/set-flag
 echo "    echo" >> /usr/bin/set-flag
 echo "    exit 0" >> /usr/bin/set-flag
 echo "fi" >> /usr/bin/set-flag
@@ -4871,6 +4887,7 @@ echo "if [ -z \"\$1\" ]; then" >> /usr/bin/del-flag
 echo "    echo " >> /usr/bin/del-flag
 echo "    echb \"del-flag <name-of-flag>\"" >> /usr/bin/del-flag
 echo "    echo \"Delete a flag\"" >> /usr/bin/del-flag
+echo "    echo \"The steelsquid daemon must be running for this to work\"" >> /usr/bin/set-flag
 echo "    echo" >> /usr/bin/del-flag
 echo "    exit 0" >> /usr/bin/del-flag
 echo "fi" >> /usr/bin/del-flag
@@ -4899,6 +4916,7 @@ echo "if [ -z \"\$1\" ]; then" >> /usr/bin/set-parameter
 echo "    echo " >> /usr/bin/set-parameter
 echo "    echb \"set-parameter <name> <value>\"" >> /usr/bin/set-parameter
 echo "    echo \"Set a parameter\"" >> /usr/bin/set-parameter
+echo "    echo \"The steelsquid daemon must be running for this to work\"" >> /usr/bin/set-flag
 echo "    echo" >> /usr/bin/set-parameter
 echo "    exit 0" >> /usr/bin/set-parameter
 echo "fi" >> /usr/bin/set-parameter
@@ -4959,6 +4977,7 @@ echo "if [ -z \"\$1\" ]; then" >> /usr/bin/del-parameter
 echo "    echo " >> /usr/bin/del-parameter
 echo "    echb \"del-parameter <name-of-paramater>\"" >> /usr/bin/del-parameter
 echo "    echo \"Delete a parameter\"" >> /usr/bin/del-parameter
+echo "    echo \"The steelsquid daemon must be running for this to work\"" >> /usr/bin/set-flag
 echo "    echo" >> /usr/bin/del-parameter
 echo "    exit 0" >> /usr/bin/del-parameter
 echo "fi" >> /usr/bin/del-parameter

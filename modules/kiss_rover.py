@@ -18,6 +18,7 @@ import steelsquid_pi
 import steelsquid_piio
 import steelsquid_kiss_global
 import time
+import datetime
 
 
 # Is this module started
@@ -54,6 +55,47 @@ def disable():
         steelsquid_kiss_global.stream_off() #Will trigger reboot
 
 
+class SETTINGS(object):
+    '''
+    The system will try to load settings with the same name as all variables in the class SETTINGS.
+    If the variable value is Boolean: steelsquid_utils.get_flag("variable_name")
+    If the variable value is Integer, Float, String: steelsquid_utils.get_parameter("variable_name")
+    If the variable value is Array []: steelsquid_utils.get_list("variable_name")
+    The variable value will also be used as default value if the paramater or list not is found
+    When the system shutdowen the value of the variable will also be saved to disk
+    EX: this_is_a_flag = False
+        this_is_a_parameter = "a_default_value"
+        this_is_a_list = []
+    System try to read: steelsquid_utils.get_flag("this_is_a_flag")
+    System try to read: steelsquid_utils.get_parameter("this_is_a_parameter", "a_default_value")
+    System try to read: steelsquid_utils.get_list("this_is_a_list", [])
+    To sum up: Variables in class SETTINGS that has value: Boolean, Array, Integer, Float, String will be will be persistent.
+    '''
+    # Number of seconds until drive stop if no commands from client (connection lost, stop the rover)
+    max_drive_delta = 1
+
+    # When system start move servo here
+    servo_position_start = 210
+
+    # Max Servo position
+    servo_position_max = 230
+
+    # Min Servo position
+    servo_position_min = 80
+
+    # Motor max forward
+    motor_forward_max = 1023
+
+    # Motor max backward
+    motor_backward_max = -1023
+
+    # start with this value when drive forward (if lower than this the motor do not turn)
+    motor_forward_start = 200
+
+    # start with this value when drive backward (if lower than this the motor do not turn)
+    motor_backward_start = -200
+
+
 class SYSTEM(object):
     '''
     Methods in this class will be executed by the system if module is enabled
@@ -74,39 +116,11 @@ class SYSTEM(object):
         Do not execute long running stuff here, do it in on_loop...
         '''
         steelsquid_utils.shout("Steelsquid Rover enabled")
-        # Set servo max and min position
-        GLOBAL.servo_position_start = steelsquid_utils.get_parameter("servo_position_start", GLOBAL.servo_position_start)
-        GLOBAL.servo_position_max = steelsquid_utils.get_parameter("servo_position_max", GLOBAL.servo_position_max)
-        GLOBAL.servo_position_min = steelsquid_utils.get_parameter("servo_position_min", GLOBAL.servo_position_min)
-        # Set the sevo to start position
-        steelsquid_piio.servo(1, GLOBAL.servo_position_start)       
-        # Load DC motor max forward and backward speed
-        GLOBAL.motor_forward_max = steelsquid_utils.get_parameter("motor_forward_max", GLOBAL.motor_forward_max)
-        GLOBAL.motor_backward_max = steelsquid_utils.get_parameter("motor_backward_max", GLOBAL.motor_backward_max)
+        # Set servo start position
+        WEB.servo_position = SETTINGS.servo_position_start
+        # Move the sevo to start position
+        steelsquid_piio.servo(1, WEB.servo_position)       
 
-
-    @staticmethod
-    def on_network(status, wired, wifi_ssid, wifi, wan):
-        '''
-        Execute on network up or down.
-        status = True/False (up or down)
-        wired = Wired ip number
-        wifi_ssid = Cnnected to this wifi
-        wifi = Wifi ip number
-        wan = Ip on the internet
-        '''    
-        pass
-        
-        
-    @staticmethod
-    def on_event_data(key, value):
-        '''
-        This will fire when data is changed with steelsquid_kiss_global.set_event_data(key, value)
-        key=The key of the data
-        value=The value of the data
-        '''    
-        pass
-    
 
 class LOOP(object):
     '''
@@ -119,21 +133,12 @@ class LOOP(object):
     @staticmethod
     def on_loop():
         '''
-        Check some stuff
+        If more than "configurable" second since last drive command stop the drive (connection may be lost)
         '''    
-        return 1
-
-
-class EVENTS(object):
-    '''
-    Create staticmethods in this class to listen for asynchronous events.
-    Example: If you have a method like this:
-      @staticmethod
-      def this_is_a_event(a_parameter, another_parameter):
-         print a_parameter+":"+another_parameter
-    Then if a thread somewhere in the system execute this: steelsquid_kiss_global.broadcast_event("this_is_a_event", ("para1", "para2",))
-    The method def this_is_a_event will execute asynchronous
-    '''
+        drive_delta = datetime.datetime.now() - WEB.last_drive_command
+        if drive_delta.total_seconds()>1:
+            steelsquid_piio.motor(0, 0)
+        return 0.5 # Execute this method again in half a second
 
 
 class WEB(object):
@@ -149,159 +154,63 @@ class WEB(object):
      - steelsquid_kiss_http_server.py
      - web/index.html
     '''
+    
+    # Current servo position
+    servo_position = 210
 
+    # Is the lamp on or off
+    lamp_status = False
+    
+    # Last time the client send a drive command
+    last_drive_command = datetime.datetime.now()
+
+    
     @staticmethod
-    def rover_info(session_id, parameters):
+    def rover_settings(session_id, parameters):
         '''
         Get info on the rover
         '''
-        pass
-
-
-class SOCKET(object):
-    '''
-    Methods in this class will be executed by the socket connection if module is activated and the socket connection is enabled
-    A simple class that i use to sen async socket command to and from client/server.
-    A request can be made from server to client or from client to server
-    See steelsquid_connection.py and steelsquid_socket_connection.py
-     - on_connect(remote_address): When a connection is enabled
-     - on_disconnect(error_message): When a connection is lost
-   '''
-    
-    #Is this connection a server
-    #This is set by the system
-    is_server=False
-
-    @staticmethod
-    def on_connect(remote_address):
-        '''
-        When a connection is enabled
-        @param remote_address: IP number to the host
-        '''
-        pass
-
-
-    @staticmethod
-    def on_disconnect(error_message):
-        '''
-        When a connection is closedecho "deb http://mirrordirector.raspbian.org/raspbian/ jessie main contrib non-free rpi" > /etc/apt/sources.list
-echo "deb http://archive.raspberrypi.org/debian/ jessie main ui untested staging" >> /etc/apt/sources.list
-
-        Will also execute on connection lost or no connection
-        @param error_message: I a error (Can be None)
-        '''
-        pass 
-
-        
-class PIIO(object):
-    '''
-    THIS ONLY WORKS ON THE PIIO BOARD...
-    Methods in this class will be executed by the system if module is enabled and this is a PIIO board
-    Enebale this module like this: steelsquid piio-on
-     on_voltage_change(voltage) Will fire when in voltage to the PIIO board i changed.
-     on_low_bat(voltage) Will execute when voltage is to low.
-     on_button(button_nr) Will execute when button 1 to 6 is clicken on the PIIO board
-     on_button_info() Will execute when info button clicken on the PIIO board
-     on_switch(dip_nr, status) Will execute when switch 1 to 6 is is changed on the PIIO board
-     on_movement(x, y, z) will execute if Geeetech MPU-6050 is connected and the device is moved.
-     on_rotation(x, y) will execute if Geeetech MPU-6050 is connected and the device is tilted.
-    '''
-        
-        
-    @staticmethod
-    def on_voltage_change(voltage):
-        '''
-        THIS ONLY WORKS ON THE PIIO BOARD...
-        Will fire when in voltage to the PIIO board i changed
-        voltage = Current voltage
-        '''    
-        pass
-
-        
-    @staticmethod
-    def on_low_bat(voltage):
-        '''
-        THIS ONLY WORKS ON THE PIIO BOARD...
-        Execute when voltage is to low.
-        Is set with the paramater: voltage_waring
-        voltage = Current voltage
-        '''    
-        pass
-
-
-    @staticmethod
-    def on_button_info():
-        '''
-        THIS ONLY WORKS ON THE PIIO BOARD...
-        Execute when info button clicken on the PIIO board
-        '''    
-        pass
-        
-
-    @staticmethod
-    def on_button(button_nr):
-        '''
-        THIS ONLY WORKS ON THE PIIO BOARD...
-        Execute when button 1 to 6 is clicken on the PIIO board
-        button_nr = button 1 to 6
-        '''    
-        pass
-
-
-    @staticmethod
-    def on_switch(dip_nr, status):
-        '''
-        THIS ONLY WORKS ON THE PIIO BOARD...
-        Execute when switch 1 to 6 is is changed on the PIIO board
-        dip_nr = DIP switch nr 1 to 6
-        status = True/False   (on/off)
-        '''    
-        pass
-
-
-    @staticmethod
-    def on_movement(x, y, z):
-        '''
-        THIS ONLY WORKS ON THE PIIO BOARD...
-        Execute if Geeetech MPU-6050 is connected and the device is moved.
-        '''    
-        pass
-
-
-    @staticmethod
-    def on_rotation(x, y):
-        '''
-        THIS ONLY WORKS ON THE PIIO BOARD...
-        Execute if Geeetech MPU-6050 is connected and the device is tilted.
-        '''    
-        pass
-
-        
-class GLOBAL(object):
-    '''
-    Put global staticmethods in this class, methods you use from different part of the system.
-    Maybe the same methods is used from the WEB, SOCKET or other part, then put that method her.
-    It is not necessary to put it her, you can also put it direcly in the module (but i think it is kind of nice to have it inside this class)
-    '''
-    # Servo start position
-    servo_position_start = 200
-    # Max Servo position
-    servo_position_max = 230
-    # Min Servo position
-    servo_position_min = 80
-    # Motor max forward
-    motor_forward_max = 200
-    # Motor max backward
-    motor_backward_max = -200
-
-    @staticmethod
-    def dummy():
-        '''
-        Dummy
-        '''
-        pass
-
-
+        return [WEB.servo_position, SETTINGS.servo_position_max, SETTINGS.servo_position_min, SETTINGS.motor_forward_max, SETTINGS.motor_backward_max, SETTINGS.motor_forward_start, SETTINGS.motor_backward_start, WEB.lamp_status]
     
     
+    @staticmethod
+    def rover_camera(session_id, parameters):
+        '''
+        Tilt camera up and down
+        '''
+        position = int(parameters[0])
+        if position>SETTINGS.servo_position_max:
+            position=SETTINGS.servo_position_max
+        elif position<SETTINGS.servo_position_min:
+            position=SETTINGS.servo_position_min
+        WEB.servo_position = position
+        steelsquid_piio.servo(1, position)
+
+
+    @staticmethod
+    def rover_drive(session_id, parameters):
+        '''
+        Tilt camera up and down
+        '''
+        left = int(parameters[0])
+        right = int(parameters[1])
+        if left>SETTINGS.motor_forward_max:
+            left=SETTINGS.motor_forward_max
+        elif left<SETTINGS.motor_backward_max:
+            left=SETTINGS.motor_backward_max
+        if right>SETTINGS.motor_forward_max:
+            right=SETTINGS.motor_forward_max
+        elif right<SETTINGS.motor_backward_max:
+            right=SETTINGS.motor_backward_max
+        WEB.last_drive_command = datetime.datetime.now()
+        steelsquid_piio.motor(left, right)
     
+        
+    @staticmethod
+    def rover_lamp(session_id, parameters):
+        '''
+        Turn the lamp on and off
+        '''
+        status = steelsquid_utils.to_boolean(parameters[0])
+        steelsquid_piio.power(1, status)
+        

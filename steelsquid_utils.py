@@ -1381,6 +1381,14 @@ def add_to_list(name, value):
     append_to_file(STEELSQUID_FOLDER+"/lists/" + name, value + "\n")
 
 
+def set_list(name, list_to_save):
+    '''
+    Set a list
+    This value is stored on disk so it's persist between reboots
+    '''
+    write_to_file(STEELSQUID_FOLDER+"/lists/" + name, "\n".join(list_to_save))
+
+
 def del_from_list(name, row):
     '''
     Delte row number from list
@@ -1473,7 +1481,7 @@ def get_from_list(name, row):
     return ""
     
 
-def get_list(name):
+def get_list(name, default_value=[]):
     '''
     get list
     @return: the array
@@ -1499,8 +1507,10 @@ def get_list(name):
             ins.close()
         except:
             pass
-    if len(array) == 1 and array[0] == '':
-        return []
+    if len(array)==0:
+        return default_value
+    elif len(array) == 1 and array[0] == '':
+        return default_value
     return array
 
 
