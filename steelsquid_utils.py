@@ -547,27 +547,11 @@ def network_ip_wired():
     Get network information wired 
     @return: string
     """
-    output = subprocess.check_output("/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'", shell=True, stderr=subprocess.STDOUT).strip('\n')
-    if len(output) < 4 or "eth" in output:
-        output = subprocess.check_output("/sbin/ifconfig eth1 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'", shell=True, stderr=subprocess.STDOUT).strip('\n')
-        if len(output) < 4 or "eth" in output:
-            output = subprocess.check_output("/sbin/ifconfig eth2 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'", shell=True, stderr=subprocess.STDOUT).strip('\n')
-            if len(output) < 4 or "eth" in output:
-                output = subprocess.check_output("/sbin/ifconfig eth3 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'", shell=True, stderr=subprocess.STDOUT).strip('\n')
-                if len(output) < 4 or "eth" in output:
-                    output = subprocess.check_output("/sbin/ifconfig eth4 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'", shell=True, stderr=subprocess.STDOUT).strip('\n')
-                    if len(output) < 4 or "eth" in output:
-                        return "---"
-                    else:
-                        return output
-                else:
-                    return output
-            else:
-                return output
-        else:
+    for i in range(20):
+        output = subprocess.check_output("/sbin/ifconfig eth"+str(i)+" | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'", shell=True, stderr=subprocess.STDOUT).strip('\n')
+        if len(output) > 4 and "eth" not in output:
             return output
-    else:
-        return output
+    return "---"
 
 
 def network_ip_wifi():
@@ -575,31 +559,11 @@ def network_ip_wifi():
     Get network information wifi
     @return: string
     """
-    output = subprocess.check_output("/sbin/ifconfig wlan0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'", shell=True, stderr=subprocess.STDOUT).strip('\n')
-    if len(output) < 4 or "wlan" in output:
-        output = subprocess.check_output("/sbin/ifconfig wlan1 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'", shell=True, stderr=subprocess.STDOUT).strip('\n')
-        if len(output) < 4 or "wlan" in output:
-            output = subprocess.check_output("/sbin/ifconfig wlan2 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'", shell=True, stderr=subprocess.STDOUT).strip('\n')
-            if len(output) < 4 or "wlan" in output:
-                output = subprocess.check_output("/sbin/ifconfig wlan3 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'", shell=True, stderr=subprocess.STDOUT).strip('\n')
-                if len(output) < 4 or "wlan" in output:
-                    output = subprocess.check_output("/sbin/ifconfig wlan4 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'", shell=True, stderr=subprocess.STDOUT).strip('\n')
-                    if len(output) < 4 or "wlan" in output:
-                        output = subprocess.check_output("/sbin/ifconfig wlan5 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'", shell=True, stderr=subprocess.STDOUT).strip('\n')
-                        if len(output) < 4 or "wlan" in output:
-                            return "---"
-                        else:
-                            return output
-                    else:
-                        return output
-                else:
-                    return output
-            else:
-                return output
-        else:
+    for i in range(20):
+        output = subprocess.check_output("/sbin/ifconfig wlan"+str(i)+" | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'", shell=True, stderr=subprocess.STDOUT).strip('\n')
+        if len(output) > 4 and "wlan" not in output:
             return output
-    else:
-        return output
+    return "---"
 
 
 def network_ip_vpn():

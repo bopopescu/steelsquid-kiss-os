@@ -24,6 +24,7 @@
 in_parameter_1=$1
 in_parameter_2=$2
 in_parameter_3=$3
+in_parameter_4=$4
 
 # This script name without suffix (Project name)
 project_name="steelsquid-kiss-os"
@@ -983,6 +984,14 @@ function help_develop()
     echo "A module is the python files under modules directory"
     echo "name = The name of the file in modules directory"
     echo "on/off = On enable the module and off will disable"
+    echo 
+    echb "steelsquid module <name> <on/off> <argument>"
+    echo "Enable or disable a module."
+    echo "When a module is enabled it will start on boot."
+    echo "A module is the python files under modules directory"
+    echo "name = The name of the file in modules directory"
+    echo "on/off = On enable the module and off will disable"
+    echo "argument = Send a argument to the module (one word)"
     echo 
     echb "steelsquid download-img"
     echo "Download a steelsquid-kiss-os.img file."
@@ -1952,11 +1961,21 @@ function module()
         fi
     else
         if [[ $in_parameter_3 == "on" ]]; then
-            log "Enable module $in_parameter_2"
-            event module_on $in_parameter_2
+            if [ "$in_parameter_4" == "" ]; then                
+                log "Enable module $in_parameter_2"
+                event module_on $in_parameter_2
+            else
+                log "Enable module $in_parameter_2 $in_parameter_4"
+                event module_on $in_parameter_2  $in_parameter_4
+            fi
         else
-            log "Disable module $in_parameter_2"
-            event module_off $in_parameter_2
+            if [ "$in_parameter_4" == "" ]; then                
+                log "Disable module $in_parameter_2"
+                event module_off $in_parameter_2
+            else
+                log "Disable module $in_parameter_2 $in_parameter_4"
+                event module_off $in_parameter_2 $in_parameter_4
+            fi
         fi
     fi
 }
@@ -4112,7 +4131,7 @@ git clone https://github.com/jacksonliam/mjpg-streamer.git
 cd /opt/mjpg-streamer-pi/mjpg-streamer/mjpg-streamer-experimental
 make
 if [ $(has-parameter "stream_frames") == "false" ]; then
-    $(set-parameter "stream_frames" "4")
+    $(set-parameter "stream_frames" "8")
 fi
 
 

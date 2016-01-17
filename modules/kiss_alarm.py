@@ -6,6 +6,100 @@ This is functionality for my alarm.
 Connect different sensors to monitor your house or other thinks.
 Also see utils.html
 
+For this to start on boot you need to enable it, you can do it like this:
+Command line: steelsquid module kiss_expand on
+Python: steelsquid_kiss_global.module_status("kiss_expand", True)
+Syncrinization program: Press E and then enter
+
+You can omit all the undelaying methods and classes and this module will just be imported...
+
+Varibale is_started
+ Is this module started
+ This is set by the system automatically.
+
+If a method named enable exist:
+ When this module is enabled what needs to be done (execute: steelsquid module XXX on)
+ Maybe you need create some files or enable other stuff.
+
+If a method named disable exist:
+ When this module is disabled what needs to be done (execute: steelsquid module XXX off)
+ Maybe you need remove some files or disable other stuff.
+
+If Class with name SETTINGS exist:
+ The system will try to load settings with the same name as all variables in the class SETTINGS.
+ If the variable value is Boolean: steelsquid_utils.get_flag("variable_name")
+ If the variable value is Integer, Float, String: steelsquid_utils.get_parameter("variable_name")
+ If the variable value is Array []: steelsquid_utils.get_list("variable_name")
+ The variable value will also be used as default value if the paramater or list not is found
+ When the system shutdowen the value of the variable will also be saved to disk
+ EX: 
+   class SETTINGS(object):
+       this_is_a_flag = False
+       this_is_a_parameter = "a_default_value"
+       this_is_a_list = []
+   System try to read: steelsquid_utils.get_flag("this_is_a_flag")
+   System try to read: steelsquid_utils.get_parameter("this_is_a_parameter", "a_default_value")
+   System try to read: steelsquid_utils.get_list("this_is_a_list", [])
+ To sum up: Variables in class SETTINGS that has value: Boolean, Array, Integer, Float, String will be persistent.
+
+If Class with name SYSTEM has this staticmethods
+ on_start() exist it will be executed when system starts (boot)
+ on_stop() exist it will be executed when system stops (shutdown)
+ on_network(status, wired, wifi_ssid, wifi, wan) exist it will be execute on network up or down
+ on_vpn(status, name, ip) This will fire when a VPN connection is enabled/disabled.
+ on_bluetooth(status) exist it will be execute on bluetooth enabled
+ on_mount(type_of_mount, remote, local) This will fire when USB, Samba(windows share) or SSH is mounted.
+ on_umount(type_of_mount, remote, local) This will fire when USB, Samba(windows share) or SSH is unmounted.
+ on_event_data(key, value) exist it will execute when data is changed with steelsquid_kiss_global.set_event_data(key, value)
+
+If Class with name LOOP
+ Every static method with no inparameters will execute over and over again untill it return None or -1
+ If it return a number larger than 0 it will sleep for that number of seconds before execute again.
+ If it return 0 it will not not sleep, will execute again immediately.
+ Every method will execute in its own thread
+
+Class with name EVENTS
+ Create staticmethods in this class to listen for asynchronous events.
+ Example: If you have a method like this:
+   @staticmethod
+   def this_is_a_event(a_parameter, another_parameter):
+      print a_parameter+":"+another_parameter
+ Then if a thread somewhere in the system execute this: steelsquid_kiss_global.broadcast_event("this_is_a_event", ("para1", "para2",))
+ The method def this_is_a_event will execute asynchronous
+
+Class with name WEB:
+ Methods in this class will be executed by the webserver if module is activated and the webserver is enabled
+ If is a GET it will return files and if it is a POST it executed commands.
+ It is meant to be used as follows.
+ 1. Make a call from the browser (GET) and a html page is returned back.
+ 2. This html page then make AJAX (POST) call to the server to retrieve or update data.
+ 3. The data sent to and from the server can just be a simple list of strings.
+ See steelsquid_http_server.py for more examples how it work
+
+Class with name SOCKET:
+ Methods in this class will be executed by the socket connection if module is activated and the socket connection is enabled
+ A simple class that i use to sen async socket command to and from client/server.
+ A request can be made from server to client or from client to server
+ See steelsquid_connection.py and steelsquid_socket_connection.py
+ - on_connect(remote_address): When a connection is enabled
+ - on_disconnect(error_message): When a connection is lost
+
+If this is a PIIO board
+Methods in this class will be executed by the system if module is enabled and this is a PIIO board
+Enebale this module like this: steelsquid piio-on
+ on_voltage_change(voltage) Will fire when in voltage to the PIIO board i changed 
+ on_low_bat(voltage) exist it will execute when voltage is to low.
+ on_button(button_nr) exist it will execute when button 1 to 6 is clicken on the PIIO board
+ on_button_info() exist it will execute when info button clicken on the PIIO board
+ on_switch(dip_nr, status) exist it will execute when switch 1 to 6 is is changed on the PIIO board
+ on_movement(x, y, z) will execute if Geeetech MPU-6050 is connected and the device is moved.
+ on_rotation(x, y) will execute if Geeetech MPU-6050 is connected and the device is tilted.
+
+The class with name GLOBAL
+ Put global staticmethods in this class, methods you use from different part of the system.
+ Maybe the same methods is used from the WEB, SOCKET or other part, then put that method her.
+ It is not necessary to put it her, you can also put it direcly in the module or use a nother name (but i think it is kind of nice to have it inside this class)
+
 @organization: Steelsquid
 @author: Andreas Nilsson
 @contact: steelsquid@gmail.com
@@ -32,19 +126,23 @@ import importlib
 is_started = False
 
 
-def enable():
+def enable(argument=None):
     '''
     When this module is enabled what needs to be done? (execute: steelsquid module XXX on)
     Maybe you need create some files or enable other stuff.
+    argument: Send data to the enable or disable method in the module
+              Usually a string to tell the start/stop something
     '''
     if not steelsquid_kiss_global.stream() == "pi":
         steelsquid_kiss_global.stream_pi()
 
 
-def disable():
+def disable(argument=None):
     '''
     When this module is disabled what needs to be done? (execute: steelsquid module XXX off)
     Maybe you need remove some files or disable other stuff.
+    argument: Send data to the enable or disable method in the module
+              Usually a string to tell the start/stop something
     '''
     if steelsquid_kiss_global.stream() == "pi":
         steelsquid_kiss_global.stream_off()

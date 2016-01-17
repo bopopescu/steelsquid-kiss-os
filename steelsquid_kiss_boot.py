@@ -461,10 +461,16 @@ def task_event_thread(command, parameters=None):
             event.set()
         # Enable a module
         elif command == "module_on":
-            steelsquid_kiss_global.module_status(parameters[0], True, restart=True)
+            if len(parameters)>1:
+                steelsquid_kiss_global.module_status(parameters[0], True, argument=parameters[1], restart=True)
+            else:
+                steelsquid_kiss_global.module_status(parameters[0], True, restart=True)
         # Disable a module
         elif command == "module_off":
-            steelsquid_kiss_global.module_status(parameters[0], False, restart=True)
+            if len(parameters)>1:
+                steelsquid_kiss_global.module_status(parameters[0], False, argument=parameters[1], restart=True)
+            else:
+                steelsquid_kiss_global.module_status(parameters[0], False, restart=True)
         # Set or del flag
         elif command == "flag":
             if parameters[0]=="set":
@@ -653,7 +659,7 @@ def main():
                     if not steelsquid_utils.has_parameter("bluetooth_pin"):
                         steelsquid_utils.set_parameter("bluetooth_pin", "1234")
                     thread.start_new_thread(bluetooth_agent, ()) 
-                # Init to listen for events
+                # Init the listen for events
                 fd = inotifyx.init()
                 inotifyx.add_watch(fd, system_event_dir, inotifyx.IN_CLOSE_WRITE)
                 # Execute a network event so the IP is shown

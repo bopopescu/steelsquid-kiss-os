@@ -293,7 +293,12 @@
                     drawHelpTextCamera();
                     drawHelpTextDrive();
                     //Send a camera move command to the rover
-                    sendCamera(camera_mouseY_now-camera_mouseY_press)
+                    if(rover_type=="large"){
+                        sendCamera(camera_mouseY_press-camera_mouseY_now);
+                    }
+                    else{
+                        sendCamera(camera_mouseY_now-camera_mouseY_press);
+                    }
                 }
             }
             
@@ -408,7 +413,12 @@
                     //Draw help text
                     drawHelpTextCamera();
                     //Send a camera move command to the rover
-                    sendCamera(camera_mouseY_now-camera_mouseY_press)
+                    if(rover_type=="large"){
+                        sendCamera(camera_mouseY_press-camera_mouseY_now);
+                    }
+                    else{
+                        sendCamera(camera_mouseY_now-camera_mouseY_press);
+                    }
                 }
                 
             }
@@ -430,6 +440,7 @@
             var min_value = 0;
             var send_drive = false;
             var lamp_status = false;
+            var rover_type = "medium"; 
             
             /**
              * When the page is loaded
@@ -460,7 +471,7 @@
                     canvas.addEventListener('touchend', touchEnd, false);
                 }
                 else{
-                    canvas.addEventListener('mousedown', mouseDown, false); 
+                    canvas.addEventListener('mousedown', mouseDown, false);
                     canvas.addEventListener('mousemove', mouseMove, false);
                     window.addEventListener('mouseup', mouseUp, false);
                 }
@@ -591,6 +602,12 @@
                 motor_forward_start = parseInt(paramaters[5]);
                 motor_backward_start = parseInt(paramaters[6]);
                 lamp_status = paramaters[7]=="True";
+                rover_type = paramaters[8];
+                //Rotate camera if a mini rover
+                if(rover_type=="mini"){
+                    $('#stream_img').removeClass('rotate-180').addClass('rotate-180');
+                }
+                
                 rover_is_enabled=true;
                 $("#not_enabled").hide();
                 onEvery05s();

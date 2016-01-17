@@ -104,11 +104,36 @@ def get_modules():
     return loaded_modules
 
 
-def module_status(name, status, restart=True):
+def clear_modules_settings(module_name):
+    '''
+    Clear all settings for a module
+    See the SETTINGS class in a module...
+    '''    
+    mod = import_module('modules.'+module_name)
+    class_settings = _get_object(mod, "SETTINGS")
+    if class_settings!=None:
+        members = [attr for attr in dir(class_settings) if not callable(getattr(class_settings, attr)) and not attr.startswith("__")]
+        for var_name in members:
+            the_var = getattr(class_settings, var_name, None)
+            if isinstance(the_var, (bool)):
+                steelsquid_utils.del_flag(var_name)
+            elif isinstance(the_var, list):
+                steelsquid_utils.del_list(var_name)
+            elif isinstance(the_var, int):
+                steelsquid_utils.del_parameter(var_name)
+            elif isinstance(the_var, float):
+                steelsquid_utils.del_parameter(var_name)
+            else:
+                steelsquid_utils.del_parameter(var_name)
+
+
+def module_status(name, status, argument = None, restart=True):
     '''
     Enable or disable a module
     name: Name of the mopule
     status: True/False
+    argument: Send data to the enable or disable method in the module
+              Usually a string to tell the start/stop something
     restart: restart the steelsquid daemon
     Return: Is it found
     '''    
@@ -124,7 +149,7 @@ def module_status(name, status, restart=True):
                 if status:
                     steelsquid_utils.set_flag("module_"+name)
                     try:
-                        mod.enable()
+                        mod.enable(argument)
                     except:
                         steelsquid_utils.del_flag("module_"+name)
                         steelsquid_utils.shout(string="Enable module error", is_error=True)
@@ -132,7 +157,7 @@ def module_status(name, status, restart=True):
                 else:
                     steelsquid_utils.del_flag("module_"+name)
                     try:
-                        mod.disable()
+                        mod.disable(argument)
                     except:
                         steelsquid_utils.set_flag("module_"+name)
                         steelsquid_utils.shout(string="Disable module error", is_error=True)

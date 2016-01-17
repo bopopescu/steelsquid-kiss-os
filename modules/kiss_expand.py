@@ -116,18 +116,22 @@ import steelsquid_kiss_global
 is_started = False
 
 
-def enable():
+def enable(argument=None):
     '''
     When this module is enabled what needs to be done (execute: steelsquid module XXX on)
     Maybe you need create some files or enable other stuff.
+    argument: Send data to the enable or disable method in the module
+              Usually a string to tell the start/stop something
     '''
     pass
 
 
-def disable():
+def disable(argument=None):
     '''
     When this module is disabled what needs to be done (execute: steelsquid module XXX off)
     Maybe you need remove some files or disable other stuff.
+    argument: Send data to the enable or disable method in the module
+              Usually a string to tell the start/stop something
     '''
     pass
 

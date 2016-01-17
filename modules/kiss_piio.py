@@ -39,9 +39,11 @@ last_voltage = 0
 last_print_voltage = 0
 
 
-def enable():
+def enable(argument=None):
     '''
     When this module is enabled what needs to be done (execute: steelsquid module XXX on)
+    argument: Send data to the enable or disable method in the module
+              Usually a string to tell the start/stop something
     Maybe you need create some files or enable other stuff.
     '''
     steelsquid_utils.set_flag("auto")
@@ -50,10 +52,12 @@ def enable():
     steelsquid_utils.del_flag("ssd")
 
 
-def disable():
+def disable(argument=None):
     '''
     When this module is disabled what needs to be done (execute: steelsquid module XXX off)
     Maybe you need remove some files or disable other stuff.
+    argument: Send data to the enable or disable method in the module
+              Usually a string to tell the start/stop something
     '''
     pass
 
