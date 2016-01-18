@@ -330,6 +330,9 @@ class WEB(object):
         elif right<SETTINGS.motor_backward_max:
             right=SETTINGS.motor_backward_max
         WEB.last_drive_command = datetime.datetime.now()
+        
+        
+        
         # The large rover uses Piborg diablo motor controller
         if SETTINGS.rover_type=="large":
             steelsquid_pi.diablo_motor_1(left);
