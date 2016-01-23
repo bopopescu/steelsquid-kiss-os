@@ -33,9 +33,6 @@ import sys
 is_started = False
 
 # Last voltage read
-last_voltage = 0
-
-# Last voltage read
 last_print_voltage = 0
 
 
@@ -241,7 +238,6 @@ class LOOP(object):
         '''
         Check voltage level
         '''    
-        global last_voltage
         global last_print_voltage
         new_voltage = steelsquid_piio.volt(2, 4)
         voltage_waring = int(steelsquid_utils.get_parameter("voltage_warning", "-1"))
@@ -256,7 +252,8 @@ class LOOP(object):
         if new_voltage<voltage_poweroff:
             steelsquid_piio.shutdown()
             
-        if new_voltage != last_voltage:
+        if new_voltage != steelsquid_piio.last_voltage:
+            steelsquid_piio.last_voltage = new_voltage
             if abs(new_voltage - last_print_voltage)>=0.1:
                 if last_print_voltage == 0:
                     steelsquid_utils.shout("Voltage is: " + str(new_voltage), to_lcd=False)

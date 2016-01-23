@@ -34,9 +34,10 @@ GAIN_2_048_V = 2048
 GAIN_1_024_V = 1024
 GAIN_0_512_V = 512
 GAIN_0_256_V = 256
-
 counter=0
 version = "1.0"
+# Last voltage read
+last_voltage = 0
 
 
 def shutdown():
@@ -45,6 +46,15 @@ def shutdown():
     '''
     steelsquid_pi.po16_gpio_set(1, True)
     steelsquid_utils.execute_system_command_blind(['shutdown', '-h', 'now'], wait_for_finish=False)
+
+
+def volt_last(number_of_decimals=-1, samples=1):
+    '''
+    Read main in voltage to the PIIO board
+    This will read the last known voltage (the kiss_piio.py read the voltage)
+    Return: last read main in voltage
+    '''
+    return last_voltage
 
 
 def volt(number_of_decimals=-1, samples=1):
@@ -892,7 +902,7 @@ def hcsr04_distance(trig_gpio, echo_gpio, force_setup = False, use_piio_pin_nr=T
     @param trig_gpio: The trig gpio
     @param echo_gpio: The echo gpio
     @param force_setup: Force setup of pins
-    @return: The distance in cm (-1 = unable to mesure)
+    @return: The distance in cm (999=to long to read)
     '''
     trig_gpio = int(trig_gpio)
     echo_gpio = int(echo_gpio)

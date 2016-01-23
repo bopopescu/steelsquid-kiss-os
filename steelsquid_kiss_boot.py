@@ -67,24 +67,30 @@ def import_file_dyn(obj):
     try:
         class_settings = steelsquid_kiss_global._get_object(obj, "SETTINGS")
         if class_settings!=None:
-            members = [attr for attr in dir(class_settings) if not callable(getattr(class_settings, attr)) and not attr.startswith("__")]
-            for var_name in members:
-                the_var = getattr(class_settings, var_name, None)
-                if isinstance(the_var, (bool)):
-                    the_var = steelsquid_utils.get_flag(var_name)
-                    setattr(class_settings, var_name, the_var)
-                elif isinstance(the_var, list):
-                    the_var = steelsquid_utils.get_list(var_name, the_var)
-                    setattr(class_settings, var_name, the_var)
-                elif isinstance(the_var, int):
-                    the_var = steelsquid_utils.get_parameter(var_name, str(the_var))
-                    setattr(class_settings, var_name, int(the_var))
-                elif isinstance(the_var, float):
-                    the_var = steelsquid_utils.get_parameter(var_name, str(the_var))
-                    setattr(class_settings, var_name, float(the_var))
-                else:
-                    the_var = steelsquid_utils.get_parameter(var_name, str(the_var))
-                    setattr(class_settings, var_name, the_var)
+            persistent_off=False
+            try:
+                persistent_off = getattr(class_settings, "_persistent_off")==True
+            except:
+                pass
+            if not persistent_off:
+                members = [attr for attr in dir(class_settings) if not callable(getattr(class_settings, attr)) and not attr.startswith("_")]
+                for var_name in members:
+                    the_var = getattr(class_settings, var_name, None)
+                    if isinstance(the_var, (bool)):
+                        the_var = steelsquid_utils.get_flag(var_name)
+                        setattr(class_settings, var_name, the_var)
+                    elif isinstance(the_var, list):
+                        the_var = steelsquid_utils.get_list(var_name, the_var)
+                        setattr(class_settings, var_name, the_var)
+                    elif isinstance(the_var, int):
+                        the_var = steelsquid_utils.get_parameter(var_name, str(the_var))
+                        setattr(class_settings, var_name, int(the_var))
+                    elif isinstance(the_var, float):
+                        the_var = steelsquid_utils.get_parameter(var_name, str(the_var))
+                        setattr(class_settings, var_name, float(the_var))
+                    else:
+                        the_var = steelsquid_utils.get_parameter(var_name, str(the_var))
+                        setattr(class_settings, var_name, the_var)
         class_system = steelsquid_kiss_global._get_object(obj, "SYSTEM")
         if class_system!=None:
             steelsquid_kiss_global._exec_method_set_started(class_system, "on_start", is_started=True)
@@ -123,39 +129,51 @@ def reload_file_dyn(obj):
             steelsquid_kiss_global._exec_method_set_started(class_system, "on_stop", is_started=False)
         class_settings = steelsquid_kiss_global._get_object(obj, "SETTINGS")
         if class_settings!=None:
-            members = [attr for attr in dir(class_settings) if not callable(getattr(class_settings, attr)) and not attr.startswith("__")]
-            for var_name in members:
-                the_var = getattr(class_settings, var_name, None)
-                if isinstance(the_var, (bool)):
-                    if the_var:
-                        steelsquid_utils.set_flag(var_name)
+            persistent_off=False
+            try:
+                persistent_off = getattr(class_settings, "_persistent_off")==True
+            except:
+                pass
+            if not persistent_off:
+                members = [attr for attr in dir(class_settings) if not callable(getattr(class_settings, attr)) and not attr.startswith("_")]
+                for var_name in members:
+                    the_var = getattr(class_settings, var_name, None)
+                    if isinstance(the_var, (bool)):
+                        if the_var:
+                            steelsquid_utils.set_flag(var_name)
+                        else:
+                            steelsquid_utils.del_flag(var_name)
+                    elif isinstance(the_var, list):
+                        steelsquid_utils.set_list(var_name, the_var)
                     else:
-                        steelsquid_utils.del_flag(var_name)
-                elif isinstance(the_var, list):
-                    steelsquid_utils.set_list(var_name, the_var)
-                else:
-                    steelsquid_utils.set_parameter(var_name, str(the_var))
+                        steelsquid_utils.set_parameter(var_name, str(the_var))
         reload(obj)
         class_settings = steelsquid_kiss_global._get_object(obj, "SETTINGS")
         if class_settings!=None:
-            members = [attr for attr in dir(class_settings) if not callable(getattr(class_settings, attr)) and not attr.startswith("__")]
-            for var_name in members:
-                the_var = getattr(class_settings, var_name, None)
-                if isinstance(the_var, (bool)):
-                    the_var = steelsquid_utils.get_flag(var_name)
-                    setattr(class_settings, var_name, the_var)
-                elif isinstance(the_var, list):
-                    the_var = steelsquid_utils.get_list(var_name, the_var)
-                    setattr(class_settings, var_name, the_var)
-                elif isinstance(the_var, int):
-                    the_var = steelsquid_utils.get_parameter(var_name, str(the_var))
-                    setattr(class_settings, var_name, int(the_var))
-                elif isinstance(the_var, float):
-                    the_var = steelsquid_utils.get_parameter(var_name, str(the_var))
-                    setattr(class_settings, var_name, float(the_var))
-                else:
-                    the_var = steelsquid_utils.get_parameter(var_name, str(the_var))
-                    setattr(class_settings, var_name, the_var)
+            persistent_off=False
+            try:
+                persistent_off = getattr(class_settings, "_persistent_off")==True
+            except:
+                pass
+            if not persistent_off:
+                members = [attr for attr in dir(class_settings) if not callable(getattr(class_settings, attr)) and not attr.startswith("_")]
+                for var_name in members:
+                    the_var = getattr(class_settings, var_name, None)
+                    if isinstance(the_var, (bool)):
+                        the_var = steelsquid_utils.get_flag(var_name)
+                        setattr(class_settings, var_name, the_var)
+                    elif isinstance(the_var, list):
+                        the_var = steelsquid_utils.get_list(var_name, the_var)
+                        setattr(class_settings, var_name, the_var)
+                    elif isinstance(the_var, int):
+                        the_var = steelsquid_utils.get_parameter(var_name, str(the_var))
+                        setattr(class_settings, var_name, int(the_var))
+                    elif isinstance(the_var, float):
+                        the_var = steelsquid_utils.get_parameter(var_name, str(the_var))
+                        setattr(class_settings, var_name, float(the_var))
+                    else:
+                        the_var = steelsquid_utils.get_parameter(var_name, str(the_var))
+                        setattr(class_settings, var_name, the_var)
         class_system = steelsquid_kiss_global._get_object(obj, "SYSTEM")
         if class_system!=None:
             steelsquid_kiss_global._exec_method_set_started(class_system, "on_start", is_started=True)
@@ -390,18 +408,24 @@ def _cleanup():
                 steelsquid_kiss_global._exec_method_set_started(class_system, "on_stop", is_started=False)
             class_settings = steelsquid_kiss_global._get_object(obj, "SETTINGS")
             if class_settings!=None:
-                members = [attr for attr in dir(class_settings) if not callable(getattr(class_settings, attr)) and not attr.startswith("__")]
-                for var_name in members:
-                    the_var = getattr(class_settings, var_name, None)
-                    if isinstance(the_var, (bool)):
-                        if the_var:
-                            steelsquid_utils.set_flag(var_name)
+                persistent_off=False
+                try:
+                    persistent_off = getattr(class_settings, "_persistent_off")==True
+                except:
+                    pass
+                if not persistent_off:
+                    members = [attr for attr in dir(class_settings) if not callable(getattr(class_settings, attr)) and not attr.startswith("_")]
+                    for var_name in members:
+                        the_var = getattr(class_settings, var_name, None)
+                        if isinstance(the_var, (bool)):
+                            if the_var:
+                                steelsquid_utils.set_flag(var_name)
+                            else:
+                                steelsquid_utils.del_flag(var_name)
+                        elif isinstance(the_var, list):
+                            steelsquid_utils.set_list(var_name, the_var)
                         else:
-                            steelsquid_utils.del_flag(var_name)
-                    elif isinstance(the_var, list):
-                        steelsquid_utils.set_list(var_name, the_var)
-                    else:
-                        steelsquid_utils.set_parameter(var_name, str(the_var))
+                            steelsquid_utils.set_parameter(var_name, str(the_var))
     except:
         steelsquid_utils.shout()
     if steelsquid_utils.get_flag("socket_connection"):

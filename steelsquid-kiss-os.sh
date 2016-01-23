@@ -1633,9 +1633,8 @@ function log_on()
 	log "Enable systemd logging"
     set-flag "log"
     sed -i '/VERBOSE=/c\VERBOSE=yes' /etc/default/rcS
-    rm /boot/cmdline.txt > /dev/null 2>&1
-    echo "dwc_otg.fiq_fix_enable dwc_otg.lpm_enable=0 root=/dev/mmcblk0p2 rootfstype=ext4 rootflags=commit=120,data=writeback elevator=noop noatime nodiratime data=writeback rootwait console=null quiet logo.nologo" >> /boot/cmdline.txt
-    sed -i 's/^Storage.*/#Storage=auto/' /etc/systemd/journald.conf
+    echo "dwc_otg.fiq_fix_enable dwc_otg.lpm_enable=0 root=/dev/mmcblk0p2 rootfstype=ext4 rootflags=commit=1 elevator=noop noatime nodiratime rootwait logo.nologo" > /boot/cmdline.txt
+    sed -i 's/^Storage.*/Storage=persistent/' /etc/systemd/journald.conf
     sed -i 's/^LogLevel.*/#LogLevel=/' /etc/systemd/system.conf
     sed -i 's/^LogTarget.*/#LogTarget=/' /etc/systemd/system.conf
     sed -i 's/^DefaultStandardOutput.*/#DefaultStandardOutput=/' /etc/systemd/system.conf
@@ -1643,6 +1642,11 @@ function log_on()
     sed -i 's/^LogTarget.*/#LogTarget=/' /etc/systemd/user.conf
     sed -i 's/^DefaultStandardOutput.*/#DefaultStandardOutput=/' /etc/systemd/user.conf    
     sed -i 's/^#ForwardToConsole.*/ForwardToConsole=yes/' /etc/systemd/journald.conf
+    systemctl enable systemd-journald.service    
+    systemctl start systemd-journald.service
+    sed -i 's/errors=remount-ro,defaults,noatime,nodiratime /errors=remount-ro,defaults,noatime,sync,nodiratime /g' /etc/fstab
+    sed -i '/tmpfs/d' /etc/fstab
+    sed -i '/none /d' /etc/fstab
 	log-reboot
 }
 if [ "$in_parameter_1" == "log-on" ]; then
@@ -1659,9 +1663,8 @@ function log_off()
 	log "Disable systemd logging"
     del-flag "log"
     sed -i '/VERBOSE=/c\VERBOSE=no' /etc/default/rcS
-    rm /boot/cmdline.txt > /dev/null 2>&1
-    echo "dwc_otg.fiq_fix_enable dwc_otg.lpm_enable=0 root=/dev/mmcblk0p2 rootfstype=ext4 rootflags=commit=120,data=writeback elevator=noop noatime nodiratime data=writeback rootwait quiet loglevel=0 logo.nologo" >> /boot/cmdline.txt
-    sed -i 's/^#Storage.*/Storage=none/' /etc/systemd/journald.conf
+    echo "dwc_otg.fiq_fix_enable dwc_otg.lpm_enable=0 root=/dev/mmcblk0p2 rootfstype=ext4 rootflags=commit=10,data=writeback elevator=noop noatime nodiratime data=writeback rootwait quiet loglevel=0 logo.nologo consoleblank=0" > /boot/cmdline.txt
+    sed -i 's/^Storage.*/Storage=none/' /etc/systemd/journald.conf
     sed -i 's/^#LogLevel.*/LogLevel=emerg/' /etc/systemd/system.conf
     sed -i 's/^#LogTarget.*/LogTarget=null/' /etc/systemd/system.conf
     sed -i 's/^#DefaultStandardOutput.*/DefaultStandardOutput=null/' /etc/systemd/system.conf
@@ -1676,6 +1679,14 @@ function log_off()
     sed -i 's/^LogTarget.*/LogTarget=null/' /etc/systemd/user.conf
     sed -i 's/^DefaultStandardOutput.*/DefaultStandardOutput=null/' /etc/systemd/user.conf    
     sed -i 's/^ForwardToConsole.*/#ForwardToConsole=no/' /etc/systemd/journald.conf  
+    systemctl stop systemd-journald.service
+    systemctl disable systemd-journald.service    
+    sed -i '/tmpfs/d' /etc/fstab
+    sed -i '/none /d' /etc/fstab
+    sed -i 's/errors=remount-ro,defaults,noatime,sync,nodiratime /errors=remount-ro,defaults,noatime,nodiratime /g' /etc/fstab
+    echo "none   /var/log   tmpfs   noatime,nodiratime,rw,mode=1777,nodev,nosuid,noexec,size=32m    0   0" >> /etc/fstab
+    echo "none   /tmp       tmpfs   noatime,nodiratime,rw,mode=1777,nodev,nosuid,size=256m   0   0" >> /etc/fstab
+    echo "/tmp   /var/tmp   none    noatime,nodiratime,rw,mode=1777,nodev,nosuid,bind        0   0" >> /etc/fstab
 	log-reboot
 }
 if [ "$in_parameter_1" == "log-off" ]; then
@@ -4057,7 +4068,20 @@ echo "" >> /opt/steelsquid/python/modules/__init__.py
 if [ $(is-raspberry-pi) == "true" ]; then
     log "Download and install WiringPi"
     pip install wiringpi2
+    git clone git://git.drogon.net/wiringPi
+    cd wiringPi
+    ./build
 fi
+
+
+##################################################################################
+# Create direcorys and links
+##################################################################################
+log "libultrasonic"
+git clone https://github.com/wdalmut/libultrasonic.git
+cd libultrasonic
+make -C src/ board=hc_sr04
+make -C examples/
 
 
 ##################################################################################
@@ -4310,7 +4334,7 @@ echo "LC_TYPE=en_US.UTF-8" >> /etc/environment
 ##################################################################################
 log "Optimize boot"
 rm /boot/cmdline.txt > /dev/null 2>&1
-echo "dwc_otg.fiq_fix_enable dwc_otg.lpm_enable=0 root=/dev/mmcblk0p2 rootfstype=ext4 rootflags=commit=120,data=writeback elevator=noop noatime nodiratime data=writeback rootwait quiet loglevel=0 logo.nologo consoleblank=0" >> /boot/cmdline.txt
+echo "dwc_otg.fiq_fix_enable dwc_otg.lpm_enable=0 root=/dev/mmcblk0p2 rootfstype=ext4 rootflags=commit=10,data=writeback elevator=noop noatime nodiratime data=writeback rootwait quiet loglevel=0 logo.nologo consoleblank=0" >> /boot/cmdline.txt
 log "Boot optimized"
 
 
@@ -4574,8 +4598,8 @@ echo "disable_overscan=1" > /boot/config.txt
 echo "disable_splash=1" >> /boot/config.txt
 echo "boot_delay=0" >> /boot/config.txt
 echo "dtparam=i2c_arm=on" >> /boot/config.txt
-echo "dtparam=spi=on" >> /boot/config.txt
-echo "dtparam=i2s=on" >> /boot/config.txt
+#echo "dtparam=spi=on" >> /boot/config.txt
+#echo "dtparam=i2s=on" >> /boot/config.txt
 
 if [ $(get-flag "camera") == "true" ]; then
     enable_camera

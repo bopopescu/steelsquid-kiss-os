@@ -40,6 +40,10 @@ If Class with name SETTINGS exist:
    System try to read: steelsquid_utils.get_flag("this_is_a_flag")
    System try to read: steelsquid_utils.get_parameter("this_is_a_parameter", "a_default_value")
    System try to read: steelsquid_utils.get_list("this_is_a_list", [])
+ If you want to disable save and read the settings from disk add a variable like this.
+ This is usefull under development if you wan to test different values when you restart the module,
+ otherwise the value from the first execution to be used ...
+   _persistent_off = True
  To sum up: Variables in class SETTINGS that has value: Boolean, Array, Integer, Float, String will be persistent.
 
 If Class with name SYSTEM has this staticmethods
@@ -162,6 +166,10 @@ class SETTINGS(object):
     System try to read: steelsquid_utils.get_flag("this_is_a_flag")
     System try to read: steelsquid_utils.get_parameter("this_is_a_parameter", "a_default_value")
     System try to read: steelsquid_utils.get_list("this_is_a_list", [])
+    If you want to disable save and read the settings from disk add a variable like this.
+    This is usefull under development if you wan to test different values when you restart the module,
+    otherwise the value from the first execution to be used ...
+      _persistent_off = True
     To sum up: Variables in class SETTINGS that has value: Boolean, Array, Integer, Float, String will be will be persistent.
     '''
 

@@ -39,6 +39,189 @@
             var canvas;
             var ctx;
 
+            // Video location
+            videoLeft=0;
+            videoTop=0;
+            videoWidth=0;
+            videoHeight=0;
+
+            /**
+             * Draws a dot at a specific position on the canvas
+             */
+            function drawDot(x, y ,size) {
+                // Let's use black by setting RGB values to 0, and 255 alpha (completely opaque)
+                r=0; g=0; b=0; a=255;
+
+                // Select a fill style
+                ctx.fillStyle = "rgba("+r+","+g+","+b+","+(a/255)+")";
+
+                // Draw a filled circle
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI*2, true); 
+                ctx.closePath();
+                ctx.fill();           
+            } 
+            
+            /**
+             * Draws a line
+             */
+            function drawLine(x_start, y_start, x_stop, y_stop) {
+                ctx.beginPath();
+                ctx.moveTo(x_start, y_start);
+                ctx.lineTo(x_stop, y_stop);
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = '#000000';
+                ctx.stroke();                
+            } 
+            
+            /**
+             * Draws drawDistance
+             */
+            function drawDistance() {
+                if(videoWidth>0){
+                    //Top left
+                    fromLeft = videoLeft;
+                    fromTop = videoTop-1;
+                    startAngle = 0;
+                    endAngle = Math.PI/2;
+                    drawPay(fromLeft, fromTop, startAngle, endAngle, front_left_distance);
+                    //Top
+                    fromLeft = videoLeft + videoWidth/2;
+                    fromTop = videoTop-1;
+                    startAngle = 0;
+                    endAngle = Math.PI;
+                    drawPay(fromLeft, fromTop, startAngle, endAngle, front_distance)
+                    //Top right
+                    fromLeft = videoLeft+videoWidth;
+                    fromTop = videoTop-1;
+                    startAngle = Math.PI/2;
+                    endAngle = Math.PI;
+                    drawPay(fromLeft, fromTop, startAngle, endAngle, front_right_distance);
+                    //Right
+                    fromLeft = videoLeft+videoWidth;
+                    fromTop = videoTop-36 + videoHeight/2;
+                    startAngle = Math.PI/2;
+                    endAngle = Math.PI*1.5;
+                    drawPay(fromLeft, fromTop, startAngle, endAngle, right_distance);
+                    //Back Right
+                    fromLeft = videoLeft+videoWidth;
+                    fromTop = videoTop + videoHeight-36;
+                    startAngle = Math.PI;
+                    endAngle = Math.PI*1.5;
+                    drawPay(fromLeft, fromTop, startAngle, endAngle, back_right_distance);
+                    //Back
+                    fromLeft = videoLeft+videoWidth/2;
+                    fromTop = videoTop + videoHeight-36;
+                    startAngle = Math.PI;
+                    endAngle = 0;
+                    drawPay(fromLeft, fromTop, startAngle, endAngle, back_distance);
+                    //Back left
+                    fromLeft = videoLeft;
+                    fromTop = videoTop + videoHeight-36;
+                    startAngle = Math.PI*1.5;
+                    endAngle = 0;
+                    drawPay(fromLeft, fromTop, startAngle, endAngle, back_left_distance);
+                    //left
+                    fromLeft = videoLeft;
+                    fromTop = videoTop-36 + videoHeight/2;
+                    startAngle = Math.PI*1.5;
+                    endAngle = Math.PI*0.5;
+                    drawPay(fromLeft, fromTop, startAngle, endAngle, left_distance);
+                }
+ 
+            } 
+
+            function drawPay(fromLeft, fromTop, startAngle, endAngle, distance) {
+                radius = videoHeight/15;
+                dest_rad = remap(distance, 4, 80, radius-3, 0)
+                ctx.beginPath();
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 2;
+                ctx.arc(fromLeft, fromTop, radius, startAngle, endAngle, false); 
+                ctx.stroke();      
+                ctx.beginPath();
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.arc(fromLeft, fromTop, radius-2, startAngle, endAngle, false); 
+                ctx.stroke();      
+                ctx.beginPath();
+                ctx.moveTo(fromLeft, fromTop);
+                ctx.fillStyle = '#ff0000';
+                ctx.arc(fromLeft, fromTop, dest_rad, startAngle, endAngle, false); 
+                ctx.closePath();
+                ctx.fill();                          
+            }
+            
+            
+            /**
+             * Draws text on canvas
+             */
+            function drawText(text, x, y) {
+                ctx.fillStyle = '#000000';
+                ctx.font = "13px Arial";
+                ctx.fillText(text, x, y);                           
+            } 
+
+
+            /**
+             * Draws text vertical on canvas
+             */
+            function drawTextVerical(text, toLeft) {
+                var x = canvas.offsetWidth-8;
+                var y = (canvas.offsetHeight / 2)-20;
+                ctx.save();
+                if (toLeft){
+                    ctx.translate(16, y);
+                }
+                else{
+                    ctx.translate(x, y);
+                }
+                ctx.fillStyle = '#000000';
+                ctx.rotate(-Math.PI/2);
+                ctx.textAlign = "center";
+                ctx.font = "13px Arial";
+                ctx.fillText(text, 0, 0);
+                ctx.restore();
+            } 
+
+            /**
+             * Draws text vertical in canvas
+             */
+            function drawDoubleText(verticalText1, verticalText2) {
+                var x = canvas.offsetWidth-8;
+                var y = (canvas.offsetHeight / 2)-20;
+                ctx.save();
+                ctx.fillStyle = '#000000';
+                ctx.translate(x, y);
+                ctx.rotate(-Math.PI/2);
+                ctx.textAlign = "center";
+                ctx.font = "13px Arial";
+                ctx.fillText(verticalText1, 0, 0);
+                ctx.restore();
+                ctx.save();
+                ctx.translate(x-20, y);
+                ctx.rotate(-Math.PI/2);
+                ctx.textAlign = "center";
+                ctx.font = "13px Arial";
+                ctx.fillText(verticalText2, 0, 0);
+                ctx.restore();
+            } 
+
+            /**
+             * Expand canvas to max size
+             */
+            function setSizeOfCanvas(){
+                heightObj = document.getElementById('fill');
+                canvas.style.width = "100%";
+                canvas.style.height = (heightObj.offsetHeight)+"px";
+                canvas.width  = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+                //Set size of video
+                $("#stream_img").height(canvas.offsetHeight);
+                max_value = parseInt(canvas.height/2);
+                min_value = max_value*-1;
+            }
+
             // Variables to keep track of the mouse position and left-button status 
             var drive_is_mouseDown=0;
             var drive_mouseX_now;
@@ -89,124 +272,23 @@
                 var result = portion + newMin;
                 if (reverseOutput){
                     result = newMax - portion;
+                    if(result<nMax){
+                        result = nMax;
+                    }
+                    else if(result>nMin){
+                        result = nMin;
+                    }
+                }
+                else{
+                    if(result>nMax){
+                        result = nMax;
+                    }
+                    else if(result<nMin){
+                        result = nMin;
+                    }
                 }
 
                 return result;
-            }
-
-            /**
-             * Expand canvas to max size
-             */
-            function setSizeOfCanvas(){
-                heightObj = document.getElementById('fill');
-                canvas.style.width = "100%";
-                canvas.style.height = (heightObj.offsetHeight)+"px";
-                canvas.width  = canvas.offsetWidth;
-                canvas.height = canvas.offsetHeight;
-                //Set size of video
-                $("#stream_img").height(canvas.offsetHeight);
-                max_value = parseInt(canvas.height/2);
-                min_value = max_value*-1;
-            }
-            
-                
-            /**
-             * Draws a dot at a specific position on the canvas
-             */
-            function drawDot(x, y ,size) {
-                // Let's use black by setting RGB values to 0, and 255 alpha (completely opaque)
-                r=0; g=0; b=0; a=255;
-
-                // Select a fill style
-                ctx.fillStyle = "rgba("+r+","+g+","+b+","+(a/255)+")";
-
-                // Draw a filled circle
-                ctx.beginPath();
-                ctx.arc(x, y, size, 0, Math.PI*2, true); 
-                ctx.closePath();
-                ctx.fill();           
-            } 
-            
-            /**
-             * Draws a line
-             */
-            function drawLine(x_start, y_start, x_stop, y_stop) {
-                ctx.beginPath();
-                ctx.moveTo(x_start, y_start);
-                ctx.lineTo(x_stop, y_stop);
-                ctx.lineWidth = 4;
-                ctx.stroke();                
-            } 
-
-            /**
-             * Draws text in canvas
-             */
-            function drawText(text, x, y) {
-                ctx.font = "14px Arial";
-                ctx.fillText(text, x, y);                           
-            } 
-
-            /**
-             * Draws text vertical in canvas
-             */
-            function drawTextVerical(text, toLeft) {
-                var x = canvas.offsetWidth-8;
-                var y = (canvas.offsetHeight / 2)-20;
-                ctx.save();
-                if (toLeft){
-                    ctx.translate(16, y);
-                }
-                else{
-                    ctx.translate(x, y);
-                }
-                ctx.rotate(-Math.PI/2);
-                ctx.textAlign = "center";
-                ctx.font = "14px Arial";
-                ctx.fillText(text, 0, 0);
-                ctx.restore();
-            } 
-
-            /**
-             * Draws text vertical in canvas
-             */
-            function drawDoubleText(verticalText1, verticalText2) {
-                var x = canvas.offsetWidth-8;
-                var y = (canvas.offsetHeight / 2)-20;
-                ctx.save();
-                ctx.translate(x, y);
-                ctx.rotate(-Math.PI/2);
-                ctx.textAlign = "center";
-                ctx.font = "14px Arial";
-                ctx.fillText(verticalText1, 0, 0);
-                ctx.restore();
-                ctx.save();
-                ctx.translate(x-20, y);
-                ctx.rotate(-Math.PI/2);
-                ctx.textAlign = "center";
-                ctx.font = "14px Arial";
-                ctx.fillText(verticalText2, 0, 0);
-                ctx.restore();
-            } 
-
-            /**
-             * Clear the canvas context using the canvas width and height
-             */
-            function clearCanvas() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-            }
-
-            /**
-             * Clear camera canvas (left part of the screen)
-             */
-            function clearCanvasCamera() {
-                ctx.clearRect(0, 0, canvas.width/2, canvas.height);
-            }
-
-            /**
-             * Clear drive canvas (right part of the screen)
-             */
-            function clearCanvasDrive() {
-                ctx.clearRect(canvas.width/2, 0, canvas.width, canvas.height);
             }
 
             /**
@@ -217,7 +299,6 @@
                     drive_is_mouseDown=1;
                     drive_mouseX_press = drive_mouseX_now;
                     drive_mouseY_press = drive_mouseY_now;
-                    drawDot(drive_mouseX_press, drive_mouseY_press, 12);
                     //Stop the movement
                     sendDrive(0, 0);
                 }
@@ -225,9 +306,11 @@
                     camera_is_mouseDown=1;
                     camera_mouseX_press = camera_mouseX_now;
                     camera_mouseY_press = camera_mouseY_now;
-                    drawDot(camera_mouseX_press, camera_mouseY_press, 12);
                     servo_position_press = servo_position;
                 }
+                // Draw canvas
+                drawCanvas();
+                // Check if it is a double tap
                 tapTheScreen();
             }
 
@@ -237,10 +320,8 @@
             function mouseUp(e) {
                 drive_is_mouseDown=0;
                 camera_is_mouseDown=0;
-                clearCanvas();
-                //Draw help text
-                drawHelpTextCamera();
-                drawHelpTextDrive();
+                // Draw canvas
+                drawCanvas();
                 //Stop the movement
                 sendDrive(0, 0);
             }
@@ -266,32 +347,14 @@
                     camera_mouseY_now = e.layerY;
                 }
                 if(drive_is_mouseDown){
-                    // Clear old content
-                    clearCanvas();
-                    //Draw line from new to start dott
-                    drawLine(drive_mouseX_now, drive_mouseY_now, drive_mouseX_press, drive_mouseY_press);
-                    //Draw new dott
-                    drawDot(drive_mouseX_now, drive_mouseY_now, 12);
-                    //Draw start dott
-                    drawDot(drive_mouseX_press, drive_mouseY_press, 12);
-                    //Draw help text
-                    drawHelpTextCamera();
-                    drawHelpTextDrive();
+                    // Draw canvas
+                    drawCanvas();
                     //Send a drive command to the rover
                     sendDrive(drive_mouseX_now- drive_mouseX_press, drive_mouseY_press - drive_mouseY_now)
                 }
                 if(camera_is_mouseDown){
-                    // Clear old content
-                    clearCanvas();
-                    //Draw line from new to start dott
-                    drawLine(camera_mouseX_press, camera_mouseY_now, camera_mouseX_press, camera_mouseY_press);
-                    //Draw new dott
-                    drawDot(camera_mouseX_press, camera_mouseY_now, 12);
-                    //Draw start dott
-                    drawDot(camera_mouseX_press, camera_mouseY_press, 12);
-                    //Draw help text
-                    drawHelpTextCamera();
-                    drawHelpTextDrive();
+                    // Draw canvas
+                    drawCanvas();
                     //Send a camera move command to the rover
                     if(rover_type=="large"){
                         sendCamera(camera_mouseY_press-camera_mouseY_now);
@@ -318,7 +381,8 @@
                         drive_is_mouseDown=1;
                         drive_mouseX_press = t.pageX;
                         drive_mouseY_press = t.pageY - canvas.offsetTop;
-                        drawDot(drive_mouseX_press, drive_mouseY_press, 12);
+                        // Draw canvas
+                        drawCanvas();
                         //Stop the movement
                         sendDrive(0, 0);
                     }
@@ -326,10 +390,12 @@
                         camera_is_mouseDown=1;
                         camera_mouseX_press = t.pageX;
                         camera_mouseY_press = t.pageY - canvas.offsetTop;
-                        drawDot(camera_mouseX_press, camera_mouseY_press, 12);
+                        // Draw canvas
+                        drawCanvas();
                         servo_position_press = servo_position;
                     }
                 }
+                // Check if it is a double tap
                 tapTheScreen();
             }
 
@@ -345,17 +411,15 @@
                     t = e.changedTouches[i];
                     if (t.pageX>=($(document).width()/2)){
                         drive_is_mouseDown=0;
-                        clearCanvasDrive();
-                        //Draw help text
-                        drawHelpTextDrive();
+                        // Draw canvas
+                        drawCanvas();
                         //Stop the movement
                         sendDrive(0, 0);
                     }
                     else{
                         camera_is_mouseDown=0;
-                        clearCanvasCamera();
-                        //Draw help text
-                        drawHelpTextCamera();
+                        // Draw canvas
+                        drawCanvas();
                     }
                 }
             }
@@ -379,39 +443,17 @@
                         camera_mouseY_now = t.pageY - canvas.offsetTop;
                     }
                 }
-                
-                if (drive_is_mouseDown==1 && camera_is_mouseDown==1){
-                    clearCanvas();
-                }
-                else if(drive_is_mouseDown==1){
-                    clearCanvasDrive();
-                }
-                else if(camera_is_mouseDown==1){
-                    clearCanvasCamera();
-                }
 
                 //Draw the drive
                 if (drive_is_mouseDown==1) {
-                    //Draw line from new to start dott
-                    drawLine(drive_mouseX_now, drive_mouseY_now, drive_mouseX_press, drive_mouseY_press);
-                    //Draw new dott
-                    drawDot(drive_mouseX_now, drive_mouseY_now, 12);
-                    //Draw start dott
-                    drawDot(drive_mouseX_press, drive_mouseY_press, 12);
-                    //Draw help text
-                    drawHelpTextDrive();
+                    // Draw canvas
+                    drawCanvas();
                     //Send a drive command to the rover
                     sendDrive(drive_mouseX_now-drive_mouseX_press, drive_mouseY_press - drive_mouseY_now)
                 }
                 if (camera_is_mouseDown==1) {
-                    //Draw line from new to start dott
-                    drawLine(camera_mouseX_press, camera_mouseY_now, camera_mouseX_press, camera_mouseY_press);
-                    //Draw new dott
-                    drawDot(camera_mouseX_press, camera_mouseY_now, 12);
-                    //Draw start dott
-                    drawDot(camera_mouseX_press, camera_mouseY_press, 12);
-                    //Draw help text
-                    drawHelpTextCamera();
+                    // Draw canvas
+                    drawCanvas();
                     //Send a camera move command to the rover
                     if(rover_type=="large"){
                         sendCamera(camera_mouseY_press-camera_mouseY_now);
@@ -441,7 +483,48 @@
             var send_drive = false;
             var lamp_status = false;
             var rover_type = "medium"; 
+            var every_second_time = true;
+            var voltage = 0;
+            var front_distance = 999;
+            var front_right_distance=999
+            var right_distance=999
+            var back_right_distance=999
+            var back_distance=999
+            var back_left_distance=999
+            var left_distance=999
+            var front_left_distance=999
             
+            /**
+             * Initialise all the drawing on the canvas here
+             */
+            function drawCanvas() {
+                //Clear canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                //Draw voltage
+                drawText("Voltage: "+voltage, canvas.offsetWidth-130, 15)
+                //Draw help texts
+                drawTextVerical("Drag up and down to tilt camera", true);
+                drawDoubleText("Drag in all directions to drive the rover", "Double tap to toggle the light");
+                if(drive_is_mouseDown){
+                    //Draw start dott
+                    drawDot(drive_mouseX_press, drive_mouseY_press, 12);
+                    //Draw new dott
+                    drawDot(drive_mouseX_now, drive_mouseY_now, 12);
+                    //Draw line from new to start dott
+                    drawLine(drive_mouseX_now, drive_mouseY_now, drive_mouseX_press, drive_mouseY_press);
+                }
+                if(camera_is_mouseDown){
+                    //Draw start dott
+                    drawDot(camera_mouseX_press, camera_mouseY_press, 12);
+                    //Draw new dott
+                    drawDot(camera_mouseX_press, camera_mouseY_now, 12);
+                    //Draw line from new to start dott
+                    drawLine(camera_mouseX_press, camera_mouseY_now, camera_mouseX_press, camera_mouseY_press);
+                }
+                //Draw the distance stuff
+                drawDistance();
+            }
+                        
             /**
              * When the page is loaded
              */
@@ -460,10 +543,9 @@
                 // If the browser supports the canvas tag, get the 2d drawing context for this canvas
                 ctx = canvas.getContext('2d');
                 
-                //Draw the help text
-                drawHelpTextCamera();
-                drawHelpTextDrive();
-
+                // Draw the canvas
+                drawCanvas();
+                
                 // Handle touch and desktop different
                 if(isTouch){
                     canvas.addEventListener('touchstart', touchStart, false);
@@ -480,15 +562,14 @@
                 window.addEventListener('resize', function(event){
                     setSizeOfCanvas();
                     try{
-                        //Draw the help text
-                        drawHelpTextCamera();
-                        drawHelpTextDrive();
+                        // Draw the canvas
+                        drawCanvas();
                     }
                     catch(e){
                     }
                 });
 
-                // This thread sending the command to 
+                // This thread sending the command to server
                 setTimeout(function(){
                     if (servo_position_last!=servo_position){
                         servo_position_last = servo_position;
@@ -517,18 +598,14 @@
                     if (motor_left==0 && motor_right==0){
                         send_drive=false;
                     }
+                    
+                    if(every_second_time){
+                        submitNoPW('rover_status');
+                    }
+                    every_second_time=!every_second_time;
+                    
                     setTimeout(arguments.callee, 300);
                 }, 300);
-            }
-            
-            /**
-             * Draw help Text on canvas
-             */
-            function drawHelpTextCamera(){
-                drawTextVerical("Drag up and down to tilt camera", true);
-            }
-            function drawHelpTextDrive(){
-                drawDoubleText("Drag in all directions to drive the rover", "Double tap to toggle the light");
             }
             
             /**
@@ -549,6 +626,12 @@
                 if (rover_is_enabled && !is_top_menu_showing()){
                     $("#the_video").show();
                     $("#stream_img").attr("src", "http://"+window.location.hostname+":"+stream_port+"/?action=stream");         
+                    img_o = $("#stream_img");
+                    p = img_o.position();
+                    videoLeft=40;
+                    videoTop=1;
+                    videoWidth=img_o.width();
+                    videoHeight=img_o.height();
                 }
             }
             
@@ -557,10 +640,15 @@
              */
             function onVisible(){
                 if (rover_is_enabled && !is_top_menu_showing()){
-                    drawHelpTextCamera();
-                    drawHelpTextDrive();
+                    drawCanvas();
                     $("#the_video").show();
                     $("#stream_img").attr("src", "http://"+window.location.hostname+":"+stream_port+"/?action=stream");         
+                    img_o = $("#the_video");
+                    p = img_o.position();
+                    videoLeft=p.left;
+                    videoTop=p.left;
+                    videoWidth=img_o.width();
+                    videoHeight=img_o.height();
                 }
             }
 
@@ -607,10 +695,25 @@
                 if(rover_type=="mini"){
                     $('#stream_img').removeClass('rotate-180').addClass('rotate-180');
                 }
-                
                 rover_is_enabled=true;
                 $("#not_enabled").hide();
                 onEvery05s();
+            }
+            
+            /**
+             * Get status
+             */
+            function on_rover_status(paramaters){
+                voltage = paramaters[0];
+                front_distance = parseInt(paramaters[1]);
+                front_right_distance=parseInt(paramaters[2]);
+                right_distance=parseInt(paramaters[3]);
+                back_right_distance=parseInt(paramaters[4]);
+                back_distance=parseInt(paramaters[5]);
+                back_left_distance=parseInt(paramaters[6]);
+                left_distance=parseInt(paramaters[7]);
+                front_left_distance=parseInt(paramaters[8]);
+                drawCanvas();
             }
 
             /**
@@ -630,7 +733,7 @@
                         
             /**
              * Send drive command to rover
-             * x and y how many pixelsn the pinger is drawn (top to bottom +, bottom to top -)
+             * x and y how many pixelsn the finger is drawn (top to bottom +, bottom to top -)
              */
             function sendDrive(x, y) {
                 drive = parseInt(remap(y, min_value, max_value, motor_backward_max, motor_forward_max));
@@ -661,7 +764,7 @@
 
             /**
              * Send camera command to rover
-             * y how many pixelsn the pinger is drawn (top to bottom +, bottom to top -)
+             * y how many pixelsn the finger is drawn (top to bottom +, bottom to top -)
              */
             function sendCamera(new_camera) {
                 if (new_camera<0){
@@ -681,7 +784,7 @@
 
             
             /**
-             * Check if it is a double tap, then toggle screen
+             * Check if it is a double tap, then toggle lamp
              */
             function tapTheScreen(){
                 new_tap = new Date().getTime();
@@ -699,12 +802,12 @@
         <div id="included_top_bar">Kiss OS Utils</div>
         <div class="fill" id="fill">
             <div id="app">
-                <canvas id="pad">
+                <canvas id="pad" style="z-index: 10">
 
                 </canvas>
             </div>
         </div>
-        <div id="the_video" style="position:absolute; left:40px;top:37px;display: none">
+        <div id="the_video" style="position:absolute; left:40px;top:37px;display: none;z-index: 5">
             <img alt="The stream" id="stream_img" src="" style="height:100%">
         </div>
         <div id="not_enabled" style="position:absolute; left:10px;top:60px;display: none;border:1px solid black;background-color: white;padding:8px">

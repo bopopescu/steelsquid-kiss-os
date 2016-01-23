@@ -38,6 +38,7 @@ import signal
 import smbus
 import math
 import RPi.GPIO as GPIO
+import gc
 from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
@@ -1020,7 +1021,7 @@ def hcsr04_distance(trig_gpio, echo_gpio, force_setup = False):
     @param trig_gpio: The trig gpio
     @param echo_gpio: The echo gpio
     @param force_setup: Force setup of pins
-    @return: The distance in cm (-1 = unable to mesure)
+    @return: The distance in cm (999=to long to read)
     '''
     trig_gpio = int(trig_gpio)
     echo_gpio = int(echo_gpio)
@@ -1030,27 +1031,36 @@ def hcsr04_distance(trig_gpio, echo_gpio, force_setup = False):
         gpio_setup_in(echo_gpio, resistor=PULL_UP)
         gpio_set(trig_gpio, False)
         distances_created.append(trig_gpio)
+        time.sleep(0.1)
+    result = [999, 999, 999, 999, 999, 999]
+    for i in range(5):
+        #gc.collect()
+        time.sleep(0.0001)
+        gpio_set(trig_gpio, True)
         time.sleep(0.00001)
-    gpio_set(trig_gpio, True)
-    time.sleep(0.00001)
-    gpio_set(trig_gpio, False)
-    countdown = TIMEOUT
-    while (gpio_get(echo_gpio) == False and countdown > 0):
-        countdown = countdown - 1
-    if countdown > 0:
-        echostart = time.time()
-        countdown = TIMEOUT
-        while (gpio_get(echo_gpio) == True and countdown > 0):
-            countdown = countdown - 1
-        if countdown > 0:
+        gpio_set(trig_gpio, False)
+        countdown=100
+        while gpio_get(echo_gpio) == False:
+            echostart = time.time()
+            time.sleep(0.0001)
+            countdown = countdown-1
+            if countdown==0:
+                break
+        countdown=100
+        while gpio_get(echo_gpio) == True:
             echoend = time.time()
+            time.sleep(0.0001)
+            countdown = countdown-1
+            if countdown==0:
+                break
+        if 'echoend' in locals() and 'echostart' in locals() :
             echoduration = echoend - echostart
-            distance = echoduration * 17150
-            return int(round(distance, 0))
-        else:
-            return -1
-    else:
-        return -1
+            distance = echoduration * 14500
+            result[i]=int(round(distance, 0))
+    median = steelsquid_utils.median(result)
+    if median>80:
+        median=999
+    return median
 
 
 def hcsr04_event(trig_gpio, echo_gpio, callback_method, min_change=2, sample_sleep=0.2):

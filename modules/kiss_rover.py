@@ -39,6 +39,10 @@ If Class with name SETTINGS exist:
    System try to read: steelsquid_utils.get_flag("this_is_a_flag")
    System try to read: steelsquid_utils.get_parameter("this_is_a_parameter", "a_default_value")
    System try to read: steelsquid_utils.get_list("this_is_a_list", [])
+ If you want to disable save and read the settings from disk add a variable like this.
+ This is usefull under development if you wan to test different values when you restart the module,
+ otherwise the value from the first execution to be used ...
+   _persistent_off = True
  To sum up: Variables in class SETTINGS that has value: Boolean, Array, Integer, Float, String will be persistent.
 
 If Class with name SYSTEM has this staticmethods
@@ -132,7 +136,6 @@ def enable(argument=None):
     steelsquid_kiss_global.clear_modules_settings("kiss_rover")
     # Get what tyoe of rover this is from the start argument
     if argument!=None and argument=="large":
-        # If this is a large rover use other defualt settings
         steelsquid_utils.set_parameter("rover_type", "large")
         steelsquid_utils.set_parameter("servo_position_start", "70")
         steelsquid_utils.set_parameter("servo_position_max", "160")
@@ -142,7 +145,6 @@ def enable(argument=None):
         steelsquid_utils.set_parameter("motor_forward_start", "75")
         steelsquid_utils.set_parameter("motor_backward_start", "-75")
     elif argument!=None and argument=="mini":
-        # If this is a large rover use other defualt settings
         steelsquid_utils.set_parameter("rover_type", "mini")
         steelsquid_utils.set_parameter("servo_position_start", "85")
         steelsquid_utils.set_parameter("servo_position_max", "140")
@@ -152,7 +154,14 @@ def enable(argument=None):
         steelsquid_utils.set_parameter("motor_forward_start", "170")
         steelsquid_utils.set_parameter("motor_backward_start", "-170")
     else:
-        steelsquid_utils.set_paramater("rover_type", "small")
+        steelsquid_utils.set_parameter("rover_type", "small")
+        steelsquid_utils.set_parameter("servo_position_start", "210")
+        steelsquid_utils.set_parameter("servo_position_max", "230")
+        steelsquid_utils.set_parameter("servo_position_min", "80")
+        steelsquid_utils.set_parameter("motor_forward_max", "1023")
+        steelsquid_utils.set_parameter("motor_backward_max", "-1023")
+        steelsquid_utils.set_parameter("motor_forward_start", "200")
+        steelsquid_utils.set_parameter("motor_backward_start", "-200")
     # Enable the PIIO board
     if not steelsquid_kiss_global.is_module_enabled("kiss_piio") and not steelsquid_kiss_global.stream():
         steelsquid_kiss_global.module_status("kiss_piio", True, restart=False) # Not trigger reboot
@@ -193,34 +202,75 @@ class SETTINGS(object):
     System try to read: steelsquid_utils.get_flag("this_is_a_flag")
     System try to read: steelsquid_utils.get_parameter("this_is_a_parameter", "a_default_value")
     System try to read: steelsquid_utils.get_list("this_is_a_list", [])
+    If you want to disable save and read the settings from disk add a variable like this.
+    This is usefull under development if you wan to test different values when you restart the module,
+    otherwise the value from the first execution to be used ...
+      _persistent_off = True
     To sum up: Variables in class SETTINGS that has value: Boolean, Array, Integer, Float, String will be will be persistent.
     '''
-    # What type of rover is this. This is set by the enable module (Small or large, default small)
-    rover_type = "small"
+    
+    # This will tell the system not to save and read the settings from disk
+    _persistent_off = True
+
+    # What type of rover is this. This is set by the enable module (Small or large, default mini)
+    rover_type = "mini"
+
+    # The lamp is connected to this POWER PIN
+    lamp_power_pin = 1
+
+    # The front edge detection sensor is connected to this GPIO
+    front_edge_gpio = 14
+
+    # The front edge detection sensor is connected to this GPIO
+    left_edge_gpio = 15
+
+    # The front edge detection sensor is connected to this GPIO
+    right_edge_gpio = 13
+
+    # The front edge detection sensor is connected to this GPIO
+    back_edge_gpio = 16
+
+    # The distance sensor gpios
+    front_echo_gpio = 1
+    front_trig_gpio = 17
+    front_right_echo_gpio = 2
+    front_right_trig_gpio = 18
+    right_echo_gpio = 3
+    right_trig_gpio = 19
+    back_right_echo_gpio = 4
+    back_right_trig_gpio = 20
+    back_echo_gpio = 5
+    back_trig_gpio = 21
+    back_left_echo_gpio = 6
+    back_left_trig_gpio = 22
+    left_echo_gpio = 7
+    left_trig_gpio = 9
+    front_left_echo_gpio = 8
+    front_left_trig_gpio = 10
 
     # Number of seconds until drive stop if no commands from client (connection lost, stop the rover)
     max_drive_delta = 1
 
     # When system start move servo here
-    servo_position_start = 210
+    servo_position_start = 85
 
     # Max Servo position
-    servo_position_max = 230
+    servo_position_max = 140
 
     # Min Servo position
-    servo_position_min = 80
+    servo_position_min = 30
 
     # Motor max forward
-    motor_forward_max = 1023
+    motor_forward_max = 800
 
     # Motor max backward
-    motor_backward_max = -1023
+    motor_backward_max = -800
 
     # start with this value when drive forward (if lower than this the motor do not turn)
-    motor_forward_start = 200
+    motor_forward_start = 170
 
     # start with this value when drive backward (if lower than this the motor do not turn)
-    motor_backward_start = -200
+    motor_backward_start = -170
 
 
 class SYSTEM(object):
@@ -246,8 +296,40 @@ class SYSTEM(object):
         # Set servo start position
         WEB.servo_position = SETTINGS.servo_position_start
         # Move the sevo to start position
-        steelsquid_piio.servo(1, WEB.servo_position)       
+        steelsquid_piio.servo(1, WEB.servo_position)
+        # The mini rover has edge detection sensors
+        if SETTINGS.rover_type=="mini":
+            steelsquid_piio.gpio_event(SETTINGS.front_edge_gpio, SYSTEM.on_edge, bouncetime_ms=0, resistor=steelsquid_piio.PULL_NONE)         
+            steelsquid_piio.gpio_event(SETTINGS.left_edge_gpio, SYSTEM.on_edge, bouncetime_ms=0, resistor=steelsquid_piio.PULL_NONE)         
+            steelsquid_piio.gpio_event(SETTINGS.right_edge_gpio, SYSTEM.on_edge, bouncetime_ms=0, resistor=steelsquid_piio.PULL_NONE)         
+            steelsquid_piio.gpio_event(SETTINGS.back_edge_gpio, SYSTEM.on_edge, bouncetime_ms=0, resistor=steelsquid_piio.PULL_NONE)         
 
+
+    @staticmethod
+    def on_stop():
+        '''
+        This will execute when system stops
+        Do not execute long running stuff here
+        '''
+        pass
+        
+
+    @staticmethod
+    def on_edge(gpio, state):
+        '''
+        On edge detection
+        If front edge detect: state=True
+        '''
+        # Light different PIIO leds
+        if gpio == SETTINGS.front_edge_gpio:
+            steelsquid_piio.led(4, state)
+        elif gpio == SETTINGS.left_edge_gpio:
+            steelsquid_piio.led(3, state)
+        elif gpio == SETTINGS.right_edge_gpio:
+            steelsquid_piio.led(2, state)
+        elif gpio == SETTINGS.back_edge_gpio:
+            steelsquid_piio.led(1, state)
+        
 
 class LOOP(object):
     '''
@@ -257,15 +339,35 @@ class LOOP(object):
     Every method will execute in its own thread
     '''
     
+    # Last distance read
+    front_distance=999
+    front_right_distance=999
+    right_distance=999
+    back_right_distance=999
+    back_distance=999
+    back_left_distance=999
+    left_distance=999
+    front_left_distance=999
+    
     @staticmethod
     def on_loop():
         '''
-        If more than "configurable" second since last drive command stop the drive (connection may be lost)
+        Execute every 0.5 second
         '''    
+        # If more than "configurable" second since last drive command stop the drive (connection may be lost)
         drive_delta = datetime.datetime.now() - WEB.last_drive_command
         if drive_delta.total_seconds()>1:
             steelsquid_piio.motor(0, 0)
-        return 0.5 # Execute this method again in half a second
+        # Read front sensor distance
+        LOOP.front_distance = steelsquid_piio.hcsr04_distance(SETTINGS.front_trig_gpio, SETTINGS.front_echo_gpio)
+        LOOP.front_right_distance = steelsquid_piio.hcsr04_distance(SETTINGS.front_right_trig_gpio, SETTINGS.front_right_echo_gpio)
+        LOOP.right_distance = steelsquid_piio.hcsr04_distance(SETTINGS.right_trig_gpio, SETTINGS.right_echo_gpio)
+        LOOP.back_right_distance = steelsquid_piio.hcsr04_distance(SETTINGS.back_right_trig_gpio, SETTINGS.back_right_echo_gpio)
+        LOOP.back_distance = steelsquid_piio.hcsr04_distance(SETTINGS.back_trig_gpio, SETTINGS.back_echo_gpio)
+        LOOP.back_left_distance = steelsquid_piio.hcsr04_distance(SETTINGS.back_left_trig_gpio, SETTINGS.back_left_echo_gpio)
+        LOOP.left_distance = steelsquid_piio.hcsr04_distance(SETTINGS.left_trig_gpio, SETTINGS.left_echo_gpio)
+        LOOP.front_left_distance = steelsquid_piio.hcsr04_distance(SETTINGS.front_left_trig_gpio, SETTINGS.front_left_echo_gpio)
+        return 0.3 # Execute this method again in half a second
 
 
 class WEB(object):
@@ -298,6 +400,14 @@ class WEB(object):
         Get info on the rover
         '''
         return [WEB.servo_position, SETTINGS.servo_position_max, SETTINGS.servo_position_min, SETTINGS.motor_forward_max, SETTINGS.motor_backward_max, SETTINGS.motor_forward_start, SETTINGS.motor_backward_start, WEB.lamp_status, SETTINGS.rover_type]
+
+
+    @staticmethod
+    def rover_status(session_id, parameters):
+        '''
+        Get status
+        '''
+        return [steelsquid_piio.volt_last(), LOOP.front_distance, LOOP.front_right_distance, LOOP.right_distance, LOOP.back_right_distance, LOOP.back_distance, LOOP.back_left_distance, LOOP.left_distance, LOOP.front_left_distance]
     
     
     @staticmethod
@@ -347,6 +457,6 @@ class WEB(object):
         Turn the lamp on and off
         '''
         status = steelsquid_utils.to_boolean(parameters[0])
-        steelsquid_piio.power(1, status)
-        steelsquid_piio.power(2, status) 
+        steelsquid_piio.power(SETTINGS.lamp_power_pin, status)
+        steelsquid_piio.power(SETTINGS.lamp_power_pin+1, status) 
         
