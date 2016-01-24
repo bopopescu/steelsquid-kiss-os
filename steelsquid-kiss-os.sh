@@ -4077,16 +4077,6 @@ fi
 ##################################################################################
 # Create direcorys and links
 ##################################################################################
-log "libultrasonic"
-git clone https://github.com/wdalmut/libultrasonic.git
-cd libultrasonic
-make -C src/ board=hc_sr04
-make -C examples/
-
-
-##################################################################################
-# Create direcorys and links
-##################################################################################
 log "Create direcorys and links"
 mkdir $steelsquid_folder/flags
 mkdir $steelsquid_folder/lists
