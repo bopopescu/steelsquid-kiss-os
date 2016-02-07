@@ -1811,3 +1811,10 @@ def reverse_byte_order(data):
         val    = (val << 8) | (data & 0xff)
         data >>= 8
     return val
+
+
+def split_chunks(arr, chunk_size):
+    '''
+    Split a array into chunks
+    '''
+    return [arr[i:i+chunk_size] for i in range(0, len(arr), chunk_size)]

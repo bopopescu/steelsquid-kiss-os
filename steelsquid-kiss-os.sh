@@ -71,11 +71,14 @@ python_downloads[17]="$base/steelsquid_trex.py"
 python_downloads[18]="$base/steelsquid_oled_ssd1306.py"
 python_downloads[19]="$base/steelsquid_bluetooth_connection.py"
 python_downloads[20]="$base/steelsquid_i2c.py"
-python_downloads[21]="$base/MCP23017.py"
-python_downloads[22]="$base/modules/kiss_expand.py"
-python_downloads[23]="$base/modules/kiss_alarm.py"
-python_downloads[24]="$base/modules/kiss_piio.py"
-python_downloads[25]="$base/modules/kiss_rover.py"
+python_downloads[21]="$base/steelsquid_nrf24.py"
+python_downloads[22]="$base/MCP23017.py"
+python_downloads[23]="$base/nrf24.py"
+python_downloads[24]="$base/modules/kiss_expand.py"
+python_downloads[25]="$base/modules/kiss_alarm.py"
+python_downloads[26]="$base/modules/kiss_piio.py"
+python_downloads[27]="$base/modules/kiss_rover.py"
+python_downloads[28]="$base/modules/kiss_radiorover.py"
 
 # Links to python_downloads
 python_links[1]="/usr/bin/steelsquid-boot"
@@ -103,6 +106,9 @@ python_links[22]="/usr/bin/dummy"
 python_links[23]="/usr/bin/dummy"
 python_links[24]="/usr/bin/dummy"
 python_links[25]="/usr/bin/dummy"
+python_links[26]="/usr/bin/dummy"
+python_links[27]="/usr/bin/dummy"
+python_links[28]="/usr/bin/dummy"
 
 # Download to web root folder
 web_root_downloads[1]="$base/web/top_bar.html"
@@ -113,8 +119,9 @@ web_root_downloads[5]="$base/web/download.html"
 web_root_downloads[6]="$base/web/file.html"
 web_root_downloads[7]="$base/web/utils.html"
 web_root_downloads[8]="$base/web/rover.html"
-web_root_downloads[9]="$base/web/expand.html"
-web_root_downloads[10]="$base/web/template.html"
+web_root_downloads[9]="$base/web/radiorover.html"
+web_root_downloads[10]="$base/web/expand.html"
+web_root_downloads[11]="$base/web/template.html"
 
 # Download to web img folder
 web_img_downloads[1]="$base/img/back.png"
@@ -1249,6 +1256,17 @@ function help_utils()
     echo 
     echb "steelsquid rover-off"
     echo "Disable rover functionality."
+    echo 
+    echb "steelsquid browser-on <url>"
+    echo "When system boot, start a browser in fullscreen."
+    echo "Need to install alot of stuff, will take several minutes to finish."
+    echo "url = URL to load"
+    echo 
+    echb "steelsquid browser-off"
+    echo "Desable the browser start when system boot"
+    echo 
+    echb "steelsquid browser-restart"
+    echo "If the browser in fullscreen is activated use this to restart it."
 }
 if [ "$in_parameter_1" == "help-utils" ]; then
     help_utils
@@ -2126,7 +2144,11 @@ function stream_on_pi_no_restart()
     echo "" >> /etc/systemd/system/mjpgstreamerpi.service
     echo "[Service]" >> /etc/systemd/system/mjpgstreamerpi.service
     echo "Environment=\"LD_LIBRARY_PATH=/opt/mjpg-streamer-pi/mjpg-streamer/mjpg-streamer-experimental\"" >> /etc/systemd/system/mjpgstreamerpi.service
-    echo "ExecStart=/opt/mjpg-streamer-pi/mjpg-streamer/mjpg-streamer-experimental/mjpg_streamer -i \"/opt/mjpg-streamer-pi/mjpg-streamer/mjpg-streamer-experimental/input_raspicam.so -x 640 -y 480 -fps ${dat}\" -o \"/opt/mjpg-streamer-pi/mjpg-streamer/mjpg-streamer-experimental/output_http.so -w www\"" >> /etc/systemd/system/mjpgstreamerpi.service
+    if [ $(get-flag "stream_low") == "true" ]; then
+        echo "ExecStart=/opt/mjpg-streamer-pi/mjpg-streamer/mjpg-streamer-experimental/mjpg_streamer -i \"/opt/mjpg-streamer-pi/mjpg-streamer/mjpg-streamer-experimental/input_raspicam.so -vf -hf -x 320 -y 240 -quality 12 -fps ${dat}\" -o \"/opt/mjpg-streamer-pi/mjpg-streamer/mjpg-streamer-experimental/output_http.so -w www\"" >> /etc/systemd/system/mjpgstreamerpi.service
+    else
+        echo "ExecStart=/opt/mjpg-streamer-pi/mjpg-streamer/mjpg-streamer-experimental/mjpg_streamer -i \"/opt/mjpg-streamer-pi/mjpg-streamer/mjpg-streamer-experimental/input_raspicam.so -x 640 -y 480 -fps ${dat}\" -o \"/opt/mjpg-streamer-pi/mjpg-streamer/mjpg-streamer-experimental/output_http.so -w www\"" >> /etc/systemd/system/mjpgstreamerpi.service
+    fi
     echo "Restart=always" >> /etc/systemd/system/mjpgstreamerpi.service
     echo "RestartSec=5" >> /etc/systemd/system/mjpgstreamerpi.service
     echo "KillMode=process" >> /etc/systemd/system/mjpgstreamerpi.service
@@ -2182,6 +2204,79 @@ if [ "$in_parameter_1" == "stream-off" ]; then
 fi
 
 
+##################################################################################
+# Enable start browser  in fullscreen
+##################################################################################
+function browser_on()
+{
+	log "Enable start browser  in fullscreen"
+    useradd browser
+    mkhomedir_helper browser
+    aptitude install -R xserver-xorg-video-fbturbo xserver-xorg xinit gconf-service libgconf-2-4 libgnome-keyring0 libxss1 xserver-xorg-input-multitouch xdg-utils lsb-release libexif12 libexif-gtk5 nodm
+    wget http://ftp.us.debian.org/debian/pool/main/libg/libgcrypt11/libgcrypt11_1.5.0-5+deb7u3_armhf.deb
+    wget http://launchpadlibrarian.net/218525709/chromium-browser_45.0.2454.85-0ubuntu0.14.04.1.1097_armhf.deb
+    wget http://launchpadlibrarian.net/218525711/chromium-codecs-ffmpeg-extra_45.0.2454.85-0ubuntu0.14.04.1.1097_armhf.deb
+    dpkg -i libgcrypt11_1.5.0-5+deb7u3_armhf.deb
+    dpkg -i chromium-codecs-ffmpeg-extra_45.0.2454.85-0ubuntu0.14.04.1.1097_armhf.deb
+    dpkg -i chromium-browser_45.0.2454.85-0ubuntu0.14.04.1.1097_armhf.deb
+    
+    echo "#"\!"/bin/bash" > /home/browser/.xsession
+    echo "xset s off &" >> /home/browser/.xsession
+    echo "xset dpms 0 0 0 &" >> /home/browser/.xsession
+    echo "exec /usr/bin/chromium-browser --noerrdialogs --incognito --touch-events=enabled --enable-pinch --kiosk $in_parameter_2" >> /home/browser/.xsession
+    chmod +x /home/browser/.xsession
+    
+    sed -i 's/.*NODM_ENABLED=.*/NODM_ENABLED=true/' /etc/default/nodm
+    sed -i 's/.*NODM_USER=.*/NODM_USER=browser/' /etc/default/nodm
+    systemctl enable nodm
+    systemctl start nodm
+        
+    del-flag "web_authentication"
+    set-parameter "browser" $in_parameter_2
+    log-reboot
+}
+if [ "$in_parameter_1" == "browser-on" ]; then
+	browser_on
+	exit 0
+fi
+
+
+##################################################################################
+# Disable start browser  in fullscreen
+##################################################################################
+function browser_off()
+{
+	log "Disable start browser  in fullscreen"
+    systemctl stop nodm
+    systemctl disable nodm
+        
+    set-flag "web_authentication"
+    del-parameter "browser"
+    log-reboot
+}
+if [ "$in_parameter_1" == "browser-off" ]; then
+	browser_off
+	exit 0
+fi
+
+
+##################################################################################
+# Disable start browser  in fullscreen
+##################################################################################
+function browser_restart()
+{
+	log "Restart fullscreen browser"
+    systemctl stop nodm
+    sleep 2
+    systemctl start nodm
+}
+if [ "$in_parameter_1" == "browser-restart" ]; then
+	browser_restart
+	exit 0
+fi
+
+
+browser-restart
 ##################################################################################
 # Show status Alarm/Surveillance
 ##################################################################################
@@ -3909,8 +4004,8 @@ log "Repository updated"
 ##################################################################################
 if [ $(get_installed) == "false" ]; then
 	log "Remove and install packages"
-    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv i2c-tools alsa-firmware-loaders alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree expeyes-firmware-dev firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-samsung firmware-ti-connectivity firmware-zd1211 libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer sigrok-firmware-fx2lafw libraspberrypi-bin libraspberrypi-dev fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw console-data read-edid bluetooth apt-utils libraspberrypi0
-    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv i2c-tools alsa-firmware-loaders alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree expeyes-firmware-dev firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-samsung firmware-ti-connectivity firmware-zd1211 libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer sigrok-firmware-fx2lafw libraspberrypi-bin libraspberrypi-dev fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw console-data read-edid bluetooth apt-utils libraspberrypi0
+    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv i2c-tools alsa-firmware-loaders alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree expeyes-firmware-dev firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-samsung firmware-ti-connectivity firmware-zd1211 libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer sigrok-firmware-fx2lafw libraspberrypi-bin libraspberrypi-dev fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw console-data read-edid bluetooth apt-utils libraspberrypi0 python-spidev
+    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv i2c-tools alsa-firmware-loaders alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree expeyes-firmware-dev firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-samsung firmware-ti-connectivity firmware-zd1211 libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer sigrok-firmware-fx2lafw libraspberrypi-bin libraspberrypi-dev fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw console-data read-edid bluetooth apt-utils libraspberrypi0 python-spidev
     exit-check 
     aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install build-essential python-dbus python-pexpect python-dev python-setuptools python-pip python-pam python-smbus psmisc git libudev-dev libmount-dev python-imaging pkg-config libglib2.0-dev whois
     aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install build-essential python-dbus python-pexpect python-dev python-setuptools python-pip python-pam python-smbus psmisc git libudev-dev libmount-dev python-imaging pkg-config libglib2.0-dev whois
@@ -4180,11 +4275,13 @@ fi
 # Optimize fstab (noatime,nodiratime)
 ##################################################################################
 log "Optimize fstab (noatime,nodiratime)"
+mkdir -p /opt/steelsquid/web/tmpfs
 sed -i 's/errors=remount-ro,noatime /errors=remount-ro,defaults,noatime,nodiratime /g' /etc/fstab
 sed -i '/tmpfs/d' /etc/fstab
 sed -i '/none /d' /etc/fstab
 echo "none   /var/log   tmpfs   noatime,nodiratime,rw,mode=1777,nodev,nosuid,noexec,size=32m    0   0" >> /etc/fstab
 echo "none   /tmp       tmpfs   noatime,nodiratime,rw,mode=1777,nodev,nosuid,size=256m   0   0" >> /etc/fstab
+echo "none   /opt/steelsquid/web/tmpfs       tmpfs   noatime,nodiratime,rw,mode=1777,nodev,nosuid,size=256m   0   0" >> /etc/fstab
 echo "/tmp   /var/tmp   none    noatime,nodiratime,rw,mode=1777,nodev,nosuid,bind        0   0" >> /etc/fstab
 log "Fstab Optimized"
 
@@ -4588,7 +4685,7 @@ echo "disable_overscan=1" > /boot/config.txt
 echo "disable_splash=1" >> /boot/config.txt
 echo "boot_delay=0" >> /boot/config.txt
 echo "dtparam=i2c_arm=on" >> /boot/config.txt
-#echo "dtparam=spi=on" >> /boot/config.txt
+echo "dtparam=spi=on" >> /boot/config.txt
 #echo "dtparam=i2s=on" >> /boot/config.txt
 
 if [ $(get-flag "camera") == "true" ]; then

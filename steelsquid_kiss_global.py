@@ -29,6 +29,7 @@ import os
 import modules
 from importlib import import_module
 
+
 # Number of eventdata and brodecast handler threads
 NUMBER_OF_EVENT_HANDLERS = 3
 
@@ -334,6 +335,43 @@ def camera_status(status=None):
             os.system("steelsquid camera-off")
         os.system("reboot")
     return steelsquid_utils.get_flag("camera")
+
+
+def nrf24_status(status):
+    '''
+    Enable nrf24 transmitter on this device
+    Must reboot to implement
+    status: server=Enable as server
+            client=Enable as client
+            master=Enable as master
+            slave=Enable as slave
+            None=Disable
+    '''    
+    if status==None:
+        steelsquid_utils.del_flag("nrf24_server")
+        steelsquid_utils.del_flag("nrf24_client")
+        steelsquid_utils.del_flag("nrf24_master")
+        steelsquid_utils.del_flag("nrf24_slave")
+    elif status=="server":
+        steelsquid_utils.set_flag("nrf24_server")
+        steelsquid_utils.del_flag("nrf24_client")
+        steelsquid_utils.del_flag("nrf24_master")
+        steelsquid_utils.del_flag("nrf24_slave")
+    elif status=="client":
+        steelsquid_utils.del_flag("nrf24_server")
+        steelsquid_utils.set_flag("nrf24_client")
+        steelsquid_utils.del_flag("nrf24_master")
+        steelsquid_utils.del_flag("nrf24_slave")
+    elif status=="master":
+        steelsquid_utils.del_flag("nrf24_server")
+        steelsquid_utils.del_flag("nrf24_client")
+        steelsquid_utils.set_flag("nrf24_master")
+        steelsquid_utils.del_flag("nrf24_slave")
+    elif status=="slave":
+        steelsquid_utils.del_flag("nrf24_server")
+        steelsquid_utils.del_flag("nrf24_client")
+        steelsquid_utils.del_flag("nrf24_master")
+        steelsquid_utils.set_flag("nrf24_slave")
     
 
 def _broadcast_event_handler():
@@ -442,6 +480,25 @@ def _execute_all_modules(class_name, method_name, method_args=None):
                     steelsquid_utils.shout("Module error: " + name+ "." + class_name + "." + method_name + "("+str(method_args)+")", is_error=True)
         except:
             pass
+
+
+def _execute_first_modules_and_return(class_name, method_name, method_args=None):
+    '''
+    Execute on first available modules (in modules/)
+    Execute a method in a module or class(classmethod) if exists
+    '''
+    for name, mod in loaded_modules.iteritems():
+        if class_name != None:
+            if hasattr(mod, class_name):
+                mod = getattr(mod, class_name)
+        if hasattr(mod, method_name):
+            mod = getattr(mod, method_name)
+            if method_args==None:
+                return mod()
+            else:
+                return mod(*method_args)
+    raise Exception("Command not found!")
+    
         
 def _has_modules_method(class_name, method_name):
     '''

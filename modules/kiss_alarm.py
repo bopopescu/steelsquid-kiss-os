@@ -23,7 +23,7 @@ If a method named enable exist:
 
 If a method named disable exist:
  When this module is disabled what needs to be done (execute: steelsquid module XXX off)
- Maybe you need remove some files or disable other stuff.
+ Maybe you need remove some files or disable other stuff.    
 
 If Class with name SETTINGS exist:
  The system will try to load settings with the same name as all variables in the class SETTINGS.

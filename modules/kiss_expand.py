@@ -97,6 +97,36 @@ Enebale this module like this: steelsquid piio-on
  on_movement(x, y, z) will execute if Geeetech MPU-6050 is connected and the device is moved.
  on_rotation(x, y) will execute if Geeetech MPU-6050 is connected and the device is tilted.
 
+ Class RADIO
+    If you have a NRF24L01+ transceiver connected to this device you can use server/client or master/slave functionality.
+    Enable the nrf24 server functionality in command line: set-flag  nrf24_server
+    On client device: set-flag  nrf24_client
+    Master: set-flag  nrf24_master
+    Slave: set-flag  nrf24_slave
+    Must restart the steelsquid daeomon for it to take effect.
+    In python you can do: steelsquid_kiss_global.nrf24_status(status)
+        status: server=Enable as server
+                client=Enable as client
+                master=Enable as master
+                slave=Enable as slave
+                None=Disable
+    SERVER/CLIENT:
+    If the clent execute: data = steelsquid_nrf24.request("a_command", data)
+    A method with the name a_command(data) will execute on the server in class RADIO.
+    The server then can return some data that the client will reseive...
+    If server method raise exception the steelsquid_nrf24.request("a_command", data) will also raise a exception.
+    MASTER/SLAVE:
+    One of the devices is master and can send data to the slave (example a file or video stream).
+    The data is cut up into packages and transmitted.
+    The slave can transmitt short command back to the master on every package of data it get.
+    This is usefull if you want to send a low resolution and low framerate video from the master to the slave.
+    And the slave then can send command back to the master.
+    Master execute: steelsquid_nrf24.send(data)
+    The method: on_receive(data) will be called on the client
+    Slave execute: steelsquid_nrf24.command("a_command", parameters)
+    A method with the name: a_command(parameters) will be called on the master
+                            parameters is a list of strings
+
 The class with name GLOBAL
  Put global staticmethods in this class, methods you use from different part of the system.
  Maybe the same methods is used from the WEB, SOCKET or other part, then put that method her.
@@ -426,6 +456,46 @@ class PIIO(object):
         THIS ONLY WORKS ON THE PIIO BOARD...
         Execute if Geeetech MPU-6050 is connected and the device is tilted.
         '''    
+        pass
+
+
+class RADIO(object):
+    '''
+    If you have a NRF24L01+ transceiver connected to this device you can use server/client or master/slave functionality.
+    Enable the nrf24 server functionality in command line: set-flag  nrf24_server
+    On client device: set-flag  nrf24_client
+    Master: set-flag  nrf24_master
+    Slave: set-flag  nrf24_slave
+    Must restart the steelsquid daeomon for it to take effect.
+    In python you can do: steelsquid_kiss_global.nrf24_status(status)
+        status: server=Enable as server
+                client=Enable as client
+                master=Enable as master
+                slave=Enable as slave
+                None=Disable
+    SERVER/CLIENT:
+    If the clent execute: data = steelsquid_nrf24.request("a_command", data)
+    A method with the name a_command(data) will execute on the server in class RADIO.
+    The server then can return some data that the client will reseive...
+    If server method raise exception the steelsquid_nrf24.request("a_command", data) will also raise a exception.
+    MASTER/SLAVE:
+    One of the devices is master and can send data to the slave (example a file or video stream).
+    The data is cut up into packages and transmitted.
+    The slave can transmitt short command back to the master on every package of data it get.
+    This is usefull if you want to send a low resolution and low framerate video from the master to the slave.
+    And the slave then can send command back to the master.
+    Master execute: steelsquid_nrf24.send(data)
+    The method: on_receive(data) will be called on the client
+    Slave execute: steelsquid_nrf24.command("a_command", parameters)
+    A method with the name: a_command(parameters) will be called on the master
+                            parameters is a list of strings
+    '''
+
+    @staticmethod
+    def on_receive(data):
+        '''
+        Data from the master to the slave
+        '''
         pass
 
     

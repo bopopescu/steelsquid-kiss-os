@@ -54,7 +54,7 @@ class SteelsquidKissHttpServer(steelsquid_http_server.SteelsquidHttpServer):
         If no True/False inparamater only return status of a module
         '''
         if len(parameters)==2:            
-            status = steelsquid_kiss_global.module_status(parameters[0], steelsquid_utils.to_boolean(parameters[1]))
+            status = steelsquid_kiss_global.module_status(parameters[0], steelsquid_utils.to_boolean(parameters[1]), parameters[2])
             if not status:
                 raise Exception("Unable to enable/disable module!")
         return steelsquid_kiss_global.is_module_enabled(parameters[0])

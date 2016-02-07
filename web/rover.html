@@ -2,7 +2,7 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" /> 
-        <title>Kiss OS Rover</title>
+        <title>Kiss OS WIFI Rover</title>
         <meta name="Steelsquid Kiss OS" content="Controll a rover with Steelsquid PIIO board" />
         <meta name="keywords" content="steelsquid, steelsquid-kiss-os, raspberry, pi, debian, linux, distribution, administrator, configure, rover" />
         <meta name="author" content="Andreas Nilsson (Steelsquid)" />
@@ -78,7 +78,7 @@
              * Draws drawDistance
              */
             function drawDistance() {
-                if(videoWidth>0){
+                if(videoWidth>0 && rover_type=="mini"){
                     //Top left
                     fromLeft = videoLeft;
                     fromTop = videoTop-1;
@@ -813,7 +813,9 @@
         <div id="not_enabled" style="position:absolute; left:10px;top:60px;display: none;border:1px solid black;background-color: white;padding:8px">
             The rover fuctionality is not enabled.<br/>
             <!-- Send command to server to enable the rover module -->
-            <button onclick="javascript:submitSync('module_status', 'kiss_rover', 'True');">Enable</button>
+            <button onclick="javascript:submitSync('module_status', 'kiss_rover', 'True', 'large');">Enable large</button>
+            <button onclick="javascript:submitSync('module_status', 'kiss_rover', 'True', 'small');">Enable small</button>
+            <button onclick="javascript:submitSync('module_status', 'kiss_rover', 'True', 'mini');">Enable mini</button>
         </div>
     </body>
 </html>

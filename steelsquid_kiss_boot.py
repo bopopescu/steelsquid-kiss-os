@@ -38,6 +38,7 @@ if len(sys.argv)==2 and sys.argv[1]=="start":
     import shlex
     import inotifyx
     import threading
+    import steelsquid_nrf24
     event = threading.Event()
 else:
     import os
@@ -428,6 +429,11 @@ def _cleanup():
                             steelsquid_utils.set_parameter(var_name, str(the_var))
     except:
         steelsquid_utils.shout()
+    if steelsquid_utils.get_flag("nrf24_master") or steelsquid_utils.get_flag("nrf24_slave"):
+        try:
+            steelsquid_nrf24.stop()
+        except:
+            steelsquid_utils.shout()
     if steelsquid_utils.get_flag("socket_connection"):
         try:
             steelsquid_kiss_global.socket_connection.stop()
@@ -572,6 +578,57 @@ def task_event_thread(command, parameters=None):
         steelsquid_utils.shout()
 
 
+def nrf24_server_thread():
+    '''
+    Start server for the NRF24L01 radio transiver
+    '''
+    try:
+        while running:
+            # Listen for request from the client
+            command, data = steelsquid_nrf24.listen(timeout=2)
+            if command!=None:
+                # Execute a method with the sam ename as the command i module RADIO class
+                try:
+                    answer = steelsquid_kiss_global._execute_first_modules_and_return("RADIO", command, (data,))
+                    steelsquid_nrf24.response(answer)
+                except Exception, e:
+                    steelsquid_nrf24.error(e.message)
+    except:
+        steelsquid_utils.shout()
+
+
+def nrf24_slave_thread():
+    '''
+    Start slave thread for the NRF24L01 radio transiver
+    listen for data from the master and execute method in RADIO class
+    '''
+    while running:
+        try:
+            # Listen for data from master
+            data = steelsquid_nrf24.receive(timeout=2)
+            if data!=None:
+                # Execute method on_receive in module RADIO class
+                steelsquid_kiss_global._execute_first_modules_and_return("RADIO", "on_receive", (data,))
+        except:
+            steelsquid_utils.shout()
+
+
+def nrf24_callback(command):
+    '''
+    Master get a command from the slave
+    '''
+    try:
+        # Execute method on_receive in module RADIO class
+        com = command.split("|")
+        if len(com)>1:
+            steelsquid_kiss_global._execute_first_modules_and_return("RADIO", com[0], (com[1:],))
+        else:
+            steelsquid_kiss_global._execute_first_modules_and_return("RADIO", com[0], ([],))
+    except:
+        steelsquid_utils.shout()
+    
+
+
 def broadcast_task_event(event, parameters_to_event=None):
     '''
     Broadcast a event to the steelsquid daemon (steelsquid program)
@@ -683,6 +740,24 @@ def main():
                     if not steelsquid_utils.has_parameter("bluetooth_pin"):
                         steelsquid_utils.set_parameter("bluetooth_pin", "1234")
                     thread.start_new_thread(bluetooth_agent, ()) 
+                # Enable NRF24L01+ as server
+                if steelsquid_utils.get_flag("nrf24_server"):
+                    steelsquid_utils.shout("Enable NRF24L01+ server")
+                    steelsquid_nrf24.server()
+                    thread.start_new_thread(nrf24_server_thread, ())
+                # Enable NRF24L01+ as client
+                elif steelsquid_utils.get_flag("nrf24_client"):
+                    steelsquid_utils.shout("Enable NRF24L01+ client")
+                    steelsquid_nrf24.client()
+                # Enable NRF24L01+ as master
+                if steelsquid_utils.get_flag("nrf24_master"):
+                    steelsquid_utils.shout("Enable NRF24L01+ master")
+                    steelsquid_nrf24.master(nrf24_callback)
+                # Enable NRF24L01+ as slave
+                elif steelsquid_utils.get_flag("nrf24_slave"):
+                    steelsquid_utils.shout("Enable NRF24L01+ slave")
+                    steelsquid_nrf24.slave()
+                    thread.start_new_thread(nrf24_slave_thread, ())
                 # Init the listen for events
                 fd = inotifyx.init()
                 inotifyx.add_watch(fd, system_event_dir, inotifyx.IN_CLOSE_WRITE)
