@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" /> 
+        <title>Kiss OS Radio Rover</title>
+        <meta name="Steelsquid Kiss OS" content="Controll a rover with Steelsquid PIIO board" />
+        <meta name="keywords" content="steelsquid, steelsquid-kiss-os, raspberry, pi, debian, linux, distribution, administrator, configure, rover" />
+        <meta name="author" content="Andreas Nilsson (Steelsquid)" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>     
+        <meta name="mobile-web-app-capable" content="yes"/>
+        <meta name="apple-mobile-web-app-capable" content="yes"/>
+        <link rel="icon" href="favicon.ico" type="image/x-icon"/>
+        <link rel="shortcut icon" href="favicon.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="steelsquid.css"/>
+        <script type="text/javascript" src="jquery.js"></script>
+        <script type="text/javascript" src="steelsquid.js"></script>     
+        <style type="text/css">
+            /* Necessary for correct mouse co-ords in Firefox */
+            #app {
+                -webkit-touch-callout: none;
+                -webkit-user-select: none;
+                -khtml-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+            }
+            /* Necessary for correct mouse co-ords in Firefox */
+            #pad {
+                position:relative;
+            }
+        </style>
+        <script type="text/javascript">
+            //<![CDATA[ 
+
+            // Is this a touch device
+            var isTouch = (('ontouchstart' in window) || (navigator.msMaxTouchPoints > 0));
+            
+            // Variables for referencing the canvas and 2dcanvas context
+            var canvas;
+            var ctx;
+
+            // Video location
+            videoLeft=0;
+            videoTop=0;
+            videoWidth=0;
+            videoHeight=0;
+
+            /**
+             * Draws a dot at a specific position on the canvas
+             */
+            function drawDot(x, y ,size) {
+                // Let's use black by setting RGB values to 0, and 255 alpha (completely opaque)
+                r=0; g=0; b=0; a=255;
+
+                // Select a fill style
+                ctx.fillStyle = "rgba("+r+","+g+","+b+","+(a/255)+")";
+
+                // Draw a filled circle
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI*2, true); 
+                ctx.closePath();
+                ctx.fill();           
+            } 
+            
+            /**
+             * Draws a line
+             */
+            function drawLine(x_start, y_start, x_stop, y_stop) {
+                ctx.beginPath();
+                ctx.moveTo(x_start, y_start);
+                ctx.lineTo(x_stop, y_stop);
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = '#000000';
+                ctx.stroke();                
+            } 
+            
+            
+            /**
+             * Draws text on canvas
+             */
+            function drawText(text, x, y) {
+                ctx.fillStyle = '#000000';
+                ctx.font = "13px Arial";
+                ctx.fillText(text, x, y);                           
+            } 
+
+
+            /**
+             * Draws text vertical on canvas
+             */
+            function drawTextVerical(text, toLeft) {
+                var x = canvas.offsetWidth-8;
+                var y = (canvas.offsetHeight / 2)-20;
+                ctx.save();
+                if (toLeft){
+                    ctx.translate(16, y);
+                }
+                else{
+                    ctx.translate(x, y);
+                }
+                ctx.fillStyle = '#000000';
+                ctx.rotate(-Math.PI/2);
+                ctx.textAlign = "center";
+                ctx.font = "13px Arial";
+                ctx.fillText(text, 0, 0);
+                ctx.restore();
+            } 
+
+            /**
+             * Draws text vertical in canvas
+             */
+            function drawDoubleText(verticalText1, verticalText2) {
+                var x = canvas.offsetWidth-8;
+                var y = (canvas.offsetHeight / 2)-20;
+                ctx.save();
+                ctx.fillStyle = '#000000';
+                ctx.translate(x, y);
+                ctx.rotate(-Math.PI/2);
+                ctx.textAlign = "center";
+                ctx.font = "13px Arial";
+                ctx.fillText(verticalText1, 0, 0);
+                ctx.restore();
+                ctx.save();
+                ctx.translate(x-20, y);
+                ctx.rotate(-Math.PI/2);
+                ctx.textAlign = "center";
+                ctx.font = "13px Arial";
+                ctx.fillText(verticalText2, 0, 0);
+                ctx.restore();
+            } 
+
+            /**
+             * Expand canvas to max size
+             */
+            function setSizeOfCanvas(){
+                heightObj = document.getElementById('fill');
+                canvas.style.width = "100%";
+                canvas.style.height = (heightObj.offsetHeight)+"px";
+                canvas.width  = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+                //Set size of video
+                $("#stream_img").height(canvas.offsetHeight);
+                max_value = parseInt(canvas.height/2);
+                min_value = max_value*-1;
+            }
+
+            // Variables to keep track of the mouse position and left-button status 
+            var drive_is_mouseDown=0;
+            var drive_mouseX_now;
+            var drive_mouseY_now;
+            var drive_mouseX_press;
+            var drive_mouseY_press;
+            var camera_is_mouseDown=0;
+            var camera_mouseX_now;
+            var camera_mouseY_now;
+            var camera_mouseX_press;
+            var camera_mouseY_press;
+            var last_tap = new Date().getTime();
+            
+            /**
+             * Remap one serie to another
+             */
+            function remap( x, oMin, oMax, nMin, nMax ){
+                //range check
+                if (oMin == oMax){
+                    return None;
+                }
+    
+                if (nMin == nMax){
+                    return None;
+                }
+
+                //check reversed input range
+                var reverseInput = false;
+                oldMin = Math.min( oMin, oMax );
+                oldMax = Math.max( oMin, oMax );
+                if (oldMin != oMin){
+                    reverseInput = true;
+                }
+
+                //check reversed output range
+                var reverseOutput = false;  
+                newMin = Math.min( nMin, nMax );
+                newMax = Math.max( nMin, nMax );
+                if (newMin != nMin){
+                    reverseOutput = true;
+                }
+
+                var portion = (x-oldMin)*(newMax-newMin)/(oldMax-oldMin);
+                if (reverseInput){
+                    portion = (oldMax-x)*(newMax-newMin)/(oldMax-oldMin);
+                }
+
+                var result = portion + newMin;
+                if (reverseOutput){
+                    result = newMax - portion;
+                    if(result<nMax){
+                        result = nMax;
+                    }
+                    else if(result>nMin){
+                        result = nMin;
+                    }
+                }
+                else{
+                    if(result>nMax){
+                        result = nMax;
+                    }
+                    else if(result<nMin){
+                        result = nMin;
+                    }
+                }
+
+                return result;
+            }
+
+            /**
+             * Keep track of the mouse button being pressed and draw a dot at current location
+             */
+            function mouseDown(e) {
+                if (drive_mouseX_now>=($(document).width()/2)){
+                    drive_is_mouseDown=1;
+                    drive_mouseX_press = drive_mouseX_now;
+                    drive_mouseY_press = drive_mouseY_now;
+                    //Stop the movement
+                    sendDrive(0, 0);
+                }
+                else{
+                    camera_is_mouseDown=1;
+                    camera_mouseX_press = camera_mouseX_now;
+                    camera_mouseY_press = camera_mouseY_now;
+                    servo_position_press = servo_position;
+                }
+                // Draw canvas
+                drawCanvas();
+                // Check if it is a double tap
+                tapTheScreen();
+            }
+
+            /**
+             * Keep track of the mouse button being released
+             */
+            function mouseUp(e) {
+                drive_is_mouseDown=0;
+                camera_is_mouseDown=0;
+                // Draw canvas
+                drawCanvas();
+                //Stop the movement
+                sendDrive(0, 0);
+            }
+
+            /**
+             * Keep track of the mouse position.
+             */
+            function mouseMove(e) { 
+                if (!e)
+                    var e = event;
+                e.preventDefault();
+                //Get current location
+                if (e.offsetX) {
+                    drive_mouseX_now = e.offsetX;
+                    drive_mouseY_now = e.offsetY;
+                    camera_mouseX_now = e.offsetX;
+                    camera_mouseY_now = e.offsetY;
+                }
+                else if (e.layerX) {
+                    drive_mouseX_now = e.layerX;
+                    drive_mouseY_now = e.layerY;
+                    camera_mouseX_now = e.layerX;
+                    camera_mouseY_now = e.layerY;
+                }
+                if(drive_is_mouseDown){
+                    // Draw canvas
+                    drawCanvas();
+                    //Send a drive command to the rover
+                    sendDrive(drive_mouseX_now- drive_mouseX_press, drive_mouseY_press - drive_mouseY_now)
+                }
+                if(camera_is_mouseDown){
+                    // Draw canvas
+                    drawCanvas();
+                    //Send a camera move command to the rover
+                    sendCamera(camera_mouseY_now-camera_mouseY_press);
+                }
+            }
+            
+            /**
+             * When user touch screen
+             */
+            function touchStart(e) {
+                if (!e)
+                    var e = event;
+                e.preventDefault();
+                var arrayLength = e.changedTouches.length;
+                //Check all touches, touch on the left side is camera movement
+                //And on the right side to drive the rover.
+                for (var i = 0; i < arrayLength; i++) {
+                    t = e.changedTouches[i];
+                    if (t.pageX>=($(document).width()/2)){
+                        drive_is_mouseDown=1;
+                        drive_mouseX_press = t.pageX;
+                        drive_mouseY_press = t.pageY - canvas.offsetTop;
+                        // Draw canvas
+                        drawCanvas();
+                        //Stop the movement
+                        sendDrive(0, 0);
+                    }
+                    else{
+                        camera_is_mouseDown=1;
+                        camera_mouseX_press = t.pageX;
+                        camera_mouseY_press = t.pageY - canvas.offsetTop;
+                        // Draw canvas
+                        drawCanvas();
+                        servo_position_press = servo_position;
+                    }
+                }
+                // Check if it is a double tap
+                tapTheScreen();
+            }
+
+            /**
+             * When user stop to touch screen
+             */
+            function touchEnd(e) {
+                if (!e)
+                    var e = event;
+                e.preventDefault();
+                var arrayLength = e.changedTouches.length;
+                for (var i = 0; i < arrayLength; i++) {
+                    t = e.changedTouches[i];
+                    if (t.pageX>=($(document).width()/2)){
+                        drive_is_mouseDown=0;
+                        // Draw canvas
+                        drawCanvas();
+                        //Stop the movement
+                        sendDrive(0, 0);
+                    }
+                    else{
+                        camera_is_mouseDown=0;
+                        // Draw canvas
+                        drawCanvas();
+                    }
+                }
+            }
+
+            /**
+             * When user move the finger on screen
+             */
+            function touchMove(e) { 
+                if (!e)
+                    var e = event;
+                e.preventDefault();
+                var arrayLength = e.changedTouches.length;
+                for (var i = 0; i < arrayLength; i++) {
+                    t = e.changedTouches[i];
+                    if (t.pageX>=($(document).width()/2)){
+                        drive_mouseX_now = t.pageX;
+                        drive_mouseY_now = t.pageY - canvas.offsetTop;
+                    }
+                    else{
+                        camera_mouseX_now = t.pageX;
+                        camera_mouseY_now = t.pageY - canvas.offsetTop;
+                    }
+                }
+
+                //Draw the drive
+                if (drive_is_mouseDown==1) {
+                    // Draw canvas
+                    drawCanvas();
+                    //Send a drive command to the rover
+                    sendDrive(drive_mouseX_now-drive_mouseX_press, drive_mouseY_press - drive_mouseY_now)
+                }
+                if (camera_is_mouseDown==1) {
+                    // Draw canvas
+                    drawCanvas();
+                    //Send a camera move command to the rover
+                    sendCamera(camera_mouseY_now-camera_mouseY_press);
+                }
+                
+            }
+            
+            var rover_is_enabled = false
+            var servo_position = 210;
+            var servo_position_press = servo_position;
+            var servo_position_last=servo_position;
+            var servo_position_max = 230;
+            var servo_position_min = 80;
+            var motor_forward_max = 1023;
+            var motor_backward_max = -1023;
+            var motor_forward_start = 200;
+            var motor_backward_start = -200;
+            var motor_left = 0;
+            var motor_right = 0;
+            var max_value = 0;
+            var min_value = 0;
+            var send_drive = false;
+            var lamp_status = false;
+            var every_second_time = true;
+            var d_m = true;
+            
+            /**
+             * Initialise all the drawing on the canvas here
+             */
+            function drawCanvas() {
+                //Clear canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                //Draw help texts
+                drawTextVerical("Drag up and down to tilt camera", true);
+                drawDoubleText("Drag in all directions to drive the rover", "Double tap to toggle the light");
+                if(drive_is_mouseDown){
+                    //Draw start dott
+                    drawDot(drive_mouseX_press, drive_mouseY_press, 12);
+                    //Draw new dott
+                    drawDot(drive_mouseX_now, drive_mouseY_now, 12);
+                    //Draw line from new to start dott
+                    drawLine(drive_mouseX_now, drive_mouseY_now, drive_mouseX_press, drive_mouseY_press);
+                }
+                if(camera_is_mouseDown){
+                    //Draw start dott
+                    drawDot(camera_mouseX_press, camera_mouseY_press, 12);
+                    //Draw new dott
+                    drawDot(camera_mouseX_press, camera_mouseY_now, 12);
+                    //Draw line from new to start dott
+                    drawLine(camera_mouseX_press, camera_mouseY_now, camera_mouseX_press, camera_mouseY_press);
+                }
+            }
+                        
+            /**
+             * When the page is loaded
+             */
+            function onPageLoad(){
+                //Prevent scrolling
+                document.body.addEventListener('touchmove', function(event) {
+                  event.preventDefault();
+                }, false);                 
+                
+                // Get the specific canvas element from the HTML document
+                canvas = document.getElementById('pad');
+                
+                // fit the canvas to container
+                setSizeOfCanvas();
+
+                // If the browser supports the canvas tag, get the 2d drawing context for this canvas
+                ctx = canvas.getContext('2d');
+                
+                // Draw the canvas
+                drawCanvas();
+                
+                // Handle touch and desktop different
+                if(isTouch){
+                    canvas.addEventListener('touchstart', touchStart, false);
+                    canvas.addEventListener('touchmove', touchMove, false);
+                    canvas.addEventListener('touchend', touchEnd, false);
+                }
+                else{
+                    canvas.addEventListener('mousedown', mouseDown, false);
+                    canvas.addEventListener('mousemove', mouseMove, false);
+                    window.addEventListener('mouseup', mouseUp, false);
+                }
+                
+                // Set fit the canvas to container
+                window.addEventListener('resize', function(event){
+                    setSizeOfCanvas();
+                    try{
+                        // Draw the canvas
+                        drawCanvas();
+                    }
+                    catch(e){
+                    }
+                });
+
+                // This thread is reading the picture from server
+                setTimeout(function(){
+                    if (rover_is_enabled && !is_top_menu_showing()){
+                        $("#stream_img").attr("src", "http://"+window.location.hostname+"/tmpfs/radiorover.jpg?" + new Date().getTime());
+                    }
+
+                    if (servo_position_last!=servo_position){
+                        servo_position_last = servo_position;
+                        submitAsync('radiorover_camera', servo_position);
+                    }
+
+                    if (motor_left!=0 || motor_right!=0){
+                        d_m=true;
+                    }
+                    
+                    if (d_m){
+                        m_l=motor_left;
+                        m_r=motor_right;
+                        if (m_l > 0){
+                            m_l = m_l + motor_forward_start;
+                        }
+                        else if(m_l < 0){
+                            m_l = m_l + motor_backward_start;
+                        }
+                        if (m_r > 0){
+                            m_r = m_r + motor_forward_start;
+                        }
+                        else if(m_r < 0){
+                            m_r = m_r + motor_backward_start;
+                        }
+                        submitAsync('radiorover_drive', m_l, m_r);
+                    }
+                    if (motor_left==0 && motor_right==0){
+                        d_m=false;
+                    }
+                    
+                    if(every_second_time){
+                        submitNoPW('radiorover_status');
+                    }
+
+                    every_second_time=!every_second_time;
+
+
+                    setTimeout(arguments.callee, 200);
+                }, 200);
+                
+ 
+            }
+            
+            /**
+             * This will execute every 1 second
+             */
+            function onEvery01s(){
+                //Send utill is enabled
+                if(!rover_is_enabled){
+                    //Send a command to the servor to get settings
+                    submitNoPW('radiorover_settings');
+                }
+            }
+            
+            /**
+             * This will execute every 5 second
+             */
+            function onEvery05s(){
+                if (rover_is_enabled && !is_top_menu_showing()){
+                    $("#the_video").show();
+                    $("#stream_img").attr("src", "http://"+window.location.hostname+"/tmpfs/radiorover.jpg?" + new Date().getTime());         
+                    img_o = $("#stream_img");
+                    p = img_o.position();
+                    videoLeft=40;
+                    videoTop=1;
+                    videoWidth=img_o.width();
+                    videoHeight=img_o.height();
+                }
+            }
+            
+            /**
+             * When the page is in front
+             */
+            function onVisible(){
+                if (rover_is_enabled && !is_top_menu_showing()){
+                    drawCanvas();
+                    $("#the_video").show();
+                    $("#stream_img").attr("src", "http://"+window.location.hostname+"/tmpfs/radiorover.jpg?" + new Date().getTime());         
+                    img_o = $("#the_video");
+                    p = img_o.position();
+                    videoLeft=p.left;
+                    videoTop=p.left;
+                    videoWidth=img_o.width();
+                    videoHeight=img_o.height();
+                }
+            }
+
+            /**
+             * When the page is in background
+             */
+            function onHidden(){
+                if (rover_is_enabled){
+                    $("#the_video").hide();
+                    $("#stream_img").attr("src", "");         
+                }
+            }
+                        
+            /**
+             * This will execute when the black top menu is expanded
+             */
+            function on_top_menu_show(){
+                onHidden();
+            }
+
+            /**
+             * This will execute when the black top menu is hidden
+             */
+            function on_top_menu_hide(){
+                onVisible();
+            }
+                        
+            /**
+             * Get settings from the server
+             */
+            function on_radiorover_settings(paramaters){
+                servo_position = parseInt(paramaters[0]);
+                servo_position_press = servo_position;
+                servo_position_last = servo_position;
+                servo_position_max = parseInt(paramaters[1]);
+                servo_position_min = parseInt(paramaters[2]);
+                motor_forward_max = parseInt(paramaters[3]);
+                motor_backward_max = parseInt(paramaters[4]);
+                motor_forward_start = parseInt(paramaters[5]);
+                motor_backward_start = parseInt(paramaters[6]);
+                lamp_status = paramaters[7]=="True";
+                //Rotate camera if a mini rover
+                //$('#stream_img').removeClass('rotate-180').addClass('rotate-180');
+                rover_is_enabled=true;
+                $("#not_enabled").hide();
+                onEvery05s();
+            }
+            
+            /**
+             * Get status
+             */
+            function on_radiorover_status(paramaters){
+                drawCanvas();
+            }
+
+            /**
+             * Error when get settings from the server
+             */
+            function on_radiorover_settings_err(error){
+                rover_is_enabled=false;
+                $("#not_enabled").show();
+            }
+
+            /**
+             * On enable the rover functionality OK
+             */
+            function on_module_status(paramaters){
+                showAlertMedium("Enabling...please wait!!!", false);
+            }
+                        
+            /**
+             * Send drive command to rover
+             * x and y how many pixelsn the finger is drawn (top to bottom +, bottom to top -)
+             */
+            function sendDrive(x, y) {
+                drive = parseInt(remap(y, min_value, max_value, motor_backward_max, motor_forward_max));
+                motor_left = drive;
+                motor_right = drive;
+                steer = parseInt((remap(x, min_value, max_value, motor_backward_max, motor_forward_max)));
+                if (steer>0){ //Right
+                    motor_right = motor_right - steer;
+                    motor_left = motor_left + steer;
+                }
+                else if (steer<0){ //Left
+                    motor_right = motor_right - steer;
+                    motor_left = motor_left + steer;
+                }
+                if (motor_right>motor_forward_max){
+                    motor_right = motor_forward_max;
+                }
+                else if (motor_right<motor_backward_max){
+                    motor_right = motor_backward_max;
+                }
+                if (motor_left>motor_forward_max){
+                    motor_left = motor_forward_max;
+                }
+                else if (motor_left<motor_backward_max){
+                    motor_left = motor_backward_max;
+                }
+            }
+
+            /**
+             * Send camera command to rover
+             * y how many pixelsn the finger is drawn (top to bottom +, bottom to top -)
+             */
+            function sendCamera(new_camera) {
+                if (new_camera<0){
+                    add_servo_position = (remap(new_camera*-1, 0, max_value, 0, servo_position_max-servo_position_min ))*-1;
+                }
+                else{
+                    add_servo_position = remap(new_camera, 0, max_value, 0, servo_position_max-servo_position_min );
+                }
+                servo_position = parseInt(servo_position_press + add_servo_position);
+                if (servo_position<servo_position_min){
+                    servo_position=servo_position_min;
+                }
+                else if (servo_position>servo_position_max){
+                    servo_position=servo_position_max;
+                }
+            }
+
+            
+            /**
+             * Check if it is a double tap, then toggle lamp
+             */
+            function tapTheScreen(){
+                new_tap = new Date().getTime();
+                if(new_tap-last_tap<300){
+                    lamp_status = !lamp_status;
+                    submitAsync('radiorover_lamp', lamp_status);
+                }
+                last_tap = new_tap;
+            }
+            //]]>
+        </script>
+        
+    </head>
+    <body id="the_body">
+        <div id="included_top_bar">Kiss OS Utils</div>
+        <div class="fill" id="fill">
+            <div id="app">
+                <canvas id="pad" style="z-index: 10">
+
+                </canvas>
+            </div>
+        </div>
+        <div id="the_video" style="position:absolute; left:40px;top:37px;display: none;z-index: 5">
+            <img alt="The stream" id="stream_img" src="" style="height:100%">
+        </div>
+        <div id="not_enabled" style="position:absolute; left:10px;top:60px;display: none;border:1px solid black;background-color: white;padding:8px">
+            The Radio Rover fuctionality is not enabled.<br/>
+            <!-- Send command to server to enable the rover module -->
+            <button onclick="javascript:submitSync('module_status', 'kiss_radiorover', 'True', 'server');">Enable</button>
+        </div>
+    </body>
+</html>
