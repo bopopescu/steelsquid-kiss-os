@@ -12,7 +12,7 @@ Connect to the controll unit by WIFi and controll the rover over radio (NRF24L01
 @author: Andreas Nilsson
 @contact: steelsquid@gmail.com
 @license: GNU Lesser General Public License v2.1
-@change: 2014-12-26 Created
+@change: 2016-02-02 Created
 '''
 
 
@@ -30,9 +30,6 @@ import os
 # Is this module started
 # This is set by the system automatically.
 is_started = False
-
-# Using this to syncronise picture take and reqaust from client
-lock = threading.Lock()
 
 
 def enable(argument=None):
