@@ -78,7 +78,7 @@ python_downloads[24]="$base/modules/kiss_expand.py"
 python_downloads[25]="$base/modules/kiss_alarm.py"
 python_downloads[26]="$base/modules/kiss_piio.py"
 python_downloads[27]="$base/modules/kiss_rover.py"
-python_downloads[28]="$base/modules/kiss_radiorover.py"
+python_downloads[28]="$base/modules/kiss_nrf24rover.py"
 
 # Links to python_downloads
 python_links[1]="/usr/bin/steelsquid-boot"
@@ -119,7 +119,7 @@ web_root_downloads[5]="$base/web/download.html"
 web_root_downloads[6]="$base/web/file.html"
 web_root_downloads[7]="$base/web/utils.html"
 web_root_downloads[8]="$base/web/rover.html"
-web_root_downloads[9]="$base/web/radiorover.html"
+web_root_downloads[9]="$base/web/nrf24rover.html"
 web_root_downloads[10]="$base/web/expand.html"
 web_root_downloads[11]="$base/web/template.html"
 

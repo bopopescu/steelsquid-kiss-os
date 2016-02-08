@@ -497,7 +497,7 @@ def _execute_first_modules_and_return(class_name, method_name, method_args=None)
                 return mod()
             else:
                 return mod(*method_args)
-    raise Exception("Command not found!")
+    raise Exception("Method not found: "+method_name)
     
         
 def _has_modules_method(class_name, method_name):
