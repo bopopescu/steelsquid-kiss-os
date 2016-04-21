@@ -84,6 +84,10 @@ last_lan_ip = None
 # Last WAN IP
 last_wan_ip = None
 
+# Radio
+radio_count_max = 30
+radio_count = 30
+
 
 def get_module(name):
     '''
@@ -131,7 +135,7 @@ def clear_modules_settings(module_name):
     mod = import_module('modules.'+module_name)
     class_settings = _get_object(mod, "SETTINGS")
     if class_settings!=None:
-        members = [attr for attr in dir(class_settings) if not callable(getattr(class_settings, attr)) and not attr.startswith("__")]
+        members = [attr for attr in dir(class_settings) if not callable(getattr(class_settings, attr)) and not attr.startswith("_")]
         for var_name in members:
             the_var = getattr(class_settings, var_name, None)
             if isinstance(the_var, (bool)):
@@ -412,6 +416,16 @@ def hmtrlrs_status(status):
         steelsquid_utils.set_flag("hmtrlrs_client")
 
 
+def radio_interrupt():
+    '''
+    If you made changes to the RADIO_SYNC or RADIO_PUSH variables you can fire the sync or push with this method
+    Otherwise you must wait about 1 second for it to fire....
+    '''    
+    global radio_count
+    radio_count=radio_count_max
+    steelsquid_kiss_boot.radio_event.set()
+
+
 def _broadcast_event_handler():
     '''
     Fire the broadcast event 
@@ -537,6 +551,20 @@ def _execute_first_modules_and_return(class_name, method_name, method_args=None)
                 return mod(*method_args)
     raise Exception("Method not found: "+method_name)
     
+    
+def _get_first_modules_class(class_name, inner_class_name=None):
+    '''
+    Get class from first module
+    '''
+    for name, mod in loaded_modules.iteritems():
+        if hasattr(mod, class_name):
+            mod = getattr(mod, class_name)
+            if inner_class_name!=None:
+                mod = getattr(mod, inner_class_name)
+            return mod
+    return None
+        
+        
         
 def _has_modules_method(class_name, method_name):
     '''

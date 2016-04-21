@@ -17,6 +17,7 @@ import steelsquid_utils
 import steelsquid_pi
 import steelsquid_kiss_global
 import steelsquid_nm
+import steelsquid_kiss_boot
 import time
 import datetime
 import steelsquid_hmtrlrs
@@ -26,7 +27,6 @@ from decimal import Decimal
 # Is this module started
 # This is set by the system automatically.
 is_started = False
-
 
 
 def enable(argument=None):
@@ -40,8 +40,6 @@ def enable(argument=None):
     steelsquid_kiss_global.clear_modules_settings("kiss_station")
     # Enable transeiver as client
     steelsquid_kiss_global.hmtrlrs_status("client")
-    # Enable the link by default
-    steelsquid_utils.set_flag("is_transceiver_on")
     # Disable the automatic print if IP to LCD...this module will do it
     steelsquid_utils.set_flag("no_net_to_lcd")
     # Change GPIO for transceiver
@@ -92,6 +90,26 @@ class STATIC(object):
     # Max motor speed
     motor_max = 1000
 
+    # When system start move servo here
+    servo_position_pan_start = 367
+
+    # Max Servo position
+    servo_position_pan_max = 570
+
+    # Min Servo position
+    servo_position_pan_min = 170
+
+    # When system start move servo here
+    servo_position_tilt_start = 430
+
+    # Max Servo position
+    servo_position_tilt_max = 550
+
+    # Min Servo position
+    servo_position_tilt_min = 320
+
+
+
 
 
 
@@ -110,11 +128,10 @@ class DYNAMIC(object):
     # Using this when i print a message to LCD, so the next ip/voltage uppdat dont ovrewrite the message to fast
     stop_next_lcd_message = False
 
-    # Remote station voltage (this)
+    # Remote station voltage (this station)
     voltage_station = 0
 
-    # Rover voltage
-    voltage_rover = 0
+
 
 
 
@@ -143,17 +160,8 @@ class SETTINGS(object):
     # This will tell the system not to save and read the settings from disk
     _persistent_off = False
     
-    # Is the transceiver on
-    is_transceiver_on = False
-    
-    # Is the transceiver on
-    is_video_on = False
-    
-    # Is the headlights on
-    is_headlights_on = False
-
-    
         
+
 
 
 
@@ -187,15 +195,20 @@ class SYSTEM(object):
         steelsquid_utils.on_ok_callback_method=GLOBAL.ok_led_flash
         steelsquid_utils.on_err_callback_method=GLOBAL.err_led_flash
         # Start listen on buttons
-        steelsquid_pi.mcp23017_click(21, 0, SYSTEM.on_network_button, pullup=True, rpi_gpio=26)
-        steelsquid_pi.mcp23017_click(21, 3, SYSTEM.on_transceiver_button, pullup=True, rpi_gpio=26)
-        steelsquid_pi.mcp23017_click(21, 6, SYSTEM.on_video_button, pullup=True, rpi_gpio=26)
-        steelsquid_pi.gpio_click(7, SYSTEM.on_horn_button, resistor=steelsquid_pi.PULL_UP)
+        #steelsquid_pi.mcp23017_click(21, 0, SYSTEM.on_network_button, pullup=True, rpi_gpio=26)
+        #steelsquid_pi.mcp23017_click(21, 3, SYSTEM.on_transceiver_button, pullup=True, rpi_gpio=26)
+        #steelsquid_pi.mcp23017_click(21, 6, SYSTEM.on_video_button, pullup=True, rpi_gpio=26)
+        #steelsquid_pi.gpio_click(7, SYSTEM.on_horn_button, resistor=steelsquid_pi.PULL_UP)
         steelsquid_pi.gpio_click(6, SYSTEM.on_headlights_button, resistor=steelsquid_pi.PULL_UP)
-        steelsquid_pi.gpio_click(22, SYSTEM.on_center_button, resistor=steelsquid_pi.PULL_UP)
-        steelsquid_pi.gpio_click(9, SYSTEM.on_cruise_button, resistor=steelsquid_pi.PULL_UP)
+        #steelsquid_pi.gpio_click(17, SYSTEM.on_left_button, resistor=steelsquid_pi.PULL_UP)
+        #steelsquid_pi.gpio_click(22, SYSTEM.on_center_button, resistor=steelsquid_pi.PULL_UP)
+        #steelsquid_pi.gpio_click(24, SYSTEM.on_right_button, resistor=steelsquid_pi.PULL_UP)
+        #steelsquid_pi.gpio_click(9, SYSTEM.on_cruise_button, resistor=steelsquid_pi.PULL_UP)
+        #steelsquid_pi.gpio_click(13, SYSTEM.on_highbeam_button, resistor=steelsquid_pi.PULL_UP)
+        # Is network enabled (light the led?)
         GLOBAL.network_on_led(steelsquid_nm.get_network_status())
-        GLOBAL.headlamp_led(SETTINGS.is_headlights_on)    
+        # Is transceiver enabled
+        GLOBAL.transceiver_on_led(not steelsquid_hmtrlrs.disable)   
         
 
     @staticmethod
@@ -206,7 +219,7 @@ class SYSTEM(object):
         '''
         steelsquid_pi.cleanup()
        
-
+       
     @staticmethod
     def on_network_button(address, pin):
         '''
@@ -214,53 +227,49 @@ class SYSTEM(object):
         '''        
         if steelsquid_nm.get_network_status():
             GLOBAL.write_message("Disable the network\nPlease wait!")
+            # LED
+            GLOBAL.network_on_led(False)
             # Disable network localy
             steelsquid_nm.set_network_status(False)
             # Send disable network command to rover
-            if SETTINGS.is_transceiver_on:
-                steelsquid_hmtrlrs.request("n", [0])
+            RADIO_SYNC.CLIENT.is_network_on = False
         else:
             GLOBAL.write_message("Enable the network\nPlease wait!")
+            # LED
+            GLOBAL.network_on_led(True)
             # Enable network localy
             steelsquid_nm.set_network_status(True)
             # Send enable network command to rover
-            if SETTINGS.is_transceiver_on:
-                steelsquid_hmtrlrs.request("n", [1])
-
+            RADIO_SYNC.CLIENT.is_network_on = True
+               
 
     @staticmethod
     def on_transceiver_button(address, pin):
         '''
         When the toggle transceiver button is clicked
         '''
-        if SETTINGS.is_transceiver_on:
+        if not steelsquid_hmtrlrs.disable:
             GLOBAL.write_message("Disable the transceiver\nPlease wait!")
         else:
             GLOBAL.write_message("Enable the transceiver\nPlease wait!")
-        SETTINGS.is_transceiver_on = not SETTINGS.is_transceiver_on
-        GLOBAL.transceiver_on_led(SETTINGS.is_transceiver_on)      
-        if not SETTINGS.is_transceiver_on:
-            DYNAMIC.voltage_rover==0
+        steelsquid_hmtrlrs.disable = not steelsquid_hmtrlrs.disable
+        GLOBAL.transceiver_on_led(not steelsquid_hmtrlrs.disable)      
 
-
+        
     @staticmethod
     def on_video_button(address, pin):
         '''
         When the toggle video button is clicked
         '''
-        if SETTINGS.is_transceiver_on:
-            if SETTINGS.is_video_on:
-                GLOBAL.write_message("Disable the video\nPlease wait!")
-            else:
-                GLOBAL.write_message("Enable the video\nPlease wait!")
-            # Enable the reseiver locally
-            SETTINGS.is_video_on = not SETTINGS.is_video_on
-            GLOBAL.video_on_led(SETTINGS.is_video_on)        
-            GLOBAL.video(SETTINGS.is_video_on)        
-            # Send enable network command to rover
-            steelsquid_hmtrlrs.request("t", [steelsquid_utils.to_bin(not SETTINGS.is_video_on)])
+        if RADIO_SYNC.CLIENT.is_video_on:
+            GLOBAL.write_message("Disable the video\nPlease wait!")
         else:
-            GLOBAL.write_message("Please enable the transceiver!", is_errorr=True)
+            GLOBAL.write_message("Enable the video\nPlease wait!")
+        # Change the value (Will sync with rover)
+        RADIO_SYNC.CLIENT.is_video_on = not RADIO_SYNC.CLIENT.is_video_on
+        # Do it localy
+        GLOBAL.video_on_led(RADIO_SYNC.CLIENT.is_video_on)        
+        GLOBAL.video(RADIO_SYNC.CLIENT.is_video_on)        
         
 
     @staticmethod
@@ -268,60 +277,92 @@ class SYSTEM(object):
         '''
         When the horn button is clicked
         '''
-        if SETTINGS.is_transceiver_on:
-            # Send horn command to rover
-            steelsquid_hmtrlrs.request("h")
-            # Flash icon
-            GLOBAL.horn_led_flash()        
-        else:
-            GLOBAL.write_message("Please enable the transceiver!", is_errorr=True)
+        # Flash icon
+        GLOBAL.horn_led_flash()        
+        # Send horn command to rover
+        steelsquid_hmtrlrs.request("horn")
+                
         
-
     @staticmethod
-    def on_headlights_button(pin):
+    def on_left_button(pin):
         '''
-        When the headlights button is clicked
+        Left camera button clicked
         '''
-        steelsquid_utils.log("") 
-        if SETTINGS.is_transceiver_on:
-            SETTINGS.is_headlights_on = not SETTINGS.is_headlights_on
-            # LED
-            GLOBAL.headlamp_led(SETTINGS.is_headlights_on)        
-            # Send healights command to rover
-            steelsquid_hmtrlrs.request("l", [steelsquid_utils.to_bin(not SETTINGS.is_headlights_on)])
-        else:
-            GLOBAL.write_message("Please enable the transceiver!", is_errorr=True)
-
+        # Flash icon
+        GLOBAL.left_led_flash()        
+        # Send center command to rover
+        steelsquid_hmtrlrs.request("left")
+        # Center local values
+        RADIO_PUSH_2.camera_pan=STATIC.servo_position_pan_max
+        RADIO_PUSH_2.camera_tilt=STATIC.servo_position_tilt_start
+        
 
     @staticmethod
     def on_center_button(pin):
         '''
         Center camera button clicked
         '''
-        if SETTINGS.is_transceiver_on:
-            # Send center command to rover
-            steelsquid_hmtrlrs.request("e")
-            # Flash icon
-            GLOBAL.center_led_flash()        
-        else:
-            GLOBAL.write_message("Please enable the transceiver!", is_errorr=True)
+        # Flash icon
+        GLOBAL.center_led_flash()        
+        # Send center command to rover
+        steelsquid_hmtrlrs.request("center")
+        # Center local values
+        RADIO_PUSH_2.camera_pan=STATIC.servo_position_pan_start
+        RADIO_PUSH_2.camera_tilt=STATIC.servo_position_tilt_start
 
 
+    @staticmethod
+    def on_right_button(pin):
+        '''
+        Right camera button clicked
+        '''
+        # Flash icon
+        GLOBAL.right_led_flash()        
+        # Send center command to rover
+        steelsquid_hmtrlrs.request("right")
+        # Center local values
+        RADIO_PUSH_2.camera_pan=STATIC.servo_position_pan_min
+        RADIO_PUSH_2.camera_tilt=STATIC.servo_position_tilt_start
+
+                
     @staticmethod
     def on_cruise_button(pin):
         '''
         Cruise controll button clicked
         '''
-        if SETTINGS.is_transceiver_on:
-            # Send horn command to rover
-            answer = steelsquid_hmtrlrs.request("r")
-            # Set LED
-            GLOBAL.cruise_led(answer[0]=="1")
-        else:
-            GLOBAL.write_message("Please enable the transceiver!", is_errorr=True)
+        # Change the value (Will sync with rover)
+        RADIO_SYNC.CLIENT.is_cruise_on = not RADIO_SYNC.CLIENT.is_cruise_on
+        steelsquid_kiss_global.radio_interrupt()
+        # Light the led
+        GLOBAL.cruise_led(RADIO_SYNC.CLIENT.is_cruise_on)
 
+
+    @staticmethod
+    def on_headlights_button(pin):
+        '''
+        When the headlights button is clicked
+        '''
+        # Change the value (Will sync with rover)
+        RADIO_SYNC.CLIENT.is_headlights_on = not RADIO_SYNC.CLIENT.is_headlights_on
+        steelsquid_kiss_global.radio_interrupt()
+        # Light the led
+        GLOBAL.headlamp_led(RADIO_SYNC.CLIENT.is_headlights_on)
+
+
+    @staticmethod
+    def on_highbeam_button(pin):
+        '''
+        When the highbeam button is clicked
+        '''
+        # Change the value (Will sync with rover)
+        RADIO_SYNC.CLIENT.is_highbeam_on = not RADIO_SYNC.CLIENT.is_highbeam_on
+        steelsquid_kiss_global.radio_interrupt()
+        # Light the led
+        GLOBAL.highbeam_led(RADIO_SYNC.CLIENT.is_highbeam_on)
         
         
+        
+
 
 
 class LOOP(object):
@@ -332,29 +373,19 @@ class LOOP(object):
     Every method will execute in its own thread
     '''
     
-    # Send status command every 1 second
-    counter_stat = 0
-    
-    # Send 4 stop drive command then do not send
-    counter_drive = 0
-    
-    # How many send error untill lost connection
-    counter_lost_connection = 0
-    
-    
     @staticmethod
-    def on_loop_slow():
+    def Update_lcd_and_leds():
         '''
-        Execute every 2 second
+        Execute every 1 second
         ''' 
         try:
             # Read station voltage
             DYNAMIC.voltage_station = GLOBAL.read_in_volt(2, 3)
             # Light the voltage bars
             GLOBAL.station_bar(DYNAMIC.voltage_station)
-            GLOBAL.rover_bar(DYNAMIC.voltage_rover)
+            GLOBAL.rover_bar(RADIO_SYNC.SERVER.voltage_rover)
             # Voltage warning
-            if DYNAMIC.voltage_station<STATIC.station_voltage_warning or DYNAMIC.voltage_rover<STATIC.rover_voltage_warning:
+            if DYNAMIC.voltage_station<STATIC.station_voltage_warning or RADIO_SYNC.SERVER.voltage_rover<STATIC.rover_voltage_warning:
                 GLOBAL.err_led_flash()
             # Print IP/voltage to LCD
             if not DYNAMIC.stop_next_lcd_message:
@@ -375,15 +406,12 @@ class LOOP(object):
                     print_this.append("Statin: " + str(DYNAMIC.voltage_station) + "V  ***LOW***")
                 else:
                     print_this.append("Statin: " + str(DYNAMIC.voltage_station) + "V")
-                if DYNAMIC.voltage_rover==0 or not SETTINGS.is_transceiver_on:
-                    GLOBAL.transceiver_connected_led(False)
+                if not steelsquid_hmtrlrs.is_linked():
                     print_this.append("Rover: No connection!")
-                elif DYNAMIC.voltage_rover<STATIC.rover_voltage_warning:
-                    GLOBAL.transceiver_connected_led(True)
-                    print_this.append("Rover: " + str(DYNAMIC.voltage_rover)+ "V  ***LOW***")
+                elif RADIO_SYNC.SERVER.voltage_rover<STATIC.rover_voltage_warning:
+                    print_this.append("Rover: " + str(RADIO_SYNC.SERVER.voltage_rover)+ "V  ***LOW***")
                 else:
-                    GLOBAL.transceiver_connected_led(True)
-                    print_this.append("Rover: " + str(DYNAMIC.voltage_rover)+ "V")
+                    print_this.append("Rover: " + str(RADIO_SYNC.SERVER.voltage_rover)+ "V")
                 # Set Network LED status
                 GLOBAL.network_conneced_led(connected)
                 # Write text to LCD
@@ -395,119 +423,219 @@ class LOOP(object):
             else:
                 DYNAMIC.stop_next_lcd_message=False
             # Is network enabled LED
-            GLOBAL.network_on_led(steelsquid_nm.get_network_status())        
-            # Is transceiver enabled LED
-            GLOBAL.transceiver_on_led(SETTINGS.is_transceiver_on)        
-            # Is video enabled
-            GLOBAL.video_on_led(SETTINGS.is_video_on)        
-            GLOBAL.video(SETTINGS.is_video_on)     
-            # Is headlight on
-            GLOBAL.headlamp_led(SETTINGS.is_headlights_on)    
+            GLOBAL.network_on_led(steelsquid_nm.get_network_status())             
         except:
             steelsquid_utils.shout()
         return 1 # Execute this method again in 1 second
 
 
-    @staticmethod
-    def on_loop_fast():
-        '''
-        Execute every 0.01 second
-        Send the status command to rover
-         - Left motor speed
-         - Right motor speed
-         - Pan camera
-         - Tilt camera
-         - tx
-         - headlamp
-        Also read status from the rover: battery voltage
-        ''' 
-        if SETTINGS.is_transceiver_on:
-            try:
-                # Get the drive joystick location
-                drive = steelsquid_pi.po12_adc(3, 3)
-                drive = 515 - drive
-                if drive > -20 and drive < 20:
-                    drive = 0
-                steer = steelsquid_pi.po12_adc(4, 3)
-                steer = 515 - steer
-                if steer > -20 and steer < 20:
-                    steer = 0
-                # Remap the joystick range
-                drive = int(steelsquid_utils.remap(drive, -170, 170, STATIC.motor_max*-1, STATIC.motor_max))
-                steer = int(steelsquid_utils.remap(steer, -170, 170, STATIC.motor_max*-1, STATIC.motor_max)) / 2
-                # Convert to left and right motor values
-                motor_left = drive
-                motor_right = drive
-                if steer>0:
-                    motor_right = motor_right - steer
-                    motor_left = motor_left + steer
-                elif steer<0:
-                    motor_right = motor_right - steer
-                    motor_left = motor_left + steer
-                
-                if motor_right>STATIC.motor_max:
-                    motor_right = STATIC.motor_max
-                elif motor_right<STATIC.motor_max*-1:
-                    motor_right = STATIC.motor_max*-1
-                
-                if motor_left>STATIC.motor_max:
-                    motor_left = STATIC.motor_max
-                elif motor_left<STATIC.motor_max*-1:
-                    motor_left = STATIC.motor_max*-1
 
-                    
-                # Get the tilt/pan joystick location
-                pan = steelsquid_pi.po12_adc(2, 3)
-                pan = pan - 515
-                if pan > -20 and pan < 20:
-                    pan = 0
-                tilt = steelsquid_pi.po12_adc(1, 3)
-                tilt = 515 - tilt
-                if tilt > -20 and tilt < 20:
-                    tilt = 0
-                LOOP.counter_stat = LOOP.counter_stat + 1
-                if LOOP.counter_stat==1:
-                    # Send a update command every 2 second
-                    to_rover = [None]*6
-                    to_rover[0] = motor_left
-                    to_rover[1] = motor_right
-                    to_rover[2] = pan
-                    to_rover[3] = tilt
-                    to_rover[4] = steelsquid_utils.to_bin(SETTINGS.is_video_on)
-                    to_rover[5] = steelsquid_utils.to_bin(SETTINGS.is_headlights_on)
-                    from_rover = steelsquid_hmtrlrs.request("u", to_rover)
-                    LOOP.counter_lost_connection=0
-                    # Light the connected LED
-                    GLOBAL.transceiver_connected_led(True)
-                    # Save voltage from rover
-                    v = from_rover[0]
-                    if v!="None":
-                        DYNAMIC.voltage_rover = float(v)
-                    # Light the cruise controll LED
-                    GLOBAL.cruise_led(from_rover[1]=="1")
-                elif LOOP.counter_stat>=100:
-                    LOOP.counter_stat=0
-                # Send drive command
-                if motor_left != 0 or motor_right != 0:
-                    LOOP.counter_drive=0
-                    steelsquid_hmtrlrs.broadcast("d", [motor_left, motor_right])
-                else:
-                    if LOOP.counter_drive<3:
-                        LOOP.counter_drive = LOOP.counter_drive + 1
-                        steelsquid_hmtrlrs.broadcast("d", [motor_left, motor_right])
-                # Send pan and tilt command
-                if pan != 0 or tilt != 0:
-                    steelsquid_hmtrlrs.broadcast("c", [pan, tilt])
-                        
-            except:
-                if LOOP.counter_lost_connection==1:
-                    DYNAMIC.voltage_rover = 0
-                    GLOBAL.transceiver_connected_led(False)
-                else:
-                    LOOP.counter_lost_connection = LOOP.counter_lost_connection+1
+
+
+
+class RADIO_SYNC(object):
+    '''
+    Class RADIO_SYNC
+      If you use a HM-TRLR-S and it is enabled (set-flag  hmtrlrs_server) this class will make the client send
+      ping commadns to the server.
+      staticmethod: on_sync(seconds_since_last_ok_ping)
+        seconds_since_last_ok_ping: Seconds since last sync that went OK (send or reseive)
+        Will fire after every sync on the client (ones a second or when steelsquid_kiss_global.radio_interrupt() is executed)
+        This will also be executed on server (When sync is reseived or about every seconds when no activity from the client).
+    Class CLIENT   (Inside RADIO_SYNC)
+      All varibales in this class will be synced from the client to the server
+      OBS! The variables most be in the same order in the server and client
+      The variables can only be int, float, bool or string
+      If you have the class RADIO_SYNC this inner class must exist or the system want start
+    Class SERVER   (Inside RADIO_SYNC)
+      All varibales in this class will be synced from the server to the client
+      OBS! The variables most be in the same order in the server and client
+      The variables can only be int, float, bool or string
+      If you have the class RADIO_SYNC this inner class must exist or the system want start
+    '''    
+    
+    @staticmethod
+    def on_sync(seconds_since_last_ok_ping):
+        '''
+        seconds_since_last_ok_ping: Seconds since last sync that went OK (send or reseive)
+        Will fire after every sync on the client (ones a second or when steelsquid_kiss_global.radio_interrupt() is executed)
+        This will also be executed on server (When sync is reseived or about every seconds when no activity from the client).
+        '''
+        # Check if connection is lost
+        if seconds_since_last_ok_ping<steelsquid_hmtrlrs.LINK_LOST_SUGGESTION:
+            GLOBAL.transceiver_connected_led(True)
         else:
             GLOBAL.transceiver_connected_led(False)
-        return 0.01 # Execute this method again in 0.01 second
+        
+        
+    class CLIENT(object):
+        '''
+        All varibales in this class will be synced from the client to the server
+        '''
+        # Enable/disable the network (wifi)
+        is_network_on = True
+
+        # Enable/disable the video transmitter and reseiver
+        is_video_on = False
+        
+        # Is cruise control enabled
+        is_cruise_on = False
+        
+        # Is the headlights on
+        is_headlights_on = False
+        
+        # Is the highbeam on
+        is_highbeam_on = False
+
+        
+    class SERVER(object):
+        '''
+        All varibales in this class will be synced from the server to the client
+        '''
+        # Voltage for the rover
+        voltage_rover = 0.0
+
+
+
+
+
+
+class RADIO_PUSH_1(object):
+    '''
+    Class RADIO_PUSH_1 (to 4)
+      If you use a HM-TRLR-S and it is enabled (set-flag  hmtrlrs_server) this class will make the client send the
+      values of variables i this class to the server.
+      You can have 4 RADIO_PUSH classes RADIO_PUSH_1 ti RADIO_PUSH_4
+      This is faster than RADIO_SYNC because the client do not need to wait for ansver fron server
+      OBS! The variables most be in the same order in the server and client
+      It will not read anything back (if you want the sync values from the server use RADIO_SYNC)
+      So all varibales in this class will be the same on the server and client, but client can only change the values.
+      The variables can only be int, float, bool or string
+      staticmethod: on_push()
+        You must have this staticmethod or this functionality will not work
+        On client it will fire before every push sent (ones every 0.01 second), return True or False
+        True=send update to server, False=Do not send anything to server
+        On server it will fire on every push received
+    '''
+    
+    # This will not sdend to server
+    _sent_zero_count = 0
+
+    # Speed of the motors
+    motor_left = 0
+    motor_right = 0
+
+
+    @staticmethod
+    def on_push():
+        '''
+        You must have this staticmethod or this functionality will not work
+        On client it will fire before every push sent (ones every 0.01 second), return True or False
+        True=send update to server, False=Do not send anything to server
+        On server it will fire on every push received
+        '''
+        # Get the drive joystick location
+        drive = steelsquid_pi.po12_adc(3, 3)
+        drive = 515 - drive
+        if drive > -20 and drive < 20:
+            drive = 0
+        steer = steelsquid_pi.po12_adc(4, 3)
+        steer = 515 - steer
+        if steer > -20 and steer < 20:
+            steer = 0
+        # Remap the joystick range
+        drive = int(steelsquid_utils.remap(drive, -170, 170, STATIC.motor_max*-1, STATIC.motor_max))
+        steer = int(steelsquid_utils.remap(steer, -170, 170, STATIC.motor_max*-1, STATIC.motor_max))
+        # Convert to left and right motor values
+        motor_left = drive
+        motor_right = drive
+        if steer>0 or steer<0:
+            motor_right = motor_right - steer
+            motor_left = motor_left + steer
+        
+        if motor_right>STATIC.motor_max:
+            motor_right = STATIC.motor_max
+        elif motor_right<STATIC.motor_max*-1:
+            motor_right = STATIC.motor_max*-1
+        
+        if motor_left>STATIC.motor_max:
+            motor_left = STATIC.motor_max
+        elif motor_left<STATIC.motor_max*-1:
+            motor_left = STATIC.motor_max*-1
+        # Set the value that will be sent to the server
+        RADIO_PUSH_1.motor_left=motor_left
+        RADIO_PUSH_1.motor_right=motor_right
+        if motor_left == 0 and motor_right==0:
+            if RADIO_PUSH_1._sent_zero_count>=6:
+                return False # Do not update to server
+            else:
+                RADIO_PUSH_1._sent_zero_count=RADIO_PUSH_1._sent_zero_count+1
+                return True # Do not update to server
+        else:
+            RADIO_PUSH_1._sent_zero_count=0
+            return True # Send update to server
+
+
+
+
+
+
+class RADIO_PUSH_2(object):
+    '''
+    Class RADIO_PUSH_1 (to 4)
+      If you use a HM-TRLR-S and it is enabled (set-flag  hmtrlrs_server) this class will make the client send the
+      values of variables i this class to the server.
+      You can have 4 RADIO_PUSH classes RADIO_PUSH_1 ti RADIO_PUSH_4
+      This is faster than RADIO_SYNC because the client do not need to wait for ansver fron server
+      OBS! The variables most be in the same order in the server and client
+      It will not read anything back (if you want the sync values from the server use RADIO_SYNC)
+      So all varibales in this class will be the same on the server and client, but client can only change the values.
+      staticmethod: on_push()
+        You must have this staticmethod or this functionality will not work
+        On client it will fire before every push sent (ones every 0.01 second), return True or False
+        True=send update to server, False=Do not send anything to server
+        On server it will fire on every push received
+    '''
+    
+    # Speed of the motors
+    camera_pan = STATIC.servo_position_pan_start
+    camera_tilt = STATIC.servo_position_tilt_start
+
+
+    @staticmethod
+    def on_push():
+        '''
+        You must have this staticmethod or this functionality will not work
+        On client it will fire before every push sent (ones every 0.01 second), return True or False
+        True=send update to server, False=Do not send anything to server
+        On server it will fire on every push received
+        '''
+        # Get the tilt/pan joystick location
+        pan = steelsquid_pi.po12_adc(2, 3)
+        pan = pan - 515
+        if pan > -20 and pan < 20:
+            pan = 0
+        tilt = steelsquid_pi.po12_adc(1, 3)
+        tilt = 515 - tilt
+        if tilt > -20 and tilt < 20:
+            tilt = 0
+        if pan != 0 or tilt!=0:
+            pan = RADIO_PUSH_2.camera_pan - int(pan/15)
+            tilt = RADIO_PUSH_2.camera_tilt + int(tilt/15)
+            if pan<STATIC.servo_position_pan_min:
+                pan = STATIC.servo_position_pan_min
+            elif pan>STATIC.servo_position_pan_max:
+                pan = STATIC.servo_position_pan_max
+            if tilt<STATIC.servo_position_tilt_min:
+                tilt = STATIC.servo_position_tilt_min
+            elif tilt>STATIC.servo_position_tilt_max:
+                tilt = STATIC.servo_position_tilt_max
+            RADIO_PUSH_2.camera_pan = pan
+            RADIO_PUSH_2.camera_tilt = tilt
+            return True
+        else:
+            return False
+
 
 
 
@@ -609,6 +737,12 @@ class GLOBAL(object):
         steelsquid_pi.gpio_set(12, status)
 
 
+    @staticmethod
+    def highbeam_led(status):
+        '''
+        Turn the rover highbeam_led LED on or off
+        ''' 
+        steelsquid_pi.gpio_set(16, status)
 
 
     @staticmethod
@@ -628,6 +762,14 @@ class GLOBAL(object):
 
 
     @staticmethod
+    def left_led_flash():
+        '''
+        FLash
+        ''' 
+        steelsquid_pi.gpio_flash(27, None, 1)
+
+
+    @staticmethod
     def center_led_flash():
         '''
         FLash the horn led
@@ -636,21 +778,51 @@ class GLOBAL(object):
 
 
     @staticmethod
+    def right_led_flash():
+        '''
+        FLash
+        ''' 
+        steelsquid_pi.gpio_flash(10, None, 1)
+
+
+    @staticmethod
     def station_bar(voltage):
         '''
         Light the station led bar (voltage)
         ''' 
-        leds = steelsquid_utils.remap(voltage, STATIC.station_voltage_min, STATIC.station_voltage_max, 1, 10)
-        steelsquid_pi.mcp23017_set(20, 10, not leds <= 1)
-        steelsquid_pi.mcp23017_set(20, 9, not leds <= 2)
-        steelsquid_pi.mcp23017_set(20, 8, not leds <= 3)
-        steelsquid_pi.mcp23017_set(20, 7, not leds <= 4)
-        steelsquid_pi.mcp23017_set(20, 6, not leds <= 5)
-        steelsquid_pi.mcp23017_set(20, 5, not leds <= 6)
-        steelsquid_pi.mcp23017_set(20, 4, not leds <= 7)
-        steelsquid_pi.mcp23017_set(20, 3, not leds <= 8)
-        steelsquid_pi.mcp23017_set(20, 2, not leds <= 9)
-        steelsquid_pi.mcp23017_set(20, 1, not leds <= 10)
+        leds = int(steelsquid_utils.remap(voltage, STATIC.station_voltage_min, STATIC.station_voltage_max, 1, 10))
+        if leds<=1:
+            steelsquid_pi.mcp23017_flash(20, 10)
+            steelsquid_pi.mcp23017_set(20, 9, False)
+            steelsquid_pi.mcp23017_set(20, 8, False)
+            steelsquid_pi.mcp23017_set(20, 7, False)
+            steelsquid_pi.mcp23017_set(20, 6, False)
+            steelsquid_pi.mcp23017_set(20, 5, False)
+            steelsquid_pi.mcp23017_set(20, 4, False)
+            steelsquid_pi.mcp23017_set(20, 3, False)
+            steelsquid_pi.mcp23017_set(20, 2, False)
+            steelsquid_pi.mcp23017_set(20, 1, False)
+        elif leds<=2:
+            steelsquid_pi.mcp23017_flash(20, 10)
+            steelsquid_pi.mcp23017_flash(20, 9)
+            steelsquid_pi.mcp23017_set(20, 8, False)
+            steelsquid_pi.mcp23017_set(20, 7, False)
+            steelsquid_pi.mcp23017_set(20, 6, False)
+            steelsquid_pi.mcp23017_set(20, 5, False)
+            steelsquid_pi.mcp23017_set(20, 4, False)
+            steelsquid_pi.mcp23017_set(20, 2, False)
+            steelsquid_pi.mcp23017_set(20, 1, False)
+        else:
+            steelsquid_pi.mcp23017_set(20, 10, not leds <= 1)
+            steelsquid_pi.mcp23017_set(20, 9, not leds <= 2)
+            steelsquid_pi.mcp23017_set(20, 8, not leds <= 3)
+            steelsquid_pi.mcp23017_set(20, 7, not leds <= 4)
+            steelsquid_pi.mcp23017_set(20, 6, not leds <= 5)
+            steelsquid_pi.mcp23017_set(20, 5, not leds <= 6)
+            steelsquid_pi.mcp23017_set(20, 4, not leds <= 7)
+            steelsquid_pi.mcp23017_set(20, 3, not leds <= 8)
+            steelsquid_pi.mcp23017_set(20, 2, not leds <= 9)
+            steelsquid_pi.mcp23017_set(20, 1, not leds <= 10)
 
 
     @staticmethod
@@ -658,17 +830,40 @@ class GLOBAL(object):
         '''
         Light the rover led bar (voltage)
         ''' 
-        leds = steelsquid_utils.remap(voltage, STATIC.rover_voltage_min, STATIC.rover_voltage_max, 1, 10)
-        steelsquid_pi.mcp23017_set(20, 15, not leds <= 10)
-        steelsquid_pi.mcp23017_set(20, 14, not leds <= 9)
-        steelsquid_pi.mcp23017_set(20, 13, not leds <= 8)
-        steelsquid_pi.mcp23017_set(20, 12, not leds <= 7)
-        steelsquid_pi.mcp23017_set(20, 11, not leds <= 6)
-        steelsquid_pi.mcp23017_set(21, 15, not leds <= 5)
-        steelsquid_pi.mcp23017_set(21, 14, not leds <= 4)
-        steelsquid_pi.mcp23017_set(21, 13, not leds <= 3)
-        steelsquid_pi.mcp23017_set(21, 12, not leds <= 2)
-        steelsquid_pi.mcp23017_set(21, 11, not leds <= 1)
+        leds = int(steelsquid_utils.remap(voltage, STATIC.rover_voltage_min, STATIC.rover_voltage_max, 1, 10))
+        if leds<=1:
+            steelsquid_pi.mcp23017_set(20, 15, False)
+            steelsquid_pi.mcp23017_set(20, 14, False)
+            steelsquid_pi.mcp23017_set(20, 13, False)
+            steelsquid_pi.mcp23017_set(20, 12, False)
+            steelsquid_pi.mcp23017_set(20, 11, False)
+            steelsquid_pi.mcp23017_set(21, 15, False)
+            steelsquid_pi.mcp23017_set(21, 14, False)
+            steelsquid_pi.mcp23017_set(21, 13, False)
+            steelsquid_pi.mcp23017_set(21, 12, False)
+            steelsquid_pi.mcp23017_flash(21, 11)
+        elif leds<=2:
+            steelsquid_pi.mcp23017_set(20, 15, False)
+            steelsquid_pi.mcp23017_set(20, 14, False)
+            steelsquid_pi.mcp23017_set(20, 13, False)
+            steelsquid_pi.mcp23017_set(20, 12, False)
+            steelsquid_pi.mcp23017_set(20, 11, False)
+            steelsquid_pi.mcp23017_set(21, 15, False)
+            steelsquid_pi.mcp23017_set(21, 14, False)
+            steelsquid_pi.mcp23017_set(21, 13, False)
+            steelsquid_pi.mcp23017_flash(21, 12)
+            steelsquid_pi.mcp23017_flash(21, 11)
+        else:
+            steelsquid_pi.mcp23017_set(20, 15, not leds <= 10)
+            steelsquid_pi.mcp23017_set(20, 14, not leds <= 9)
+            steelsquid_pi.mcp23017_set(20, 13, not leds <= 8)
+            steelsquid_pi.mcp23017_set(20, 12, not leds <= 7)
+            steelsquid_pi.mcp23017_set(20, 11, not leds <= 6)
+            steelsquid_pi.mcp23017_set(21, 15, not leds <= 5)
+            steelsquid_pi.mcp23017_set(21, 14, not leds <= 4)
+            steelsquid_pi.mcp23017_set(21, 13, not leds <= 3)
+            steelsquid_pi.mcp23017_set(21, 12, not leds <= 2)
+            steelsquid_pi.mcp23017_set(21, 11, not leds <= 1)
 
 
     @staticmethod

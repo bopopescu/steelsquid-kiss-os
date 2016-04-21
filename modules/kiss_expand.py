@@ -119,7 +119,7 @@ Class RADIO
         In python you can do: steelsquid_kiss_global.nrf24_status(status)
         status: server=Enable as server
                 client=Enable as client
-                master=Enable as master
+                aster=Enable as master
                 slave=Enable as slave
                 None=Disable
         SERVER/CLIENT:
@@ -154,6 +154,39 @@ Class RADIO
         If you do not want a response back from the server. 
         The method on the server should then return None.
         If server method raise exception the steelsquid_hmtrlrs.request("a_command", data) will also raise a exception.
+        
+Class RADIO_SYNC
+  If you use a HM-TRLR-S and it is enabled (set-flag  hmtrlrs_server) this class will make the client send
+  ping commadns to the server.
+  staticmethod: on_sync(seconds_since_last_ok_ping)
+    seconds_since_last_ok_ping: Seconds since last sync that went OK (send or reseive)
+    Will fire after every sync on the client (ones a second or when steelsquid_kiss_global.radio_interrupt() is executed)
+    This will also be executed on server (When sync is reseived or about every seconds when no activity from the client).
+Class CLIENT   (Inside RADIO_SYNC)
+  All varibales in this class will be synced from the client to the server
+  OBS! The variables most be in the same order in the server and client
+  The variables can only be int, float, bool or string
+  If you have the class RADIO_SYNC this inner class must exist or the system want start
+Class SERVER   (Inside RADIO_SYNC)
+  All varibales in this class will be synced from the server to the client
+  OBS! The variables most be in the same order in the server and client
+  The variables can only be int, float, bool or string
+  If you have the class RADIO_SYNC this inner class must exist or the system want start
+
+Class RADIO_PUSH_1 (to 4)
+  If you use a HM-TRLR-S and it is enabled (set-flag  hmtrlrs_server) this class will make the client send the
+  values of variables i this class to the server.
+  You can have 4 RADIO_PUSH classes RADIO_PUSH_1 to RADIO_PUSH_4
+  This is faster than RADIO_SYNC because the client do not need to wait for ansver fron server
+  OBS! The variables most be in the same order in the server and client
+  It will not read anything back (if you want the sync values from the server use RADIO_SYNC)
+  So all varibales in this class will be the same on the server and client, but client can only change the values.
+  The variables can only be int, float, bool or string
+  staticmethod: on_push()
+    You must have this staticmethod or this functionality will not work
+    On client it will fire before every push sent (ones every 0.01 second), return True or False
+    True=send update to server, False=Do not send anything to server
+    On server it will fire on every push received
 
 The class with name GLOBAL
  Put global staticmethods in this class, methods you use from different part of the system.
@@ -582,7 +615,79 @@ class RADIO(object):
         '''
         pass
 
-    
+
+class RADIO_SYNC(object):
+    '''
+    Class RADIO_SYNC
+      If you use a HM-TRLR-S and it is enabled (set-flag  hmtrlrs_server) this class will make the client send
+      ping commadns to the server.
+      staticmethod: on_sync(seconds_since_last_ok_ping)
+        seconds_since_last_ok_ping: Seconds since last sync that went OK (send or reseive)
+        Will fire after every sync on the client (ones a second or when steelsquid_kiss_global.radio_interrupt() is executed)
+        This will also be executed on server (When sync is reseived or about every seconds when no activity from the client).
+    Class CLIENT   (Inside RADIO_SYNC)
+      All varibales in this class will be synced from the client to the server
+      OBS! The variables most be in the same order in the server and client
+      The variables can only be int, float, bool or string
+      If you have the class RADIO_SYNC this inner class must exist or the system want start
+    Class SERVER   (Inside RADIO_SYNC)
+      All varibales in this class will be synced from the server to the client
+      OBS! The variables most be in the same order in the server and client
+      The variables can only be int, float, bool or string
+      If you have the class RADIO_SYNC this inner class must exist or the system want start
+    '''
+
+    @staticmethod
+    def on_sync(seconds_since_last_ok_ping):
+        '''
+        seconds_since_last_ok_ping: Seconds since last sync that went OK (send or reseive)
+        Will fire after every sync on the client (ones a second or when steelsquid_kiss_global.radio_interrupt() is executed)
+        This will also be executed on server (When sync is reseived or about every seconds when no activity from the client).
+        '''
+        pass
+        
+
+    class CLIENT(object):
+        '''
+        All varibales in this class will be synced from the client to the server
+        '''
+        
+        
+    class SERVER(object):
+        '''
+        All varibales in this class will be synced from the server to the client
+        '''
+
+
+
+
+class RADIO_PUSH_1(object):
+    '''
+    Class RADIO_PUSH_1 (to 4)
+      If you use a HM-TRLR-S and it is enabled (set-flag  hmtrlrs_server) this class will make the client send the
+      values of variables i this class to the server.
+      You can have 4 RADIO_PUSH classes RADIO_PUSH_1 ti RADIO_PUSH_4
+      This is faster than RADIO_SYNC because the client do not need to wait for ansver fron server
+      OBS! The variables most be in the same order in the server and client
+      It will not read anything back (if you want the sync values from the server use RADIO_SYNC)
+      So all varibales in this class will be the same on the server and client, but client can only change the values.
+      The variables can only be int, float, bool or string
+      staticmethod: on_push()
+        You must have this staticmethod or this functionality will not work
+        On client it will fire before every push sent (ones every 0.01 second), return True or False
+        True=send update to server, False=Do not send anything to server
+        On server it will fire on every push received
+    '''
+
+    @staticmethod
+    def on_push():
+        '''
+        You must have this staticmethod or this functionality will not work
+        On client it will fire before every push sent (ones every 0.01 second), return True or False
+        True=send update to server, False=Do not send anything to server
+        On server it will fire on every push received
+        '''
+        pass
     
     
 class GLOBAL(object):

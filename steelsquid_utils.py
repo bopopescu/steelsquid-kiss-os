@@ -1884,3 +1884,14 @@ def to_bin(boolean):
     else:
         return "0"
         
+        
+def from_bin(v):
+    '''
+    to boolean from 1 and 0 
+    '''
+    if v==1 or v=="1":
+        return True
+    elif v==0 or v=="0":
+        return False
+    else:
+        raise RuntimeError("Could not convert to boolean: "+ v)    

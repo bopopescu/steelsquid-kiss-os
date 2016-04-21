@@ -40,12 +40,18 @@ if len(sys.argv)==2 and sys.argv[1]=="start":
     import threading
     import steelsquid_nrf24
     import steelsquid_hmtrlrs
-    event = threading.Event()
+    import types    
+    import datetime    
 else:
+    import threading
     import os
 
 # Is the steelsquid program running
 running = True
+
+event = threading.Event()
+radio_event = threading.Event()    
+
 
 # Where to look for task events
 system_event_dir = "/run/shm/steelsquid"
@@ -684,28 +690,217 @@ def broadcast_task_event(event, parameters_to_event=None):
                 pass
 
 
+def hmtrlrs_client_thread():
+    '''
+    Start client thread for the HM-TRLR-S transiver 
+    '''
+    sync_class = steelsquid_kiss_global._get_first_modules_class("RADIO_SYNC")
+    if sync_class!=None:
+        sync_class_client = steelsquid_kiss_global._get_first_modules_class("RADIO_SYNC", "CLIENT")
+        sync_class_client_members = [attr for attr in dir(sync_class_client) if not attr.startswith("_")]
+        sync_class_server = steelsquid_kiss_global._get_first_modules_class("RADIO_SYNC", "SERVER")
+        sync_class_server_members = [attr for attr in dir(sync_class_server) if not attr.startswith("_")]
+    push_classes = []
+    pc = steelsquid_kiss_global._get_first_modules_class("RADIO_PUSH_1")
+    if pc!=None:
+        members = [attr for attr in dir(pc) if attr!="on_push" and not attr.startswith("_")]
+        push_classes.append([1, pc, members])
+    pc = steelsquid_kiss_global._get_first_modules_class("RADIO_PUSH_2")
+    if pc!=None:
+        members = [attr for attr in dir(pc) if attr!="on_push" and not attr.startswith("_")]
+        push_classes.append([2, pc, members])
+    pc = steelsquid_kiss_global._get_first_modules_class("RADIO_PUSH_3")
+    if pc!=None:
+        members = [attr for attr in dir(pc) if attr!="on_push" and not attr.startswith("_")]
+        push_classes.append([3, pc, members])
+    pc = steelsquid_kiss_global._get_first_modules_class("RADIO_PUSH_4")
+    if pc!=None:
+        members = [attr for attr in dir(pc) if attr!="on_push" and not attr.startswith("_")]
+        push_classes.append([4, pc, members])
+    # nothing to do...stop thread...
+    if sync_class==None and push_classes[0]==None and push_classes[1]==None and push_classes[2]==None and push_classes[3]==None:
+        return
+    while running:
+        do_sleep = True
+        # Execute the push...
+        for pc in push_classes:
+            push_class_nr = pc[0]
+            push_class = pc[1]
+            members = pc[2]
+            try:
+                # Check if send the push
+                do_push = False
+                try:
+                    do_push = push_class.on_push()
+                except:
+                    if running:
+                        steelsquid_utils.shout()
+                # Send push broadcast
+                if do_push:
+                    values = []
+                    for name in members:
+                        member = getattr(push_class, name)
+                        if isinstance(member, (bool)):
+                            values.append(steelsquid_utils.to_bin(member))
+                        else:
+                            values.append(member)
+                    steelsquid_hmtrlrs.broadcast_push(push_class_nr, values)
+                    do_sleep = False
+            except:
+                pass
+        # The sync
+        if sync_class != None:
+            # Execute about every second
+            if steelsquid_kiss_global.radio_count >= steelsquid_kiss_global.radio_count_max:
+                steelsquid_kiss_global.radio_count = 0
+                do_sleep = False
+                try:
+                    # Get Client valuest
+                    client_values = []
+                    for name in sync_class_client_members:
+                        member = getattr(sync_class_client, name)
+                        if isinstance(member, (bool)):
+                            client_values.append(steelsquid_utils.to_bin(member))
+                        else:
+                            client_values.append(member)
+                    # Send to server
+                    server_values = steelsquid_hmtrlrs.request_sync(client_values)
+                    i = 0
+                    for name in sync_class_server_members:
+                        v_local = getattr(sync_class_server, name)
+                        v_server = server_values[i]
+                        if isinstance(v_local, (bool)):
+                            v_server = steelsquid_utils.from_bin(v_server)
+                        elif isinstance(v_local, int):
+                            v_server = int(v_server)
+                        elif isinstance(v_local, float):
+                            v_server = float(v_server)
+                        setattr(sync_class_server, name, v_server)
+                        i = i + 1
+                except:
+                    pass
+                # Execute on_sync method
+                try:
+                    diff = datetime.datetime.now()-steelsquid_hmtrlrs.last_sync
+                    sync_class.on_sync(diff.total_seconds())
+                except:
+                    if running:
+                        steelsquid_utils.shout()
+            elif not do_sleep:
+                steelsquid_kiss_global.radio_count = steelsquid_kiss_global.radio_count + 2
+            else:
+                steelsquid_kiss_global.radio_count = steelsquid_kiss_global.radio_count + 1
+        if do_sleep:
+            radio_event.wait(0.01)
+
+
+
 def hmtrlrs_server_thread():
     '''
     Start server for the HM-TRLR-S transiver 
     '''
+    push_class_1 = steelsquid_kiss_global._get_first_modules_class("RADIO_PUSH_1")
+    if push_class_1!=None:
+        members_class_1 = [attr for attr in dir(push_class_1) if attr!="on_push" and not attr.startswith("_")]
+    push_class_2 = steelsquid_kiss_global._get_first_modules_class("RADIO_PUSH_2")
+    if push_class_2!=None:
+        members_class_2 = [attr for attr in dir(push_class_2) if attr!="on_push" and not attr.startswith("_")]
+    push_class_3 = steelsquid_kiss_global._get_first_modules_class("RADIO_PUSH_3")
+    if push_class_3!=None:
+        members_class_3 = [attr for attr in dir(push_class_3) if attr!="on_push" and not attr.startswith("_")]
+    push_class_4 = steelsquid_kiss_global._get_first_modules_class("RADIO_PUSH_4")
+    if push_class_4!=None:
+        members_class_4 = [attr for attr in dir(push_class_4) if attr!="on_push" and not attr.startswith("_")]
+    sync_class = steelsquid_kiss_global._get_first_modules_class("RADIO_SYNC")
+    if sync_class!=None:
+        sync_class_client = steelsquid_kiss_global._get_first_modules_class("RADIO_SYNC", "CLIENT")
+        sync_class_client_members = [attr for attr in dir(sync_class_client) if not attr.startswith("_")]
+        sync_class_server = steelsquid_kiss_global._get_first_modules_class("RADIO_SYNC", "SERVER")
+        sync_class_server_members = [attr for attr in dir(sync_class_server) if not attr.startswith("_")]
     while running:
         try:
             # Listen for request from the client
             command, data = steelsquid_hmtrlrs.listen()
-            if command!=None:
-                # Execute a method with the same name as the command i module RADIO class
-                try:
-                    if data == None:
-                        answer = steelsquid_kiss_global._execute_first_modules_and_return("RADIO", command, ([],))
-                        if answer!=None:
-                            steelsquid_hmtrlrs.response(answer)
+            # Execute the on_sync every second
+            if command==None:
+                if sync_class!=None:
+                    diff = datetime.datetime.now()-steelsquid_hmtrlrs.last_sync
+                    sync_class.on_sync(diff.total_seconds())
+            else:
+                # A Sync or Push
+                if type(command) == types.IntType:
+                    # A sync request
+                    if sync_class!=None and command==0:
+                        i = 0
+                        for name in sync_class_client_members:
+                            v_local = getattr(sync_class_client, name)
+                            v_client = data[i]
+                            if isinstance(v_local, (bool)):
+                                v_client = steelsquid_utils.from_bin(v_client)
+                            elif isinstance(v_local, int):
+                                v_client = int(v_client)
+                            elif isinstance(v_local, float):
+                                v_client = float(v_client)
+                            setattr(sync_class_client, name, v_client)
+                            i = i + 1
+                        values = []
+                        for name in sync_class_server_members:
+                            member = getattr(sync_class_server, name)
+                            if isinstance(member, (bool)):
+                                values.append(steelsquid_utils.to_bin(member))
+                            else:
+                                values.append(member)
+                        diff = datetime.datetime.now()-steelsquid_hmtrlrs.last_sync
+                        try:
+                            sync_class.on_sync(diff.total_seconds())
+                        except:
+                            if running:
+                                steelsquid_utils.shout()
+                        steelsquid_hmtrlrs.response_sync(values)
+                    # A push broadcast
                     else:
-                        answer = steelsquid_kiss_global._execute_first_modules_and_return("RADIO", command, (data,))
-                        if answer!=None:
-                            steelsquid_hmtrlrs.response(answer)
-                except Exception, e:
-                    steelsquid_utils.shout()
-                    steelsquid_hmtrlrs.error(e.message)
+                        push_class= None
+                        if push_class_1!=None and command==1:
+                            push_class = push_class_1
+                            members = members_class_1
+                        if push_class_2!=None and command==2:
+                            push_class = push_class_2
+                            members = members_class_2
+                        if push_class_3!=None and command==3:
+                            push_class = push_class_3
+                            members = members_class_3
+                        if push_class_4!=None and command==4:
+                            push_class = push_class_4
+                            members = members_class_4
+                        if push_class!=None:
+                            i = 0
+                            for name in members:
+                                old = getattr(push_class, name)
+                                if isinstance(old, (bool)):
+                                     setattr(push_class, name, steelsquid_utils.from_bin(data[i]))
+                                elif isinstance(old, int):
+                                    setattr(push_class, name, int(data[i]))
+                                elif isinstance(old, float):
+                                    setattr(push_class, name, float(data[i]))
+                                else:
+                                    setattr(push_class, name, data[i])
+                                i = i + 1
+                            push_class.on_push()
+                else:
+                    # Execute a method with the same name as the command i module RADIO class
+                    try:
+                        if data == None:
+                            answer = steelsquid_kiss_global._execute_first_modules_and_return("RADIO", command, ([],))
+                            if answer!=None:
+                                steelsquid_hmtrlrs.response(answer)
+                        else:
+                            answer = steelsquid_kiss_global._execute_first_modules_and_return("RADIO", command, (data,))
+                            if answer!=None:
+                                steelsquid_hmtrlrs.response(answer)
+                    except Exception, e:
+                        if running:
+                            steelsquid_utils.shout()
+                            steelsquid_hmtrlrs.error(e.message)
         except:
             if running:
                 steelsquid_utils.shout()
@@ -743,6 +938,13 @@ def main():
                     gpio = steelsquid_utils.get_parameter("power_gpio")
                     steelsquid_utils.shout("Listen for clean shutdown on GPIO " + gpio)
                     steelsquid_pi.gpio_click(gpio, poweroff, steelsquid_pi.PULL_DOWN)
+                # Load all modules
+                pkgpath = os.path.dirname(modules.__file__)
+                for name in pkgutil.iter_modules([pkgpath]):
+                    if steelsquid_utils.get_flag("module_"+name[1]):
+                        steelsquid_utils.shout("Load module: " +name[1], debug=True)    
+                        n = name[1]
+                        steelsquid_kiss_global.loaded_modules[n]=import_module('modules.'+n)
                 # Enable the download manager
                 if steelsquid_utils.get_flag("download"):
                     if steelsquid_utils.get_parameter("download_dir") == "":
@@ -779,13 +981,7 @@ def main():
                     reset_gpio = int(steelsquid_utils.get_parameter("hmtrlrs_reset_gpio", "23"))
                     steelsquid_utils.shout("Enable HM-TRLR-S client")
                     steelsquid_hmtrlrs.setup(config_gpio=config_gpio, reset_gpio=reset_gpio)
-                # Load all modules
-                pkgpath = os.path.dirname(modules.__file__)
-                for name in pkgutil.iter_modules([pkgpath]):
-                    if steelsquid_utils.get_flag("module_"+name[1]):
-                        steelsquid_utils.shout("Load module: " +name[1], debug=True)    
-                        n = name[1]
-                        steelsquid_kiss_global.loaded_modules[n]=import_module('modules.'+n)
+                    thread.start_new_thread(hmtrlrs_client_thread, ())
                 # Start the modules
                 for obj in steelsquid_kiss_global.loaded_modules.itervalues():
                     thread.start_new_thread(import_file_dyn, (obj,)) 

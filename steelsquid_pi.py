@@ -51,6 +51,7 @@ from Adafruit_I2C import Adafruit_I2C
 import Adafruit_Nokia_LCD as LCD
 import Adafruit_GPIO.SPI as SPI
 import Diablo
+from decimal import Decimal
 
 EDGE_RISING = GPIO.RISING
 EDGE_FALLING = GPIO.FALLING
@@ -67,10 +68,10 @@ lcd = None
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 lcd_last_text = ""
-lock = threading.Lock()
-lock_mcp = threading.Lock()
-lock_event = threading.Lock()
-lock_po12 = threading.Lock()
+lock = threading.RLock()
+lock_mcp = threading.RLock()
+lock_event = threading.RLock()
+lock_po12 = threading.RLock()
 distances_created = []
 pwm = None
 ads_48 = None
@@ -223,7 +224,7 @@ def gpio_get(gpio, resistor=PULL_DOWN):
         return False
 
 
-def gpio_event(gpio, callback_method, bouncetime_ms=60, resistor=PULL_DOWN, edge=EDGE_BOTH):
+def gpio_event(gpio, callback_method, bouncetime_ms=100, resistor=PULL_DOWN, edge=EDGE_BOTH):
     '''
     Listen for events on gpio pin
     @param gpio: GPIO number
@@ -250,7 +251,7 @@ def gpio_event(gpio, callback_method, bouncetime_ms=60, resistor=PULL_DOWN, edge
         GPIO.add_event_detect(gpio, edge, callback=call_met)
 
 
-def gpio_click(gpio, callback_method, bouncetime_ms=60, resistor=PULL_DOWN):
+def gpio_click(gpio, callback_method, bouncetime_ms=100, resistor=PULL_DOWN):
     '''
     Connect a button to gpio pin
     Will fire when button is released.
@@ -264,22 +265,21 @@ def gpio_click(gpio, callback_method, bouncetime_ms=60, resistor=PULL_DOWN):
     if not setup[gpio] == SETUP_IN:
         gpio_setup_in(gpio, resistor)
     def call_met(para):
-        status = False
-        if GPIO.input(para) == 1:
-            status = True
-        if status == (resistor==PULL_UP):
-            try:
-                callback_method(para)          
-            except:
-                steelsquid_utils.shout()
-    global down
-    global up
-    down = -1
-    up = -1
+        print para
+        try:
+            callback_method(para)          
+        except:
+            steelsquid_utils.shout()
     if bouncetime_ms!=0:
-        GPIO.add_event_detect(gpio, EDGE_BOTH, callback=call_met, bouncetime=bouncetime_ms)
+        if resistor==PULL_UP:
+            GPIO.add_event_detect(gpio, EDGE_RISING, callback=call_met, bouncetime=bouncetime_ms)
+        else:
+            GPIO.add_event_detect(gpio, EDGE_FALLING, callback=call_met, bouncetime=bouncetime_ms)
     else:
-        GPIO.add_event_detect(gpio, EDGE_BOTH, callback=call_met)
+        if resistor==PULL_UP:
+            GPIO.add_event_detect(gpio, EDGE_RISING, callback=call_met, bouncetime=bouncetime_ms)
+        else:
+            GPIO.add_event_detect(gpio, EDGE_FALLING, callback=call_met, bouncetime=bouncetime_ms)
 
 
 def mcp23017_setup_out(address, gpio):
@@ -521,7 +521,7 @@ def mcp23017_set(address, gpio, value):
             mcp.output(gpio, 0) 
         
 
-def mcp23017_flash(address, gpio, status, seconds):
+def mcp23017_flash(address, gpio, status=None, seconds=0.5):
     '''
     Set a gpio hight or low on a MCP23017
     Change to hight (true) or low (false) on a pin alternately
@@ -731,7 +731,7 @@ def mcp23017_cleanup():
         pass
 
 
-def ads1015(address, gpio, gain=GAIN_6_144_V):
+def ads1015(address, gpio, gain=GAIN_6_144_V, number_of_decimals=-1):
     '''
     Read analog in from ADS1015 (0 to 5 v)
     address= 48, 49, 4A, 4B 
@@ -740,7 +740,11 @@ def ads1015(address, gpio, gain=GAIN_6_144_V):
     address = str(address)
     gpio = int(gpio)
     with steelsquid_i2c.Lock():
-        return __ads1015(address).readADCSingleEnded(gpio, gain, 250) / 1000
+        v = __ads1015(address).readADCSingleEnded(gpio, gain, 250) / 1000
+        if number_of_decimals!=-1:
+            v = Decimal(v)
+            v = round(v, number_of_decimals)
+        return v
 
 
 def ads1015_median(address, gpio, gain=GAIN_6_144_V, samples=8):
@@ -1517,10 +1521,11 @@ def po12_digital_out(channel, status):
     status = True/False
     '''
     channel = int(channel)
-    if steelsquid_utils.to_boolean(status):
-        steelsquid_i2c.write_bytes(0x34, 2, [channel, 1])
-    else:
-        steelsquid_i2c.write_bytes(0x34, 2, [channel, 0])
+    with(lock_po12):
+        if steelsquid_utils.to_boolean(status):
+            steelsquid_i2c.write_bytes(0x34, 2, [channel, 1])
+        else:
+            steelsquid_i2c.write_bytes(0x34, 2, [channel, 0])
 
 
 def po12_digital_out_flash(channel, status, seconds):
@@ -1572,16 +1577,15 @@ def po12_adc_vref(vref):
     
     
 def __po12_adc(channel):
-    with(lock_po12):
-        global po12_adc_has_setup
-        if not po12_adc_has_setup:
-            po12_adc_has_setup=True
-            po12_adc_pullup(False)
-            time.sleep(0.01)
-            po12_adc_vref(None)
-            time.sleep(0.01)
-        channel = int(channel)
-        return steelsquid_i2c.read_16_bit_command(0x34, 1, [channel], little_endian=False)
+    global po12_adc_has_setup
+    if not po12_adc_has_setup:
+        po12_adc_has_setup=True
+        po12_adc_pullup(False)
+        time.sleep(0.01)
+        po12_adc_vref(None)
+        time.sleep(0.01)
+    channel = int(channel)
+    return steelsquid_i2c.read_16_bit_command(0x34, 1, [channel], little_endian=False)
     
 
 def po12_adc(channel, samples=1):
@@ -1592,15 +1596,16 @@ def po12_adc(channel, samples=1):
     samples = number of samples and then calculate median
     Return 0 to 1023
     '''
-    if samples==1:
-        return __po12_adc(channel)
-    else:
-        a_list=[]
-        for i in range(samples):
-            value =  __po12_adc(channel)
-            a_list.append(value)
-            time.sleep(0.001)
-        return int(steelsquid_utils.median(a_list))
+    with(lock_po12):
+        if samples==1:
+            return __po12_adc(channel)
+        else:
+            a_list=[]
+            for i in range(samples):
+                value =  __po12_adc(channel)
+                a_list.append(value)
+                time.sleep(0.0001)
+            return int(steelsquid_utils.median(a_list))
 
 
 def po12_adc_volt(channel, samples=1):
@@ -1610,9 +1615,10 @@ def po12_adc_volt(channel, samples=1):
     channel = 1 to 8
     Return 0V to vref
     '''
-    value = po12_adc(channel, samples)
-    calc = value/float(1023)
-    return vref_voltage * calc
+    with(lock_po12):
+        value = po12_adc(channel, samples)
+        calc = value/float(1023)
+        return vref_voltage * calc
 
 
 def po12_adc_event(channel, callback_method, min_change=0.01, sample_sleep=0.2, samples=1):

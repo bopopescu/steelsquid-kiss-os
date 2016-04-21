@@ -16,15 +16,16 @@ import steelsquid_utils
 import steelsquid_pi
 import steelsquid_kiss_global
 import steelsquid_nm
+import steelsquid_kiss_boot
 import time
 import datetime
 import steelsquid_hmtrlrs
+from decimal import Decimal
 
 
 # Is this module started
 # This is set by the system automatically.
 is_started = False
-
 
 
 def enable(argument=None):
@@ -56,7 +57,6 @@ def disable(argument=None):
     steelsquid_utils.del_flag("no_net_to_lcd")
     # Remove the voltage warning and power off (lipo 4s)
     steelsquid_utils.del_parameter("voltage_warning")
-    steelsquid_utils.del_parameter("voltage_poweroff")
     # Disable the HM-TRLR-S
     steelsquid_kiss_global.hmtrlrs_status(None)
 
@@ -74,30 +74,27 @@ class STATIC(object):
     # voltage warning (lipo 7s)
     voltage_warning = 24.5
     
-    # GPIO for the HM-TRLR-S
-    hmtrlrs_config_gpio = 4
-    hmtrlrs_reset_gpio = 18
-
-    # When system start move servo here
-    servo_position_pan_start = 120
-
-    # Max Servo position
-    servo_position_pan_max = 255
-
-    # Min Servo position
-    servo_position_pan_min = 0
-
-    # When system start move servo here
-    servo_position_tilt_start = 100
-
-    # Max Servo position
-    servo_position_tilt_max = 225
-
-    # Min Servo position
-    servo_position_tilt_min = 70
-
     # Max motor speed
-    motor_max = 200
+    motor_max = 1000
+
+    # When system start move servo here
+    servo_position_pan_start = 367
+
+    # Max Servo position
+    servo_position_pan_max = 570
+
+    # Min Servo position
+    servo_position_pan_min = 170
+
+    # When system start move servo here
+    servo_position_tilt_start = 430
+
+    # Max Servo position
+    servo_position_tilt_max = 550
+
+    # Min Servo position
+    servo_position_tilt_min = 320
+
 
 
 
@@ -118,17 +115,10 @@ class DYNAMIC(object):
     # Using this when i print a message to LCD, so the next ip/voltage uppdat dont ovrewrite the message to fast
     stop_next_lcd_message = False
 
-    # Current pan
-    pan = STATIC.servo_position_pan_start
+    # Using this to know when to turn on and off the cruise control
+    cruise_enabled = False
 
-    # Current tilt
-    tilt = STATIC.servo_position_tilt_start
 
-    # Last time the client send a drive command
-    last_command = datetime.datetime.now()
-    
-    # Is cuise control on
-    is_cruise_on = False
 
 
 
@@ -157,11 +147,8 @@ class SETTINGS(object):
     # This will tell the system not to save and read the settings from disk
     _persistent_off = False
     
-    # Is the transceiver on
-    is_video_on = False
-
-    
         
+
 
 
 
@@ -191,22 +178,21 @@ class SYSTEM(object):
             steelsquid_nm.set_network_status(True)        
         except:
             pass
-        import steelsquid_piio
-        steelsquid_piio.servo(1, DYNAMIC.pan)
-        steelsquid_piio.servo(2, DYNAMIC.tilt)
+        GLOBAL.camera(STATIC.servo_position_pan_start, STATIC.servo_position_tilt_start)
         
         
-
     @staticmethod
     def on_stop():
         '''
         This will execute when system stops
         Do not execute long running stuff here
         '''
+        GLOBAL.drive(0, 0)
         steelsquid_pi.cleanup()      
         
         
         
+
 
 
 class LOOP(object):
@@ -218,55 +204,42 @@ class LOOP(object):
     '''
     
     @staticmethod
-    def on_loop_slow():
+    def update_lcd_and_voltage():
         '''
         Execute every 2 second
         ''' 
-        # If more than 2 second since last command stop the drive (connection may be lost)
-        drive_delta = datetime.datetime.now() - DYNAMIC.last_command
-        sec = 2
-        if DYNAMIC.is_cruise_on:
-            sec=4
-        if drive_delta.total_seconds()>sec:
-            DYNAMIC.is_cruise_on=False
-            GLOBAL.drive(0, 0)
-        # If more than 16 seconds beep and flash lights
-        if drive_delta.total_seconds()>16:
-            import steelsquid_piio
-            steelsquid_piio.power_flash(1, status=None, seconds=1)
-            steelsquid_piio.power_flash(2, status=None, seconds=1) 
-            steelsquid_piio.power_flash(3, status=None, seconds=1) 
-            steelsquid_piio.power_flash(4, status=None, seconds=1) 
-            steelsquid_piio.power_flash(5, status=None, seconds=1) 
-            steelsquid_piio.power_flash(6, status=None, seconds=0.01)
-        # Print IP/voltage to LCD
-        if not DYNAMIC.stop_next_lcd_message:
-            print_this = []
-            print_this.append(steelsquid_utils.get_date_time())
-            connected = False
-            # Get network status
-            if steelsquid_kiss_global.last_net:
-                if steelsquid_kiss_global.last_wifi_name!="---":
-                    print_this.append(steelsquid_kiss_global.last_wifi_name)
-                    print_this.append(steelsquid_kiss_global.last_wifi_ip)
-                    connected=True
-                if steelsquid_kiss_global.last_lan_ip!="---":
-                    print_this.append(steelsquid_kiss_global.last_lan_ip)
-                    connected=True
-            # Write text to LCD
-            if len(print_this)>0:
-                new_lcd_message = "\n".join(print_this)
-                if new_lcd_message!=DYNAMIC.last_lcd_message:
-                    DYNAMIC.last_lcd_message = new_lcd_message
-                    steelsquid_pi.ssd1306_write(new_lcd_message, 0)
-        else:
-            DYNAMIC.stop_next_lcd_message=False
-        # Read voltage
-        import steelsquid_piio
-        steelsquid_kiss_global.last_voltage = steelsquid_piio.volt(2, 4)
+        try:
+            # Print IP/voltage to LCD
+            if not DYNAMIC.stop_next_lcd_message:
+                print_this = []
+                print_this.append(steelsquid_utils.get_date_time())
+                connected = False
+                # Get network status
+                if steelsquid_kiss_global.last_net:
+                    if steelsquid_kiss_global.last_wifi_name!="---":
+                        print_this.append(steelsquid_kiss_global.last_wifi_name)
+                        print_this.append(steelsquid_kiss_global.last_wifi_ip)
+                        connected=True
+                    if steelsquid_kiss_global.last_lan_ip!="---":
+                        print_this.append(steelsquid_kiss_global.last_lan_ip)
+                        connected=True
+                # Write text to LCD
+                if len(print_this)>0:
+                    new_lcd_message = "\n".join(print_this)
+                    if new_lcd_message!=DYNAMIC.last_lcd_message:
+                        DYNAMIC.last_lcd_message = new_lcd_message
+                        steelsquid_pi.ssd1306_write(new_lcd_message, 0)
+            else:
+                DYNAMIC.stop_next_lcd_message=False
+            # Read rover voltage
+            RADIO_SYNC.SERVER.voltage_rover = GLOBAL.voltage()
+        except:
+            if steelsquid_kiss_boot.running:
+                steelsquid_utils.shout()
         return 2 # Execute this method again in 2 second
         
         
+
 
 
 
@@ -290,157 +263,208 @@ class RADIO(object):
         The method on the server should then return None.
         If server method raise exception the steelsquid_hmtrlrs.request("a_command", data) will also raise a exception.
     '''
+        
 
     @staticmethod
-    def r(parameters):
-        '''
-        Cruise controll
-        '''
-        DYNAMIC.is_cruise_on = not DYNAMIC.is_cruise_on
-        if DYNAMIC.is_cruise_on:
-            GLOBAL.drive(0, 0)
-            return [1]
-        else:
-            GLOBAL.drive(0, 0)
-            return [0]
-
-
-    @staticmethod
-    def n(parameters):
-        '''
-        Network
-        A request from client to enable or dissable network
-        '''
-        # Disable network
-        steelsquid_nm.set_network_status(parameters[0]=="1")
-        return []
-
-
-    @staticmethod
-    def t(parameters):
-        '''
-        TX
-        A request from client to enable or disable the video transmitter
-        '''
-        return []
-
-
-    @staticmethod
-    def d(parameters):
-        '''
-        Drive
-        A request from client drive the rover
-        '''
-        try:
-            # Speed of the left motor (-1000 to 1000)
-            left_motor = int(parameters[0])
-            # Speed of the right motor (-1000 to 1000)
-            right_motor = int(parameters[1])
-            # Set motor speed
-            GLOBAL.drive(left_motor, right_motor)
-            # Set last command
-            DYNAMIC.last_command = datetime.datetime.now()
-        except:
-            pass
-
-
-    @staticmethod
-    def c(parameters):
-        '''
-        Camera
-        A request from client to tilt or pan camera
-        '''
-        try:
-            # pan camera left and right
-            pan = int(parameters[0])
-            # Tilt camera up and down
-            tilt = int(parameters[1])
-            GLOBAL.pan(pan/10)
-            GLOBAL.tilt(tilt/10)
-            # Set last command
-            DYNAMIC.last_command = datetime.datetime.now()
-        except:
-            pass
-
-
-    @staticmethod
-    def h(parameters):
+    def horn(parameters):
         '''
         Horn
         A request from client to sound the horn
         '''
-        import steelsquid_piio
-        steelsquid_piio.power_flash(6)
+        GLOBAL.horn()
         return []
 
 
     @staticmethod
-    def e(parameters):
+    def left(parameters):
+        '''
+        Center
+        A request from client to left the camera
+        '''
+        GLOBAL.camera(STATIC.servo_position_pan_max, STATIC.servo_position_tilt_start)
+        return []
+
+
+    @staticmethod
+    def center(parameters):
         '''
         Center
         A request from client to center the camera
         '''
-        import steelsquid_piio
-        DYNAMIC.pan = STATIC.servo_position_pan_start
-        DYNAMIC.tilt = STATIC.servo_position_tilt_start
-        steelsquid_piio.servo(1, DYNAMIC.pan)
-        steelsquid_piio.servo(2, DYNAMIC.tilt)
+        GLOBAL.camera(STATIC.servo_position_pan_start, STATIC.servo_position_tilt_start)
         return []
 
 
     @staticmethod
-    def l(parameters):
+    def right(parameters):
         '''
-        Headlight
-        A request from client to turn on headlights
+        Center
+        A request from client to right the camera
         '''
-        import steelsquid_piio
-        status = steelsquid_utils.to_boolean(parameters[0])
-        steelsquid_piio.power(1, status)
-        steelsquid_piio.power(2, status) 
-        steelsquid_piio.power(3, status) 
-        steelsquid_piio.power(4, status) 
-        steelsquid_piio.power(5, status) 
+        GLOBAL.camera(STATIC.servo_position_pan_min, STATIC.servo_position_tilt_start)
         return []
 
 
+
+
+
+class RADIO_SYNC(object):
+    '''
+    Class RADIO_SYNC
+      If you use a HM-TRLR-S and it is enabled (set-flag  hmtrlrs_server) this class will make the client send
+      ping commadns to the server.
+      staticmethod: on_sync(seconds_since_last_ok_ping)
+        seconds_since_last_ok_ping: Seconds since last sync that went OK (send or reseive)
+        Will fire after every sync on the client (ones a second or when steelsquid_kiss_global.radio_interrupt() is executed)
+        This will also be executed on server (When sync is reseived or about every seconds when no activity from the client).
+    Class CLIENT   (Inside RADIO_SYNC)
+      All varibales in this class will be synced from the client to the server
+      OBS! The variables most be in the same order in the server and client
+      The variables can only be int, float, bool or string
+      If you have the class RADIO_SYNC this inner class must exist or the system want start
+    Class SERVER   (Inside RADIO_SYNC)
+      All varibales in this class will be synced from the server to the client
+      OBS! The variables most be in the same order in the server and client
+      The variables can only be int, float, bool or string
+      If you have the class RADIO_SYNC this inner class must exist or the system want start
+    '''
+
     @staticmethod
-    def u(parameters):
+    def on_sync(seconds_since_last_ok_ping):
         '''
-        Update
-        A request from remote to rover for:
-         - Left motor speed
-         - Right motor speed
-         - Pan camera
-         - Tilt camera
-         - tx
-         - Headlght
-        Send back this to remote:
-         - battery voltage
+        seconds_since_last_ok_ping: Seconds since last sync that went OK (send or reseive)
+        Will fire after every sync on the client (ones a second or when steelsquid_kiss_global.radio_interrupt() is executed)
+        This will also be executed on server (When sync is reseived or about every seconds when no activity from the client).
         '''
-        # Speed of the left motor (-1000 to 1000)
-        left = int(parameters[0])
-        # Speed of the right motor (-1000 to 1000)
-        right = int(parameters[1])
-        # Tilt camera up and down
-        pan = int(parameters[2])
-        # pan camera left and right
-        tilt = int(parameters[3])
-        # Enable the video
-        tx = parameters[4]=="1"
-        # Enable the video
-        GLOBAL.headlights(parameters[5]=="1")
-        # Camera
-        GLOBAL.pan(pan/10)
-        GLOBAL.tilt(tilt/10)
-        # Drive
-        GLOBAL.drive(left, right)
-        # Set last command
-        DYNAMIC.last_command = datetime.datetime.now()
-        if DYNAMIC.is_cruise_on:
-            return [steelsquid_kiss_global.last_voltage, "1"]
+        # Stop drive if no commadn in 1 second
+        if seconds_since_last_ok_ping>1:
+            RADIO_SYNC.CLIENT.is_cruise_on = False
+            DYNAMIC.cruise_enabled = False
+            GLOBAL.drive(0, 0)
+        # Check if connection is lost
+        if seconds_since_last_ok_ping>steelsquid_hmtrlrs.LINK_LOST_SUGGESTION:
+            GLOBAL.connection_lost()
         else:
-            return [steelsquid_kiss_global.last_voltage, "0"]
+            # Enable or disable network
+            if steelsquid_nm.get_network_status()!=RADIO_SYNC.CLIENT.is_network_on:
+                steelsquid_nm.set_network_status(RADIO_SYNC.CLIENT.is_network_on)
+            # Cruise control
+            if RADIO_SYNC.CLIENT.is_cruise_on and not DYNAMIC.cruise_enabled:
+                DYNAMIC.cruise_enabled = True
+                GLOBAL.drive(0, 0)
+            elif not RADIO_SYNC.CLIENT.is_cruise_on and DYNAMIC.cruise_enabled:
+                DYNAMIC.cruise_enabled = False
+                GLOBAL.drive(0, 0)
+            # Headlamps
+            GLOBAL.headlights(RADIO_SYNC.CLIENT.is_headlights_on)   
+            # highbeam
+            GLOBAL.highbeam(RADIO_SYNC.CLIENT.is_highbeam_on)   
+            # highbeam
+            GLOBAL.video(RADIO_SYNC.CLIENT.is_video_on)   
+
+
+    class CLIENT(object):
+        '''
+        All varibales in this class will be synced from the client to the server
+        '''
+        # Enable/disable the network (wifi)
+        is_network_on = True
+
+        # Enable/disable the video transmitter and reseiver
+        is_video_on = False
+        
+        # Is cruise control enabled
+        is_cruise_on = False
+        
+        # Is the headlights on
+        is_headlights_on = False
+
+        # Is the highbeam on
+        is_highbeam_on = False
+        
+        
+    class SERVER(object):
+        '''
+        All varibales in this class will be synced from the server to the client
+        '''
+        # Voltage for the rover
+        voltage_rover = 0.0
+
+
+
+
+
+
+class RADIO_PUSH_1(object):
+    '''
+    Class RADIO_PUSH_1 (to 4)
+      If you use a HM-TRLR-S and it is enabled (set-flag  hmtrlrs_server) this class will make the client send the
+      values of variables i this class to the server.
+      You can have 4 RADIO_PUSH classes RADIO_PUSH_1 ti RADIO_PUSH_4
+      This is faster than RADIO_SYNC because the client do not need to wait for ansver fron server
+      OBS! The variables most be in the same order in the server and client
+      It will not read anything back (if you want the sync values from the server use RADIO_SYNC)
+      So all varibales in this class will be the same on the server and client, but client can only change the values.
+      staticmethod: on_push()
+        You must have this staticmethod or this functionality will not work
+        On client it will fire before every push sent (ones every 0.01 second), return True or False
+        True=send update to server, False=Do not send anything to server
+        On server it will fire on every push received
+    '''
+    
+    # Speed of the motors
+    motor_left = 0
+    motor_right = 0
+
+
+    @staticmethod
+    def on_push():
+        '''
+        You must have this staticmethod or this functionality will not work
+        On client it will fire before every push sent (ones every 0.01 second), return True or False
+        True=send update to server, False=Do not send anything to server
+        On server it will fire on every push received
+        '''
+        GLOBAL.drive(RADIO_PUSH_1.motor_left, RADIO_PUSH_1.motor_right)
+
+
+
+
+
+
+class RADIO_PUSH_2(object):
+    '''
+    Class RADIO_PUSH_1 (to 4)
+      If you use a HM-TRLR-S and it is enabled (set-flag  hmtrlrs_server) this class will make the client send the
+      values of variables i this class to the server.
+      You can have 4 RADIO_PUSH classes RADIO_PUSH_1 ti RADIO_PUSH_4
+      This is faster than RADIO_SYNC because the client do not need to wait for ansver fron server
+      OBS! The variables most be in the same order in the server and client
+      It will not read anything back (if you want the sync values from the server use RADIO_SYNC)
+      So all varibales in this class will be the same on the server and client, but client can only change the values.
+      staticmethod: on_push()
+        You must have this staticmethod or this functionality will not work
+        On client it will fire before every push sent (ones every 0.01 second), return True or False
+        True=send update to server, False=Do not send anything to server
+        On server it will fire on every push received
+    '''
+    
+    # Speed of the motors
+    camera_pan = STATIC.servo_position_pan_start
+    camera_tilt = STATIC.servo_position_tilt_start
+
+
+    @staticmethod
+    def on_push():
+        '''
+        You must have this staticmethod or this functionality will not work
+        On client it will fire before every push sent (ones every 0.01 second), return True or False
+        True=send update to server, False=Do not send anything to server
+        On server it will fire on every push received
+        '''
+        GLOBAL.camera(RADIO_PUSH_2.camera_pan, RADIO_PUSH_2.camera_tilt)
+
+
 
 
 
@@ -452,6 +476,7 @@ class GLOBAL(object):
     It is not necessary to put it her, you can also put it direcly in the module (but i think it is kind of nice to have it inside this class)
     '''
 
+
     @staticmethod
     def write_message(message=None, is_errorr=False):
         '''
@@ -462,44 +487,61 @@ class GLOBAL(object):
 
 
     @staticmethod
+    def connection_lost():
+        '''
+        The connection to remote is lost
+        ''' 
+        pass
+        
+
+    @staticmethod
+    def horn():
+        '''
+        Sound horn for a second
+        '''
+        pass
+        #steelsquid_pi.gpio_flash(6, None, 0.5)
+
+
+    @staticmethod
     def headlights(status):
         '''
         headlights
         '''
-        import steelsquid_piio
-        steelsquid_piio.power(1, status)
-        steelsquid_piio.power(2, status) 
-        steelsquid_piio.power(3, status) 
-        steelsquid_piio.power(4, status) 
-        steelsquid_piio.power(5, status)         
+        steelsquid_pi.gpio_set(26, status)
 
 
     @staticmethod
-    def pan(pan):
+    def highbeam(status):
         '''
-        Move pan servo
+        highbeam
         '''
-        import steelsquid_piio
-        DYNAMIC.pan = DYNAMIC.pan-pan
-        if DYNAMIC.pan<STATIC.servo_position_pan_min:
-            DYNAMIC.pan = STATIC.servo_position_pan_min
-        elif DYNAMIC.pan>STATIC.servo_position_pan_max:
-            DYNAMIC.pan = STATIC.servo_position_pan_max
-        steelsquid_piio.servo(1, DYNAMIC.pan)
+        steelsquid_pi.gpio_set(13, status)
 
 
     @staticmethod
-    def tilt(tilt):
+    def video(status):
         '''
-        Move tilt servo
+        Is video on
         '''
-        import steelsquid_piio
-        DYNAMIC.tilt = DYNAMIC.tilt-tilt
-        if DYNAMIC.tilt<STATIC.servo_position_tilt_min:
-            DYNAMIC.tilt = STATIC.servo_position_tilt_min
-        elif DYNAMIC.tilt>STATIC.servo_position_tilt_max:
-            DYNAMIC.tilt = STATIC.servo_position_tilt_max
-        steelsquid_piio.servo(2, DYNAMIC.tilt)
+        steelsquid_pi.gpio_set(19, status)
+
+
+    @staticmethod
+    def camera(pan, tilt):
+        '''
+        Move servo
+        '''
+        if pan<STATIC.servo_position_pan_min:
+            pan = STATIC.servo_position_pan_min
+        elif pan>STATIC.servo_position_pan_max:
+            pan = STATIC.servo_position_pan_max
+        if tilt<STATIC.servo_position_tilt_min:
+            tilt = STATIC.servo_position_tilt_min
+        elif tilt>STATIC.servo_position_tilt_max:
+            tilt = STATIC.servo_position_tilt_max
+        steelsquid_pi.pca9685_move(14, pan)
+        steelsquid_pi.pca9685_move(15, tilt)
 
 
     @staticmethod
@@ -508,15 +550,16 @@ class GLOBAL(object):
         Drive
         '''
         # Cruise controll
-        if DYNAMIC.is_cruise_on:
-            if left > right:
-                diff = left - right
-                left = 1000
-                right = 1000 - diff/2
-            else:
-                diff = right - left
-                left = 1000 - diff/2
-                right = 1000
+        #if RADIO_SYNC.CLIENT.is_cruise_on:
+        #    GLOBAL.cruise_enabled = True
+        #    if left > right:
+        #        diff = left - right
+        #        left = STATIC.motor_max
+        #        right = STATIC.motor_max - diff/2
+        #    else:
+        #        diff = right - left
+        #        left = STATIC.motor_max - diff/2
+        #        right = STATIC.motor_max
         # Check values
         if left>STATIC.motor_max:
             left = STATIC.motor_max
@@ -526,7 +569,16 @@ class GLOBAL(object):
             right = STATIC.motor_max
         elif right<STATIC.motor_max*-1:
             right = STATIC.motor_max*-1
-        steelsquid_pi.diablo_motor_1(left);
-        steelsquid_pi.diablo_motor_2(right);
+        steelsquid_pi.diablo_motor_1(left)
+        steelsquid_pi.diablo_motor_2(right)
 
 
+    @staticmethod
+    def voltage():
+        '''
+        Read voltage
+        '''
+        v = steelsquid_pi.ads1015(48, 0)*11.14
+        v = Decimal(v)
+        v = round(v, 2)
+        return v
