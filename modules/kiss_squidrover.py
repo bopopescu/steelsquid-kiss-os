@@ -21,7 +21,8 @@ import time
 import datetime
 import steelsquid_hmtrlrs
 from decimal import Decimal
-
+from espeak import espeak
+espeak.set_voice("sv+f5")
 
 # Is this module started
 # This is set by the system automatically.
@@ -75,25 +76,25 @@ class STATIC(object):
     voltage_warning = 24.5
     
     # Max motor speed
-    motor_max = 1000
+    motor_max = 300
 
     # When system start move servo here
-    servo_position_pan_start = 367
+    servo_position_pan_start = 400
 
     # Max Servo position
-    servo_position_pan_max = 570
+    servo_position_pan_max = 590
 
     # Min Servo position
-    servo_position_pan_min = 170
+    servo_position_pan_min = 180
 
     # When system start move servo here
-    servo_position_tilt_start = 430
+    servo_position_tilt_start = 400
 
     # Max Servo position
-    servo_position_tilt_max = 550
+    servo_position_tilt_max = 530
 
     # Min Servo position
-    servo_position_tilt_min = 320
+    servo_position_tilt_min = 280
 
 
 
@@ -305,6 +306,15 @@ class RADIO(object):
         return []
 
 
+    @staticmethod
+    def text_to_speach(parameters):
+        '''
+        Say something
+        '''
+        espeak.synth(parameters[0])
+        return []
+
+
 
 
 
@@ -500,7 +510,7 @@ class GLOBAL(object):
         Sound horn for a second
         '''
         pass
-        #steelsquid_pi.gpio_flash(6, None, 0.5)
+        steelsquid_pi.gpio_flash(6, None, 0.5)
 
 
     @staticmethod
@@ -550,16 +560,16 @@ class GLOBAL(object):
         Drive
         '''
         # Cruise controll
-        #if RADIO_SYNC.CLIENT.is_cruise_on:
-        #    GLOBAL.cruise_enabled = True
-        #    if left > right:
-        #        diff = left - right
-        #        left = STATIC.motor_max
-        #        right = STATIC.motor_max - diff/2
-        #    else:
-        #        diff = right - left
-        #        left = STATIC.motor_max - diff/2
-        #        right = STATIC.motor_max
+        if RADIO_SYNC.CLIENT.is_cruise_on:
+            GLOBAL.cruise_enabled = True
+            if left > right:
+                diff = left - right
+                left = STATIC.motor_max
+                right = STATIC.motor_max - diff/2
+            else:
+                diff = right - left
+                left = STATIC.motor_max - diff/2
+                right = STATIC.motor_max
         # Check values
         if left>STATIC.motor_max:
             left = STATIC.motor_max

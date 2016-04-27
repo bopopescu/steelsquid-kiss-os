@@ -505,7 +505,7 @@ def request(command, data=None, _do_not_use=0):
             elif req == NAK:
                 raise Exception(command +": "+ _read_line())
             else:
-                raise Exception("Unknown response...")
+                raise Exception("Unknown response: "+str(req))
  
  
 def request_sync(data=None, _do_not_use=0):

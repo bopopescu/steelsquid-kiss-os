@@ -130,6 +130,7 @@ web_root_downloads[8]="$base/web/rover.html"
 web_root_downloads[9]="$base/web/nrf24rover.html"
 web_root_downloads[10]="$base/web/expand.html"
 web_root_downloads[11]="$base/web/template.html"
+web_root_downloads[12]="$base/web/speak.html"
 
 # Download to web img folder
 web_img_downloads[1]="$base/img/back.png"
@@ -1275,6 +1276,17 @@ function help_utils()
     echo 
     echb "steelsquid browser-restart"
     echo "If the browser in fullscreen is activated use this to restart it."
+    echo 
+    echb "steelsquid mbrowser-on <url>"
+    echo "When system boot, start a midori  browser in fullscreen."
+    echo "Need to install alot of stuff, will take several minutes to finish."
+    echo "url = URL to load"
+    echo 
+    echb "steelsquid mbrowser-off"
+    echo "Desable the midori browser start when system boot"
+    echo 
+    echb "steelsquid mbrowser-restart"
+    echo "If the midori browser in fullscreen is activated use this to restart it."
 }
 if [ "$in_parameter_1" == "help-utils" ]; then
     help_utils
@@ -2282,6 +2294,74 @@ if [ "$in_parameter_1" == "browser-restart" ]; then
 	browser_restart
 	exit 0
 fi
+
+
+##################################################################################
+# Enable start browser  in fullscreen (midori)
+##################################################################################
+function mbrowser_on()
+{
+	log "Enable start browser  in fullscreen (midori)"
+    useradd browser
+    mkhomedir_helper browser
+    aptitude install -R midori matchbox-window-manager xserver-xorg-video-fbturbo xserver-xorg xinit gconf-service libgconf-2-4 libgnome-keyring0 libxss1 xserver-xorg-input-multitouch xdg-utils lsb-release libexif12 libexif-gtk5 nodm
+    
+    echo "#"\!"/bin/bash" > /home/browser/.xsession
+    echo "xset s off &" >> /home/browser/.xsession
+    echo "xset dpms 0 0 0 &" >> /home/browser/.xsession
+    echo "/usr/bin/midori -e Fullscreen -a $in_parameter_2 &" >> /home/browser/.xsession
+    echo "exec matchbox-window-manager -use_cursor no -use_titlebar no" >> /home/browser/.xsession
+    chmod +x /home/browser/.xsession
+    
+    sed -i 's/.*NODM_ENABLED=.*/NODM_ENABLED=true/' /etc/default/nodm
+    sed -i 's/.*NODM_USER=.*/NODM_USER=browser/' /etc/default/nodm
+    systemctl enable nodm
+    systemctl start nodm
+        
+    del-flag "web_authentication"
+    set-parameter "browser" $in_parameter_2
+    log-reboot
+}
+if [ "$in_parameter_1" == "mbrowser-on" ]; then
+	mbrowser_on
+	exit 0
+fi
+
+
+##################################################################################
+# Disable start browser  in fullscreen (midori)
+##################################################################################
+function mbrowser_off()
+{
+	log "Disable start browser  in fullscreen (midori)"
+    systemctl stop nodm
+    systemctl disable nodm
+        
+    set-flag "web_authentication"
+    del-parameter "browser"
+    log-reboot
+}
+if [ "$in_parameter_1" == "mbrowser-off" ]; then
+	mbrowser_off
+	exit 0
+fi
+
+
+##################################################################################
+# Disable start browser  in fullscreen (midori)
+##################################################################################
+function mbrowser_restart()
+{
+	log "Restart fullscreen browser (midori)"
+    systemctl stop nodm
+    sleep 2
+    systemctl start nodm
+}
+if [ "$in_parameter_1" == "mbrowser-restart" ]; then
+	mbrowser_restart
+	exit 0
+fi
+
 
 
 ##################################################################################
@@ -4021,8 +4101,8 @@ if [ $(get_installed) == "false" ]; then
     aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install deborphan network-manager network-manager-openvpn dash nano sudo aptitude udev ntfs-3g console-setup beep ecryptfs-utils alsa-utils alsa-base va-driver-all vdpau-va-driver
     aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install deborphan network-manager network-manager-openvpn dash nano sudo aptitude udev ntfs-3g console-setup beep ecryptfs-utils alsa-utils alsa-base va-driver-all vdpau-va-driver
     exit-check 
-    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install telnet secure-delete beep sysstat openssh-client cifs-utils smbclient keyutils sshfs curl samba-common lsof mc fgetty ftp htop elinks screenie nload mtr-tiny lzma zip unzip unrar-free p7zip-full bzip2 whiptail parted lua5.1 aria2 python-serial python-numpy python2.7-numpy python-paramiko zlib1g zlib1g-dev libfreetype6-dev ttf-anonymous-pro python-picamera
-    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install telnet secure-delete beep sysstat openssh-client cifs-utils smbclient keyutils sshfs curl samba-common lsof mc fgetty ftp htop elinks screenie nload mtr-tiny lzma zip unzip unrar-free p7zip-full bzip2 whiptail parted lua5.1 aria2 python-serial python-numpy python2.7-numpy python-paramiko zlib1g zlib1g-dev libfreetype6-dev ttf-anonymous-pro python-picamera
+    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install telnet secure-delete beep sysstat openssh-client cifs-utils smbclient keyutils sshfs curl samba-common lsof mc fgetty ftp htop elinks screenie nload mtr-tiny lzma zip unzip unrar-free p7zip-full bzip2 whiptail parted lua5.1 aria2 python-serial python-numpy python2.7-numpy python-paramiko zlib1g zlib1g-dev libfreetype6-dev ttf-anonymous-pro python-picamera espeak python-espeak
+    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install telnet secure-delete beep sysstat openssh-client cifs-utils smbclient keyutils sshfs curl samba-common lsof mc fgetty ftp htop elinks screenie nload mtr-tiny lzma zip unzip unrar-free p7zip-full bzip2 whiptail parted lua5.1 aria2 python-serial python-numpy python2.7-numpy python-paramiko zlib1g zlib1g-dev libfreetype6-dev ttf-anonymous-pro python-picamera espeak python-espeak
     exit-check 
     aptitude -y purge cron ifupdown rsyslog vim-common vim-tiny hdparm keyboard-configuration console-setup console-setup-linux
     aptitude -y purge cron ifupdown rsyslog vim-common vim-tiny hdparm keyboard-configuration console-setup console-setup-linux

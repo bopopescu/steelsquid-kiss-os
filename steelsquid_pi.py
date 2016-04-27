@@ -251,7 +251,7 @@ def gpio_event(gpio, callback_method, bouncetime_ms=100, resistor=PULL_DOWN, edg
         GPIO.add_event_detect(gpio, edge, callback=call_met)
 
 
-def gpio_click(gpio, callback_method, bouncetime_ms=100, resistor=PULL_DOWN):
+def gpio_click(gpio, callback_method, bouncetime_ms=200, resistor=PULL_DOWN):
     '''
     Connect a button to gpio pin
     Will fire when button is released.
@@ -265,21 +265,15 @@ def gpio_click(gpio, callback_method, bouncetime_ms=100, resistor=PULL_DOWN):
     if not setup[gpio] == SETUP_IN:
         gpio_setup_in(gpio, resistor)
     def call_met(para):
-        print para
-        try:
-            callback_method(para)          
-        except:
-            steelsquid_utils.shout()
+        if (GPIO.input(para) == 0) == (resistor==PULL_UP):
+            try:
+                callback_method(para)          
+            except:
+                steelsquid_utils.shout()
     if bouncetime_ms!=0:
-        if resistor==PULL_UP:
-            GPIO.add_event_detect(gpio, EDGE_RISING, callback=call_met, bouncetime=bouncetime_ms)
-        else:
-            GPIO.add_event_detect(gpio, EDGE_FALLING, callback=call_met, bouncetime=bouncetime_ms)
+        GPIO.add_event_detect(gpio, EDGE_BOTH, callback=call_met, bouncetime=bouncetime_ms)
     else:
-        if resistor==PULL_UP:
-            GPIO.add_event_detect(gpio, EDGE_RISING, callback=call_met, bouncetime=bouncetime_ms)
-        else:
-            GPIO.add_event_detect(gpio, EDGE_FALLING, callback=call_met, bouncetime=bouncetime_ms)
+        GPIO.add_event_detect(gpio, EDGE_BOTH, callback=call_met, bouncetime=bouncetime_ms)
 
 
 def mcp23017_setup_out(address, gpio):

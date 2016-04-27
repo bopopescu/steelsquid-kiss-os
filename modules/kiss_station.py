@@ -45,6 +45,9 @@ def enable(argument=None):
     # Change GPIO for transceiver
     steelsquid_utils.set_parameter("hmtrlrs_config_gpio", str(STATIC.hmtrlrs_config_gpio))
     steelsquid_utils.set_parameter("hmtrlrs_reset_gpio", str(STATIC.hmtrlrs_reset_gpio))
+    # Enable midori browser start on the composite screen
+    steelsquid_utils.execute_system_command_blind(['steelsquid', 'mbrowser-on', 'http://localhost/speak'])
+    
 
 
 def disable(argument=None):
@@ -75,38 +78,38 @@ class STATIC(object):
     
     # Station voltages(lipo 3s) 
     station_voltage_max = 12.6      # 4.2V
-    station_voltage_warning = 10.8  # 3.6V
-    station_voltage_min = 10.2      # 3.4V
+    station_voltage_warning = 10.5  # 3.5V
+    station_voltage_min = 9.6       # 3.2V
 
-    # Rover voltages(lipo 7s)
-    rover_voltage_max = 16.8
-    rover_voltage_warning = 14.4
-    rover_voltage_min = 13.6
+    # Rover voltages(lipo 6s)
+    rover_voltage_max = 25.2        # 4.2V
+    rover_voltage_warning = 21      # 3.5V
+    rover_voltage_min = 19.2        # 3.2V
     
     # GPIO for the HM-TRLR-S
     hmtrlrs_config_gpio = 4
     hmtrlrs_reset_gpio = 18
 
     # Max motor speed
-    motor_max = 1000
+    motor_max = 300
 
     # When system start move servo here
-    servo_position_pan_start = 367
+    servo_position_pan_start = 400
 
     # Max Servo position
-    servo_position_pan_max = 570
+    servo_position_pan_max = 590
 
     # Min Servo position
-    servo_position_pan_min = 170
+    servo_position_pan_min = 180
 
     # When system start move servo here
-    servo_position_tilt_start = 430
+    servo_position_tilt_start = 400
 
     # Max Servo position
-    servo_position_tilt_max = 550
+    servo_position_tilt_max = 530
 
     # Min Servo position
-    servo_position_tilt_min = 320
+    servo_position_tilt_min = 280
 
 
 
@@ -186,6 +189,8 @@ class SYSTEM(object):
         '''
         # Startup message
         steelsquid_utils.shout("Steelsquid Remote Station started")
+        # Reset some GPIO
+        steelsquid_pi.gpio_set(8, False)
         # Enable network by default
         try:
             steelsquid_nm.set_network_status(True)        
@@ -195,16 +200,16 @@ class SYSTEM(object):
         steelsquid_utils.on_ok_callback_method=GLOBAL.ok_led_flash
         steelsquid_utils.on_err_callback_method=GLOBAL.err_led_flash
         # Start listen on buttons
-        #steelsquid_pi.mcp23017_click(21, 0, SYSTEM.on_network_button, pullup=True, rpi_gpio=26)
-        #steelsquid_pi.mcp23017_click(21, 3, SYSTEM.on_transceiver_button, pullup=True, rpi_gpio=26)
-        #steelsquid_pi.mcp23017_click(21, 6, SYSTEM.on_video_button, pullup=True, rpi_gpio=26)
-        #steelsquid_pi.gpio_click(7, SYSTEM.on_horn_button, resistor=steelsquid_pi.PULL_UP)
+        steelsquid_pi.mcp23017_click(21, 0, SYSTEM.on_network_button, pullup=True, rpi_gpio=26)
+        steelsquid_pi.mcp23017_click(21, 3, SYSTEM.on_transceiver_button, pullup=True, rpi_gpio=26)
+        steelsquid_pi.mcp23017_click(21, 6, SYSTEM.on_video_button, pullup=True, rpi_gpio=26)
+        steelsquid_pi.gpio_click(7, SYSTEM.on_horn_button, resistor=steelsquid_pi.PULL_UP)
         steelsquid_pi.gpio_click(6, SYSTEM.on_headlights_button, resistor=steelsquid_pi.PULL_UP)
-        #steelsquid_pi.gpio_click(17, SYSTEM.on_left_button, resistor=steelsquid_pi.PULL_UP)
-        #steelsquid_pi.gpio_click(22, SYSTEM.on_center_button, resistor=steelsquid_pi.PULL_UP)
-        #steelsquid_pi.gpio_click(24, SYSTEM.on_right_button, resistor=steelsquid_pi.PULL_UP)
-        #steelsquid_pi.gpio_click(9, SYSTEM.on_cruise_button, resistor=steelsquid_pi.PULL_UP)
-        #steelsquid_pi.gpio_click(13, SYSTEM.on_highbeam_button, resistor=steelsquid_pi.PULL_UP)
+        steelsquid_pi.gpio_click(17, SYSTEM.on_left_button, resistor=steelsquid_pi.PULL_UP)
+        steelsquid_pi.gpio_click(22, SYSTEM.on_center_button, resistor=steelsquid_pi.PULL_UP)
+        steelsquid_pi.gpio_click(24, SYSTEM.on_right_button, resistor=steelsquid_pi.PULL_UP)
+        steelsquid_pi.gpio_click(9, SYSTEM.on_cruise_button, resistor=steelsquid_pi.PULL_UP)
+        steelsquid_pi.gpio_click(13, SYSTEM.on_highbeam_button, resistor=steelsquid_pi.PULL_UP)
         # Is network enabled (light the led?)
         GLOBAL.network_on_led(steelsquid_nm.get_network_status())
         # Is transceiver enabled
@@ -637,6 +642,28 @@ class RADIO_PUSH_2(object):
             return False
 
 
+
+
+class WEB(object):
+    '''
+    Methods in this class will be executed by the webserver if module is enabled and the webserver is enabled
+    If is a GET it will return files and if it is a POST it executed commands.
+    It is meant to be used as follows.
+    1. Make a call from the browser (GET) and a html page is returned back.
+    2. This html page then make AJAX (POST) call to the server to retrieve or update data.
+    3. The data sent to and from the server can just be a simple list of strings.
+    For more examples how it work:
+     - steelsquid_http_server.py
+     - steelsquid_kiss_http_server.py
+     - web/index.html
+    '''
+    
+    @staticmethod
+    def text_to_speach(session_id, parameters):
+        '''
+        Get info on the rover
+        '''
+        steelsquid_hmtrlrs.request("text_to_speach", parameters)
 
 
 
