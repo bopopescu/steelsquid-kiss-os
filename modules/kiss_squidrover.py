@@ -76,7 +76,11 @@ class STATIC(object):
     voltage_warning = 24.5
     
     # Max motor speed
-    motor_max = 300
+    motor_max = 1000
+    
+    # Max slow speed
+    # When the battery is mor than 24 volt (when i use 2 * 14.8V)
+    motor_slow_max = 300
 
     # When system start move servo here
     servo_position_pan_start = 400
@@ -119,6 +123,9 @@ class DYNAMIC(object):
     # Using this to know when to turn on and off the cruise control
     cruise_enabled = False
 
+    # Current max speed of the motors
+    # Can eider be STATIC.motor_max or STATIC.motor_slow_max
+    current_max = STATIC.motor_max
 
 
 
@@ -371,6 +378,13 @@ class RADIO_SYNC(object):
             GLOBAL.highbeam(RADIO_SYNC.CLIENT.is_highbeam_on)   
             # highbeam
             GLOBAL.video(RADIO_SYNC.CLIENT.is_video_on)   
+            # Slow speed
+            if RADIO_SYNC.CLIENT.is_slow_on:
+                DYNAMIC.current_max = STATIC.motor_slow_max
+            else:
+                DYNAMIC.current_max = STATIC.motor_max
+                
+            
 
 
     class CLIENT(object):
@@ -391,6 +405,9 @@ class RADIO_SYNC(object):
 
         # Is the highbeam on
         is_highbeam_on = False
+
+        # Is slow mode on
+        is_slow_on = False
         
         
     class SERVER(object):
@@ -564,21 +581,21 @@ class GLOBAL(object):
             GLOBAL.cruise_enabled = True
             if left > right:
                 diff = left - right
-                left = STATIC.motor_max
-                right = STATIC.motor_max - diff/2
+                left = DYNAMIC.current_max
+                right = DYNAMIC.current_max - diff/2
             else:
                 diff = right - left
-                left = STATIC.motor_max - diff/2
-                right = STATIC.motor_max
+                left = DYNAMIC.current_max - diff/2
+                right = DYNAMIC.current_max
         # Check values
-        if left>STATIC.motor_max:
-            left = STATIC.motor_max
-        elif left<STATIC.motor_max*-1:
-            left = STATIC.motor_max*-1
-        if right>STATIC.motor_max:
-            right = STATIC.motor_max
-        elif right<STATIC.motor_max*-1:
-            right = STATIC.motor_max*-1
+        if left>DYNAMIC.current_max:
+            left = DYNAMIC.current_max
+        elif left<DYNAMIC.current_max*-1:
+            left = DYNAMIC.current_max*-1
+        if right>DYNAMIC.current_max:
+            right = DYNAMIC.current_max
+        elif right<DYNAMIC.current_max*-1:
+            right = DYNAMIC.current_max*-1
         steelsquid_pi.diablo_motor_1(left)
         steelsquid_pi.diablo_motor_2(right)
 
