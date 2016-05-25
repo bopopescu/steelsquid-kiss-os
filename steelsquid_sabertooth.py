@@ -7,9 +7,6 @@ motor1 = left
 motor2 = right
 http://www.dimensionengineering.com/products/sabertooth2x25
 
-NOTE! When you execute this from the command line it execute outside of steelsquid daemon, and may interrupt for example the LCD, DAC, ADC or extra GPIO.
-It is meant to be used inside the steelsquid daemon (see http://www.steelsquid.org/steelsquid-kiss-os-development)
-
 @organization: Steelsquid
 @author: Andreas Nilsson
 @contact: steelsquid@gmail.com

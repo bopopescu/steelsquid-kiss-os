@@ -51,46 +51,48 @@ download=$base/$project_name.sh
 img_iso=https://googledrive.com/host/0B2XmU-Cgji4bcDFmV25xM3Vic3c
 
 # Python downloads (install this pyton scripts)
-python_downloads[1]="$base/steelsquid_kiss_boot.py"
-python_downloads[2]="$base/steelsquid_nm.py"
-python_downloads[3]="$base/steelsquid_pi.py"
-python_downloads[4]="$base/steelsquid_piio.py"
-python_downloads[5]="$base/steelsquid_synchronize.py"
-python_downloads[6]="$base/steelsquid_utils.py"
-python_downloads[7]="$base/steelsquid_connection.py"
-python_downloads[8]="$base/steelsquid_socket_connection.py"
-python_downloads[9]="$base/steelsquid_server.py"
-python_downloads[10]="$base/steelsquid_http_server.py"
-python_downloads[11]="$base/steelsquid_kiss_global.py"
-python_downloads[12]="$base/steelsquid_kiss_http_server.py"
-python_downloads[13]="$base/steelsquid_kiss_socket_connection.py"
-python_downloads[14]="$base/steelsquid_lcd_hdd44780.py"
-python_downloads[15]="$base/steelsquid_omx.py"
-python_downloads[16]="$base/steelsquid_sabertooth.py"
-python_downloads[17]="$base/steelsquid_trex.py"
-python_downloads[18]="$base/steelsquid_oled_ssd1306.py"
-python_downloads[19]="$base/steelsquid_bluetooth_connection.py"
-python_downloads[20]="$base/steelsquid_i2c.py"
-python_downloads[21]="$base/steelsquid_nrf24.py"
-python_downloads[22]="$base/MCP23017.py"
-python_downloads[23]="$base/nrf24.py"
-python_downloads[24]="$base/modules/kiss_expand.py"
-python_downloads[25]="$base/modules/kiss_alarm.py"
-python_downloads[26]="$base/modules/kiss_piio.py"
-python_downloads[27]="$base/modules/kiss_rover.py"
-python_downloads[28]="$base/modules/kiss_nrf24rover.py"
-python_downloads[29]="$base/modules/kiss_fpvrover.py"
-python_downloads[30]="$base/modules/kiss_station.py"
-python_downloads[31]="$base/modules/kiss_squidrover.py"
-python_downloads[32]="$base/steelsquid_hmtrlrs.py"
+python_downloads[1]="$base/steelsquid_kiss_start.py"
+python_downloads[2]="$base/steelsquid_kiss_boot.py"
+python_downloads[3]="$base/steelsquid_nm.py"
+python_downloads[4]="$base/steelsquid_pi.py"
+python_downloads[5]="$base/steelsquid_piio.py"
+python_downloads[6]="$base/steelsquid_synchronize.py"
+python_downloads[7]="$base/steelsquid_utils.py"
+python_downloads[8]="$base/steelsquid_connection.py"
+python_downloads[9]="$base/steelsquid_socket_connection.py"
+python_downloads[10]="$base/steelsquid_server.py"
+python_downloads[11]="$base/steelsquid_http_server.py"
+python_downloads[12]="$base/steelsquid_kiss_global.py"
+python_downloads[13]="$base/steelsquid_kiss_http_server.py"
+python_downloads[14]="$base/steelsquid_kiss_socket_connection.py"
+python_downloads[15]="$base/steelsquid_lcd_hdd44780.py"
+python_downloads[16]="$base/steelsquid_omx.py"
+python_downloads[17]="$base/steelsquid_sabertooth.py"
+python_downloads[18]="$base/steelsquid_trex.py"
+python_downloads[19]="$base/steelsquid_oled_ssd1306.py"
+python_downloads[20]="$base/steelsquid_bluetooth_connection.py"
+python_downloads[21]="$base/steelsquid_i2c.py"
+python_downloads[22]="$base/steelsquid_nrf24.py"
+python_downloads[23]="$base/MCP23017.py"
+python_downloads[24]="$base/nrf24.py"
+python_downloads[25]="$base/modules/kiss_expand.py"
+python_downloads[26]="$base/modules/kiss_alarm.py"
+python_downloads[27]="$base/modules/kiss_piio.py"
+python_downloads[28]="$base/modules/kiss_rover.py"
+python_downloads[29]="$base/modules/kiss_nrf24rover.py"
+python_downloads[30]="$base/modules/kiss_fpvrover.py"
+python_downloads[31]="$base/modules/kiss_station.py"
+python_downloads[32]="$base/modules/kiss_squidrover.py"
+python_downloads[33]="$base/steelsquid_hmtrlrs.py"
+python_downloads[34]="$base/steelsquid_rmcs220x.py"
 
 # Links to python_downloads
 python_links[1]="/usr/bin/steelsquid-boot"
-python_links[2]="/usr/bin/net"
-python_links[3]="/usr/bin/pi"
-python_links[4]="/usr/bin/piio"
-python_links[5]="/usr/bin/synchronize"
-python_links[6]="/usr/bin/dummy"
+python_links[2]="/usr/bin/dummy"
+python_links[3]="/usr/bin/net"
+python_links[4]="/usr/bin/pi"
+python_links[5]="/usr/bin/piio"
+python_links[6]="/usr/bin/synchronize"
 python_links[7]="/usr/bin/dummy"
 python_links[8]="/usr/bin/dummy"
 python_links[9]="/usr/bin/dummy"
@@ -116,7 +118,9 @@ python_links[28]="/usr/bin/dummy"
 python_links[29]="/usr/bin/dummy"
 python_links[30]="/usr/bin/dummy"
 python_links[31]="/usr/bin/dummy"
-python_links[32]="/usr/bin/hmtrlrs"
+python_links[32]="/usr/bin/dummy"
+python_links[33]="/usr/bin/hmtrlrs"
+python_links[34]="/usr/bin/rmcs220x"
 
 # Download to web root folder
 web_root_downloads[1]="$base/web/top_bar.html"
@@ -839,11 +843,11 @@ function help_files()
     echb "/opt/steelsquid/python"
     echo "Home for all python files"
     echo 
-    echb "/usr/bin/steelsquid-boot -> /opt/steelsquid/python/steelsquid_kiss_boot.py"
+    echb "/usr/bin/steelsquid-boot -> /opt/steelsquid/python/steelsquid_kiss_start.py"
     echo "Python script that execute on boot and shutdown"
     echo 
-    echb "/usr/bin/event -> /opt/steelsquid/python/steelsquid_kiss_boot.py"
-    echo "The steelsquid_kiss_boot.py also handles events from the OS...(using the name event in some old scripts)"
+    echb "/usr/bin/event -> /opt/steelsquid/python/steelsquid_kiss_start.py"
+    echo "The steelsquid_kiss_start.py also handles events from the OS...(using the name event in some old scripts)"
     echo 
     echb "/opt/steelsquid/python/modules"
     echo "All python scrips in this folder will be imported (executed) on boot."
@@ -882,6 +886,14 @@ function help_files()
     echb "/opt/steelsquid/python/steelsquid_bluetooth_connection.py"
     echo "Bluetooth implementation of steelsquid_connection..."
     echo 
+    echb "/opt/steelsquid/python/steelsquid_kiss_start.py"
+    echo "This will execute when steelsquid-kiss-os starts."
+    echo "Will onl execute steelsquid-kiss-boot."
+    echo "Using this to speed up start of steelsquid kiss daemon."
+    echo "The reason some files arent compiled is that the main script,"
+    echo "which you invoke with python main.py is recompiled every time you run the script. "
+    echo "All imported scripts will be compiled and stored on the disk."
+    echo 
     echb "/opt/steelsquid/python/steelsquid_kiss_boot.py"
     echo "This will execute when steelsquid-kiss-os starts"
     echo "Also listen for events from the OS"
@@ -918,6 +930,10 @@ function help_files()
     echo 
     echb "/opt/steelsquid/python/steelsquid_omx.py"
     echo "Simple python interface for the omxplayer"
+    echo 
+    echb "/opt/steelsquid/python/steelsquid_rmcs220x.py"
+    echo "A simple serial interface for RMCS-220X High-Torque Encoder DC Servo Motor and Driver ."
+    echo "https://www.active-robots.com/fileuploader/download/download/?d=0&file=custom%2Fupload%2FFile-1440671791.pdf"
     echo 
     echb "/opt/steelsquid/python/steelsquid_pi.py"
     echo "Some useful stuff for Raspberry Pi"
@@ -4173,7 +4189,7 @@ pip install inotifyx
 ##################################################################################
 log "event link"
 rm /usr/bin/event
-ln -s /opt/steelsquid/python/steelsquid_kiss_boot.py /usr/bin/event
+ln -s /opt/steelsquid/python/steelsquid_kiss_start.py /usr/bin/event
 
 
 
@@ -4703,7 +4719,7 @@ echo "Before=shutdown.target reboot.target halt.target" >> /etc/systemd/system/s
 echo "" >> /etc/systemd/system/steelsquid.service
 echo "[Service]" >> /etc/systemd/system/steelsquid.service
 echo "ExecStart=/usr/bin/steelsquid-boot start" >> /etc/systemd/system/steelsquid.service
-echo "ExecStopPost=/usr/bin/shout \"Steelsquid service closed.\nIf you shutdown the computer or restart the steelsquid service this is OK.\nIf this is a error (nothing more happens) it is probably in steelsquid-boot.py\nYou can enable logging for more info: steelsquid log-on\nAlso sheck if steelsquid-boot proces is running: ps -ef|grep steelsquid-boot\nIf not try: steelsquid-boot start\nAnd check for errors...\"" >> /etc/systemd/system/steelsquid.service
+echo "ExecStopPost=/usr/bin/shout \"Steelsquid service closed.\nIf you shutdown the computer or restart the steelsquid service this is OK.\nIf this is a error (nothing more happens) it is probably in steelsquid_kiss_boot.py\nYou can enable logging for more info: steelsquid log-on\nAlso sheck if steelsquid-boot proces is running: ps -ef|grep steelsquid-boot\nIf not try: steelsquid-boot start\nAnd check for errors...\"" >> /etc/systemd/system/steelsquid.service
 echo "KillSignal=SIGINT" >> /etc/systemd/system/steelsquid.service
 echo "TimeoutStopSec=4" >> /etc/systemd/system/steelsquid.service
 echo "" >> /etc/systemd/system/steelsquid.service

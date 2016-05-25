@@ -95,10 +95,10 @@ class STATIC(object):
     
     # Max slow speed
     # When the battery is mor than 24 volt (when i use 2 * 14.8V)
-    motor_slow_max = 300
+    motor_slow_max = 800
 
     # When system start move servo here
-    servo_position_pan_start = 400
+    servo_position_pan_start = 370
 
     # Max Servo position
     servo_position_pan_max = 590

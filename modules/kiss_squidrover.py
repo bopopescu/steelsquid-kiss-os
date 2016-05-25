@@ -80,10 +80,10 @@ class STATIC(object):
     
     # Max slow speed
     # When the battery is mor than 24 volt (when i use 2 * 14.8V)
-    motor_slow_max = 300
+    motor_slow_max = 800
 
     # When system start move servo here
-    servo_position_pan_start = 400
+    servo_position_pan_start = 370
 
     # Max Servo position
     servo_position_pan_max = 590
@@ -211,6 +211,8 @@ class LOOP(object):
     Every method will execute in its own thread
     '''
     
+    last_value = None
+    
     @staticmethod
     def update_lcd_and_voltage():
         '''
@@ -247,6 +249,21 @@ class LOOP(object):
         return 2 # Execute this method again in 2 second
         
         
+    
+    #@staticmethod
+    #def camera_stabilisation():
+    #    '''
+    #    Stabilitate the camera around the x rotation
+    #    ''' 
+    #    try:
+    #        x, y = steelsquid_pi.mpu6050_rotation(samples=11)
+    #        x = int(x)
+    #        print x
+    #        RADIO_PUSH_2.camera_tilt = STATIC.servo_position_tilt_start+(x*3)
+    #        GLOBAL.camera(None, RADIO_PUSH_2.camera_tilt)
+    #    except:
+    #        pass
+    #    return 0.001
 
 
 
@@ -518,7 +535,7 @@ class GLOBAL(object):
         '''
         The connection to remote is lost
         ''' 
-        pass
+        steelsquid_pi.gpio_flash(26, None, 0.1)
         
 
     @staticmethod
@@ -559,16 +576,18 @@ class GLOBAL(object):
         '''
         Move servo
         '''
-        if pan<STATIC.servo_position_pan_min:
-            pan = STATIC.servo_position_pan_min
-        elif pan>STATIC.servo_position_pan_max:
-            pan = STATIC.servo_position_pan_max
-        if tilt<STATIC.servo_position_tilt_min:
-            tilt = STATIC.servo_position_tilt_min
-        elif tilt>STATIC.servo_position_tilt_max:
-            tilt = STATIC.servo_position_tilt_max
-        steelsquid_pi.pca9685_move(14, pan)
-        steelsquid_pi.pca9685_move(15, tilt)
+        if pan!=None:
+            if pan<STATIC.servo_position_pan_min:
+                pan = STATIC.servo_position_pan_min
+            elif pan>STATIC.servo_position_pan_max:
+                pan = STATIC.servo_position_pan_max
+            steelsquid_pi.pca9685_move(14, pan)
+        if tilt!=None:
+            if tilt<STATIC.servo_position_tilt_min:
+                tilt = STATIC.servo_position_tilt_min
+            elif tilt>STATIC.servo_position_tilt_max:
+                tilt = STATIC.servo_position_tilt_max
+            steelsquid_pi.pca9685_move(15, tilt)
 
 
     @staticmethod

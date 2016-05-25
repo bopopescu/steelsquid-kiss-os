@@ -1293,18 +1293,36 @@ def mpu6050_movement(address=0x69):
     return gyro_xout, gyro_xout, gyro_zout
 
 
-def mpu6050_rotation(address=0x69):
+def mpu6050_rotation(address=0x69, samples=1):
     '''
     Read mpu-6050 rotation angle in degrees for both the X & Y.
     SparkFun Triple Axis Accelerometer and Gyro Breakout - MPU-6050
     https://www.sparkfun.com/products/11028
+    samples = number of samples and then calculate median
     Returns: (x, y)
     '''
-    accel_xout, accel_yout, accel_zout = mpu6050_accel(address)
-    x = get_x_rotation(accel_xout, accel_yout, accel_zout)
-    y = get_y_rotation(accel_xout, accel_yout, accel_zout)    
-    return x, y
-
+    if samples==1:
+        accel_xout, accel_yout, accel_zout = mpu6050_accel(address)
+        x = get_x_rotation(accel_xout, accel_yout, accel_zout)
+        y = get_y_rotation(accel_xout, accel_yout, accel_zout)    
+        return x, y
+    else:
+        a_list_x=[]
+        a_list_y=[]
+        a_list_z=[]
+        for i in range(samples):
+            accel_xout, accel_yout, accel_zout = mpu6050_accel(address)
+            a_list_x.append(accel_xout)
+            a_list_y.append(accel_yout)
+            a_list_z.append(accel_zout)
+            time.sleep(0.0001)
+        accel_xout = steelsquid_utils.median(a_list_x)
+        accel_yout = steelsquid_utils.median(a_list_y)
+        accel_zout = steelsquid_utils.median(a_list_z)
+        x = get_x_rotation(accel_xout, accel_yout, accel_zout)
+        y = get_y_rotation(accel_xout, accel_yout, accel_zout)    
+        return x, y
+ 
 
 def mpu6050_temp(address=0x69):
     '''
