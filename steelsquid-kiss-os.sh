@@ -4198,17 +4198,27 @@ ln -s /opt/steelsquid/python/steelsquid_kiss_start.py /usr/bin/event
 ##################################################################################
 if [ $(is-raspberry-pi) == "true" ]; then
     log "Install Adafruit-Raspberry-Pi-Python-Code"
-    cd /usr/local/lib/python2.7/dist-packages
-    rm Adafruit_I2C.py
-    wget https://raw.githubusercontent.com/adafruit/Adafruit-Raspberry-Pi-Python-Code/master/Adafruit_I2C/Adafruit_I2C.py
-    rm Adafruit_PWM_Servo_Driver.py
-    wget https://raw.githubusercontent.com/adafruit/Adafruit-Raspberry-Pi-Python-Code/master/Adafruit_PWM_Servo_Driver/Adafruit_PWM_Servo_Driver.py
-    rm Adafruit_MCP230xx.py
-    wget https://raw.githubusercontent.com/adafruit/Adafruit-Raspberry-Pi-Python-Code/master/Adafruit_MCP230xx/Adafruit_MCP230xx.py
-    rm Adafruit_ADS1x15.py
-    wget https://raw.githubusercontent.com/adafruit/Adafruit-Raspberry-Pi-Python-Code/master/Adafruit_ADS1x15/Adafruit_ADS1x15.py
-    rm Adafruit_MCP4725.py
-    wget https://raw.githubusercontent.com/adafruit/Adafruit-Raspberry-Pi-Python-Code/master/Adafruit_MCP4725/Adafruit_MCP4725.py
+    cd /tmp
+	git clone https://github.com/adafruit/Adafruit_Python_GPIO.git    
+	cd Adafruit_Python_GPIO
+	python setup.py install -f -O2
+	
+
+    cd /tmp
+	git clone https://github.com/adafruit/Adafruit_Python_PCA9685.git
+	cd Adafruit_Python_PCA9685
+	python setup.py install -f -O2
+
+    cd /tmp
+	git clone https://github.com/adafruit/Adafruit_Python_ADS1x15.git
+	cd Adafruit_Python_ADS1x15
+	python setup.py install -f -O2
+
+    cd /tmp
+	git clone https://github.com/adafruit/Adafruit_Python_MCP4725.git
+	cd Adafruit_Python_MCP4725
+	python setup.py install -f -O2
+
     cd /tmp
     git clone https://github.com/adafruit/Adafruit_Nokia_LCD.git
     cd Adafruit_Nokia_LCD

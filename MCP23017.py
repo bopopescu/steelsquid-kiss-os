@@ -3,7 +3,7 @@
 # This is made by: Dan Woodruff
 # https://bitbucket.org/dewoodruff
 
-from Adafruit_I2C import Adafruit_I2C
+from Adafruit_GPIO.I2C import Device as Adafruit_I2C
 import smbus
 import time
 import math
