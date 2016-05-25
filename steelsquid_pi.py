@@ -48,7 +48,6 @@ from MCP23017 import MCP23017
 from Adafruit_ADS1x15 import ADS1x15
 from Adafruit_MCP4725 import MCP4725
 from Adafruit_GPIO.I2C import Device as Adafruit_I2C
-
 import Adafruit_Nokia_LCD as LCD
 import Adafruit_GPIO.SPI as SPI
 import Diablo
