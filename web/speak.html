@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" /> 
+        <title>Kiss Controll station</title>
+        <meta name="Steelsquid Kiss OS" content="Administrate/Control/Configure steelsquid-kiss-os from web browser." />
+        <meta name="keywords" content="steelsquid, steelsquid-kiss-os, raspberry, pi, debian, linux, distribution, administrator, configure" />
+        <meta name="author" content="Andreas Nilsson (Steelsquid)" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+        <meta name="mobile-web-app-capable" content="yes"/>
+        <meta name="apple-mobile-web-app-capable" content="yes"/>
+        <link rel="icon" href="favicon.ico" type="image/x-icon"/>
+        <link rel="shortcut icon" href="favicon.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="steelsquid.css"/>
+        <script type="text/javascript" src="jquery.js"></script>
+        <script type="text/javascript" src="steelsquid.js"></script>
+        <script type="text/javascript">
+            //<![CDATA[ 
+    
+            /**
+             * When the page is loaded
+             */
+            function onPageLoad(){
+                $('#the_text').keypress(function(event) {
+                    if (event.keyCode == 13) {
+                        submitAsyncFromInput('text_to_speach', 'the_text')
+                        $('#the_text').val("");
+                    }
+                });
+            }
+                        
+            //]]>
+        </script>
+        
+    </head>
+    <body style="background-color: black;color: white;font-weight: bold;">
+        WHAT DO YOU WANT TO SAY?<br>
+        <input type="text" id="the_text" autofocus />
+    </body>
+</html>
