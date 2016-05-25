@@ -107,7 +107,7 @@ The files under modules/ can also listen to events and handle web requests.<br>
    Put global staticmethods in this class, methods you use from different part of the system.
 
 More info see<br>
-https://sites.google.com/site/steelsquid/extend<br>
+http://www.steelsquid.org/extend<br>
 https://github.com/steelsquid/steelsquid-kiss-os/blob/master/modules/kiss_expand.py
 
 
