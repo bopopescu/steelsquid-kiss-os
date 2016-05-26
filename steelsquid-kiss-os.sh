@@ -4202,7 +4202,6 @@ if [ $(is-raspberry-pi) == "true" ]; then
 	git clone https://github.com/adafruit/Adafruit_Python_GPIO.git    
 	cd Adafruit_Python_GPIO
 	python setup.py install -f -O2
-	
 
     cd /tmp
 	git clone https://github.com/adafruit/Adafruit_Python_PCA9685.git
