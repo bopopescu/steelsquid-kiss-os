@@ -45,7 +45,7 @@ from PIL import ImageFont
 from sets import Set
 from Adafruit_PCA9685 import PCA9685 as PWM
 from MCP23017 import MCP23017
-from Adafruit_ADS1x15 import ADS1x15
+import Adafruit_ADS1x15
 from Adafruit_MCP4725 import MCP4725
 from Adafruit_GPIO.I2C import Device as Adafruit_I2C
 import Adafruit_Nokia_LCD as LCD
@@ -78,12 +78,6 @@ ads_48 = None
 ads_49 = None
 ads_4A = None
 ads_4B = None
-GAIN_6_144_V = 6144
-GAIN_4_096_V = 4096
-GAIN_2_048_V = 2048
-GAIN_1_024_V = 1024
-GAIN_0_512_V = 512
-GAIN_0_256_V = 256
 mcp_setup_20 = [SETUP_NONE] * 16
 mcp_setup_21 = [SETUP_NONE] * 16
 mcp_setup_22 = [SETUP_NONE] * 16
@@ -725,23 +719,24 @@ def mcp23017_cleanup():
         pass
 
 
-def ads1015(address, gpio, gain=GAIN_6_144_V, number_of_decimals=-1):
+def ads1015(address, gpio, gain=1, number_of_decimals=-1):
     '''
     Read analog in from ADS1015 (0 to 5 v)
     address= 48, 49, 4A, 4B 
     gpio = 0 to 3
+    gain = 2/3, 1, 2, 4, 8, 16
     '''
     address = str(address)
     gpio = int(gpio)
     with steelsquid_i2c.Lock():
-        v = __ads1015(address).readADCSingleEnded(gpio, gain, 250) / 1000
+        v = __ads1015(address).read_adc(gpio, gain, 250) / 1000
         if number_of_decimals!=-1:
             v = Decimal(v)
             v = round(v, number_of_decimals)
         return v
 
 
-def ads1015_median(address, gpio, gain=GAIN_6_144_V, samples=8):
+def ads1015_median(address, gpio, gain=1, samples=8):
     '''
     Read analog in from ADS1015 (0 to 5 v)
     Median of number of samples
@@ -750,7 +745,7 @@ def ads1015_median(address, gpio, gain=GAIN_6_144_V, samples=8):
     '''
     a_list=[]
     for i in range(samples):
-        value = ads1015(address, gpio, gain=GAIN_6_144_V)
+        value = ads1015(address, gpio, gain)
         a_list.append(value)
         time.sleep(0.01)
     return steelsquid_utils.median(a_list)
@@ -766,22 +761,22 @@ def __ads1015(address):
     if address == "48":
         global ads_48
         if ads_48==None:
-            ads_48 = ADS1x15(address = 0x48, ic=0x00)
+            ads_48 = Adafruit_ADS1x15.ADS1115(address = 0x48)
         return ads_48
     elif address == "49":
         global ads_49
         if ads_49==None:
-            ads_49 = ADS1x15(address = 0x49, ic=0x00)
+            ads_49 = Adafruit_ADS1x15.ADS1115(address = 0x49)
         return ads_49
     elif address == "4A":
         global ads_4A
         if ads_4A==None:
-            ads_4A = ADS1x15(address = 0x4A, ic=0x00)
+            ads_4A = Adafruit_ADS1x15.ADS1115(address = 0x4A)
         return ads_4A
     elif address == "4B":
         global ads_4B
         if ads_4B==None:
-            ads_4B = ADS1x15(address = 0x4B, ic=0x00)
+            ads_4B = Adafruit_ADS1x15.ADS1115(address = 0x4B)
         return ads_4B
 
 
@@ -1131,9 +1126,9 @@ def pca9685_move(servo, value):
     with steelsquid_i2c.Lock():
         global pwm
         if pwm == None:
-            pwm = PWM(0x40, debug=False)
-            pwm.setPWMFreq(60) 
-        pwm.setPWM(int(servo), 0, int(value))
+            pwm = PWM(0x40)
+            pwm.set_pwm_freq(60) 
+        pwm.set_pwm(int(servo), 0, int(value))
 
 
 def sabertooth_motor_speed(left, right, the_port="/dev/ttyAMA0"):

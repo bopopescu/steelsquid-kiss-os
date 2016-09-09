@@ -12,8 +12,7 @@ Write text to a ssd1306 oled display
 '''
 
 import time
-
-from Adafruit_I2C import Adafruit_I2C
+from Adafruit_GPIO.I2C import Device as Adafruit_I2C
 import Adafruit_GPIO.I2C as I2C
 import Image
 import ImageDraw

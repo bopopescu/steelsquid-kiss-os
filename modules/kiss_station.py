@@ -87,15 +87,11 @@ class STATIC(object):
     rover_voltage_min = 19.2        # 3.2V
     
     # GPIO for the HM-TRLR-S
-    hmtrlrs_config_gpio = 4
-    hmtrlrs_reset_gpio = 18
+    hmtrlrs_config_gpio = 25
+    hmtrlrs_reset_gpio = 23
 
     # Max motor speed
     motor_max = 1000
-    
-    # Max slow speed
-    # When the battery is mor than 24 volt (when i use 2 * 14.8V)
-    motor_slow_max = 800
 
     # When system start move servo here
     servo_position_pan_start = 370
@@ -137,11 +133,7 @@ class DYNAMIC(object):
 
     # Remote station voltage (this station)
     voltage_station = 0
-
-    # Current max speed of the motors
-    # Can eider be STATIC.motor_max or STATIC.motor_slow_max
-    current_max = STATIC.motor_max
-
+    
 
 
 
@@ -380,9 +372,6 @@ class SYSTEM(object):
         '''
         Slow button clicked
         '''
-        # Change the value (Will sync with rover)
-        RADIO_SYNC.CLIENT.is_slow_on = not RADIO_SYNC.CLIENT.is_slow_on
-        steelsquid_kiss_global.radio_interrupt()
         # Light the led
         GLOBAL.slow_led(RADIO_SYNC.CLIENT.is_slow_on)
         
@@ -491,11 +480,6 @@ class RADIO_SYNC(object):
             GLOBAL.transceiver_connected_led(True)
         else:
             GLOBAL.transceiver_connected_led(False)
-        # Slow speed
-        if RADIO_SYNC.CLIENT.is_slow_on:
-            DYNAMIC.current_max = STATIC.motor_slow_max
-        else:
-            DYNAMIC.current_max = STATIC.motor_max
         
         
     class CLIENT(object):
@@ -516,9 +500,6 @@ class RADIO_SYNC(object):
         
         # Is the highbeam on
         is_highbeam_on = False
-
-        # Is slow mode on
-        is_slow_on = False
 
         
     class SERVER(object):
@@ -577,8 +558,8 @@ class RADIO_PUSH_1(object):
         if steer > -20 and steer < 20:
             steer = 0
         # Remap the joystick range
-        drive = int(steelsquid_utils.remap(drive, -170, 170, DYNAMIC.current_max*-1, DYNAMIC.current_max))
-        steer = int(steelsquid_utils.remap(steer, -170, 170, DYNAMIC.current_max*-1, DYNAMIC.current_max))
+        drive = int(steelsquid_utils.remap(drive, -170, 170, STATIC.motor_max*-1, STATIC.motor_max))
+        steer = int(steelsquid_utils.remap(steer, -170, 170, STATIC.motor_max*-1, STATIC.motor_max))
         # Convert to left and right motor values
         motor_left = drive
         motor_right = drive
@@ -586,15 +567,15 @@ class RADIO_PUSH_1(object):
             motor_right = motor_right - steer
             motor_left = motor_left + steer
         
-        if motor_right>DYNAMIC.current_max:
-            motor_right = DYNAMIC.current_max
-        elif motor_right<DYNAMIC.current_max*-1:
-            motor_right = DYNAMIC.current_max*-1
+        if motor_right>STATIC.motor_max:
+            motor_right = STATIC.motor_max
+        elif motor_right<STATIC.motor_max*-1:
+            motor_right = STATIC.motor_max*-1
         
-        if motor_left>DYNAMIC.current_max:
-            motor_left = DYNAMIC.current_max
-        elif motor_left<DYNAMIC.current_max*-1:
-            motor_left = DYNAMIC.current_max*-1
+        if motor_left>STATIC.motor_max:
+            motor_left = STATIC.motor_max
+        elif motor_left<STATIC.motor_max*-1:
+            motor_left = STATIC.motor_max*-1
         # Set the value that will be sent to the server
         RADIO_PUSH_1.motor_left=motor_left
         RADIO_PUSH_1.motor_right=motor_right

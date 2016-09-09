@@ -82,9 +82,10 @@ python_downloads[28]="$base/modules/kiss_rover.py"
 python_downloads[29]="$base/modules/kiss_nrf24rover.py"
 python_downloads[30]="$base/modules/kiss_fpvrover.py"
 python_downloads[31]="$base/modules/kiss_station.py"
-python_downloads[32]="$base/modules/kiss_squidrover.py"
-python_downloads[33]="$base/steelsquid_hmtrlrs.py"
-python_downloads[34]="$base/steelsquid_rmcs220x.py"
+python_downloads[32]="$base/modules/kiss_squidscout.py"
+python_downloads[33]="$base/modules/kiss_squidrover.py"
+python_downloads[34]="$base/steelsquid_hmtrlrs.py"
+python_downloads[35]="$base/steelsquid_rmcs220x.py"
 
 # Links to python_downloads
 python_links[1]="/usr/bin/steelsquid-boot"
@@ -1320,11 +1321,11 @@ function help_build()
     echb "############################################################################"
     echo 
     echb "1.  Download and extract the installer image"
-    echo "wget https://github.com/debian-pi/raspbian-ua-netinst/releases/download/v1.0.8.1/raspbian-ua-netinst-v1.0.8.1.img.xz"
-    echo "unxz raspbian-ua-netinst-v1.0.8.1.img.xz"
+    echo "wget https://github.com/FooDeas/raspberrypi-ua-netinst/releases/download/v1.2.1/raspberrypi-ua-netinst-v1.2.1.img.xz"
+    echo "unxz raspberrypi-ua-netinst-v1.2.1.img.xz"
     echo 
     echb "2.  Copy to sdcard"
-    echo "dd bs=4M if=raspbian-ua-netinst-v1.0.8.1.img of=/dev/sdb"
+    echo "dd bs=4M if=raspberrypi-ua-netinst-v1.2.1.img of=/dev/sdb"
     echo 
     echb "3.  Insert sdcard into raspberry and boot"
     echo "Must have the networkcabel connected (internet access)"
@@ -1341,6 +1342,7 @@ function help_build()
     echb "7.  Change to 4.1 and uppgrade"
     echo "echo \"deb http://mirrordirector.raspbian.org/raspbian/ jessie main contrib non-free rpi\" > /etc/apt/sources.list"
     echo "echo \"deb http://archive.raspberrypi.org/debian/ jessie main ui untested staging\" >> /etc/apt/sources.list"
+    echo "rm /etc/apt/sources.list.d/raspberrypi.org.list"
     echo "apt-get update"
     echo "apt-get purge linux-image-rpi-rpfv linux-image-rpi2-rpfv libraspberrypi0 libraspberrypi-{bin,dev} raspberrypi-bootloader-nokernel"
     echo "apt-get --no-install-recommends install sudo nano aptitude"
@@ -4704,6 +4706,7 @@ systemctl mask remote-fs.target
 systemctl mask alsa-restore.service
 systemctl mask sysstat.service
 systemctl mask kbd.service
+systemctl disable hciuart
 log "Services disabled"
 
 
@@ -4799,6 +4802,7 @@ echo "disable_splash=1" >> /boot/config.txt
 echo "boot_delay=0" >> /boot/config.txt
 echo "dtparam=i2c_arm=on" >> /boot/config.txt
 echo "dtparam=spi=on" >> /boot/config.txt
+echo "dtparam=audio=on" >> /boot/config.txt
 #echo "dtparam=i2s=on" >> /boot/config.txt
 
 if [ $(get-flag "camera") == "true" ]; then
