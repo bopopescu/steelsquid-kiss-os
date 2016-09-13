@@ -71,31 +71,35 @@ class STATIC(object):
     Put static variables here (Variables that never change).
     It is not necessary to put it her, but i think it is kind of nice to have it inside this class.
     '''
+    # Rover voltages(lipo 4s)
+    rover_voltage_max = 16.8        # 4.2V
+    rover_voltage_warning = 14      # 3.5V
+    rover_voltage_min = 12.8        # 3.2V
     
     # Max motor speed
     motor_max = 1000
 
     # When system start move servo here
-    servo_position_pan_start = 370
+    servo_position_pan_start = 380
 
     # Max Servo position
-    servo_position_pan_max = 590
+    servo_position_pan_max = 615
 
     # Min Servo position
-    servo_position_pan_min = 180
+    servo_position_pan_min = 140
 
     # When system start move servo here
-    servo_position_tilt_start = 400
+    servo_position_tilt_start = 300
 
     # Max Servo position
-    servo_position_tilt_max = 530
+    servo_position_tilt_max = 430
 
     # Min Servo position
-    servo_position_tilt_min = 280
+    servo_position_tilt_min = 140
 
     # GPIO for the HM-TRLR-S
-    hmtrlrs_config_gpio = 4
-    hmtrlrs_reset_gpio = 18
+    hmtrlrs_config_gpio = 25
+    hmtrlrs_reset_gpio = 23
 
 
 
@@ -172,12 +176,16 @@ class SYSTEM(object):
         Do not execute long running stuff here, do it in on_loop...
         '''
         # Startup message
-        steelsquid_utils.shout("Steelsquid SquidScout started")
+        steelsquid_utils.shout("Steelsquid Squidscout started")
         # Enable network by default
         try:
             steelsquid_nm.set_network_status(True)        
         except:
             pass
+        # Reset stuff to default
+        GLOBAL.headlights(False)
+        GLOBAL.highbeam(False)
+        GLOBAL.video(False)
         GLOBAL.camera(STATIC.servo_position_pan_start, STATIC.servo_position_tilt_start)
         
         
@@ -188,7 +196,7 @@ class SYSTEM(object):
         Do not execute long running stuff here
         '''
         GLOBAL.drive(0, 0)
-        steelsquid_pi.cleanup()      
+        steelsquid_pi.cleanup()  
         
         
         
@@ -213,6 +221,13 @@ class LOOP(object):
         try:
             # Read rover voltage
             RADIO_SYNC.SERVER.voltage_rover = GLOBAL.voltage()
+            # Read rover voltage
+            RADIO_SYNC.SERVER.ampere_rover = GLOBAL.ampere()
+            # Check for low voltage
+            if RADIO_SYNC.SERVER.voltage_rover<STATIC.rover_voltage_min:
+                GLOBAL.summer(1.2)
+            elif RADIO_SYNC.SERVER.voltage_rover<STATIC.rover_voltage_warning:
+                GLOBAL.summer(0.1)
             # Print IP/voltage to LCD
             if not DYNAMIC.stop_next_lcd_message:
                 print_this = []
@@ -227,7 +242,8 @@ class LOOP(object):
                     if steelsquid_kiss_global.last_lan_ip!="---":
                         print_this.append(steelsquid_kiss_global.last_lan_ip)
                         connected=True
-                print_this.append("Voltage: " + str(RADIO_SYNC.SERVER.voltage_rover))
+                print_this.append("Voltage: " + str(RADIO_SYNC.SERVER.voltage_rover) + "V")
+                print_this.append("Ampere: " + str(RADIO_SYNC.SERVER.ampere_rover) + "A")
                 # Write text to LCD
                 if len(print_this)>0:
                     new_lcd_message = "\n".join(print_this)
@@ -403,6 +419,9 @@ class RADIO_SYNC(object):
         # Voltage for the rover
         voltage_rover = 0.0
 
+        # Ampere for the rover
+        ampere_rover = 0.0
+
 
 
 
@@ -504,8 +523,8 @@ class GLOBAL(object):
         '''
         The connection to remote is lost
         ''' 
-        pass
-        #steelsquid_pi.gpio_flash(26, None, 0.1)
+        steelsquid_pi.gpio_flash(17, None, 0.1, invert=True)
+        GLOBAL.summer(0.5)
         
 
     @staticmethod
@@ -513,8 +532,17 @@ class GLOBAL(object):
         '''
         Sound horn for a second
         '''
+        print "--- HORN ---"
+        #steelsquid_pi.gpio_flash(6, None, 0.5, invert=True)
+
+
+    @staticmethod
+    def summer(time):
+        '''
+        Sound the summer
+        '''
         pass
-        steelsquid_pi.gpio_flash(6, None, 0.5)
+        #steelsquid_pi.gpio_flash(4, None, time)
 
 
     @staticmethod
@@ -522,7 +550,8 @@ class GLOBAL(object):
         '''
         headlights
         '''
-        steelsquid_pi.gpio_set(26, status)
+        # 0 to the realy controller means ON
+        steelsquid_pi.gpio_set(17, not status)
 
 
     @staticmethod
@@ -530,7 +559,8 @@ class GLOBAL(object):
         '''
         highbeam
         '''
-        steelsquid_pi.gpio_set(13, status)
+        # 0 to the realy controller means ON
+        steelsquid_pi.gpio_set(27, not status)
 
 
     @staticmethod
@@ -538,7 +568,8 @@ class GLOBAL(object):
         '''
         Is video on
         '''
-        steelsquid_pi.gpio_set(19, status)
+        # 0 to the realy controller means ON
+        steelsquid_pi.gpio_set(26, not status)
 
 
     @staticmethod
@@ -551,13 +582,13 @@ class GLOBAL(object):
                 pan = STATIC.servo_position_pan_min
             elif pan>STATIC.servo_position_pan_max:
                 pan = STATIC.servo_position_pan_max
-            steelsquid_pi.pca9685_move(14, pan)
+            steelsquid_pi.pca9685_move(13, pan)
         if tilt!=None:
             if tilt<STATIC.servo_position_tilt_min:
                 tilt = STATIC.servo_position_tilt_min
             elif tilt>STATIC.servo_position_tilt_max:
                 tilt = STATIC.servo_position_tilt_max
-            steelsquid_pi.pca9685_move(15, tilt)
+            steelsquid_pi.pca9685_move(10, tilt)
 
 
     @staticmethod
@@ -594,7 +625,20 @@ class GLOBAL(object):
         '''
         Read voltage
         '''
-        v = steelsquid_pi.po12_adc_volt(7) * 8.475248891 
+        v = steelsquid_pi.po12_adc_volt(7, samples=8) * 8.565
         v = Decimal(v)
         v = round(v, 2)
+        return v
+
+
+    @staticmethod
+    def ampere():
+        '''
+        Read ampere
+        '''
+        v = steelsquid_pi.po12_adc_volt(8, samples=8)
+        v = v * 1000  # To mV
+        v = (v - 2472) / 20 # To Ampere
+        v = Decimal(v)
+        v = round(v, 1)
         return v

@@ -191,14 +191,18 @@ def gpio_set(gpio, state):
     GPIO.output(gpio, state)
 
 
-def gpio_flash(gpio, status, seconds):
+def gpio_flash(gpio, status, seconds, invert=False):
     '''
     Change to hight (true) or low (false) on a pin alternately
     @param gpio: GPIO number
     @param status: True/False (None = Only alternate one time (True, false))
     @param seconds: Seconds between state change
+    @param invert: If True start with False. If False start with True
     '''
-    steelsquid_utils.execute_flash("gpio_flash"+str(gpio), status, seconds, gpio_set, (gpio, True,), gpio_set, (gpio, False,))
+    if invert:
+        steelsquid_utils.execute_flash("gpio_flash"+str(gpio), status, seconds, gpio_set, (gpio, False,), gpio_set, (gpio, True,))
+    else:
+        steelsquid_utils.execute_flash("gpio_flash"+str(gpio), status, seconds, gpio_set, (gpio, True,), gpio_set, (gpio, False,))
 
 
 def gpio_get(gpio, resistor=PULL_DOWN):
@@ -1584,18 +1588,24 @@ def po12_adc_vref(vref):
     
     
 def __po12_adc(channel):
-    global po12_adc_has_setup
-    if not po12_adc_has_setup:
-        po12_adc_has_setup=True
-        po12_adc_pullup(False)
-        time.sleep(0.01)
-        po12_adc_vref(None)
-        time.sleep(0.01)
-    channel = int(channel)
-    return steelsquid_i2c.read_16_bit_command(0x34, 1, [channel], little_endian=False)
+	haveTry = False
+	while True:
+		try:
+			global po12_adc_has_setup
+			if not po12_adc_has_setup:
+				po12_adc_has_setup=True
+				po12_adc_pullup(False)
+				time.sleep(0.01)
+				po12_adc_vref(None)
+				time.sleep(0.01)
+			channel = int(channel)
+			return steelsquid_i2c.read_16_bit_command(0x34, 1, [channel], little_endian=False)
+		except Exception as e:
+			if haveTry:
+				raise e
     
 
-def po12_adc(channel, samples=1):
+def po12_adc(channel, samples=1, sleep=0.0001):
     '''
     Read the analog value in on the P011/12 ADC
     http://www.pichips.co.uk/index.php/P011_ADC#rpii2c
@@ -1615,7 +1625,7 @@ def po12_adc(channel, samples=1):
             return int(steelsquid_utils.median(a_list))
 
 
-def po12_adc_volt(channel, samples=1):
+def po12_adc_volt(channel, samples=1, sleep=0.0001):
     '''
     Read the analog voltage in on the P011/12 ADC
     http://www.pichips.co.uk/index.php/P011_ADC#rpii2c
@@ -1623,7 +1633,7 @@ def po12_adc_volt(channel, samples=1):
     Return 0V to vref
     '''
     with(lock_po12):
-        value = po12_adc(channel, samples)
+        value = po12_adc(channel, samples, sleep)
         calc = value/float(1023)
         return vref_voltage * calc
 

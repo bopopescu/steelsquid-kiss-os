@@ -4803,6 +4803,7 @@ echo "boot_delay=0" >> /boot/config.txt
 echo "dtparam=i2c_arm=on" >> /boot/config.txt
 echo "dtparam=spi=on" >> /boot/config.txt
 echo "dtparam=audio=on" >> /boot/config.txt
+echo "enable_uart=1" >> /boot/config.txt
 #echo "dtparam=i2s=on" >> /boot/config.txt
 
 if [ $(get-flag "camera") == "true" ]; then

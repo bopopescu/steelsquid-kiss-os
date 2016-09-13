@@ -972,15 +972,17 @@ def main():
                 if steelsquid_utils.get_flag("hmtrlrs_server"):
                     config_gpio = int(steelsquid_utils.get_parameter("hmtrlrs_config_gpio", "25"))
                     reset_gpio = int(steelsquid_utils.get_parameter("hmtrlrs_reset_gpio", "23"))
-                    steelsquid_utils.shout("Enable HM-TRLR-S server")
-                    steelsquid_hmtrlrs.setup(config_gpio=config_gpio, reset_gpio=reset_gpio)
+                    hmtrlrs_serial_port = steelsquid_utils.get_parameter("hmtrlrs_serial_port", "/dev/ttyS0")
+                    steelsquid_utils.shout("Enable HM-TRLR-S server ("+str(config_gpio)+":"+str(reset_gpio)+")")
+                    steelsquid_hmtrlrs.setup(serial_port=hmtrlrs_serial_port, config_gpio=config_gpio, reset_gpio=reset_gpio)
                     thread.start_new_thread(hmtrlrs_server_thread, ())
                 # Enable HM-TRLR-S as client
                 elif steelsquid_utils.get_flag("hmtrlrs_client"):
                     config_gpio = int(steelsquid_utils.get_parameter("hmtrlrs_config_gpio", "25"))
                     reset_gpio = int(steelsquid_utils.get_parameter("hmtrlrs_reset_gpio", "23"))
-                    steelsquid_utils.shout("Enable HM-TRLR-S client")
-                    steelsquid_hmtrlrs.setup(config_gpio=config_gpio, reset_gpio=reset_gpio)
+                    hmtrlrs_serial_port = steelsquid_utils.get_parameter("hmtrlrs_serial_port", "/dev/ttyS0")
+                    steelsquid_utils.shout("Enable HM-TRLR-S client ("+str(config_gpio)+":"+str(reset_gpio)+")")
+                    steelsquid_hmtrlrs.setup(serial_port=hmtrlrs_serial_port, config_gpio=config_gpio, reset_gpio=reset_gpio)
                     thread.start_new_thread(hmtrlrs_client_thread, ())
                 # Start the modules
                 for obj in steelsquid_kiss_global.loaded_modules.itervalues():

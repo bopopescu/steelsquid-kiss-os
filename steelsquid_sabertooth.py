@@ -14,27 +14,23 @@ http://www.dimensionengineering.com/products/sabertooth2x25
 @change: 2013-10-25 Created
 '''
 
-import thread
-import threading
 import time
 import steelsquid_utils
-import serial
 import math
 import sys
 
 
-class SteelsquidSabertooth(threading.Thread):
+class SteelsquidSabertooth():
     '''
     The server
     '''
 
-    def __init__(self, serial_port="/dev/ttyUSB3", baudrate=2400, speed_min_add = 5):
+    def __init__(self, serial_port="/dev/ttyS0", baudrate=2400, speed_min_add = 5):
         '''
         Constructor.
         @param speed_min_add: Motor speed can be 1 to 63. if this is 10 then the lowest speed is 10 not 1
                             Use this if the motor dont spin on low voltage
         '''
-        self.running = True
         self.serial_port=serial_port
         self.baudrate = baudrate
         self.speed_min_add = speed_min_add
@@ -84,7 +80,7 @@ class SteelsquidSabertooth(threading.Thread):
         '''
         Stop this controller.
         '''
-        self.running = False
+        ser.close()
             
             
 if __name__ == "__main__":

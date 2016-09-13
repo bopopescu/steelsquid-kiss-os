@@ -81,10 +81,10 @@ class STATIC(object):
     station_voltage_warning = 10.5  # 3.5V
     station_voltage_min = 9.6       # 3.2V
 
-    # Rover voltages(lipo 6s)
-    rover_voltage_max = 25.2        # 4.2V
-    rover_voltage_warning = 21      # 3.5V
-    rover_voltage_min = 19.2        # 3.2V
+    # Rover voltages(lipo 4s)
+    rover_voltage_max = 16.8        # 4.2V
+    rover_voltage_warning = 14      # 3.5V
+    rover_voltage_min = 12.8        # 3.2V
     
     # GPIO for the HM-TRLR-S
     hmtrlrs_config_gpio = 25
@@ -97,19 +97,19 @@ class STATIC(object):
     servo_position_pan_start = 370
 
     # Max Servo position
-    servo_position_pan_max = 590
+    servo_position_pan_max = 615
 
     # Min Servo position
-    servo_position_pan_min = 180
+    servo_position_pan_min = 140
 
     # When system start move servo here
-    servo_position_tilt_start = 400
+    servo_position_tilt_start = 300
 
     # Max Servo position
-    servo_position_tilt_max = 530
+    servo_position_tilt_max = 430
 
     # Min Servo position
-    servo_position_tilt_min = 280
+    servo_position_tilt_min = 140
 
 
 
@@ -426,6 +426,7 @@ class LOOP(object):
                     print_this.append("Rover: " + str(RADIO_SYNC.SERVER.voltage_rover)+ "V  ***LOW***")
                 else:
                     print_this.append("Rover: " + str(RADIO_SYNC.SERVER.voltage_rover)+ "V")
+                print_this.append("            " + str(RADIO_SYNC.SERVER.ampere_rover)+ "A")
                 # Set Network LED status
                 GLOBAL.network_conneced_led(connected)
                 # Write text to LCD
@@ -508,6 +509,9 @@ class RADIO_SYNC(object):
         '''
         # Voltage for the rover
         voltage_rover = 0.0
+
+        # Ampere for the rover
+        ampere_rover = 0.0
 
 
 
@@ -635,7 +639,7 @@ class RADIO_PUSH_2(object):
             tilt = 0
         if pan != 0 or tilt!=0:
             pan = RADIO_PUSH_2.camera_pan - int(pan/15)
-            tilt = RADIO_PUSH_2.camera_tilt + int(tilt/15)
+            tilt = RADIO_PUSH_2.camera_tilt - int(tilt/15)
             if pan<STATIC.servo_position_pan_min:
                 pan = STATIC.servo_position_pan_min
             elif pan>STATIC.servo_position_pan_max:
@@ -672,6 +676,7 @@ class WEB(object):
         '''
         Get info on the rover
         '''
+        print "AAA"
         steelsquid_hmtrlrs.request("text_to_speach", parameters)
 
 
