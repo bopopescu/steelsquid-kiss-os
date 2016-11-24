@@ -15,7 +15,7 @@ Some useful functions.
 import subprocess
 from subprocess import Popen, PIPE, STDOUT
 import uuid
-import os
+import os 
 import pwd
 import grp
 import shutil
@@ -457,9 +457,9 @@ def shout(string=None, to_lcd=True, debug=False, is_error=False, always_show=Fal
                     steelsquid_pi.lcd_auto_write(string, mestime, force_setup = False)
             try:
                 if not is_error and on_ok_callback_method!=None:
-                    on_ok_callback_method()
+                    on_ok_callback_method(string)
                 if is_error and on_err_callback_method!=None:
-                    on_err_callback_method()
+                    on_err_callback_method(string)
                 if get_flag("module_steelsquid_kiss_piio"):
                     import steelsquid_piio
                     if is_error:
@@ -1763,20 +1763,20 @@ def console_read(text):
         
 
 def median(data_list):
-	'''
-	Finds the median in a list of numbers.
-	'''
-	data_list = map(float, data_list)
-	n = len(data_list)
-	data_list.sort()
-	if n & 1:
-		index = n / 2 
-		return data_list[index]
-	else:
-		low_index = n / 2 - 1
-		high_index = n / 2
-		average = (data_list[low_index] + data_list[high_index]) / 2
-		return average
+    '''
+    Finds the median in a list of numbers.
+    '''
+    data_list = map(float, data_list)
+    n = len(data_list)
+    data_list.sort()
+    if n & 1:
+        index = n / 2 
+        return data_list[index]
+    else:
+        low_index = n / 2 - 1
+        high_index = n / 2
+        average = (data_list[low_index] + data_list[high_index]) / 2
+        return average
 
 
 def to_boolean(value):
@@ -1895,3 +1895,10 @@ def from_bin(v):
         return False
     else:
         raise RuntimeError("Could not convert to boolean: "+ v)    
+        
+def set_hostname(name):
+    '''
+    Set hostname
+    '''
+    execute_system_command_blind(["steelsquid", "hostname", name])
+

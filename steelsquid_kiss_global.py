@@ -316,6 +316,24 @@ def stream():
         return None
 
 
+def save_module_settings():
+    '''
+    Save varibalesin the module SETYTINGS class
+    '''    
+    steelsquid_kiss_boot._save_settings()
+
+
+def reboot():
+    '''
+    Reboot the computer
+    '''    
+    try:
+        steelsquid_kiss_boot._cleanup()
+    except:
+        steelsquid_utils.shout()
+    os.system("reboot")
+
+
 def stream_usb():
     '''
     Enable streaming of USB camera

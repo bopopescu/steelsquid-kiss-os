@@ -52,6 +52,7 @@ running = True
 event = threading.Event()
 radio_event = threading.Event()    
 
+has_clean = False
 
 # Where to look for task events
 system_event_dir = "/run/shm/steelsquid"
@@ -412,21 +413,76 @@ def _cleanup():
     '''
     Clean
     '''
-    global running
-    running = False
-    event.set()
+    global has_clean
+    if not has_clean:
+        has_clean = True
+        global running
+        running = False
+        event.set()
+        try:
+            for obj in steelsquid_kiss_global.loaded_modules.itervalues():
+                class_system = steelsquid_kiss_global._get_object(obj, "SYSTEM")
+                if class_system!=None:
+                    method_event = steelsquid_kiss_global._get_object(class_system, "on_event_data")
+                    if method_event!=None:
+                        steelsquid_kiss_global.remove_event_data_callback(method_event)
+                class_events = steelsquid_kiss_global._get_object(obj, "EVENTS")
+                if class_events!=None:
+                    steelsquid_kiss_global.remove_broadcast_event_callback(class_events)
+                if class_system!=None:
+                    steelsquid_kiss_global._exec_method_set_started(class_system, "on_stop", is_started=False)
+                class_settings = steelsquid_kiss_global._get_object(obj, "SETTINGS")
+                if class_settings!=None:
+                    persistent_off=False
+                    try:
+                        persistent_off = getattr(class_settings, "_persistent_off")==True
+                    except:
+                        pass
+                    if not persistent_off:
+                        members = [attr for attr in dir(class_settings) if not callable(getattr(class_settings, attr)) and not attr.startswith("_")]
+                        for var_name in members:
+                            the_var = getattr(class_settings, var_name, None)
+                            if isinstance(the_var, (bool)):
+                                if the_var:
+                                    steelsquid_utils.set_flag(var_name)
+                                else:
+                                    steelsquid_utils.del_flag(var_name)
+                            elif isinstance(the_var, list):
+                                steelsquid_utils.set_list(var_name, the_var)
+                            else:
+                                steelsquid_utils.set_parameter(var_name, str(the_var))
+        except:
+            steelsquid_utils.shout()
+        if steelsquid_utils.get_flag("nrf24_master") or steelsquid_utils.get_flag("nrf24_slave"):
+            try:
+                steelsquid_nrf24.stop()
+            except:
+                steelsquid_utils.shout()
+        if steelsquid_utils.get_flag("hmtrlrs_server") or steelsquid_utils.get_flag("hmtrlrs_client"):
+            try:
+                steelsquid_hmtrlrs.stop()
+            except:
+                steelsquid_utils.shout()
+        if steelsquid_utils.get_flag("socket_connection"):
+            try:
+                steelsquid_kiss_global.socket_connection.stop()
+            except:
+                pass
+        if steelsquid_utils.get_flag("web"):
+            try:
+                steelsquid_kiss_global.http_server.stop_server()
+            except:
+                pass
+        steelsquid_utils.execute_system_command_blind(['killall', 'aria2c'])
+        steelsquid_utils.shout("Goodbye :-(")
+
+
+def _save_settings():
+    '''
+    Save settings
+    '''
     try:
         for obj in steelsquid_kiss_global.loaded_modules.itervalues():
-            class_system = steelsquid_kiss_global._get_object(obj, "SYSTEM")
-            if class_system!=None:
-                method_event = steelsquid_kiss_global._get_object(class_system, "on_event_data")
-                if method_event!=None:
-                    steelsquid_kiss_global.remove_event_data_callback(method_event)
-            class_events = steelsquid_kiss_global._get_object(obj, "EVENTS")
-            if class_events!=None:
-                steelsquid_kiss_global.remove_broadcast_event_callback(class_events)
-            if class_system!=None:
-                steelsquid_kiss_global._exec_method_set_started(class_system, "on_stop", is_started=False)
             class_settings = steelsquid_kiss_global._get_object(obj, "SETTINGS")
             if class_settings!=None:
                 persistent_off=False
@@ -449,28 +505,6 @@ def _cleanup():
                             steelsquid_utils.set_parameter(var_name, str(the_var))
     except:
         steelsquid_utils.shout()
-    if steelsquid_utils.get_flag("nrf24_master") or steelsquid_utils.get_flag("nrf24_slave"):
-        try:
-            steelsquid_nrf24.stop()
-        except:
-            steelsquid_utils.shout()
-    if steelsquid_utils.get_flag("hmtrlrs_server") or steelsquid_utils.get_flag("hmtrlrs_client"):
-        try:
-            steelsquid_hmtrlrs.stop()
-        except:
-            steelsquid_utils.shout()
-    if steelsquid_utils.get_flag("socket_connection"):
-        try:
-            steelsquid_kiss_global.socket_connection.stop()
-        except:
-            pass
-    if steelsquid_utils.get_flag("web"):
-        try:
-            steelsquid_kiss_global.http_server.stop_server()
-        except:
-            pass
-    steelsquid_utils.execute_system_command_blind(['killall', 'aria2c'])
-    steelsquid_utils.shout("Goodbye :-(")
 
 
 def read_task_event(the_file):
@@ -1032,9 +1066,12 @@ def main():
                         events = inotifyx.get_events(fd)
                         for event in events:
                             read_task_event(event.name)
-                except KeyboardInterrupt:
+                except:
                     pass
-                os.close(fd)
+                try:
+                    os.close(fd)
+                except:
+                    pass
                 _cleanup()
                 # Delete old eventa
                 for f in os.listdir(system_event_dir):

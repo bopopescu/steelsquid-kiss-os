@@ -205,9 +205,9 @@ class SYSTEM(object):
         steelsquid_pi.mcp23017_click(21, 6, SYSTEM.on_video_button, pullup=True, rpi_gpio=26)
         steelsquid_pi.gpio_click(7, SYSTEM.on_horn_button, resistor=steelsquid_pi.PULL_UP)
         steelsquid_pi.gpio_click(6, SYSTEM.on_headlights_button, resistor=steelsquid_pi.PULL_UP)
-        steelsquid_pi.gpio_click(17, SYSTEM.on_left_button, resistor=steelsquid_pi.PULL_UP)
+        steelsquid_pi.gpio_click(17, SYSTEM.on_lower_button, resistor=steelsquid_pi.PULL_UP)
         steelsquid_pi.gpio_click(22, SYSTEM.on_center_button, resistor=steelsquid_pi.PULL_UP)
-        steelsquid_pi.gpio_click(24, SYSTEM.on_right_button, resistor=steelsquid_pi.PULL_UP)
+        steelsquid_pi.gpio_click(24, SYSTEM.on_raise_button, resistor=steelsquid_pi.PULL_UP)
         steelsquid_pi.gpio_click(9, SYSTEM.on_cruise_button, resistor=steelsquid_pi.PULL_UP)
         steelsquid_pi.gpio_click(13, SYSTEM.on_highbeam_button, resistor=steelsquid_pi.PULL_UP)
         steelsquid_pi.gpio_click(11, SYSTEM.on_slow_button, resistor=steelsquid_pi.PULL_UP)
@@ -290,17 +290,14 @@ class SYSTEM(object):
                 
         
     @staticmethod
-    def on_left_button(pin):
+    def on_lower_button(pin):
         '''
         Left camera button clicked
         '''
         # Flash icon
         GLOBAL.left_led_flash()        
         # Send center command to rover
-        steelsquid_hmtrlrs.request("left")
-        # Center local values
-        RADIO_PUSH_2.camera_pan=STATIC.servo_position_pan_max
-        RADIO_PUSH_2.camera_tilt=STATIC.servo_position_tilt_start
+        steelsquid_hmtrlrs.request("lower")
         
 
     @staticmethod
@@ -318,17 +315,14 @@ class SYSTEM(object):
 
 
     @staticmethod
-    def on_right_button(pin):
+    def on_raise_button(pin):
         '''
         Right camera button clicked
         '''
         # Flash icon
         GLOBAL.right_led_flash()        
         # Send center command to rover
-        steelsquid_hmtrlrs.request("right")
-        # Center local values
-        RADIO_PUSH_2.camera_pan=STATIC.servo_position_pan_min
-        RADIO_PUSH_2.camera_tilt=STATIC.servo_position_tilt_start
+        steelsquid_hmtrlrs.request("raisee")
 
                 
     @staticmethod
@@ -564,13 +558,21 @@ class RADIO_PUSH_1(object):
         # Remap the joystick range
         drive = int(steelsquid_utils.remap(drive, -170, 170, STATIC.motor_max*-1, STATIC.motor_max))
         steer = int(steelsquid_utils.remap(steer, -170, 170, STATIC.motor_max*-1, STATIC.motor_max))
+                
         # Convert to left and right motor values
         motor_left = drive
         motor_right = drive
-        if steer>0 or steer<0:
+                
+        # turn on spot
+        if steer!=0 and drive==0:
             motor_right = motor_right - steer
             motor_left = motor_left + steer
-        
+        # Drive forward or backward
+        elif steer>0 or steer<0:
+            motor_right = motor_right - (steer/4)
+            motor_left = motor_left + (steer/4)
+
+        # Chack that the waluses is in range (-1000 to 1000)
         if motor_right>STATIC.motor_max:
             motor_right = STATIC.motor_max
         elif motor_right<STATIC.motor_max*-1:
@@ -580,9 +582,14 @@ class RADIO_PUSH_1(object):
             motor_left = STATIC.motor_max
         elif motor_left<STATIC.motor_max*-1:
             motor_left = STATIC.motor_max*-1
+            
         # Set the value that will be sent to the server
         RADIO_PUSH_1.motor_left=motor_left
         RADIO_PUSH_1.motor_right=motor_right
+        
+        # This will send 6 stop motor command to the rover
+        # I dont want to send the stop signal when it is done...
+        # When no input on the joystick only send 6 stop command then no more...
         if motor_left == 0 and motor_right==0:
             if RADIO_PUSH_1._sent_zero_count>=6:
                 return False # Do not update to server

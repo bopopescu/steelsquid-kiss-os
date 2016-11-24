@@ -59,7 +59,7 @@ def disable(argument=None):
               Usually a string to tell the start/stop something
     '''
     # Disable the HM-TRLR-S
-    steelsquid_kiss_global.hmtrlrs_status(None)
+    steelsquid_kiss_global.hmtrlrs_status(None) 
 
 
 
@@ -101,6 +101,11 @@ class STATIC(object):
     hmtrlrs_config_gpio = 25
     hmtrlrs_reset_gpio = 23
 
+    # Steer servos
+    steer_front_left_straight = 296  # Servo Port 1
+    steer_front_right_straight = 333 # Servo Port 2
+    steer_back_left_straight = 322  # Servo Port 3
+    steer_back_right_straight = 326  # Servo Port 0
 
 
 
@@ -182,11 +187,14 @@ class SYSTEM(object):
             steelsquid_nm.set_network_status(True)        
         except:
             pass
+        # Register button clicks
+        steelsquid_pi.gpio_click(12, SYSTEM.on_shrink_button, resistor=steelsquid_pi.PULL_UP)
         # Reset stuff to default
         GLOBAL.headlights(False)
         GLOBAL.highbeam(False)
         GLOBAL.video(False)
         GLOBAL.camera(STATIC.servo_position_pan_start, STATIC.servo_position_tilt_start)
+        GLOBAL.steer(None, None)
         
         
     @staticmethod
@@ -198,6 +206,13 @@ class SYSTEM(object):
         GLOBAL.drive(0, 0)
         steelsquid_pi.cleanup()  
         
+        
+    @staticmethod
+    def on_shrink_button(pin):
+        '''
+        Make the rover a little bit shorter by folding down the camera.
+        '''
+        GLOBAL.shrink()
         
         
 
@@ -294,12 +309,12 @@ class RADIO(object):
 
 
     @staticmethod
-    def left(parameters):
+    def lower(parameters):
         '''
         Center
-        A request from client to left the camera
+        A request from client to lower the camera
         '''
-        GLOBAL.camera(STATIC.servo_position_pan_max, STATIC.servo_position_tilt_start)
+        GLOBAL.lower()
         return []
 
 
@@ -314,12 +329,12 @@ class RADIO(object):
 
 
     @staticmethod
-    def right(parameters):
+    def raisee(parameters):
         '''
         Center
-        A request from client to right the camera
+        A request from client to raise the camera
         '''
-        GLOBAL.camera(STATIC.servo_position_pan_min, STATIC.servo_position_tilt_start)
+        GLOBAL.raisee()
         return []
 
 
@@ -508,6 +523,9 @@ class GLOBAL(object):
     It is not necessary to put it her, you can also put it direcly in the module (but i think it is kind of nice to have it inside this class)
     '''
 
+    # Is the camera folded down to make the rover shorter
+    is_shrink = False
+
 
     @staticmethod
     def write_message(message=None, is_errorr=False):
@@ -592,6 +610,39 @@ class GLOBAL(object):
 
 
     @staticmethod
+    def shrink():
+        '''
+        Make the rover a little bit shorter by folding down the camera.
+        '''
+        if GLOBAL.is_shrink:
+            GLOBAL.lower()
+        else:
+            GLOBAL.is_shrink=True
+            steelsquid_pi.pca9685_move(11, 330)
+            steelsquid_pi.pca9685_move(12, 180)
+
+
+    @staticmethod
+    def lower():
+        '''
+        Lower the camera
+        '''
+        GLOBAL.is_shrink=False
+        steelsquid_pi.pca9685_move(11, 330)
+        steelsquid_pi.pca9685_move(12, 410)
+
+
+    @staticmethod
+    def raisee():
+        '''
+        Raise the camera
+        '''
+        GLOBAL.is_shrink=False
+        steelsquid_pi.pca9685_move(11, 415)
+        steelsquid_pi.pca9685_move(12, 180)
+
+
+    @staticmethod
     def drive(left, right):
         '''
         Drive
@@ -616,8 +667,40 @@ class GLOBAL(object):
             right = STATIC.motor_max
         elif right<STATIC.motor_max*-1:
             right = STATIC.motor_max*-1
+        GLOBAL.steer(left, right)            
         steelsquid_pi.diablo_motor_1(left)
         steelsquid_pi.diablo_motor_2(right)
+
+
+    @staticmethod
+    def steer(left, right):
+        '''
+        Move steer servos
+        '''
+        # Center the steering (0 degrees on all)
+        if left==None and right==None:
+            steelsquid_pi.pca9685_move(1, STATIC.steer_front_left_straight)
+            steelsquid_pi.pca9685_move(2, STATIC.steer_front_right_straight)
+            steelsquid_pi.pca9685_move(3, STATIC.steer_back_left_straight)
+            steelsquid_pi.pca9685_move(0, STATIC.steer_back_right_straight)
+        # Move on spot (45 degrees on all tires)
+        elif (left<0 and right>0 and left*-1==right) or (left>0 and right<0 and left==right*-1):
+            value = 45
+            steelsquid_pi.pca9685_move(1, STATIC.steer_front_left_straight-value)
+            steelsquid_pi.pca9685_move(2, STATIC.steer_front_right_straight+value)
+            steelsquid_pi.pca9685_move(3, STATIC.steer_back_left_straight+value)
+            steelsquid_pi.pca9685_move(0, STATIC.steer_back_right_straight-value)
+        # Move forward
+        elif left>0 and right>0:
+            value = (left-right)/30
+            steelsquid_pi.pca9685_move(1, STATIC.steer_front_left_straight-value)
+            steelsquid_pi.pca9685_move(2, STATIC.steer_front_right_straight-value)
+            steelsquid_pi.pca9685_move(3, STATIC.steer_back_left_straight+value)
+            steelsquid_pi.pca9685_move(0, STATIC.steer_back_right_straight+value)
+        # Move backward
+        elif left<0 and right<0:
+            pass
+                
 
 
     @staticmethod

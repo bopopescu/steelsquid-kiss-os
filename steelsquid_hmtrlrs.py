@@ -116,7 +116,7 @@ resetup_count_max = 4
 disable = False
 
 
-def setup(serial_port="/dev/ttyAMA0", config_gpio=25, reset_gpio=23, baudrate=38400, mode=MODE_MEDIUM, timeout_mutipple=1):
+def setup(serial_port="/dev/ttyAMA0", config_gpio=25, reset_gpio=23, baudrate=38400, mode=MODE_FAST, timeout_mutipple=1):
     '''
     Setup the serial interface
     serial_port: The serial port (/dev/ttyAMA0, /dev/ttyUSB1...)

@@ -84,8 +84,11 @@ python_downloads[30]="$base/modules/kiss_fpvrover.py"
 python_downloads[31]="$base/modules/kiss_station.py"
 python_downloads[32]="$base/modules/kiss_squidscout.py"
 python_downloads[33]="$base/modules/kiss_squidrover.py"
-python_downloads[34]="$base/steelsquid_hmtrlrs.py"
-python_downloads[35]="$base/steelsquid_rmcs220x.py"
+python_downloads[34]="$base/modules/kiss_irrbloss.py"
+python_downloads[35]="$base/modules/kiss_irrbloss_remote.py"
+python_downloads[36]="$base/steelsquid_hmtrlrs.py"
+python_downloads[37]="$base/steelsquid_rmcs220x.py"
+python_downloads[38]="$base/steelsquid_ht16k33.py"
 
 # Links to python_downloads
 python_links[1]="/usr/bin/steelsquid-boot"
@@ -120,8 +123,12 @@ python_links[29]="/usr/bin/dummy"
 python_links[30]="/usr/bin/dummy"
 python_links[31]="/usr/bin/dummy"
 python_links[32]="/usr/bin/dummy"
-python_links[33]="/usr/bin/hmtrlrs"
-python_links[34]="/usr/bin/rmcs220x"
+python_links[33]="/usr/bin/dummy"
+python_links[34]="/usr/bin/dummy"
+python_links[35]="/usr/bin/dummy"
+python_links[36]="/usr/bin/hmtrlrs"
+python_links[37]="/usr/bin/rmcs220x"
+python_links[38]="/usr/bin/lmatrix"
 
 # Download to web root folder
 web_root_downloads[1]="$base/web/top_bar.html"
@@ -207,19 +214,19 @@ fi
 # Has this script been updated
 function get_uppdated()
 {
-	if [ "$in_parameter_1" == "skip" ]; then
-		echo "true"
-	else
-		echo "false"
-	fi
+    if [ "$in_parameter_1" == "skip" ]; then
+        echo "true"
+    else
+        echo "false"
+    fi
 }
 
 # echo bold
 function echb()
 {
-	tput bold
-	echo -e $@
-	tput sgr0
+    tput bold
+    echo -e $@
+    tput sgr0
 }
 
 # Write log post
@@ -243,127 +250,127 @@ function log-reboot()
 # Exit this script
 function do-ok-exit()
 {
-	log "$1"
-	echo -e "\n\n"
-	exit 0
+    log "$1"
+    echo -e "\n\n"
+    exit 0
 }
 
 # Exit this script
 function do-err-exit()
 {
-	log "$1"
-	echo -e "\n\n"
-	exit 99
+    log "$1"
+    echo -e "\n\n"
+    exit 99
 }
 
 # If error in last command exit the script
 function exit-check()
 {
-	if [ $? -ne 0 ]; then
+    if [ $? -ne 0 ]; then
         if [ -n "$1" ]; then
             do-err-exit "$1"
         else
             do-err-exit "Unhandled exception, exit script!!!"
         fi
-	fi
+    fi
 }
 
 # If last command OK
 function has-exit-ok()
 {
-	if [ $? -ne 0 ]; then
-		echo "false"
+    if [ $? -ne 0 ]; then
+        echo "false"
     else
-		echo "true"
-	fi
+        echo "true"
+    fi
 }
 
 # If last command error
 function has-exit-err()
 {
-	if [ $? -ne 0 ]; then
-		echo "true"
+    if [ $? -ne 0 ]; then
+        echo "true"
     else
-		echo "false"
-	fi
+        echo "false"
+    fi
 }
 
 # Save flag to disk
 function set-flag()
 {
-	mkdir -p $steelsquid_folder/flags
-	echo "" > $steelsquid_folder/flags/$1
+    mkdir -p $steelsquid_folder/flags
+    echo "" > $steelsquid_folder/flags/$1
 }
 
 # Has set flag to disk
 function get-flag()
 {
-	if [ -f "$steelsquid_folder/flags/$1" ]; then
-		echo "true"
-	else
-		echo "false"
-	fi
+    if [ -f "$steelsquid_folder/flags/$1" ]; then
+        echo "true"
+    else
+        echo "false"
+    fi
 }
 
 # Delete flag from disk
 function del-flag()
 {
-	rm -f $steelsquid_folder/flags/$1 > /dev/null 2>&1
+    rm -f $steelsquid_folder/flags/$1 > /dev/null 2>&1
 }
 
 # Set that his script is installed
 function set_installed()
 {
-	set-flag "installed_$project_name"
+    set-flag "installed_$project_name"
 }
 
 # Is this script installed
 function get_installed()
 {
-	if [ $(get-flag "installed_$project_name") == "true" ]; then
-		echo "true"
-	else
-		echo "false"
-	fi
+    if [ $(get-flag "installed_$project_name") == "true" ]; then
+        echo "true"
+    else
+        echo "false"
+    fi
 }
 
 # Remove that his script is installed
 function del_installed()
 {
-	set-flag "installed_$project_name"
+    set-flag "installed_$project_name"
 }
 
 # Save paramater to disk
 function set-parameter()
 {
-	mkdir -p $steelsquid_folder/parameters
-	echo $2 > $steelsquid_folder/parameters/$1
+    mkdir -p $steelsquid_folder/parameters
+    echo $2 > $steelsquid_folder/parameters/$1
 }
 
 # Get paramater from disk
 function get-parameter()
 {
-	if [ -f "$steelsquid_folder/parameters/$1" ]; then
-		cat $steelsquid_folder/parameters/$1
-	else
-		echo ""
-	fi
+    if [ -f "$steelsquid_folder/parameters/$1" ]; then
+        cat $steelsquid_folder/parameters/$1
+    else
+        echo ""
+    fi
 }
 
 # Has set paramater to disk
 function has-parameter()
 {
-	if [ -f "$steelsquid_folder/parameters/$1" ]; then
-		echo "true"
-	else
-		echo "false"
-	fi
+    if [ -f "$steelsquid_folder/parameters/$1" ]; then
+        echo "true"
+    else
+        echo "false"
+    fi
 }
 
 # Delete paramater from disk
 function del-parameter()
 {
-	rm -f $steelsquid_folder/parameters/$1 > /dev/null 2>&1
+    rm -f $steelsquid_folder/parameters/$1 > /dev/null 2>&1
 }
 
 # Is this a raspberry pi
@@ -371,10 +378,10 @@ function is-raspberry-pi()
 {
     response=$(cat /proc/cpuinfo | grep BCM270)
     if [ "$response" == "" ]; then
-		echo "false"
-	else
-		echo "true"
-	fi
+        echo "false"
+    else
+        echo "true"
+    fi
 }
 
 
@@ -424,7 +431,7 @@ function help_upgrade()
 if [ "$in_parameter_1" == "help-upgrade" ]; then
     help_upgrade
     echo
-	exit 0
+    exit 0
 fi
 ##################################
 function help_network()
@@ -498,7 +505,7 @@ function help_network()
 if [ "$in_parameter_1" == "help-network" ]; then
     help_network
     echo
-	exit 0
+    exit 0
 fi
 ##################################
 function help_settings()
@@ -548,7 +555,7 @@ function help_settings()
 if [ "$in_parameter_1" == "help-settings" ]; then
     help_settings
     echo
-	exit 0
+    exit 0
 fi
 ##################################
 function help_servers()
@@ -631,7 +638,7 @@ function help_servers()
 if [ "$in_parameter_1" == "help-servers" ]; then
     help_servers
     echo
-	exit 0
+    exit 0
 fi
 ##################################
 function help_system()
@@ -666,6 +673,22 @@ function help_system()
     echb "steelsquid camera-off"
     echo "Disable the raspberry pi camera."
     echo "Will take effect on next reboot...."
+    echo 
+    echb "steelsquid monitor-0"
+    echo "Do not rotate the monitor picture"
+    echo "Will take effect on next reboot...."
+    echo 
+    echb "steelsquid monitor-180"
+    echo "Rotate the monitor image 180 degrees"
+    echo "Will take effect on next reboot...."
+    echo 
+    echb "steelsquid monitor-csi-on"
+    echo "Enable the CSI monitor"
+    echo "Will take effect on next reboot...."
+    echo 
+    echb "steelsquid monitor-csi-off"
+    echo "Disable the CSI monitor"
+    echo "Will take effect on next reboot...."
     if [ $(is-raspberry-pi) == "true" ]; then
         echo 
         echb "steelsquid gpu-mem"
@@ -680,7 +703,7 @@ function help_system()
 if [ "$in_parameter_1" == "help-system" ]; then
     help_system
     echo
-	exit 0
+    exit 0
 fi
 ##################################
 function help_other()
@@ -789,7 +812,7 @@ function help_other()
 if [ "$in_parameter_1" == "help-other" ]; then
     help_other
     echo
-	exit 0
+    exit 0
 fi
 ##################################
 function help_files()
@@ -972,7 +995,7 @@ function help_files()
 if [ "$in_parameter_1" == "help-files" ]; then
     help_files
     echo
-	exit 0
+    exit 0
 fi
 ##################################
 function help_develop()
@@ -1195,7 +1218,7 @@ function help_develop()
 if [ "$in_parameter_1" == "help-dev" ]; then
     help_develop
     echo
-	exit 0
+    exit 0
 fi
 ##################################
 function help_io()
@@ -1212,7 +1235,7 @@ function help_io()
 if [ "$in_parameter_1" == "help-pi" ]; then
     help_io
     echo
-	exit 0
+    exit 0
 fi
 ##################################
 function help_piio()
@@ -1229,7 +1252,7 @@ function help_piio()
 if [ "$in_parameter_1" == "help-piio" ]; then
     help_piio
     echo
-	exit 0
+    exit 0
 fi
 ##################################
 function help_utils()
@@ -1255,6 +1278,11 @@ function help_utils()
     echo 
     echb "steelsquid stream-pi-on"
     echo "Enable http streaming of Raspberry PI camera."
+    echo 
+    echb "steelsquid stream-udp <host>"
+    echo "Enable udp streaming of Raspberry PI camera."
+    echo "This devise has the camera and send to a server"
+    echo "Host=ip to the host that shall reseive the stream"
     echo 
     echb "steelsquid stream-off"
     echo "Disable streaming of camera."
@@ -1308,7 +1336,7 @@ function help_utils()
 if [ "$in_parameter_1" == "help-utils" ]; then
     help_utils
     echo
-	exit 0
+    exit 0
 fi
 ##################################
 function help_build()
@@ -1321,11 +1349,11 @@ function help_build()
     echb "############################################################################"
     echo 
     echb "1.  Download and extract the installer image"
-    echo "wget https://github.com/FooDeas/raspberrypi-ua-netinst/releases/download/v1.2.1/raspberrypi-ua-netinst-v1.2.1.img.xz"
-    echo "unxz raspberrypi-ua-netinst-v1.2.1.img.xz"
+    echo "wget https://github.com/FooDeas/raspberrypi-ua-netinst/releases/download/v1.4.1/raspberrypi-ua-netinst-v1.4.1.img.xz"
+    echo "unxz raspberrypi-ua-netinst-v1.4.1.img.xz"
     echo 
     echb "2.  Copy to sdcard"
-    echo "dd bs=4M if=raspberrypi-ua-netinst-v1.2.1.img of=/dev/sdb"
+    echo "dd bs=4M if=raspberrypi-ua-netinst-v1.4.1.img of=/dev/sdb"
     echo 
     echb "3.  Insert sdcard into raspberry and boot"
     echo "Must have the networkcabel connected (internet access)"
@@ -1416,7 +1444,7 @@ function help_build()
 if [ "$in_parameter_1" == "help-build" ]; then
     help_build
     echo
-	exit 0
+    exit 0
 fi
 ##################################
 function help_top()
@@ -1586,8 +1614,8 @@ function power_info()
     fi
 }
 if [ "$in_parameter_1" == "power-gpio" ]; then
-	power_info
-	exit 0
+    power_info
+    exit 0
 fi
 
 
@@ -1596,13 +1624,13 @@ fi
 ##################################################################################
 function power_off()
 {
-	log "Disable clean power off"
+    log "Disable clean power off"
     del-parameter "power_gpio"
     systemctl restart steelsquid
 }
 if [ "$in_parameter_1" == "power-gpio-off" ]; then
-	power_off
-	exit 0
+    power_off
+    exit 0
 fi
 
 
@@ -1622,8 +1650,8 @@ function modem_info()
     fi
 }
 if [ "$in_parameter_1" == "modem" ]; then
-	modem_info
-	exit 0
+    modem_info
+    exit 0
 fi
 
 
@@ -1632,15 +1660,15 @@ fi
 ##################################################################################
 function modem_on()
 {
-	log "Enable USB 3g/4g modem"
+    log "Enable USB 3g/4g modem"
     aptitude update
     aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install usb-modeswitch modemmanager
     set-flag "modem"
-	log-reboot
+    log-reboot
 }
 if [ "$in_parameter_1" == "modem-on" ]; then
-	modem_on
-	exit 0
+    modem_on
+    exit 0
 fi
 
 
@@ -1649,14 +1677,14 @@ fi
 ##################################################################################
 function modem_off()
 {
-	log "Disable USB 3g/4g modem"
+    log "Disable USB 3g/4g modem"
     aptitude -y purge usb-modeswitch modemmanager
     del-flag "modem"
-	log-reboot
+    log-reboot
 }
 if [ "$in_parameter_1" == "modem-off" ]; then
-	modem_off
-	exit 0
+    modem_off
+    exit 0
 fi
 
 
@@ -1676,8 +1704,8 @@ function log_info()
     fi
 }
 if [ "$in_parameter_1" == "log" ]; then
-	log_info
-	exit 0
+    log_info
+    exit 0
 fi
 
 
@@ -1686,7 +1714,7 @@ fi
 ##################################################################################
 function log_on()
 {
-	log "Enable systemd logging"
+    log "Enable systemd logging"
     set-flag "log"
     sed -i '/VERBOSE=/c\VERBOSE=yes' /etc/default/rcS
     echo "dwc_otg.fiq_fix_enable dwc_otg.lpm_enable=0 root=/dev/mmcblk0p2 rootfstype=ext4 rootflags=commit=1 elevator=noop noatime nodiratime rootwait logo.nologo" > /boot/cmdline.txt
@@ -1703,11 +1731,11 @@ function log_on()
     sed -i 's/errors=remount-ro,defaults,noatime,nodiratime /errors=remount-ro,defaults,noatime,sync,nodiratime /g' /etc/fstab
     sed -i '/tmpfs/d' /etc/fstab
     sed -i '/none /d' /etc/fstab
-	log-reboot
+    log-reboot
 }
 if [ "$in_parameter_1" == "log-on" ]; then
-	log_on
-	exit 0
+    log_on
+    exit 0
 fi
 
 
@@ -1716,7 +1744,7 @@ fi
 ##################################################################################
 function log_off()
 {
-	log "Disable systemd logging"
+    log "Disable systemd logging"
     del-flag "log"
     sed -i '/VERBOSE=/c\VERBOSE=no' /etc/default/rcS
     echo "dwc_otg.fiq_fix_enable dwc_otg.lpm_enable=0 root=/dev/mmcblk0p2 rootfstype=ext4 rootflags=commit=10,data=writeback elevator=noop noatime nodiratime data=writeback rootwait quiet loglevel=0 logo.nologo consoleblank=0" > /boot/cmdline.txt
@@ -1743,11 +1771,11 @@ function log_off()
     echo "none   /var/log   tmpfs   noatime,nodiratime,rw,mode=1777,nodev,nosuid,noexec,size=32m    0   0" >> /etc/fstab
     echo "none   /tmp       tmpfs   noatime,nodiratime,rw,mode=1777,nodev,nosuid,size=256m   0   0" >> /etc/fstab
     echo "/tmp   /var/tmp   none    noatime,nodiratime,rw,mode=1777,nodev,nosuid,bind        0   0" >> /etc/fstab
-	log-reboot
+    log-reboot
 }
 if [ "$in_parameter_1" == "log-off" ]; then
-	log_off
-	exit 0
+    log_off
+    exit 0
 fi
 
 
@@ -1779,8 +1807,8 @@ function lcd_info()
     fi
 }
 if [ "$in_parameter_1" == "lcd" ]; then
-	lcd_info
-	exit 0
+    lcd_info
+    exit 0
 fi
 
 
@@ -1790,17 +1818,17 @@ fi
 ##################################################################################
 function enable_lcd_nokia()
 {
-	log "Enable print IP and messges to nokia5110 LCD"
-	set-flag "nokia"
-	del-flag "hdd"
-	del-flag "auto"
-	del-flag "ssd"
+    log "Enable print IP and messges to nokia5110 LCD"
+    set-flag "nokia"
+    del-flag "hdd"
+    del-flag "auto"
+    del-flag "ssd"
     systemctl restart steelsquid
-	log-ok
+    log-ok
 }
 if [ "$in_parameter_1" == "lcd-nokia" ]; then
-	enable_lcd_nokia
-	exit 0
+    enable_lcd_nokia
+    exit 0
 fi
 
 
@@ -1809,17 +1837,17 @@ fi
 ##################################################################################
 function enable_lcd_auto()
 {
-	log "Enable print IP and messges to nokia5110 or HDD44780 LCD"
-	set-flag "auto"
-	del-flag "nokia"
-	del-flag "hdd"
-	del-flag "ssd"
+    log "Enable print IP and messges to nokia5110 or HDD44780 LCD"
+    set-flag "auto"
+    del-flag "nokia"
+    del-flag "hdd"
+    del-flag "ssd"
     systemctl restart steelsquid
-	log-ok
+    log-ok
 }
 if [ "$in_parameter_1" == "lcd-auto" ]; then
-	enable_lcd_auto
-	exit 0
+    enable_lcd_auto
+    exit 0
 fi
 
 
@@ -1828,17 +1856,17 @@ fi
 ##################################################################################
 function enable_lcd_hdd()
 {
-	log "Enable print IP and messges to HDD44780 LCD"
-	set-flag "hdd"
-	del-flag "nokia"
-	del-flag "auto"
-	del-flag "ssd"
+    log "Enable print IP and messges to HDD44780 LCD"
+    set-flag "hdd"
+    del-flag "nokia"
+    del-flag "auto"
+    del-flag "ssd"
     systemctl restart steelsquid
-	log-ok
+    log-ok
 }
 if [ "$in_parameter_1" == "lcd-hdd" ]; then
-	enable_lcd_hdd
-	exit 0
+    enable_lcd_hdd
+    exit 0
 fi
 
 
@@ -1847,17 +1875,17 @@ fi
 ##################################################################################
 function enable_lcd_ssd()
 {
-	log "Enable print IP and messges to ssd1306 oled LCD"
-	del-flag "hdd"
-	del-flag "nokia"
-	del-flag "auto"
-	set-flag "ssd"
+    log "Enable print IP and messges to ssd1306 oled LCD"
+    del-flag "hdd"
+    del-flag "nokia"
+    del-flag "auto"
+    set-flag "ssd"
     systemctl restart steelsquid
-	log-ok
+    log-ok
 }
 if [ "$in_parameter_1" == "lcd-ssd" ]; then
-	enable_lcd_ssd
-	exit 0
+    enable_lcd_ssd
+    exit 0
 fi
 
 
@@ -1866,17 +1894,17 @@ fi
 ##################################################################################
 function disable_lcd()
 {
-	log "Disable print IP and messges to LCD"
-	del-flag "nokia"
-	del-flag "hdd"
-	del-flag "auto"
-	del-flag "ssd"
+    log "Disable print IP and messges to LCD"
+    del-flag "nokia"
+    del-flag "hdd"
+    del-flag "auto"
+    del-flag "ssd"
     systemctl restart steelsquid
-	log-ok
+    log-ok
 }
 if [ "$in_parameter_1" == "lcd-off" ]; then
-	disable_lcd
-	exit 0
+    disable_lcd
+    exit 0
 fi
 
 
@@ -1894,8 +1922,8 @@ function contrast_lcd()
     fi
 }
 if [ "$in_parameter_1" == "lcd-contrast" ]; then
-	contrast_lcd
-	exit 0
+    contrast_lcd
+    exit 0
 fi
 
 
@@ -1916,8 +1944,8 @@ function camera_info()
     fi
 }
 if [ "$in_parameter_1" == "camera" ]; then
-	camera_info
-	exit 0
+    camera_info
+    exit 0
 fi
 
 
@@ -1927,8 +1955,8 @@ fi
 ##################################################################################
 function enable_camera()
 {
-	log "Enable camera"
-	set-flag "camera"
+    log "Enable camera"
+    set-flag "camera"
     sed -i '/^gpu_mem/ d' /boot/config.txt
     sed -i '/^start_x/ d' /boot/config.txt
     sed -i '/^start_file/ d' /boot/config.txt
@@ -1943,8 +1971,8 @@ function enable_camera()
     log-reboot
 }
 if [ "$in_parameter_1" == "camera-on" ]; then
-	enable_camera
-	exit 0
+    enable_camera
+    exit 0
 fi
 
 
@@ -1955,8 +1983,8 @@ fi
 ##################################################################################
 function disable_camera()
 {
-	log "Disable camera"
-	del-flag "camera"
+    log "Disable camera"
+    del-flag "camera"
     sed -i '/^gpu_mem/ d' /boot/config.txt
     sed -i '/^start_x/ d' /boot/config.txt
     sed -i '/^start_file/ d' /boot/config.txt
@@ -1967,8 +1995,84 @@ function disable_camera()
     log-reboot
 }
 if [ "$in_parameter_1" == "camera-off" ]; then
-	disable_camera
-	exit 0
+    disable_camera
+    exit 0
+fi
+
+
+##################################################################################
+# Rotate monitor 180
+##################################################################################
+function monitor_180()
+{
+    log "Rotate monitor 180"
+    set-flag "monitor_rotate_180"
+    sed -i '/^display_rotate/ d' /boot/config.txt
+    echo "display_rotate=2" >> /boot/config.txt 
+    log-reboot
+}
+if [ "$in_parameter_1" == "monitor-180" ]; then
+    monitor_180
+    exit 0
+fi
+
+
+
+
+##################################################################################
+# Monitor normal
+##################################################################################
+function monitor_0()
+{
+    log "Do not rotate monitor"
+    del-flag "monitor_rotate_180"
+    sed -i '/^display_rotate/ d' /boot/config.txt
+    log-reboot
+}
+if [ "$in_parameter_1" == "monitor-0" ]; then
+    monitor_0
+    exit 0
+fi
+
+
+##################################################################################
+# Enable the CSI monitor
+##################################################################################
+function monitor_csi_on()
+{
+    log "Enable the CSI monitor"
+    del-flag "disable_csi"
+    sed -i '/^display_default_lcd/ d' /boot/config.txt
+    sed -i '/^hdmi_force_hotplug/ d' /boot/config.txt
+    sed -i '/^hdmi_ignore_hotplug/ d' /boot/config.txt
+    echo "hdmi_ignore_hotplug=1" >> /boot/config.txt 
+    log-reboot
+}
+if [ "$in_parameter_1" == "monitor-csi-on" ]; then
+    monitor_csi_on
+    exit 0
+fi
+
+
+
+
+##################################################################################
+# Disable the CSI monitor
+##################################################################################
+function monitor_csi_off()
+{
+    log "Disable the CSI monitor"
+    set-flag "disable_csi"
+    sed -i '/^display_default_lcd/ d' /boot/config.txt
+    sed -i '/^hdmi_force_hotplug/ d' /boot/config.txt
+    sed -i '/^hdmi_ignore_hotplug/ d' /boot/config.txt
+    echo "display_default_lcd=0" >> /boot/config.txt 
+    echo "hdmi_force_hotplug=1" >> /boot/config.txt 
+    log-reboot
+}
+if [ "$in_parameter_1" == "monitor-csi-off" ]; then
+    monitor_csi_off
+    exit 0
 fi
 
 
@@ -1990,6 +2094,13 @@ function stream_info()
         echo "WEB: http://xxx.xxx.xxx.xxx/utils"
         echo "The Stream: http://xxx.xxx.xxx.xxx:8080/?action=stream"
         echo
+    elif [ $(has-parameter "stream-udp") == "false" ]; then
+        stream-udp=$(get-parameter "stream-udp")
+        echo
+        echo "Raspberry PI camera streaming: UDP client ($stream-udp)" 
+        echo "This devise has the camera and send to a server"
+        echo "Host=ip to the host that shall reseive the stream"
+        echo
     else
         echo
         echo "Camera streaming: Disabled"
@@ -1997,8 +2108,8 @@ function stream_info()
     fi
 }
 if [ "$in_parameter_1" == "stream" ]; then
-	stream_info
-	exit 0
+    stream_info
+    exit 0
 fi
 
 
@@ -2010,8 +2121,8 @@ function stream_frames()
     set-parameter "stream_frames" $in_parameter_2
 }
 if [ "$in_parameter_1" == "stream-frames" ]; then
-	stream_frames
-	exit 0
+    stream_frames
+    exit 0
 fi
 
 
@@ -2047,8 +2158,8 @@ function module()
     fi
 }
 if [ "$in_parameter_1" == "module" ]; then
-	module
-	exit 0
+    module
+    exit 0
 fi
 
 
@@ -2074,8 +2185,8 @@ function module_list()
     done
 }
 if [ "$in_parameter_1" == "module-list" ]; then
-	module_list
-	exit 0
+    module_list
+    exit 0
 fi
 
 
@@ -2103,8 +2214,8 @@ function module_list_nr()
     done
 }
 if [ "$in_parameter_1" == "module-list-nr" ]; then
-	module_list_nr
-	exit 0
+    module_list_nr
+    exit 0
 fi
 
 
@@ -2122,8 +2233,8 @@ function stream_port()
     fi
 }
 if [ "$in_parameter_1" == "stream-port" ]; then
-	stream_port
-	exit 0
+    stream_port
+    exit 0
 fi
 
 
@@ -2132,7 +2243,7 @@ fi
 ##################################################################################
 function stream_on()
 {
-	log "Enable streaming of USB camera"
+    log "Enable streaming of USB camera"
     dat=$(get-parameter "stream_frames")
         
     set-flag "stream"
@@ -2159,8 +2270,8 @@ function stream_on()
     log-reboot
 }
 if [ "$in_parameter_1" == "stream-on" ]; then
-	stream_on
-	exit 0
+    stream_on
+    exit 0
 fi
 
 ##################################################################################
@@ -2204,13 +2315,13 @@ function stream_on_pi_no_restart()
 ##################################################################################
 function stream_on_pi()
 {
-	log "Enable streaming of Raspberry PI camera"
+    log "Enable streaming of Raspberry PI camera"
     stream_on_pi_no_restart
     log-reboot
 }
 if [ "$in_parameter_1" == "stream-pi-on" ]; then
-	stream_on_pi
-	exit 0
+    stream_on_pi
+    exit 0
 fi
 
 
@@ -2221,24 +2332,42 @@ function stream_off_no_restart()
 {
     del-flag "stream"
     del-flag "stream-pi"
+    del-parameter "stream-udp"
     systemctl stop mjpgstreamer
     systemctl disable mjpgstreamer
     systemctl stop mjpgstreamerpi
     systemctl disable mjpgstreamerpi
 }
 
+
+##################################################################################
+# Enable streaming
+##################################################################################
+function stream_udp_client()
+{
+    log "Enable UDP streaming"
+    stream_off_no_restart
+    set-parameter "stream-udp" $in_parameter_2
+    log-reboot
+}
+if [ "$in_parameter_1" == "stream-udp" ]; then
+    stream_udp
+    exit 0
+fi
+
+
 ##################################################################################
 # Disable streaming of USB camera
 ##################################################################################
 function stream_off()
 {
-	log "Disable streaming of USB camera"
+    log "Disable streaming of USB camera"
     stream_off_no_restart
     log-reboot
 }
 if [ "$in_parameter_1" == "stream-off" ]; then
-	stream_off
-	exit 0
+    stream_off
+    exit 0
 fi
 
 
@@ -2247,7 +2376,7 @@ fi
 ##################################################################################
 function browser_on()
 {
-	log "Enable start browser  in fullscreen"
+    log "Enable start browser  in fullscreen"
     useradd browser
     mkhomedir_helper browser
     aptitude install -R xserver-xorg-video-fbturbo xserver-xorg xinit gconf-service libgconf-2-4 libgnome-keyring0 libxss1 xserver-xorg-input-multitouch xdg-utils lsb-release libexif12 libexif-gtk5 nodm
@@ -2274,8 +2403,8 @@ function browser_on()
     log-reboot
 }
 if [ "$in_parameter_1" == "browser-on" ]; then
-	browser_on
-	exit 0
+    browser_on
+    exit 0
 fi
 
 
@@ -2284,7 +2413,7 @@ fi
 ##################################################################################
 function browser_off()
 {
-	log "Disable start browser  in fullscreen"
+    log "Disable start browser  in fullscreen"
     systemctl stop nodm
     systemctl disable nodm
         
@@ -2293,8 +2422,8 @@ function browser_off()
     log-reboot
 }
 if [ "$in_parameter_1" == "browser-off" ]; then
-	browser_off
-	exit 0
+    browser_off
+    exit 0
 fi
 
 
@@ -2303,14 +2432,14 @@ fi
 ##################################################################################
 function browser_restart()
 {
-	log "Restart fullscreen browser"
+    log "Restart fullscreen browser"
     systemctl stop nodm
     sleep 2
     systemctl start nodm
 }
 if [ "$in_parameter_1" == "browser-restart" ]; then
-	browser_restart
-	exit 0
+    browser_restart
+    exit 0
 fi
 
 
@@ -2319,7 +2448,7 @@ fi
 ##################################################################################
 function mbrowser_on()
 {
-	log "Enable start browser  in fullscreen (midori)"
+    log "Enable start browser  in fullscreen (midori)"
     useradd browser
     mkhomedir_helper browser
     aptitude install -R midori matchbox-window-manager xserver-xorg-video-fbturbo xserver-xorg xinit gconf-service libgconf-2-4 libgnome-keyring0 libxss1 xserver-xorg-input-multitouch xdg-utils lsb-release libexif12 libexif-gtk5 nodm
@@ -2341,8 +2470,8 @@ function mbrowser_on()
     log-reboot
 }
 if [ "$in_parameter_1" == "mbrowser-on" ]; then
-	mbrowser_on
-	exit 0
+    mbrowser_on
+    exit 0
 fi
 
 
@@ -2351,7 +2480,7 @@ fi
 ##################################################################################
 function mbrowser_off()
 {
-	log "Disable start browser  in fullscreen (midori)"
+    log "Disable start browser  in fullscreen (midori)"
     systemctl stop nodm
     systemctl disable nodm
         
@@ -2360,8 +2489,8 @@ function mbrowser_off()
     log-reboot
 }
 if [ "$in_parameter_1" == "mbrowser-off" ]; then
-	mbrowser_off
-	exit 0
+    mbrowser_off
+    exit 0
 fi
 
 
@@ -2370,14 +2499,14 @@ fi
 ##################################################################################
 function mbrowser_restart()
 {
-	log "Restart fullscreen browser (midori)"
+    log "Restart fullscreen browser (midori)"
     systemctl stop nodm
     sleep 2
     systemctl start nodm
 }
 if [ "$in_parameter_1" == "mbrowser-restart" ]; then
-	mbrowser_restart
-	exit 0
+    mbrowser_restart
+    exit 0
 fi
 
 
@@ -2401,8 +2530,8 @@ function alarm_info()
     fi
 }
 if [ "$in_parameter_1" == "alarm" ]; then
-	alarm_info
-	exit 0
+    alarm_info
+    exit 0
 fi
 
 
@@ -2411,13 +2540,13 @@ fi
 ##################################################################################
 function alarm_on()
 {
-	log "Enable Alarm/Surveillance"
+    log "Enable Alarm/Surveillance"
     steelsquid module kiss_alarm on
-	log-ok
+    log-ok
 }
 if [ "$in_parameter_1" == "alarm-on" ]; then
-	alarm_on
-	exit 0
+    alarm_on
+    exit 0
 fi
 
 
@@ -2426,13 +2555,13 @@ fi
 ##################################################################################
 function alarm_off()
 {
-	log "Disable Alarm/Surveillance"
+    log "Disable Alarm/Surveillance"
     steelsquid module kiss_alarm off
-	log-ok
+    log-ok
 }
 if [ "$in_parameter_1" == "alarm-off" ]; then
-	alarm_off
-	exit 0
+    alarm_off
+    exit 0
 fi
 
 
@@ -2457,8 +2586,8 @@ function socket_info()
     fi
 }
 if [ "$in_parameter_1" == "socket" ]; then
-	socket_info
-	exit 0
+    socket_info
+    exit 0
 fi
 
 
@@ -2467,15 +2596,15 @@ fi
 ##################################################################################
 function socket_server()
 {
-	log "Enable socket connection as server"
+    log "Enable socket connection as server"
     set-flag "socket_server"
     del-parameter "socket_client"
-	systemctl restart steelsquid
+    systemctl restart steelsquid
     log-ok
 }
 if [ "$in_parameter_1" == "socket-server" ]; then 
-	socket_server
-	exit 0
+    socket_server
+    exit 0
 fi
 
 
@@ -2485,15 +2614,15 @@ fi
 ##################################################################################
 function socket_client()
 {
-	log "Enable socket connection as client"
+    log "Enable socket connection as client"
     del-flag "socket_server"
     set-parameter "socket_client" $in_parameter_2
-	systemctl restart steelsquid
+    systemctl restart steelsquid
     log-ok
 }
 if [ "$in_parameter_1" == "socket-client" ]; then
-	socket_client
-	exit 0
+    socket_client
+    exit 0
 fi
 
 
@@ -2502,15 +2631,15 @@ fi
 ##################################################################################
 function socket_off()
 {
-	log "Disable socket connection"
+    log "Disable socket connection"
     del-flag "socket_server"
     del-parameter "socket_client"
-	systemctl restart steelsquid
+    systemctl restart steelsquid
     log-ok
 }
 if [ "$in_parameter_1" == "socket-off" ]; then
-	socket_off
-	exit 0
+    socket_off
+    exit 0
 fi
 
 
@@ -2530,8 +2659,8 @@ function bluetooth_info()
     fi
 }
 if [ "$in_parameter_1" == "bluetooth" ]; then
-	bluetooth_info
-	exit 0
+    bluetooth_info
+    exit 0
 fi
 
 
@@ -2540,14 +2669,14 @@ fi
 ##################################################################################
 function bluetooth_on()
 {
-	log "Enable bluetooth pairing"
+    log "Enable bluetooth pairing"
     set-flag "bluetooth_pairing"
-	systemctl restart steelsquid
+    systemctl restart steelsquid
     log-ok
 }
 if [ "$in_parameter_1" == "bluetooth-on" ]; then
-	bluetooth_on
-	exit 0
+    bluetooth_on
+    exit 0
 fi
 
 
@@ -2556,14 +2685,14 @@ fi
 ##################################################################################
 function bluetooth_off()
 {
-	log "Disable bluetooth pairing"
+    log "Disable bluetooth pairing"
     del-flag "bluetooth_pairing"
-	systemctl restart steelsquid
+    systemctl restart steelsquid
     log-ok
 }
 if [ "$in_parameter_1" == "bluetooth-off" ]; then
-	bluetooth_off
-	exit 0
+    bluetooth_off
+    exit 0
 fi
 
 
@@ -2572,14 +2701,14 @@ fi
 ##################################################################################
 function bluetooth_pin()
 {
-	log "Set bluetooth pairing PIN"
+    log "Set bluetooth pairing PIN"
     set-parameter "bluetooth_pin" $in_parameter_2
-	systemctl restart steelsquid
+    systemctl restart steelsquid
     log-ok
 }
 if [ "$in_parameter_1" == "bluetooth-pin" ]; then
-	bluetooth_pin
-	exit 0
+    bluetooth_pin
+    exit 0
 fi
 
 
@@ -2599,8 +2728,8 @@ function rover_info()
     fi
 }
 if [ "$in_parameter_1" == "rover" ]; then
-	rover_info
-	exit 0
+    rover_info
+    exit 0
 fi
 
 
@@ -2609,13 +2738,13 @@ fi
 ##################################################################################
 function rover_on()
 {
-	log "Enable rover"
+    log "Enable rover"
     steelsquid module kiss_rover on
     log-ok
 }
 if [ "$in_parameter_1" == "rover-on" ]; then
-	rover_on
-	exit 0
+    rover_on
+    exit 0
 fi
 
 
@@ -2624,13 +2753,13 @@ fi
 ##################################################################################
 function rover_off()
 {
-	log "Disable rover"
+    log "Disable rover"
     steelsquid module kiss_rover off
     log-ok
 }
 if [ "$in_parameter_1" == "rover-off" ]; then
-	rover_off
-	exit 0
+    rover_off
+    exit 0
 fi
 
 
@@ -2650,8 +2779,8 @@ function piio_info()
     fi
 }
 if [ "$in_parameter_1" == "piio" ]; then
-	piio_info
-	exit 0
+    piio_info
+    exit 0
 fi
 
 
@@ -2660,13 +2789,13 @@ fi
 ##################################################################################
 function piio_on()
 {
-	log "Enable Steelsquid PIIO Board"
+    log "Enable Steelsquid PIIO Board"
     steelsquid module kiss_piio on
     log-ok
 }
 if [ "$in_parameter_1" == "piio-on" ]; then
-	piio_on
-	exit 0
+    piio_on
+    exit 0
 fi
 
 
@@ -2675,13 +2804,13 @@ fi
 ##################################################################################
 function piio_off()
 {
-	log "Disable Steelsquid PIIO Board"
+    log "Disable Steelsquid PIIO Board"
     steelsquid module kiss_piio off
     log-ok
 }
 if [ "$in_parameter_1" == "piio-off" ]; then
-	piio_off
-	exit 0
+    piio_off
+    exit 0
 fi
 
 
@@ -2695,8 +2824,8 @@ function restart_s()
     log-ok
 }
 if [ "$in_parameter_1" == "restart" ]; then
-	restart_s
-	exit 0
+    restart_s
+    exit 0
 fi
 
 
@@ -2716,8 +2845,8 @@ function ssh_info()
 }
 
 if [ "$in_parameter_1" == "ssh" ]; then
-	ssh_info
-	exit 0
+    ssh_info
+    exit 0
 fi
 
     
@@ -2727,7 +2856,7 @@ fi
 ##################################################################################
 function ssh_on()
 {
-	log "Enable SSH"
+    log "Enable SSH"
     sed -i "/PermitRootLogin /c\PermitRootLogin yes" /etc/ssh/sshd_config
     sed -i "/PrintLastLog /c\PrintLastLog no" /etc/ssh/sshd_config
     sed -i "/Protocol /c\Protocol 2" /etc/ssh/sshd_config
@@ -2736,13 +2865,13 @@ function ssh_on()
     systemctl enable ssh
     systemctl stop ssh
     systemctl start ssh
-	set-flag "ssh"
+    set-flag "ssh"
     log-ok
 }
 
 if [ "$in_parameter_1" == "ssh-on" ]; then
-	ssh_on
-	exit 0
+    ssh_on
+    exit 0
 fi
 
 
@@ -2751,17 +2880,17 @@ fi
 ##################################################################################
 function ssh_off()
 {
-	log "Disable SSH server"
+    log "Disable SSH server"
     systemctl stop ssh
     systemctl disable ssh
     systemctl mask ssh
-	del-flag "ssh"
+    del-flag "ssh"
     log-ok
 }
 
 if [ "$in_parameter_1" == "ssh-off" ]; then
-	ssh_off
-	exit 0
+    ssh_off
+    exit 0
 fi
 
 
@@ -2777,8 +2906,8 @@ function ssh_keys()
     log-ok
 }
 if [ "$in_parameter_1" == "ssh-keys" ]; then
-	ssh_keys
-	exit 0
+    ssh_keys
+    exit 0
 fi
 
 
@@ -2797,8 +2926,8 @@ function download_info()
 }
 
 if [ "$in_parameter_1" == "download" ]; then
-	download_info
-	exit 0
+    download_info
+    exit 0
 fi
 
 
@@ -2807,14 +2936,14 @@ fi
 ##################################################################################
 function download_start()
 {
-	log "start download server"
+    log "start download server"
     killall aria2c > /dev/null 2>&1
     aria2c -D --enable-rpc --listen-port=6881 --on-download-complete=aria2shoutok  --on-download-error=aria2shouterr --dir=$download_dir
     log-ok
 }
 if [ "$in_parameter_1" == "download-start" ]; then
-	download_start
-	exit 0
+    download_start
+    exit 0
 fi
 
 
@@ -2823,18 +2952,18 @@ fi
 ##################################################################################
 function download_on()
 {
-	log "Enable download server"
+    log "Enable download server"
     download_dir=$(get-parameter "download_dir")
     if [ -z "$download_dir" ]; then
         download_dir="/root/Downloads"
         set-parameter "download_dir" "/root/Downloads"
     fi
-	set-flag "download"
+    set-flag "download"
     download_start
 }
 if [ "$in_parameter_1" == "download-on" ]; then
-	download_on
-	exit 0
+    download_on
+    exit 0
 fi
 
 
@@ -2844,14 +2973,14 @@ fi
 ##################################################################################
 function download_off()
 {
-	log "Disable download server"
+    log "Disable download server"
     killall aria2c > /dev/null 2>&1
-	del-flag "download"
+    del-flag "download"
     log-ok
 }
 if [ "$in_parameter_1" == "download-off" ]; then
-	download_off
-	exit 0
+    download_off
+    exit 0
 fi
 
 
@@ -2870,8 +2999,8 @@ function download_dirr()
     fi
 }
 if [ "$in_parameter_1" == "download-dir" ]; then
-	download_dirr
-	exit 0
+    download_dirr
+    exit 0
 fi
 
 
@@ -2904,8 +3033,8 @@ function web_info()
 }
 
 if [ "$in_parameter_1" == "web" ]; then
-	web_info
-	exit 0
+    web_info
+    exit 0
 fi
 
 
@@ -2914,14 +3043,14 @@ fi
 ##################################################################################
 function web_port()
 {
-	log "Set webserver port"
-	$(set-parameter "web_port" $in_parameter_2)
+    log "Set webserver port"
+    $(set-parameter "web_port" $in_parameter_2)
     systemctl restart steelsquid
-	log-ok
+    log-ok
 }
 if [ "$in_parameter_1" == "web-port" ]; then
-	web_port
-	exit 0
+    web_port
+    exit 0
 fi
 
 
@@ -2931,14 +3060,14 @@ fi
 ##################################################################################
 function web_on()
 {
-	log "Enable web server"
-	set-flag "web"
+    log "Enable web server"
+    set-flag "web"
     systemctl restart steelsquid
-	log-ok
+    log-ok
 }
 if [ "$in_parameter_1" == "web-on" ]; then
-	web_on
-	exit 0
+    web_on
+    exit 0
 fi
 
 
@@ -2947,15 +3076,15 @@ fi
 ##################################################################################
 function web_off()
 {
-	log "Disable web server"
-	del-flag "web"
+    log "Disable web server"
+    del-flag "web"
     systemctl restart steelsquid
     log-ok
 }
 
 if [ "$in_parameter_1" == "web-off" ]; then
-	web_off
-	exit 0
+    web_off
+    exit 0
 fi
 
 
@@ -2965,13 +3094,13 @@ fi
 ##################################################################################
 function web_local_on()
 {
-	set-flag "web_local"
+    set-flag "web_local"
     systemctl restart steelsquid
-	log-ok
+    log-ok
 }
 if [ "$in_parameter_1" == "web-local-on" ]; then
-	web_local_on
-	exit 0
+    web_local_on
+    exit 0
 fi
 
 
@@ -2982,13 +3111,13 @@ fi
 ##################################################################################
 function web_local_off()
 {
-	del-flag "web_local"
+    del-flag "web_local"
     systemctl restart steelsquid
-	log-ok
+    log-ok
 }
 if [ "$in_parameter_1" == "web-local-off" ]; then
-	web_local_off
-	exit 0
+    web_local_off
+    exit 0
 fi
 
 
@@ -2997,14 +3126,14 @@ fi
 ##################################################################################
 function web_http()
 {
-	log "Use http in web interface"  
-	del-flag "web_https"
+    log "Use http in web interface"  
+    del-flag "web_https"
     systemctl restart steelsquid
-	log-ok
+    log-ok
 }
 if [ "$in_parameter_1" == "web-http" ]; then
-	web_http
-	exit 0
+    web_http
+    exit 0
 fi
 
 
@@ -3013,14 +3142,14 @@ fi
 ##################################################################################
 function web_https()
 {
-	log "Use https in web interface"   
-	set-flag "web_https"
+    log "Use https in web interface"   
+    set-flag "web_https"
     systemctl restart steelsquid
-	log-ok
+    log-ok
 }
 if [ "$in_parameter_1" == "web-https" ]; then
-	web_https
-	exit 0
+    web_https
+    exit 0
 fi
 
 
@@ -3029,14 +3158,14 @@ fi
 ##################################################################################
 function web_aut_on()
 {
-	log "Web authentication on"
-	set-flag "web_authentication"
+    log "Web authentication on"
+    set-flag "web_authentication"
     systemctl restart steelsquid
-	log-ok
+    log-ok
 }
 if [ "$in_parameter_1" == "web-aut-on" ]; then
-	web_aut_on
-	exit 0
+    web_aut_on
+    exit 0
 fi
 
 
@@ -3045,14 +3174,14 @@ fi
 ##################################################################################
 function web_aut_off()
 {
-	log "Web authentication off"
-	del-flag "web_authentication"
+    log "Web authentication off"
+    del-flag "web_authentication"
     systemctl restart steelsquid
-	log-ok
+    log-ok
 }
 if [ "$in_parameter_1" == "web-aut-off" ]; then
-	web_aut_off
-	exit 0
+    web_aut_off
+    exit 0
 fi
 
 
@@ -3113,10 +3242,10 @@ fi
 # Will ignore .img and .gz files
 ##################################################################################
 if [ "$in_parameter_1" == "archive" ]; then
-	log "Start to make gz file of content of current folder"
-	tar -czf $project_name.gz * --exclude='*.img' --exclude='*.gz' --exclude='*.iso'
-	exit-check
-	do-ok-exit "File created: $project_name.gz"
+    log "Start to make gz file of content of current folder"
+    tar -czf $project_name.gz * --exclude='*.img' --exclude='*.gz' --exclude='*.iso'
+    exit-check
+    do-ok-exit "File created: $project_name.gz"
 fi
 
 
@@ -3126,13 +3255,13 @@ fi
 # Create a <project_name>.gz file of the <project_name>.img or <project_name>.iso files in the folder this script is in. 
 ##################################################################################
 if [ "$in_parameter_1" == "compress" ]; then
-	log "Start to make gz file of .img file in current folder"
-	tar -czf $project_name.gz $project_name.img
-	if [ $? -ne 0 ]; then
-		tar -czf $project_name.gz $project_name.iso
-		exit-check
-	fi
-	do-ok-exit "File created: $project_name.gz"
+    log "Start to make gz file of .img file in current folder"
+    tar -czf $project_name.gz $project_name.img
+    if [ $? -ne 0 ]; then
+        tar -czf $project_name.gz $project_name.iso
+        exit-check
+    fi
+    do-ok-exit "File created: $project_name.gz"
 fi
 
 
@@ -3141,10 +3270,10 @@ fi
 # Extract a <project_name>.gz file in the folder this script is in. 
 ##################################################################################
 if [ "$in_parameter_1" == "extract" ]; then
-	log "Start to extract"
-	tar -zxf $project_name.gz -C ./
-	exit-check
-	do-ok-exit "Extract finished"
+    log "Start to extract"
+    tar -zxf $project_name.gz -C ./
+    exit-check
+    do-ok-exit "Extract finished"
 fi
 
 
@@ -3154,19 +3283,19 @@ fi
 # Download and extract a *.gz file from $img_iso. 
 ##################################################################################
 if [ "$in_parameter_1" == "download-img" ]; then
-	log "Start to download"
-	wget --progress=dot:giga --no-check-certificate -O ${project_name}_download.gz $img_iso
-	if [ $? -ne 0 ]; then
-		rm ${project_name}_download.gz > /dev/null 2>&1
-		do-err-exit "Unable to download from $img_iso"
-	else
-		log "Start to extract"
-		tar -zxf ${project_name}_download.gz -C ./
-		exit-check
-		rm ${project_name}_download.gz > /dev/null 2>&1
-		exit-check
-	fi
-	do-ok-exit "Download and extract finished"
+    log "Start to download"
+    wget --progress=dot:giga --no-check-certificate -O ${project_name}_download.gz $img_iso
+    if [ $? -ne 0 ]; then
+        rm ${project_name}_download.gz > /dev/null 2>&1
+        do-err-exit "Unable to download from $img_iso"
+    else
+        log "Start to extract"
+        tar -zxf ${project_name}_download.gz -C ./
+        exit-check
+        rm ${project_name}_download.gz > /dev/null 2>&1
+        exit-check
+    fi
+    do-ok-exit "Download and extract finished"
 fi
 
 
@@ -3175,10 +3304,10 @@ fi
 # Create a <project_name>.img from drive.
 ##################################################################################
 if [ "$in_parameter_1" == "read" ]; then
-	log "Start to create a <project name>.img from drive"
-	dd if=$in_parameter_2 of=./$project_name.img bs=4M count=875
-	exit-check
-	do-ok-exit "Img created: $project_name.img"
+    log "Start to create a <project name>.img from drive"
+    dd if=$in_parameter_2 of=./$project_name.img bs=4M count=875
+    exit-check
+    do-ok-exit "Img created: $project_name.img"
 fi
 
 
@@ -3188,10 +3317,10 @@ fi
 # Write <project_name>.img to drive.
 ##################################################################################
 if [ "$in_parameter_1" == "write" ]; then
-	log "Start to write a <project name>.img to drive"
-	dd bs=4M if=$project_name.img of=$in_parameter_2
-	exit-check
-	do-ok-exit "Write finished: $project_name.img"
+    log "Start to write a <project name>.img to drive"
+    dd bs=4M if=$project_name.img of=$in_parameter_2
+    exit-check
+    do-ok-exit "Write finished: $project_name.img"
 fi
 
 
@@ -3202,12 +3331,12 @@ fi
 ##################################################################################
 function install_steelsquid_python()
 {
-	log "Download and install python scripts"
+    log "Download and install python scripts"
     mkdir -p /opt/steelsquid/python/
     mkdir -p /opt/steelsquid/python/modules/
-	index=1
-	for var in "${python_downloads[@]}"
-	do
+    index=1
+    for var in "${python_downloads[@]}"
+    do
         expandf=""
         if [[ $var == */modules/* ]]; then
             expandf="/modules"
@@ -3238,12 +3367,12 @@ function install_steelsquid_python()
                 log "$var downloaded and installed"
             fi
         fi
-	done
-	log "Python scripts installed"
+    done
+    log "Python scripts installed"
 }
 function install_steelsquid_python_one()
 {
-	log "Download and install python script"
+    log "Download and install python script"
     var=${python_downloads[$in_parameter_2]}
     expandf=""
     if [[ $var == */modules/* ]]; then
@@ -3258,19 +3387,19 @@ function install_steelsquid_python_one()
         sudo ln -s /opt/steelsquid/python$expandf/$(basename $var) ${python_links[$in_parameter_2]}
         log "$var downloaded and installed"
     fi
-	log "Python script installed"
+    log "Python script installed"
 }
 function python_list()
 {
-	log "Python scripts"
-	index=1
+    log "Python scripts"
+    index=1
     line='    '
     echo
-	for var in "${python_downloads[@]}"
-	do
+    for var in "${python_downloads[@]}"
+    do
         echo "$index${line:${#index}}$(basename $var)"
-		index=$[$index +1]
-	done
+        index=$[$index +1]
+    done
     echo
 }
 
@@ -3280,12 +3409,12 @@ function python_list()
 ##################################################################################
 function install_web_files()
 {
-	log "Download and install web files"
+    log "Download and install web files"
     mkdir -p $steelsquid_folder/web
     
     index=0
-	for var in "${web_root_downloads[@]}"
-	do
+    for var in "${web_root_downloads[@]}"
+    do
         if [ $(get-flag "expanded") == "true" ]; then
             if [[ $var != *expand.html* ]]; then
                 sudo wget --progress=dot:giga --no-check-certificate -O $steelsquid_folder/web/$(basename $var) $var
@@ -3305,12 +3434,12 @@ function install_web_files()
                 log "$var downloaded and installed"
             fi
         fi
-	done
-	log "Web files installed"
+    done
+    log "Web files installed"
 }
 function install_web_files_first()
 {
-	log "Download and install first web files"
+    log "Download and install first web files"
     var=${web_root_downloads[0]}
     sudo wget --progress=dot:giga --no-check-certificate -O $steelsquid_folder/web/$(basename $var) $var
     if [ $? -ne 0 ]; then
@@ -3321,12 +3450,12 @@ function install_web_files_first()
 }
 
 if [ "$in_parameter_1" == "update-web" ]; then
-	install_web_files
-	exit 0
+    install_web_files
+    exit 0
 fi
 if [ "$in_parameter_1" == "update-web-first" ]; then
-	install_web_files_first
-	exit 0
+    install_web_files_first
+    exit 0
 fi
 if [ "$in_parameter_1" == "update-python" ]; then
     if [ "$in_parameter_2" == "" ]; then
@@ -3350,12 +3479,12 @@ fi
 ##################################################################################
 function install_img_files()
 {
-	log "Download and install img files"
+    log "Download and install img files"
     mkdir -p $steelsquid_folder/web/img
     
     index=0
-	for var in "${web_img_downloads[@]}"
-	do
+    for var in "${web_img_downloads[@]}"
+    do
         sudo wget --progress=dot:giga --no-check-certificate -O $steelsquid_folder/web/img/$(basename $var) $var
         index=$[$index +1]
         if [ $? -ne 0 ]; then
@@ -3363,12 +3492,12 @@ function install_img_files()
         else
             log "$var downloaded and installed"
         fi
-	done
-	log "Img files installed"
+    done
+    log "Img files installed"
 }
 if [ "$in_parameter_1" == "update-img" ]; then
-	install_img_files
-	exit 0
+    install_img_files
+    exit 0
 fi
 
 
@@ -3377,16 +3506,16 @@ fi
 ##################################################################################
 function install_all_files()
 {
-	log "Download and install all steelsquid files"
+    log "Download and install all steelsquid files"
     version_check
     install_steelsquid_python
     install_web_files
     install_img_files
-	log "OK"
+    log "OK"
 }
 if [ "$in_parameter_1" == "update-all" ]; then
-	install_all_files
-	exit 0
+    install_all_files
+    exit 0
 fi
 
 
@@ -3559,9 +3688,9 @@ fi
 # Select the geographic area in which you live.
 ##################################################################################
 if [ "$in_parameter_1" == "timezone" ]; then
-	log "Select the geographic area in which you live."
-	sudo dpkg-reconfigure tzdata
-	do-ok-exit "Geographic area selected."
+    log "Select the geographic area in which you live."
+    sudo dpkg-reconfigure tzdata
+    do-ok-exit "Geographic area selected."
 fi
 
 
@@ -3580,8 +3709,8 @@ fi
 ##################################################################################
 if [ "$in_parameter_1" == "hostname" ]; then
     echo $in_parameter_2 > /etc/hostname
-    sed -i "/$(hostname)/d" /etc/hosts
-    echo "127.0.0.1       $in_parameter_2" >> /etc/hosts
+    sed -i "/127.0.1.1/d" /etc/hosts
+    echo "127.0.1.1 $in_parameter_2" >> /etc/hosts
     exit 0
 fi
 
@@ -3602,8 +3731,8 @@ function development()
     fi
 }
 if [ "$in_parameter_1" == "dev" ]; then
-	development
-	exit 0
+    development
+    exit 0
 fi
 
 
@@ -3616,8 +3745,8 @@ function development_on()
     log-ok
 }
 if [ "$in_parameter_1" == "dev-on" ]; then
-	development_on
-	exit 0
+    development_on
+    exit 0
 fi
 
 
@@ -3630,8 +3759,8 @@ function development_off()
     log-ok
 }
 if [ "$in_parameter_1" == "dev-off" ]; then
-	development_off
-	exit 0
+    development_off
+    exit 0
 fi
 
 
@@ -3652,8 +3781,8 @@ function i2c_lock()
     fi
 }
 if [ "$in_parameter_1" == "i2c-lock" ]; then
-	i2c_lock
-	exit 0
+    i2c_lock
+    exit 0
 fi
 
 
@@ -3667,8 +3796,8 @@ function i2c_lock_on()
     log-ok
 }
 if [ "$in_parameter_1" == "i2c-lock-on" ]; then
-	i2c_lock_on
-	exit 0
+    i2c_lock_on
+    exit 0
 fi
 
 
@@ -3682,8 +3811,8 @@ function i2c_lock_off()
     log-ok
 }
 if [ "$in_parameter_1" == "i2c-lock-off" ]; then
-	i2c_lock_off
-	exit 0
+    i2c_lock_off
+    exit 0
 fi
 
 
@@ -3705,8 +3834,8 @@ function monitor_info()
     fi
 }
 if [ "$in_parameter_1" == "display" ]; then
-	monitor_info
-	exit 0
+    monitor_info
+    exit 0
 fi
 
 
@@ -3716,14 +3845,14 @@ fi
 ##################################################################################
 function enable_monitor()
 {
-	log "Enable display"
-	del-flag "disable_monitor"
+    log "Enable display"
+    del-flag "disable_monitor"
     /opt/vc/bin/tvservice -p
     log-ok
 }
 if [ "$in_parameter_1" == "display-on" ]; then
-	enable_monitor
-	exit 0
+    enable_monitor
+    exit 0
 fi
 
 
@@ -3734,14 +3863,14 @@ fi
 ##################################################################################
 function disable_monitor()
 {
-	log "Disable display"
-	set-flag "disable_monitor"
+    log "Disable display"
+    set-flag "disable_monitor"
     /opt/vc/bin/tvservice -o
     log-ok
 }
 if [ "$in_parameter_1" == "display-off" ]; then
-	disable_monitor
-	exit 0
+    disable_monitor
+    exit 0
 fi
 
 
@@ -3767,8 +3896,8 @@ function gpu_mem()
     fi
 }
 if [ "$in_parameter_1" == "gpu-mem" ]; then
-	gpu_mem
-	exit 0
+    gpu_mem
+    exit 0
 fi
 
 
@@ -3778,8 +3907,8 @@ fi
 # Trim the filesystem (SSD)
 ##################################################################################
 if [ "$in_parameter_1" == "trim" ]; then
-	for i in $(mount -l | awk '{ print $3; }'); do fstrim -v  ${i}; done
-	exit 0
+    for i in $(mount -l | awk '{ print $3; }'); do fstrim -v  ${i}; done
+    exit 0
 fi
 
 
@@ -3793,7 +3922,7 @@ function omxplayer_kill()
 }
 if [ "$in_parameter_1" == "omxplayer-kill" ]; then
     omxplayer_kill
-	exit 0
+    exit 0
 fi
 
 ##################################################################################
@@ -3806,7 +3935,7 @@ function git_commit()
 }
 if [ "$in_parameter_1" == "commit-git" ]; then
     git_commit
-	exit 0
+    exit 0
 fi
 
 
@@ -3819,14 +3948,14 @@ function local_commit()
     cp steelsquid-kiss-os.sh $steelsquid_folder/steelsquid-kiss-os.sh
     chmod 755 $steelsquid_folder/steelsquid-kiss-os.sh
 
-	for var in "${web_root_downloads[@]}"
-	do
+    for var in "${web_root_downloads[@]}"
+    do
         cp web/$(basename $var) $steelsquid_folder/web/$(basename $var)
-	done
+    done
 
-	index=1
-	for var in "${python_downloads[@]}"
-	do
+    index=1
+    for var in "${python_downloads[@]}"
+    do
         expand_folder=""
         if [[ $var == */modules/* ]]; then
             expand_folder="modules/"
@@ -3836,11 +3965,11 @@ function local_commit()
         rm ${python_links[$index]} > /dev/null 2>&1
         ln -s /opt/steelsquid/python$expandf/$(basename $var) ${python_links[$index]}
         index=$[$index +1]
-	done
+    done
 }
 if [ "$in_parameter_1" == "commit-local" ]; then
     local_commit
-	exit 0
+    exit 0
 fi
 
 
@@ -3882,21 +4011,21 @@ function remote_commit()
     
     cstring="steelsquid-kiss-os.sh" 
     for var in "${web_root_downloads[@]}"
-	do
+    do
         cstring="$cstring web/$(basename $var)"
     done
 
     for var in "${python_downloads[@]}"
-	do
+    do
         if [[ $var != */modules/* ]]; then
             cstring="$cstring $(basename $var)"
         fi
     done
     
-	log "Transmitting files"
+    log "Transmitting files"
     sshpass -p $base_remote_password scp -o StrictHostKeyChecking=no -P $base_remote_port $cstring $base_remote_user@$base_remote_server:/var/tmp
 
-	log "Installing files"
+    log "Installing files"
     sshpass -p $base_remote_password ssh -o StrictHostKeyChecking=no -p $base_remote_port $base_remote_user@$base_remote_server 'sudo steelsquid commit-remote-install'
 
     for var in "${extra_array[@]}"
@@ -3914,18 +4043,18 @@ function remote_commit()
 }
 if [ "$in_parameter_1" == "commit-remote" ]; then
     remote_commit
-	exit 0
+    exit 0
 fi
 if [ "$in_parameter_1" == "commit-remote-restart" ]; then
     remote_commit
-	log "Restarting service"
+    log "Restarting service"
     sshpass -p $base_remote_password ssh -o StrictHostKeyChecking=no -p $base_remote_port $base_remote_user@$base_remote_server 'sudo steelsquid restart'
-	exit 0
+    exit 0
 fi
 if [ "$in_parameter_1" == "remote-restart" ]; then
-	log "Restarting service"
+    log "Restarting service"
     sshpass -p $base_remote_password ssh -o StrictHostKeyChecking=no -p $base_remote_port $base_remote_user@$base_remote_server 'sudo steelsquid restart'
-	exit 0
+    exit 0
 fi
 
 
@@ -3937,14 +4066,14 @@ function remote_commit_install()
     cp /var/tmp/steelsquid-kiss-os.sh $steelsquid_folder/steelsquid-kiss-os.sh
     chmod 755 $steelsquid_folder/steelsquid-kiss-os.sh
 
-	for var in "${web_root_downloads[@]}"
-	do
+    for var in "${web_root_downloads[@]}"
+    do
         cp /var/tmp/$(basename $var) $steelsquid_folder/web/$(basename $var)
-	done
+    done
 
-	index=1
-	for var in "${python_downloads[@]}"
-	do
+    index=1
+    for var in "${python_downloads[@]}"
+    do
         expand_folder=""
         if [[ $var != */modules/* ]]; then
             cp /var/tmp/$(basename $var) /opt/steelsquid/python/$(basename $var)
@@ -3953,11 +4082,11 @@ function remote_commit_install()
             ln -s /opt/steelsquid/python/$(basename $var) ${python_links[$index]}
         fi
         index=$[$index +1]
-	done
+    done
 }
 if [ "$in_parameter_1" == "commit-remote-install" ]; then
     remote_commit_install
-	exit 0
+    exit 0
 fi
 
 ##################################################################################
@@ -3969,7 +4098,7 @@ function remote_synchronize()
 }
 if [ "$in_parameter_1" == "synchronize" ]; then
     remote_synchronize
-	exit 0
+    exit 0
 fi
 
 
@@ -3979,11 +4108,11 @@ fi
 ##################################################################################
 function version_check()
 {
-	log "Version check $project_name"
-	sudo mkdir -p $steelsquid_folder
-	exit-check
-	sudo mkdir -p $home_folder
-	exit-check
+    log "Version check $project_name"
+    sudo mkdir -p $steelsquid_folder
+    exit-check
+    sudo mkdir -p $home_folder
+    exit-check
     case $download in
         *.sh)
             log "Download and copy $project_name to $download"
@@ -4039,9 +4168,9 @@ function version_check()
 # Update the steelsquid script
 ##################################################################################
 if [ "$in_parameter_1" == "update" ]; then
-	version_check
+    version_check
     echo
-	exit 0
+    exit 0
 fi
 
 
@@ -4049,10 +4178,10 @@ fi
 # Install/upgrade the system
 ##################################################################################
 if [ "$in_parameter_1" == "upgrade" ]; then
-	version_check
-	sudo $home_folder/$project_name.sh skip
+    version_check
+    sudo $home_folder/$project_name.sh skip
     echo
-	exit 0
+    exit 0
 fi
 
 
@@ -4061,7 +4190,7 @@ fi
 # Only continue if script is upgraded
 ##################################################################################
 if [ $(get_uppdated) == "true" ]; then
-	cd $home_folder
+    cd $home_folder
 else
     help_top
     echo 
@@ -4074,9 +4203,9 @@ fi
 # Starting to do the job
 ##################################################################################
 if [ $(get_installed) == "true" ]; then
-	log "Upgrade $project_name"
+    log "Upgrade $project_name"
 else
-	log "Install $project_name"
+    log "Install $project_name"
     set-flag "web"
     set-flag "web_authentication"
     set-flag "ssh"
@@ -4109,9 +4238,9 @@ log "Repository updated"
 # Remove and install packages
 ##################################################################################
 if [ $(get_installed) == "false" ]; then
-	log "Remove and install packages"
-    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv i2c-tools alsa-firmware-loaders alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree expeyes-firmware-dev firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-samsung firmware-ti-connectivity firmware-zd1211 libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer sigrok-firmware-fx2lafw libraspberrypi-bin libraspberrypi-dev fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw console-data read-edid apt-utils libraspberrypi0 python-spidev
-    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv i2c-tools alsa-firmware-loaders alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree expeyes-firmware-dev firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-samsung firmware-ti-connectivity firmware-zd1211 libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer sigrok-firmware-fx2lafw libraspberrypi-bin libraspberrypi-dev fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw console-data read-edid apt-utils libraspberrypi0 python-spidev
+    log "Remove and install packages"
+    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv i2c-tools alsa-firmware-loaders alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree expeyes-firmware-dev firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-samsung firmware-ti-connectivity firmware-zd1211 libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer sigrok-firmware-fx2lafw libraspberrypi-bin libraspberrypi-dev fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw console-data read-edid apt-utils libraspberrypi0 python-spidev netcat
+    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv i2c-tools alsa-firmware-loaders alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree expeyes-firmware-dev firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-samsung firmware-ti-connectivity firmware-zd1211 libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer sigrok-firmware-fx2lafw libraspberrypi-bin libraspberrypi-dev fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw console-data read-edid apt-utils libraspberrypi0 python-spidev netcat
     exit-check 
     aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install build-essential python-dbus python-pexpect python-dev python-setuptools python-pip python-pam python-smbus psmisc git libudev-dev libmount-dev python-imaging pkg-config libglib2.0-dev whois
     aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install build-essential python-dbus python-pexpect python-dev python-setuptools python-pip python-pam python-smbus psmisc git libudev-dev libmount-dev python-imaging pkg-config libglib2.0-dev whois
@@ -4122,10 +4251,13 @@ if [ $(get_installed) == "false" ]; then
     aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install telnet secure-delete beep sysstat openssh-client cifs-utils smbclient keyutils sshfs curl samba-common lsof mc fgetty ftp htop elinks screenie nload mtr-tiny lzma zip unzip unrar-free p7zip-full bzip2 whiptail parted lua5.1 aria2 python-serial python-numpy python2.7-numpy python-paramiko zlib1g zlib1g-dev libfreetype6-dev ttf-anonymous-pro python-picamera espeak python-espeak
     aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install telnet secure-delete beep sysstat openssh-client cifs-utils smbclient keyutils sshfs curl samba-common lsof mc fgetty ftp htop elinks screenie nload mtr-tiny lzma zip unzip unrar-free p7zip-full bzip2 whiptail parted lua5.1 aria2 python-serial python-numpy python2.7-numpy python-paramiko zlib1g zlib1g-dev libfreetype6-dev ttf-anonymous-pro python-picamera espeak python-espeak
     exit-check 
+    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install gstreamer1.0-x gstreamer1.0-tools gstreamer1.0-plugins-bad gstreamer1.0-plugins-good gstreamer1.0-plugins-ugly gstreamer1.0-libav gstreamer1.0-pulseaudio gstreamer1.0-omx
+    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install gstreamer1.0-x gstreamer1.0-tools gstreamer1.0-plugins-bad gstreamer1.0-plugins-good gstreamer1.0-plugins-ugly gstreamer1.0-libav gstreamer1.0-pulseaudio gstreamer1.0-omx
+    exit-check 
     aptitude -y purge cron ifupdown rsyslog vim-common vim-tiny hdparm keyboard-configuration console-setup console-setup-linux
     aptitude -y purge cron ifupdown rsyslog vim-common vim-tiny hdparm keyboard-configuration console-setup console-setup-linux
     exit-check 
-	log "Packages removed and installed"
+    log "Packages removed and installed"
 fi
 
 
@@ -4201,24 +4333,24 @@ ln -s /opt/steelsquid/python/steelsquid_kiss_start.py /usr/bin/event
 if [ $(is-raspberry-pi) == "true" ]; then
     log "Install Adafruit-Raspberry-Pi-Python-Code"
     cd /tmp
-	git clone https://github.com/adafruit/Adafruit_Python_GPIO.git    
-	cd Adafruit_Python_GPIO
-	python setup.py install -f -O2
+    git clone https://github.com/adafruit/Adafruit_Python_GPIO.git    
+    cd Adafruit_Python_GPIO
+    python setup.py install -f -O2
 
     cd /tmp
-	git clone https://github.com/adafruit/Adafruit_Python_PCA9685.git
-	cd Adafruit_Python_PCA9685
-	python setup.py install -f -O2
+    git clone https://github.com/adafruit/Adafruit_Python_PCA9685.git
+    cd Adafruit_Python_PCA9685
+    python setup.py install -f -O2
 
     cd /tmp
-	git clone https://github.com/adafruit/Adafruit_Python_ADS1x15.git
-	cd Adafruit_Python_ADS1x15
-	python setup.py install -f -O2
+    git clone https://github.com/adafruit/Adafruit_Python_ADS1x15.git
+    cd Adafruit_Python_ADS1x15
+    python setup.py install -f -O2
 
     cd /tmp
-	git clone https://github.com/adafruit/Adafruit_Python_MCP4725.git
-	cd Adafruit_Python_MCP4725
-	python setup.py install -f -O2
+    git clone https://github.com/adafruit/Adafruit_Python_MCP4725.git
+    cd Adafruit_Python_MCP4725
+    python setup.py install -f -O2
 
     cd /tmp
     git clone https://github.com/adafruit/Adafruit_Nokia_LCD.git
@@ -4598,8 +4730,8 @@ sed -i '/PermitRootLogin /c\PermitRootLogin yes' /etc/ssh/sshd_config
 log "Enable i2c"
 response=$(grep -lir "i2c-bcm2708" /etc/modules)
 if [ "$response" != "/etc/modules" ]; then
-	echo "i2c-bcm2708" >> /etc/modules
-	echo "i2c-dev" >> /etc/modules
+    echo "i2c-bcm2708" >> /etc/modules
+    echo "i2c-dev" >> /etc/modules
 fi
 log "I2c enabled"
 
@@ -4627,7 +4759,7 @@ echo "user_allow_other" >> /etc/fuse.conf
 log "Removing some logsave stuff"
 response=$(grep -lir "killall -9 logsave" /etc/init.d/sendsigs)
 if [ "$response" != "/etc/init.d/sendsigs" ]; then
-	sed -i '/Asking all remaining processes to terminate/ a\        killall -9 logsave' /etc/init.d/sendsigs
+    sed -i '/Asking all remaining processes to terminate/ a\        killall -9 logsave' /etc/init.d/sendsigs
 fi
 log "Removing some logsave stuff fixed"
 
@@ -4731,9 +4863,9 @@ echo "Before=shutdown.target reboot.target halt.target" >> /etc/systemd/system/s
 echo "" >> /etc/systemd/system/steelsquid.service
 echo "[Service]" >> /etc/systemd/system/steelsquid.service
 echo "ExecStart=/usr/bin/steelsquid-boot start" >> /etc/systemd/system/steelsquid.service
+echo "ExecStop=/usr/bin/steelsquid-boot stop" >> /etc/systemd/system/steelsquid.service
 echo "ExecStopPost=/usr/bin/shout \"Steelsquid service closed.\nIf you shutdown the computer or restart the steelsquid service this is OK.\nIf this is a error (nothing more happens) it is probably in steelsquid_kiss_boot.py\nYou can enable logging for more info: steelsquid log-on\nAlso sheck if steelsquid-boot proces is running: ps -ef|grep steelsquid-boot\nIf not try: steelsquid-boot start\nAnd check for errors...\"" >> /etc/systemd/system/steelsquid.service
-echo "KillSignal=SIGINT" >> /etc/systemd/system/steelsquid.service
-echo "TimeoutStopSec=4" >> /etc/systemd/system/steelsquid.service
+#echo "KillMode=mixed" >> /etc/systemd/system/steelsquid.service
 echo "" >> /etc/systemd/system/steelsquid.service
 echo "[Install]" >> /etc/systemd/system/steelsquid.service
 echo "WantedBy=multi-user.target" >> /etc/systemd/system/steelsquid.service
@@ -5363,9 +5495,9 @@ echo "gpu_mem=$mem" >> /boot/config.txt
 # Enable disable ssh
 ##################################################################################
 if [ $(get-flag "ssh") == "true" ]; then
-	ssh_on
+    ssh_on
 else
-	ssh_off
+    ssh_off
 fi
 
 
@@ -5373,9 +5505,9 @@ fi
 # Enable disable development
 ##################################################################################
 if [ $(get-flag "development") == "true" ]; then
-	development_on
+    development_on
 else
-	development_off
+    development_off
 fi
 
 
