@@ -1146,16 +1146,15 @@ def sabertooth_motor_speed(left, right, the_port="/dev/ttyAMA0"):
         100 = 100% forward speed
     the_port: /dev/ttyAMA0, the_port=/dev/ttyUSB0...
     '''
-    with steelsquid_i2c.Lock():
-        left = int(left)
-        right = int(right)
-        global sabertooth
-        if sabertooth==None:
-            import steelsquid_sabertooth
-            if the_port == None:
-                the_port = steelsquid_utils.get_parameter("sabertooth_port", "")
-            sabertooth = steelsquid_sabertooth.SteelsquidSabertooth(serial_port=the_port)
-        sabertooth.set_dc_speed(left, right)
+    left = int(left)
+    right = int(right)
+    global sabertooth
+    if sabertooth==None:
+        import steelsquid_sabertooth
+        if the_port == None:
+            the_port = steelsquid_utils.get_parameter("sabertooth_port", "")
+        sabertooth = steelsquid_sabertooth.SteelsquidSabertooth(serial_port=the_port)
+    sabertooth.set_dc_speed(left, right)
     
 
 def trex_reset():
@@ -1602,11 +1601,10 @@ def __po12_adc(channel, sleep=PO12_DEFAULT_SLEEP):
             time.sleep(sleep)        
             return steelsquid_i2c.read_16_bit_command(0x34, 1, [channel], little_endian=False)
         except:
-            if not po12_adc_has_setup:
-                po12_adc_has_setup=True
-                po12_adc_pullup(False)
-                time.sleep(0.01)
-                po12_adc_vref(None)
+            po12_adc_has_setup=True
+            po12_adc_pullup(False)
+            time.sleep(0.01)
+            po12_adc_vref(None)
             channel = int(channel)
             time.sleep(sleep)        
             return steelsquid_i2c.read_16_bit_command(0x34, 1, [channel], little_endian=False)
@@ -1907,6 +1905,14 @@ def mcp_event_callback_method(address, pin, status):
     steelsquid_utils.log("Address " + str(address) + ", Pin" + str(pin) + " = " + str(status))
     
     
+def _dht11_temp_hum(gpio): 
+    '''
+    Read temperatur and humidity from a DHT11 sensor
+    Using this: http://www.uugear.com/portfolio/read-dht1122-temperature-humidity-sensor-from-raspberry-pi/
+    '''
+
+    
+
 if __name__ == '__main__':
     if len(sys.argv)==1:
         from steelsquid_utils import printb

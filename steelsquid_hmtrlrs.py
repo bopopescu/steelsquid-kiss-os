@@ -57,6 +57,9 @@ MODE_SLOW = "MODE_SLOW"
 # Medum range and medium speed
 MODE_MEDIUM = "MODE_MEDIUM"
 
+# Medum range and medium speed
+MODE_MEDIUM_FAST = "MODE_MEDIUM_FAST"
+
 # Fast speed but short range
 MODE_FAST = "MODE_FAST"
 
@@ -80,7 +83,7 @@ serial_port_ = None
 baudrate_=38400
 
 # Mode
-mode_=MODE_MEDIUM
+mode_=MODE_MEDIUM_FAST
 
 # Request
 ENQ = chr(0x05)
@@ -116,7 +119,7 @@ resetup_count_max = 4
 disable = False
 
 
-def setup(serial_port="/dev/ttyAMA0", config_gpio=25, reset_gpio=23, baudrate=38400, mode=MODE_FAST, timeout_mutipple=1):
+def setup(serial_port="/dev/ttyAMA0", config_gpio=25, reset_gpio=23, baudrate=38400, mode=MODE_MEDIUM_FAST, timeout_mutipple=1):
     '''
     Setup the serial interface
     serial_port: The serial port (/dev/ttyAMA0, /dev/ttyUSB1...)
@@ -145,7 +148,7 @@ def setup(serial_port="/dev/ttyAMA0", config_gpio=25, reset_gpio=23, baudrate=38
     mode_ = mode
     
     # Create the serial interface
-    ser = serial.Serial(serial_port, 9600, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=8, writeTimeout=0, dsrdtr=True, timeout=0.5)
+    ser = serial.Serial(serial_port, 9600, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=8, writeTimeout=0, dsrdtr=True, timeout=1)
     time.sleep(STRANS_SLEEP)
     # Set reset hight (low will reset the device)
     steelsquid_pi.gpio_set(reset_gpio, True)
@@ -162,10 +165,10 @@ def setup(serial_port="/dev/ttyAMA0", config_gpio=25, reset_gpio=23, baudrate=38
         pass
     if mode==MODE_SLOW:
         ser = serial.Serial(serial_port, baudrate, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=8, writeTimeout=0, dsrdtr=True, timeout=7*timeout_mutipple)
-    elif mode==MODE_MEDIUM:
-        ser = serial.Serial(serial_port, baudrate, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=8, writeTimeout=0, dsrdtr=True, timeout=0.3*timeout_mutipple)
+    elif mode==MODE_MEDIUM or mode==MODE_MEDIUM_FAST:
+        ser = serial.Serial(serial_port, baudrate, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=8, writeTimeout=0, dsrdtr=True, timeout=0.8*timeout_mutipple)
     elif mode==MODE_FAST:
-        ser = serial.Serial(serial_port, baudrate, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=8, writeTimeout=0, dsrdtr=True, timeout=0.2*timeout_mutipple)
+        ser = serial.Serial(serial_port, baudrate, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=8, writeTimeout=0, dsrdtr=True, timeout=0.4*timeout_mutipple)
     time.sleep(STRANS_SLEEP)
     # Set the HM-TRLR-S in communication mode
     steelsquid_pi.gpio_set(config_gpio, True)
@@ -187,6 +190,11 @@ def setup(serial_port="/dev/ttyAMA0", config_gpio=25, reset_gpio=23, baudrate=38
         _send_command("AT+MODE=0")
         _send_command("AT+LRSBW=8")
         _send_command("AT+LRSF=9")
+    elif mode==MODE_MEDIUM_FAST:
+        # Set LoRa
+        _send_command("AT+MODE=0")
+        _send_command("AT+LRSBW=9")
+        _send_command("AT+LRSF=7")
     elif mode==MODE_FAST:
         # Set FSK 
         _send_command("AT+MODE=2")

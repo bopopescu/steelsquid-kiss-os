@@ -18,6 +18,7 @@ import time
 import steelsquid_utils
 import math
 import sys
+import serial
 
 
 class SteelsquidSabertooth():
@@ -25,7 +26,7 @@ class SteelsquidSabertooth():
     The server
     '''
 
-    def __init__(self, serial_port="/dev/ttyS0", baudrate=2400, speed_min_add = 5):
+    def __init__(self, serial_port="/dev/ttyS0", baudrate=2400, speed_min_add = 0):
         '''
         Constructor.
         @param speed_min_add: Motor speed can be 1 to 63. if this is 10 then the lowest speed is 10 not 1
@@ -46,34 +47,37 @@ class SteelsquidSabertooth():
         0 = no speed
         100 = 100% forward speed
         '''
-        if left != None:
-            left = int(left)
-            if left < -100 or left > 100:
-                raise ValueError("Must be -100 to +100")
-            if left > 0:
-                value = int(math.ceil(self.speed_interval*(float(left)/100)))
-                left = 64 + self.speed_min_add + value
-            elif left < 0:
-                value = int(math.ceil(self.speed_interval*(float(left*-1)/100)))
-                left = 64 - (self.speed_min_add + value)
-            else:
-                left = 64
-            
-            self.ser.write(chr(left))
-        if right != None:
-            right = int(right)
-            if right < -100 or right > 100:
-                raise ValueError("Must be -100 to +100")
-            if right > 0:
-                value = int(math.ceil(self.speed_interval*(float(right)/100)))
-                right = 192 + self.speed_min_add + value
-            elif right < 0:
-                value = int(math.ceil(self.speed_interval*(float(right*-1)/100)))
-                right = 192 - (self.speed_min_add + value)
-            else:
-                right = 192
-            self.ser.write(chr(right))
+        if left != None and right != None and left==0 and right==0:
+            self.ser.write(chr(0))
+        else:
+            if left != None:
+                left = int(left)
+                if left < -100 or left > 100:
+                    raise ValueError("Must be -100 to +100")
+                if left > 0:
+                    value = int(math.ceil(self.speed_interval*(float(left)/100)))
+                    left = 64 + self.speed_min_add + value
+                elif left < 0:
+                    value = int(math.ceil(self.speed_interval*(float(left*-1)/100)))
+                    left = 64 - (self.speed_min_add + value)
+                else:
+                    left = 64
+                self.ser.write(chr(left))
+            if right != None:
+                right = int(right)
+                if right < -100 or right > 100:
+                    raise ValueError("Must be -100 to +100")
+                if right > 0:
+                    value = int(math.ceil(self.speed_interval*(float(right)/100)))
+                    right = 192 + self.speed_min_add + value
+                elif right < 0:
+                    value = int(math.ceil(self.speed_interval*(float(right*-1)/100)))
+                    right = 192 - (self.speed_min_add + value)
+                else:
+                    right = 192
+                self.ser.write(chr(right))
         self.ser.flush()
+        #print str(left)+"|"+str(right)
         
 
     def stop(self):

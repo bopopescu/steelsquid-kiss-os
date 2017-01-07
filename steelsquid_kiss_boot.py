@@ -41,7 +41,9 @@ if len(sys.argv)==2 and sys.argv[1]=="start":
     import steelsquid_nrf24
     import steelsquid_hmtrlrs
     import types    
-    import datetime    
+    import datetime   
+    import steelsquid_tcp_radio 
+    import socket
 else:
     import threading
     import os
@@ -51,11 +53,19 @@ running = True
 
 event = threading.Event()
 radio_event = threading.Event()    
+check_on_push = True    
+
+tcp_radio_event = threading.Event()    
+tcp_check_on_push = True    
 
 has_clean = False
 
 # Where to look for task events
 system_event_dir = "/run/shm/steelsquid"
+    
+# Is the tcp_radio enabled
+tcp_radio_enabled = False
+
     
 class Logger(object):
     def write(self, message):
@@ -319,7 +329,7 @@ def do_umount():
         steelsquid_utils.umount(local, "samba", ip, remote)
 
 
-def on_network(net, wired, wifi, access_point, wan):
+def on_network(net, wired, usb, wifi, access_point, wan):
     '''
     On network update
     '''
@@ -327,11 +337,12 @@ def on_network(net, wired, wifi, access_point, wan):
     stat = net=="up"
     steelsquid_kiss_global.last_net = stat
     steelsquid_kiss_global.last_lan_ip = wired
+    steelsquid_kiss_global.last_usb_ip = usb
     steelsquid_kiss_global.last_wifi_name = access_point
     steelsquid_kiss_global.last_wifi_ip = wifi
     steelsquid_kiss_global.last_wan_ip = wan
     no_net_to_lcd = steelsquid_utils.get_flag("no_net_to_lcd")
-    steelsquid_kiss_global._execute_all_modules("SYSTEM", "on_network", (stat, wired, access_point, wifi, wan,))
+    steelsquid_kiss_global._execute_all_modules("SYSTEM", "on_network", (stat, wired, usb, access_point, wifi, wan,))
     if steelsquid_utils.get_flag("bluetooth_pairing"):
         answer = steelsquid_utils.execute_system_command(["hciconfig", "-a"])
         for line in answer:
@@ -354,14 +365,21 @@ def on_network(net, wired, wifi, access_point, wan):
             if wired!="---":
                 shout_string.append("\nWIRED: ")
                 shout_string.append(wired)
+            if usb!="---":
+                shout_string.append("\nUSB: ")
+                shout_string.append(usb)
             if wan != "---":
                 shout_string.append("\nWAN: ")
                 shout_string.append(wan)
             if len(bluetooth)!=0:
                 shout_string.append(bluetooth)
         else:
-            shout_string.append("WIRED: ")
-            shout_string.append(wired)
+            if wired!="---":
+                shout_string.append("\nWIRED: ")
+                shout_string.append(wired)
+            if usb!="---":
+                shout_string.append("\nUSB: ")
+                shout_string.append(usb)
             if wan != "---":
                 shout_string.append("\nWAN: ")
                 shout_string.append(wan)
@@ -461,6 +479,11 @@ def _cleanup():
         if steelsquid_utils.get_flag("hmtrlrs_server") or steelsquid_utils.get_flag("hmtrlrs_client"):
             try:
                 steelsquid_hmtrlrs.stop()
+            except:
+                steelsquid_utils.shout()
+        if steelsquid_utils.get_flag("tcp_radio_server") or steelsquid_utils.get_flag("tcp_radio_client"):
+            try:
+                steelsquid_tcp_radio.stop()
             except:
                 steelsquid_utils.shout()
         if steelsquid_utils.get_flag("socket_connection"):
@@ -603,6 +626,7 @@ def task_event_thread(command, parameters=None):
         # Network event
         elif command == "network":
             wired = steelsquid_utils.network_ip_wired()
+            usb = steelsquid_utils.network_ip_usb()
             wifi = steelsquid_utils.network_ip_wifi()
             wan = "---"
             net = "---"
@@ -617,7 +641,7 @@ def task_event_thread(command, parameters=None):
                     access = steelsquid_nm.get_connected_access_point_name()
                 except:
                     pass
-            on_network(net, wired, wifi, access, wan)
+            on_network(net, wired, usb, wifi, access, wan)
         elif command == "mount":
             the_type = parameters[0]
             the_remote = parameters[1]
@@ -728,6 +752,7 @@ def hmtrlrs_client_thread():
     '''
     Start client thread for the HM-TRLR-S transiver 
     '''
+    global check_on_push
     sync_class = steelsquid_kiss_global._get_first_modules_class("RADIO_SYNC")
     if sync_class!=None:
         sync_class_client = steelsquid_kiss_global._get_first_modules_class("RADIO_SYNC", "CLIENT")
@@ -755,78 +780,83 @@ def hmtrlrs_client_thread():
     if sync_class==None and push_classes[0]==None and push_classes[1]==None and push_classes[2]==None and push_classes[3]==None:
         return
     while running:
-        do_sleep = True
-        # Execute the push...
-        for pc in push_classes:
-            push_class_nr = pc[0]
-            push_class = pc[1]
-            members = pc[2]
-            try:
-                # Check if send the push
-                do_push = False
+        if not tcp_radio_enabled:
+            do_sleep = True
+            # Execute the push...
+            for pc in push_classes:
+                push_class_nr = pc[0]
+                push_class = pc[1]
+                members = pc[2]
                 try:
-                    do_push = push_class.on_push()
-                except:
-                    if running:
-                        steelsquid_utils.shout()
-                # Send push broadcast
-                if do_push:
-                    values = []
-                    for name in members:
-                        member = getattr(push_class, name)
-                        if isinstance(member, (bool)):
-                            values.append(steelsquid_utils.to_bin(member))
-                        else:
-                            values.append(member)
-                    steelsquid_hmtrlrs.broadcast_push(push_class_nr, values)
-                    do_sleep = False
-            except:
-                pass
-        # The sync
-        if sync_class != None:
-            # Execute about every second
-            if steelsquid_kiss_global.radio_count >= steelsquid_kiss_global.radio_count_max:
-                steelsquid_kiss_global.radio_count = 0
-                do_sleep = False
-                try:
-                    # Get Client valuest
-                    client_values = []
-                    for name in sync_class_client_members:
-                        member = getattr(sync_class_client, name)
-                        if isinstance(member, (bool)):
-                            client_values.append(steelsquid_utils.to_bin(member))
-                        else:
-                            client_values.append(member)
-                    # Send to server
-                    server_values = steelsquid_hmtrlrs.request_sync(client_values)
-                    i = 0
-                    for name in sync_class_server_members:
-                        v_local = getattr(sync_class_server, name)
-                        v_server = server_values[i]
-                        if isinstance(v_local, (bool)):
-                            v_server = steelsquid_utils.from_bin(v_server)
-                        elif isinstance(v_local, int):
-                            v_server = int(v_server)
-                        elif isinstance(v_local, float):
-                            v_server = float(v_server)
-                        setattr(sync_class_server, name, v_server)
-                        i = i + 1
+                    # Check if send the push
+                    do_push = True
+                    try:
+                        do_push = push_class.on_push()
+                    except:
+                        if running:
+                            steelsquid_utils.shout()
+                    # Send push broadcast
+                    if do_push or not check_on_push:
+                        values = []
+                        for name in members:
+                            member = getattr(push_class, name)
+                            if isinstance(member, (bool)):
+                                values.append(steelsquid_utils.to_bin(member))
+                            else:
+                                values.append(member)
+                        steelsquid_hmtrlrs.broadcast_push(push_class_nr, values)
+                        do_sleep = False
                 except:
                     pass
-                # Execute on_sync method
-                try:
-                    diff = datetime.datetime.now()-steelsquid_hmtrlrs.last_sync
-                    sync_class.on_sync(diff.total_seconds())
-                except:
-                    if running:
-                        steelsquid_utils.shout()
-            elif not do_sleep:
-                steelsquid_kiss_global.radio_count = steelsquid_kiss_global.radio_count + 2
-            else:
-                steelsquid_kiss_global.radio_count = steelsquid_kiss_global.radio_count + 1
-        if do_sleep:
-            radio_event.wait(0.01)
-
+            check_on_push = True
+            # The sync
+            if sync_class != None:
+                # Execute about every second
+                if steelsquid_kiss_global.radio_count >= steelsquid_kiss_global.radio_count_max:
+                    steelsquid_kiss_global.radio_count = 0
+                    do_sleep = False
+                    try:
+                        # Get Client valuest
+                        client_values = []
+                        for name in sync_class_client_members:
+                            member = getattr(sync_class_client, name)
+                            if isinstance(member, (bool)):
+                                client_values.append(steelsquid_utils.to_bin(member))
+                            else:
+                                client_values.append(member)
+                        # Send to server
+                        server_values = steelsquid_hmtrlrs.request_sync(client_values)
+                        i = 0
+                        for name in sync_class_server_members:
+                            v_local = getattr(sync_class_server, name)
+                            v_server = server_values[i]
+                            if isinstance(v_local, (bool)):
+                                v_server = steelsquid_utils.from_bin(v_server)
+                            elif isinstance(v_local, int):
+                                v_server = int(v_server)
+                            elif isinstance(v_local, float):
+                                v_server = float(v_server)
+                            setattr(sync_class_server, name, v_server)
+                            i = i + 1
+                    except:
+                        pass
+                    # Execute on_sync method
+                    try:
+                        diff = datetime.datetime.now()-steelsquid_hmtrlrs.last_sync
+                        sync_class.on_sync(diff.total_seconds())
+                    except:
+                        if running:
+                            steelsquid_utils.shout()
+                elif not do_sleep:
+                    steelsquid_kiss_global.radio_count = steelsquid_kiss_global.radio_count + 2
+                else:
+                    steelsquid_kiss_global.radio_count = steelsquid_kiss_global.radio_count + 1
+            if do_sleep:
+                radio_event.wait(0.01)
+                radio_event.clear()
+        else:
+            radio_event.wait(1.0)
+            radio_event.clear()
 
 
 def hmtrlrs_server_thread():
@@ -857,69 +887,71 @@ def hmtrlrs_server_thread():
             command, data = steelsquid_hmtrlrs.listen()
             # Execute the on_sync every second
             if command==None:
-                if sync_class!=None:
+                if sync_class!=None and not tcp_radio_enabled:
                     diff = datetime.datetime.now()-steelsquid_hmtrlrs.last_sync
                     sync_class.on_sync(diff.total_seconds())
             else:
                 # A Sync or Push
                 if type(command) == types.IntType:
-                    # A sync request
-                    if sync_class!=None and command==0:
-                        i = 0
-                        for name in sync_class_client_members:
-                            v_local = getattr(sync_class_client, name)
-                            v_client = data[i]
-                            if isinstance(v_local, (bool)):
-                                v_client = steelsquid_utils.from_bin(v_client)
-                            elif isinstance(v_local, int):
-                                v_client = int(v_client)
-                            elif isinstance(v_local, float):
-                                v_client = float(v_client)
-                            setattr(sync_class_client, name, v_client)
-                            i = i + 1
-                        values = []
-                        for name in sync_class_server_members:
-                            member = getattr(sync_class_server, name)
-                            if isinstance(member, (bool)):
-                                values.append(steelsquid_utils.to_bin(member))
-                            else:
-                                values.append(member)
-                        diff = datetime.datetime.now()-steelsquid_hmtrlrs.last_sync
-                        try:
-                            sync_class.on_sync(diff.total_seconds())
-                        except:
-                            if running:
-                                steelsquid_utils.shout()
-                        steelsquid_hmtrlrs.response_sync(values)
-                    # A push broadcast
-                    else:
-                        push_class= None
-                        if push_class_1!=None and command==1:
-                            push_class = push_class_1
-                            members = members_class_1
-                        if push_class_2!=None and command==2:
-                            push_class = push_class_2
-                            members = members_class_2
-                        if push_class_3!=None and command==3:
-                            push_class = push_class_3
-                            members = members_class_3
-                        if push_class_4!=None and command==4:
-                            push_class = push_class_4
-                            members = members_class_4
-                        if push_class!=None:
+                    if not tcp_radio_enabled:
+                        # A sync request
+                        if sync_class!=None and command==0:
                             i = 0
-                            for name in members:
-                                old = getattr(push_class, name)
-                                if isinstance(old, (bool)):
-                                     setattr(push_class, name, steelsquid_utils.from_bin(data[i]))
-                                elif isinstance(old, int):
-                                    setattr(push_class, name, int(data[i]))
-                                elif isinstance(old, float):
-                                    setattr(push_class, name, float(data[i]))
-                                else:
-                                    setattr(push_class, name, data[i])
+                            for name in sync_class_client_members:
+                                v_local = getattr(sync_class_client, name)
+                                v_client = data[i]
+                                if isinstance(v_local, (bool)):
+                                    v_client = steelsquid_utils.from_bin(v_client)
+                                elif isinstance(v_local, int):
+                                    v_client = int(v_client)
+                                elif isinstance(v_local, float):
+                                    v_client = float(v_client)
+                                setattr(sync_class_client, name, v_client)
                                 i = i + 1
-                            push_class.on_push()
+                            values = []
+                            for name in sync_class_server_members:
+                                member = getattr(sync_class_server, name)
+                                if isinstance(member, (bool)):
+                                    values.append(steelsquid_utils.to_bin(member))
+                                else:
+                                    values.append(member)
+                            diff = datetime.datetime.now()-steelsquid_hmtrlrs.last_sync
+                            try:
+                                sync_class.on_sync(diff.total_seconds())
+                            except:
+                                if running:
+                                    steelsquid_utils.shout()
+                            steelsquid_hmtrlrs.response_sync(values)
+                        # A push broadcast
+                        else:
+                            push_class= None
+                            if push_class_1!=None and command==1:
+                                push_class = push_class_1
+                                members = members_class_1
+                            if push_class_2!=None and command==2:
+                                push_class = push_class_2
+                                members = members_class_2
+                            if push_class_3!=None and command==3:
+                                push_class = push_class_3
+                                members = members_class_3
+                            if push_class_4!=None and command==4:
+                                push_class = push_class_4
+                                members = members_class_4
+                            if push_class!=None:
+                                if len(data)==len(members):
+                                    i = 0
+                                    for name in members:
+                                        old = getattr(push_class, name)
+                                        if isinstance(old, (bool)):
+                                             setattr(push_class, name, steelsquid_utils.from_bin(data[i]))
+                                        elif isinstance(old, int):
+                                            setattr(push_class, name, int(data[i]))
+                                        elif isinstance(old, float):
+                                            setattr(push_class, name, float(data[i]))
+                                        else:
+                                            setattr(push_class, name, data[i])
+                                        i = i + 1
+                                    push_class.on_push()
                 else:
                     # Execute a method with the same name as the command i module RADIO class
                     try:
@@ -933,12 +965,302 @@ def hmtrlrs_server_thread():
                                 steelsquid_hmtrlrs.response(answer)
                     except Exception, e:
                         if running:
-                            steelsquid_utils.shout()
-                            steelsquid_hmtrlrs.error(e.message)
+                            s = str(e)
+                            if chr(16) not in s:
+                                steelsquid_utils.shout()
+                                steelsquid_hmtrlrs.error(e.message)
+        except Exception, err:
+            if running:
+                s = str(err)
+                if "Could not convert to boolean" not in s and "invalid literal for int" not in s and chr(16) not in s and "list index out of range" not in s:
+                    steelsquid_utils.shout()
+            
+
+def tcp_radio():
+    '''
+    Start tcp_radio
+    '''
+    sync_class = steelsquid_kiss_global._get_first_modules_class("RADIO_SYNC")
+    if sync_class!=None:
+        sync_class_client = steelsquid_kiss_global._get_first_modules_class("RADIO_SYNC", "CLIENT")
+        sync_class_client_members = [attr for attr in dir(sync_class_client) if not attr.startswith("_")]
+        sync_class_server = steelsquid_kiss_global._get_first_modules_class("RADIO_SYNC", "SERVER")
+        sync_class_server_members = [attr for attr in dir(sync_class_server) if not attr.startswith("_")]
+    push_classes = []
+    push_class_1 = steelsquid_kiss_global._get_first_modules_class("RADIO_PUSH_1")
+    members_class_1 = None
+    if push_class_1!=None:
+        members_class_1 = [attr for attr in dir(push_class_1) if attr!="on_push" and not attr.startswith("_")]
+        push_classes.append([1, push_class_1, members_class_1])
+    push_class_2 = steelsquid_kiss_global._get_first_modules_class("RADIO_PUSH_2")
+    members_class_2 = None
+    if push_class_2!=None:
+        members_class_2 = [attr for attr in dir(push_class_2) if attr!="on_push" and not attr.startswith("_")]
+        push_classes.append([2, push_class_2, members_class_2])
+    push_class_3 = steelsquid_kiss_global._get_first_modules_class("RADIO_PUSH_3")
+    members_class_3 = None
+    if push_class_3!=None:
+        members_class_3 = [attr for attr in dir(push_class_3) if attr!="on_push" and not attr.startswith("_")]
+        push_classes.append([3, push_class_3, members_class_3])
+    push_class_4 = steelsquid_kiss_global._get_first_modules_class("RADIO_PUSH_4")
+    members_class_4 = None
+    if push_class_4!=None:
+        members_class_4 = [attr for attr in dir(push_class_4) if attr!="on_push" and not attr.startswith("_")]
+        push_classes.append([4, push_class_4, members_class_4])
+    # nothing to do...stop thread...
+    if sync_class==None and push_classes[0]==None and push_classes[1]==None and push_classes[2]==None and push_classes[3]==None:
+        return
+    else:
+        if steelsquid_tcp_radio.is_server():
+            thread.start_new_thread(tcp_radio_listen_for_connection_thread, (sync_class, sync_class_client, sync_class_client_members, sync_class_server, sync_class_server_members, push_classes, push_class_1, push_class_2, push_class_3, push_class_4, members_class_1, members_class_2, members_class_3, members_class_4,))
+            thread.start_new_thread(tcp_radio_handle_connection_thread, (sync_class, sync_class_client, sync_class_client_members, sync_class_server, sync_class_server_members, push_classes, push_class_1, push_class_2, push_class_3, push_class_4, members_class_1, members_class_2, members_class_3, members_class_4,))       
+        else:
+            thread.start_new_thread(tcp_radio_make_connection_thread, (sync_class, sync_class_client, sync_class_client_members, sync_class_server, sync_class_server_members, push_classes, push_class_1, push_class_2, push_class_3, push_class_4, members_class_1, members_class_2, members_class_3, members_class_4,))       
+            thread.start_new_thread(tcp_radio_check_connection_thread, ())       
+    if sync_class!=None:
+        thread.start_new_thread(tcp_radio_sync_thread, (sync_class,))       
+
+
+def tcp_radio_listen_for_connection_thread(sync_class, sync_class_client, sync_class_client_members, sync_class_server, sync_class_server_members, push_classes, push_class_1, push_class_2, push_class_3, push_class_4, members_class_1, members_class_2, members_class_3, members_class_4):
+    '''
+    tcp_radio_listen_for_connection_thread
+    '''
+    while running:
+        try:
+            steelsquid_tcp_radio.listen_for_connection()
         except:
             if running:
                 steelsquid_utils.shout()
+                steelsquid_tcp_radio.close_connection()
+                time.sleep(0.5)
 
+
+def tcp_radio_make_connection_thread(sync_class, sync_class_client, sync_class_client_members, sync_class_server, sync_class_server_members, push_classes, push_class_1, push_class_2, push_class_3, push_class_4, members_class_1, members_class_2, members_class_3, members_class_4):
+    '''
+    tcp_radio_make_connection_thread
+    '''
+    while running:
+        try:
+            steelsquid_tcp_radio.connect()
+            if steelsquid_tcp_radio.is_remote():
+                while running:
+                    tcp_radio_remote(sync_class, sync_class_client, sync_class_client_members, sync_class_server, sync_class_server_members, push_classes, push_class_1, push_class_2, push_class_3, push_class_4, members_class_1, members_class_2, members_class_3, members_class_4)
+            else:
+                while running:
+                    tcp_radio_listen(sync_class, sync_class_client, sync_class_client_members, sync_class_server, sync_class_server_members, push_classes, push_class_1, push_class_2, push_class_3, push_class_4, members_class_1, members_class_2, members_class_3, members_class_4)
+        except:
+            if running:
+                steelsquid_utils.shout()
+                steelsquid_tcp_radio.close_connection()
+                time.sleep(0.5)
+
+
+def tcp_radio_check_connection_thread():
+    '''
+    Restart connection if it has hang....
+    '''
+    count = 0
+    while running:
+        try:
+            if steelsquid_tcp_radio.get_last_link() > 30:
+                if count == 0:
+                    steelsquid_utils.shout("Force reconnect")
+                    steelsquid_tcp_radio.close_connection()
+                    count = count + 1
+                elif count >= 3:
+                    count = 0
+                else:
+                    count = count + 1
+            else:
+                count = 0
+        except:
+            pass
+        time.sleep(10)
+
+
+def tcp_radio_handle_connection_thread(sync_class, sync_class_client, sync_class_client_members, sync_class_server, sync_class_server_members, push_classes, push_class_1, push_class_2, push_class_3, push_class_4, members_class_1, members_class_2, members_class_3, members_class_4):
+    '''
+    tcp_radio_connection_thread
+    '''
+    while running:
+        if steelsquid_tcp_radio.is_connected():
+            try:
+                if steelsquid_tcp_radio.is_remote():
+                    tcp_radio_remote(sync_class, sync_class_client, sync_class_client_members, sync_class_server, sync_class_server_members, push_classes, push_class_1, push_class_2, push_class_3, push_class_4, members_class_1, members_class_2, members_class_3, members_class_4)
+                else:
+                    tcp_radio_listen(sync_class, sync_class_client, sync_class_client_members, sync_class_server, sync_class_server_members, push_classes, push_class_1, push_class_2, push_class_3, push_class_4, members_class_1, members_class_2, members_class_3, members_class_4)
+            except:
+                if running:
+                    steelsquid_utils.shout()
+                    steelsquid_tcp_radio.close_connection()
+        else:
+            time.sleep(0.1)
+
+
+def tcp_radio_sync_thread(sync_class):
+    '''
+    tcp_radio_sync_thread
+    '''
+    while running:
+        try:
+            sync_class.on_sync(steelsquid_tcp_radio.get_last_link())
+        except:
+            if running:
+                steelsquid_utils.shout()
+        time.sleep(0.5)
+
+
+def tcp_radio_remote(sync_class, sync_class_client, sync_class_client_members, sync_class_server, sync_class_server_members, push_classes, push_class_1, push_class_2, push_class_3, push_class_4, members_class_1, members_class_2, members_class_3, members_class_4):
+    '''
+    Send kommand to unit
+    '''
+    global tcp_check_on_push
+    do_sleep = True
+    # Execute the push...
+    for pc in push_classes:
+        push_class_nr = pc[0]
+        push_class = pc[1]
+        members = pc[2]
+        # Check if send the push
+        do_push = True
+        try:
+            do_push = push_class.on_push()
+        except:
+            if running:
+                steelsquid_utils.shout()
+        # Send push broadcast
+        if do_push or not tcp_check_on_push:
+            values = []
+            for name in members:
+                member = getattr(push_class, name)
+                if isinstance(member, (bool)):
+                    values.append(steelsquid_utils.to_bin(member))
+                else:
+                    values.append(member)
+            steelsquid_tcp_radio.broadcast_push(push_class_nr, values)
+            do_sleep = False
+    tcp_check_on_push = True
+    # The sync
+    if sync_class != None:
+        # Execute about every second
+        if steelsquid_kiss_global.tcp_radio_count >= steelsquid_kiss_global.tcp_radio_count_max:
+            steelsquid_kiss_global.tcp_radio_count = 0
+            do_sleep = False
+            # Get Client valuest
+            client_values = []
+            for name in sync_class_client_members:
+                member = getattr(sync_class_client, name)
+                if isinstance(member, (bool)):
+                    client_values.append(steelsquid_utils.to_bin(member))
+                else:
+                    client_values.append(member)
+            # Send to server
+            server_values = steelsquid_tcp_radio.request_sync(client_values)
+            i = 0
+            for name in sync_class_server_members:
+                v_local = getattr(sync_class_server, name)
+                v_server = server_values[i]
+                if isinstance(v_local, (bool)):
+                    v_server = steelsquid_utils.from_bin(v_server)
+                elif isinstance(v_local, int):
+                    v_server = int(v_server)
+                elif isinstance(v_local, float):
+                    v_server = float(v_server)
+                setattr(sync_class_server, name, v_server)
+                i = i + 1
+            # Execute on_sync method
+            try:
+                sync_class.on_sync(steelsquid_tcp_radio.get_last_link())
+            except:
+                if running:
+                    steelsquid_utils.shout()
+        elif not do_sleep:
+            steelsquid_kiss_global.tcp_radio_count = steelsquid_kiss_global.tcp_radio_count + 2
+        else:
+            steelsquid_kiss_global.tcp_radio_count = steelsquid_kiss_global.tcp_radio_count + 1
+    if do_sleep:
+        tcp_radio_event.wait(0.01)
+        tcp_radio_event.clear()    
+
+
+def tcp_radio_listen(sync_class, sync_class_client, sync_class_client_members, sync_class_server, sync_class_server_members, push_classes, push_class_1, push_class_2, push_class_3, push_class_4, members_class_1, members_class_2, members_class_3, members_class_4):
+    '''
+    Listen for request from remote
+    '''
+    global tcp_check_on_push
+    command, data = steelsquid_tcp_radio.listen()
+    if command!=None:
+        # A Sync or Push
+        if type(command) == types.IntType:
+            # A sync request
+            if sync_class!=None and command==0:
+                i = 0
+                for name in sync_class_client_members:
+                    v_local = getattr(sync_class_client, name)
+                    v_client = data[i]
+                    if isinstance(v_local, (bool)):
+                        v_client = steelsquid_utils.from_bin(v_client)
+                    elif isinstance(v_local, int):
+                        v_client = int(v_client)
+                    elif isinstance(v_local, float):
+                        v_client = float(v_client)
+                    setattr(sync_class_client, name, v_client)
+                    i = i + 1
+                values = []
+                for name in sync_class_server_members:
+                    member = getattr(sync_class_server, name)
+                    if isinstance(member, (bool)):
+                        values.append(steelsquid_utils.to_bin(member))
+                    else:
+                        values.append(member)
+                # Execute on_sync method
+                try:
+                    sync_class.on_sync(steelsquid_tcp_radio.get_last_link())
+                except:
+                    if running:
+                        steelsquid_utils.shout()
+                steelsquid_tcp_radio.response_sync(values)
+            # A push broadcast
+            else:
+                push_class= None
+                if push_class_1!=None and command==1:
+                    push_class = push_class_1
+                    members = members_class_1
+                if push_class_2!=None and command==2:
+                    push_class = push_class_2
+                    members = members_class_2
+                if push_class_3!=None and command==3:
+                    push_class = push_class_3
+                    members = members_class_3
+                if push_class_4!=None and command==4:
+                    push_class = push_class_4
+                    members = members_class_4
+                if push_class!=None:
+                    if len(data)==len(members):
+                        i = 0
+                        for name in members:
+                            old = getattr(push_class, name)
+                            if isinstance(old, (bool)):
+                                 setattr(push_class, name, steelsquid_utils.from_bin(data[i]))
+                            elif isinstance(old, int):
+                                setattr(push_class, name, int(data[i]))
+                            elif isinstance(old, float):
+                                setattr(push_class, name, float(data[i]))
+                            else:
+                                setattr(push_class, name, data[i])
+                            i = i + 1
+                        push_class.on_push()
+        else:
+            # Execute a method with the same name as the command i module RADIO class
+            if data == None:
+                answer = steelsquid_kiss_global._execute_first_modules_and_return("RADIO", command, ([],))
+                if answer!=None:
+                    steelsquid_tcp_radio.response(answer)
+            else:
+                answer = steelsquid_kiss_global._execute_first_modules_and_return("RADIO", command, (data,))
+                if answer!=None:
+                    steelsquid_tcp_radio.response(answer)
+                                
 
 def main():
     '''
@@ -1002,6 +1324,21 @@ def main():
                     steelsquid_utils.shout("Enable NRF24L01+ slave")
                     steelsquid_nrf24.slave()
                     thread.start_new_thread(nrf24_slave_thread, ())
+                # Enable tcp radio as server
+                if steelsquid_utils.get_flag("tcp_radio_server"):
+                    global tcp_radio_enabled
+                    tcp_radio_enabled = True
+                    steelsquid_utils.shout("Enable TCP-RADIO as server")
+                    steelsquid_tcp_radio.setup(steelsquid_utils.get_flag("tcp_radio_is_remote"))
+                    tcp_radio()
+                # Enable tcp radio as client
+                elif steelsquid_utils.get_flag("tcp_radio_client"):
+                    global tcp_radio_enabled
+                    tcp_radio_enabled = True
+                    tcp_radio_host = steelsquid_utils.get_parameter("tcp_radio_host", "localhost")
+                    steelsquid_utils.shout("Enable TCP-RADIO as client ("+tcp_radio_host+")")
+                    steelsquid_tcp_radio.setup(steelsquid_utils.get_flag("tcp_radio_is_remote"), host=tcp_radio_host)
+                    tcp_radio()
                 # Enable HM-TRLR-S as server
                 if steelsquid_utils.get_flag("hmtrlrs_server"):
                     config_gpio = int(steelsquid_utils.get_parameter("hmtrlrs_config_gpio", "25"))

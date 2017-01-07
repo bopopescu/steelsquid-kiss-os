@@ -440,6 +440,7 @@ def print_menu():
 
     print " W : web     : Create new HTML-file in web/ (copy template.html)"
     print " V : delweb  : Delete a HTML-file in web/ (You can not undo this!!!)"
+    print " B : browser : Reload active page in browser (Kiosk mode)"
     print "------------------------------------------------------------------------------"
     print "You can also send any other simple terminal line command (ls, pwd, mkdir...)"
     print "But you can not use any commands that read input (nano, read, passwd)"
@@ -577,6 +578,9 @@ if __name__ == '__main__':
                         mod=line.rsplit(None, 1)[-1]
                         log("Request disable of module: " + mod)
                         send_command("steelsquid module "+mod+" off")
+        elif answer == "B" or answer == "b" or answer == "browser":
+            log("Request reload of browser")
+            send_command("export DISPLAY=:0.0; xdotool getactivewindow key F5")
         elif len(answer.strip())>0:
             send_command_read_answer(answer)
     disconnect()

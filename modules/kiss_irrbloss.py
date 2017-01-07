@@ -2,7 +2,7 @@
 
 
 '''.
-My 8wd drive linked rover
+My 6wd drive rover "irrbloss"
 
 @organization: Steelsquid
 @author: Andreas Nilsson
@@ -19,8 +19,10 @@ import steelsquid_nm
 import steelsquid_kiss_boot
 import time
 import datetime
+import thread  
 import steelsquid_hmtrlrs
 import steelsquid_ht16k33 as lmatrix
+import steelsquid_tcp_radio
 from decimal import Decimal
 import os
 from espeak import espeak
@@ -49,6 +51,12 @@ def enable(argument=None):
     # Change GPIO for transceiver
     steelsquid_utils.set_parameter("hmtrlrs_config_gpio", str(STATIC.gpio_hmtrlrs_config))
     steelsquid_utils.set_parameter("hmtrlrs_reset_gpio", str(STATIC.gpio_hmtrlrs_reset))
+    # Enable camera
+    steelsquid_utils.execute_system_command_blind(["steelsquid", "camera-on"], wait_for_finish=True)
+    # Max volume
+    steelsquid_utils.execute_system_command_blind(["amixer", "set", "PCM", "unmute"], wait_for_finish=True)
+    steelsquid_utils.execute_system_command_blind(["amixer", "set", "PCM", "100%"], wait_for_finish=True)
+    steelsquid_utils.execute_system_command_blind(["alsactl", "store"], wait_for_finish=True)
     
 
 
@@ -86,42 +94,35 @@ class STATIC(object):
     rover_voltage_min = 12.8        # 3.2V
     
     # interrup GPIO for mcp23017
-    gpio_mcp23017_20_trig = 18
-    gpio_mcp23017_21_trig = 24
+    gpio_mcp23017_20_trig = 4
 
     # GPIO for the HM-TRLR-S
-    gpio_hmtrlrs_config = 25
+    gpio_hmtrlrs_config = 18
     gpio_hmtrlrs_reset = 23
 
     # When system start move servo here
-    servo_position_pan_start = 424
+    servo_position_pan_start = 452
 
     # Max Servo position
-    servo_position_pan_max = 655
+    servo_position_pan_max = 700
 
     # Min Servo position
-    servo_position_pan_min = 122
+    servo_position_pan_min = 125
 
     # When system start move servo here
-    servo_position_tilt_start = 370
+    servo_position_tilt_start = 450
 
     # Max Servo position
-    servo_position_tilt_max = 455
+    servo_position_tilt_max = 550
 
     # Min Servo position
     servo_position_tilt_min = 200
 
     # Max motor speed
-    motor_max = 1000    
+    motor_max = 80 
 
-    # Min Servo position
-    steer_max = 475
-
-    # Min Servo position
-    steer_start = 410
-
-    # Min Servo position
-    steer_min = 355
+    # Max motor speed change
+    motor_max_change = 50
 
     mood_smile = [[ 0,0,0,0,0,0,0,0],
                   [ 0,1,1,0,0,1,1,0],
@@ -159,6 +160,14 @@ class STATIC(object):
                   [ 0,0,1,1,1,1,0,0],
                   [ 0,0,0,0,0,0,0,0]]
 
+    connection_lost = [[ 0,1,1,1,1,1,1,0],
+                       [ 1,0,0,0,0,0,0,1],
+                       [ 1,0,1,0,0,1,0,1],
+                       [ 1,0,0,1,1,0,0,1],
+                       [ 1,0,0,1,1,0,0,1],
+                       [ 1,0,1,0,0,1,0,1],
+                       [ 1,0,0,0,0,0,0,1],
+                       [ 0,1,1,1,1,1,1,0]]
 
 
 
@@ -177,9 +186,12 @@ class DYNAMIC(object):
     
     # Using this when i print a message to LCD, so the next ip/voltage uppdat dont ovrewrite the message to fast
     stop_next_lcd_message = False
-    
 
+    # Stream audio
+    audio = False
 
+    # Stream video
+    video = False
 
 
 
@@ -206,6 +218,27 @@ class SETTINGS(object):
     
     # This will tell the system not to save and read the settings from disk
     _persistent_off = False
+    
+    # 1=radio 2=wifi 3=3g4g
+    control = 1
+        
+    # IP-number for this remote control
+    control_ip = ""
+        
+    # IP-number were to send the video stream
+    video_ip = ""
+        
+    # IP-number were to send the audio stream
+    audio_ip = ""
+
+    # Width/height for the stream
+    resolution = "width=800,height=480"
+
+    # Width for the stream
+    fps = "20"
+
+    # Bitrate for the stream
+    bitrate = "800000"
         
 
 
@@ -232,6 +265,16 @@ class SYSTEM(object):
         '''
         # Startup message
         steelsquid_utils.shout("Steelsquid Irrbloss start")
+        if SETTINGS.control==1:
+            co = "Radio"
+        elif SETTINGS.control==2:
+            co = "WIFI"
+        elif SETTINGS.control==3:
+            co = "3G/4G"
+        else:
+            co = "Not saved"
+        steelsquid_utils.shout("Control: " + co + "\n" + "Control IP: " + SETTINGS.control_ip + "\n" + "Video stream IP: " + SETTINGS.video_ip + "\n" + "Audio stream IP: " + SETTINGS.audio_ip + "\n" + "Resolution: " + SETTINGS.resolution + "\n" + "FPS: " + SETTINGS.fps + "\n")
+        GLOBAL.set_net_status(SETTINGS.control)
         # Reset some GPIO
         OUTPUT.sum_flash()
         OUTPUT.laser(False)
@@ -252,8 +295,6 @@ class SYSTEM(object):
         steelsquid_utils.execute_system_command_blind(["alsactl", "store"], wait_for_finish=True)
         # Center camera
         OUTPUT.camera(STATIC.servo_position_pan_start, STATIC.servo_position_tilt_start)
-        # Center steer
-        OUTPUT.steer(STATIC.steer_start)
 
 
     @staticmethod
@@ -279,11 +320,11 @@ class LOOP(object):
     
     warning_flash = True
     last_mood = -1
+    last_speek=None
+    connection_lost=False
+    connection_lost_count=0
+
     
-    # Current speed of the motor
-    current_motor_left = 0
-    current_motor_right = 0
-        
     @staticmethod
     def update_lcd():
         '''
@@ -304,6 +345,9 @@ class LOOP(object):
                     if steelsquid_kiss_global.last_lan_ip!="---":
                         print_this.append(steelsquid_kiss_global.last_lan_ip)
                         connected=True
+                    if steelsquid_kiss_global.last_usb_ip!="---":
+                        print_this.append(steelsquid_kiss_global.last_usb_ip)
+                        connected=True
                 # Voltage
                 if RADIO_SYNC.SERVER.rover_voltage != -1 and RADIO_SYNC.SERVER.rover_ampere != -1:
                     if RADIO_SYNC.SERVER.rover_voltage<STATIC.rover_voltage_warning:
@@ -323,6 +367,17 @@ class LOOP(object):
                         steelsquid_pi.ssd1306_write(new_lcd_message, 0)
             else:
                 DYNAMIC.stop_next_lcd_message=False       
+               
+            # Connection lost
+            if LOOP.connection_lost:
+                if LOOP.connection_lost_count == 0:
+                    lmatrix.paint_flash(STATIC.connection_lost, 3)
+                    steelsquid_pi.gpio_flash(16, seconds=0.1, invert=False)
+                    LOOP.connection_lost_count = LOOP.connection_lost_count + 1
+                elif LOOP.connection_lost_count>=2:
+                    LOOP.connection_lost_count = 0
+                else:
+                    LOOP.connection_lost_count = LOOP.connection_lost_count + 1
         except:
             steelsquid_utils.shout()
         return 1 # Execute this method again in 1 second
@@ -377,37 +432,64 @@ class LOOP(object):
         except:
             steelsquid_utils.shout()
         return 0
+        
+        
+    @staticmethod
+    def stream_video():
+        '''
+        Stream video
+        ''' 
+        if not steelsquid_utils.is_empty(SETTINGS.video_ip):
+            if DYNAMIC.video:
+                try:
+                    steelsquid_utils.execute_system_command_blind(["pkill", "-f", "gst-launch-1.0 v4l2src"])
+                    time.sleep(0.5)
+                    steelsquid_utils.execute_system_command(["modprobe", "bcm2835-v4l2", "gst_v4l2src_is_broken=1"])
+                    steelsquid_utils.execute_system_command(["gst-launch-1.0", "v4l2src", "device=/dev/video0", "!", "video/x-raw," + SETTINGS.resolution + ",framerate=" + SETTINGS.fps + "/1", "!", "omxh264enc", "target-bitrate="+SETTINGS.bitrate, "control-rate=3", "!", "tcpclientsink", "host="+SETTINGS.video_ip, "port=6602"])
+                    #steelsquid_utils.execute_system_command(["gst-launch-1.0", "v4l2src", "do-timestamp=false", "device=/dev/video0", "!", "video/x-raw,width=1280,height=720,framerate=25/1", "!", "omxh264enc", "!", "tcpclientsink", "host="+SETTINGS.video_ip, "port=6602"])
+                except:
+                    steelsquid_utils.shout()
+            else:
+                steelsquid_utils.execute_system_command_blind(["pkill", "-f", "gst-launch-1.0 v4l2src"])
+        return 1
 
 
     @staticmethod
-    def motor_ramping():
+    def stream_audio():
         '''
-        Change motor speed soft
-        Also stop motors if no signal in 0.6 seconds
-        And enable cruise controll
+        Stream audio
         ''' 
-        # If no signal i 0.6 seconds, stop the drive
-        diff = time.time() - RADIO_PUSH_1._last_push
-        if RADIO_SYNC.CLIENT.cruise:
-            RADIO_PUSH_1.motor_left = STATIC.motor_max
-            RADIO_PUSH_1.motor_right = STATIC.motor_max
-        elif diff>0.6:
-            RADIO_PUSH_1.motor_left = 0
-            RADIO_PUSH_1.motor_right = 0
-            RADIO_SYNC.CLIENT.cruise=False
-        # Ramp tho motor slowly
-        if LOOP.current_motor_left < RADIO_PUSH_1.motor_left:
-            LOOP.current_motor_left = LOOP.current_motor_left + 30
-        elif LOOP.current_motor_left > RADIO_PUSH_1.motor_left:
-            LOOP.current_motor_left = LOOP.current_motor_left - 30
-        if LOOP.current_motor_right < RADIO_PUSH_1.motor_right:
-            LOOP.current_motor_right = LOOP.current_motor_right + 30
-        elif LOOP.current_motor_right > RADIO_PUSH_1.motor_right:
-            LOOP.current_motor_right = LOOP.current_motor_right - 30       
-        # Set new speed
-        OUTPUT.drive(LOOP.current_motor_left, LOOP.current_motor_right)
-        return 0.01
+        if not steelsquid_utils.is_empty(SETTINGS.audio_ip):
+            if DYNAMIC.audio:
+                try:
+                    steelsquid_utils.execute_system_command_blind(["pkill", "-f", "gst-launch-1.0 alsasrc"])
+                    time.sleep(0.5)
+                    steelsquid_utils.execute_system_command(["gst-launch-1.0", "alsasrc", "device=sysdefault:CARD=1", "!", "mulawenc", "!", "rtppcmupay", "!", "udpsink", "host="+SETTINGS.audio_ip, "port=6603"])
+                except:
+                    steelsquid_utils.shout()
+            else:
+                steelsquid_utils.execute_system_command_blind(["pkill", "-f", "gst-launch-1.0 alsasrc"])
+        return 4
         
+        
+    @staticmethod
+    def check_lte_and_espeek():
+        '''
+        Check that the LTE dongle is disabled when not in use
+        ''' 
+        if SETTINGS.control!=3:
+            lines = steelsquid_utils.execute_system_command(["ifconfig"])
+            for line in lines:
+                if "usb0" in line:
+                    GLOBAL.set_net_status(SETTINGS.control)
+                    break;
+        if LOOP.last_speek != None:
+            if time.time() - LOOP.last_speek > 120:
+                steelsquid_pi.gpio_set(21, True)
+                LOOP.last_speek = None
+        return 10
+
+
         
         
 
@@ -471,6 +553,96 @@ class RADIO(object):
         return []
 
 
+    @staticmethod
+    def settings_save(parameters):
+        '''
+        A request from client to save settings
+        '''
+        if len(parameters)==7:
+            if parameters[6]=="1234567":
+                if steelsquid_utils.is_ip_number(parameters[0]) and steelsquid_utils.is_ip_number(parameters[1]) and steelsquid_utils.is_ip_number(parameters[2]):
+                    if parameters[3] != None and parameters[4] != None:
+                        SETTINGS.control_ip = parameters[0]
+                        SETTINGS.video_ip = parameters[1]
+                        SETTINGS.audio_ip = parameters[2]
+                        SETTINGS.resolution = parameters[3]
+                        SETTINGS.fps = parameters[4]
+                        SETTINGS.bitrate = parameters[5]
+                        steelsquid_utils.set_parameter("tcp_radio_host", SETTINGS.control_ip)
+                        steelsquid_kiss_global.save_module_settings()
+                        steelsquid_kiss_global.reboot(delay=4)
+                        return []
+
+
+    @staticmethod
+    def set_control(parameters):
+        '''
+        A request from client to save settings
+        '''
+        print "sadasdadsd"
+        print parameters
+        con = int(parameters[0])
+        code = parameters[1]
+        if (con == 1 or con == 2 or con == 3) and code == "1234567":
+            SETTINGS.control = con
+            steelsquid_kiss_global.save_module_settings()
+            GLOBAL.set_net_status(con)
+            if SETTINGS.control==1:
+                steelsquid_kiss_global.tcp_radio_disable()
+            else:
+                steelsquid_kiss_global.tcp_radio_client(False, host = SETTINGS.control_ip)
+            steelsquid_kiss_global.restart(delay=4)
+            return []
+
+
+    @staticmethod
+    def speek(parameters, dummy=None):
+        '''
+        A request from client to speek
+        '''
+        if dummy == None:
+            thread.start_new_thread(RADIO.speek, (parameters, "",)) 
+        else:
+            sleep = False
+            if LOOP.last_speek == None:
+                sleep = True
+            LOOP.last_speek = time.time()
+            steelsquid_pi.gpio_set(21, False)
+            if sleep:
+                time.sleep(5)
+            espeak.synth(parameters[0])
+        return []
+        
+        
+    @staticmethod
+    def stream_video(parameters):
+        '''
+        A request from client to stream or not to stream video
+        '''
+        if steelsquid_utils.is_empty(SETTINGS.video_ip):
+            raise Exception("IP not set")
+        else:
+            DYNAMIC.video = parameters[0]=="True"
+            steelsquid_utils.execute_system_command_blind(["pkill", "-f", "gst-launch-1.0 v4l2src"])
+            return []
+        
+        
+        
+        
+    @staticmethod
+    def stream_audio(parameters):
+        '''
+        A request from client to stream or not to stream audio
+        '''
+        if steelsquid_utils.is_empty(SETTINGS.audio_ip):
+            raise Exception("IP not set")
+        else:
+            DYNAMIC.audio = parameters[0]=="True"
+            steelsquid_utils.execute_system_command_blind(["pkill", "-f", "gst-launch-1.0 alsasrc"])
+            return []
+
+
+
 
 
 
@@ -505,6 +677,14 @@ class RADIO_SYNC(object):
         # Stop drive if no commadn in 1 second
         if seconds_since_last_ok_ping>1:
             RADIO_SYNC.CLIENT.cruise = False
+            RADIO_PUSH_1.motor_left = 0
+            RADIO_PUSH_1.motor_right = 0
+            OUTPUT.drive(RADIO_PUSH_1.motor_left, RADIO_PUSH_1.motor_right)
+        # Flash and sount when connection lost
+        if seconds_since_last_ok_ping>10:
+            LOOP.connection_lost=True
+        else:
+            LOOP.connection_lost=False
         LOOP.check_stuff()
         
         
@@ -562,16 +742,10 @@ class RADIO_PUSH_1(object):
         True=send update to server, False=Do not send anything to server
         On server it will fire on every push received
     '''
-    
-    # Last push request
-    _last_push = 0
 
     # Speed of the motors
     motor_left = 0
     motor_right = 0
-
-    # Steer
-    steer = STATIC.steer_start
 
     @staticmethod
     def on_push():
@@ -581,9 +755,7 @@ class RADIO_PUSH_1(object):
         True=send update to server, False=Do not send anything to server
         On server it will fire on every push received
         '''
-        RADIO_PUSH_1._last_push = time.time()
-        OUTPUT.steer(RADIO_PUSH_1.steer)
-
+        OUTPUT.drive(RADIO_PUSH_1.motor_left, RADIO_PUSH_1.motor_right)
 
 
 
@@ -645,7 +817,9 @@ class OUTPUT(object):
     Put output stuff her, maybe method that light a LED.
     It is not necessary to put it her, but i think it is kind of nice to have it inside this class
     '''
-               
+    last_left = 0
+    last_right = 0
+    
     @staticmethod
     def sum_flash():
         '''
@@ -663,9 +837,10 @@ class OUTPUT(object):
     @staticmethod
     def laser(status):
         '''
-        Enable laser
+        Enable led list
         ''' 
-        steelsquid_pi.gpio_set(20, not status)
+        pass
+        #steelsquid_pi.gpio_set(16, not status)
         
 
     @staticmethod
@@ -674,7 +849,6 @@ class OUTPUT(object):
         Enable headlights
         ''' 
         steelsquid_pi.gpio_set(16, not status)
-        steelsquid_pi.mcp23017_set(21, 2, not status)
         
 
     @staticmethod
@@ -682,7 +856,9 @@ class OUTPUT(object):
         '''
         Enable highbeam
         ''' 
-        steelsquid_pi.mcp23017_set(21, 6, not status)
+        status = not status
+        steelsquid_pi.gpio_set(7, status)
+        steelsquid_pi.gpio_set(12, status)
         
 
     @staticmethod
@@ -690,7 +866,7 @@ class OUTPUT(object):
         '''
         Enable highbeam
         ''' 
-        steelsquid_pi.gpio_flash(26, invert=True)
+        steelsquid_pi.mcp23017_flash(20, 5)
                 
 
     @staticmethod
@@ -698,7 +874,7 @@ class OUTPUT(object):
         '''
         Enable cam light
         ''' 
-        steelsquid_pi.gpio_set(21, not status)
+        steelsquid_pi.gpio_set(20, not status)
 
 
     @staticmethod
@@ -706,6 +882,14 @@ class OUTPUT(object):
         '''
         Move servo
         '''
+        # Check the values...getting some crapp data some time....
+        if pan!=None:
+            if pan < 0 or pan > 800:
+                return
+        if tilt!=None:
+            if tilt < 0 or tilt > 800:
+                return
+
         if pan!=None:
             if pan<STATIC.servo_position_pan_min:
                 pan = STATIC.servo_position_pan_min
@@ -719,19 +903,6 @@ class OUTPUT(object):
                 tilt = STATIC.servo_position_tilt_max
             steelsquid_pi.pca9685_move(0, tilt)      
 
-
-    @staticmethod
-    def steer(value):
-        '''
-        Steer
-        '''
-        if value!=None:
-            if value<STATIC.steer_min:
-                value = STATIC.steer_min
-            elif value>STATIC.steer_max:
-                value = STATIC.steer_max
-            #print value
-            steelsquid_pi.pca9685_move(2, value)
         
 
     @staticmethod
@@ -739,6 +910,39 @@ class OUTPUT(object):
         '''
         Drive
         '''
+        if left!=None and left!=0:
+            if left < -100 or left > 100:
+                return
+            if OUTPUT.last_left > 0 and left > 0:
+                if left - OUTPUT.last_left > STATIC.motor_max_change:
+                    return
+            if OUTPUT.last_left > 0 and left < 0:
+                if (left*-1) + OUTPUT.last_left > STATIC.motor_max_change:
+                    return
+            if OUTPUT.last_left < 0 and left < 0:
+                if (left*-1) - (OUTPUT.last_left*-1) > STATIC.motor_max_change:
+                    return
+            if OUTPUT.last_left < 0 and left > 0:
+                if left + (OUTPUT.last_left*-1) > STATIC.motor_max_change:
+                    return
+        if right!=None and right!=0:
+            if right < -100 or right > 100:
+                return
+            if OUTPUT.last_right > 0 and right > 0:
+                if left - OUTPUT.last_right > STATIC.motor_max_change:
+                    return
+            if OUTPUT.last_right > 0 and right < 0:
+                if (right*-1) + OUTPUT.last_right > STATIC.motor_max_change:
+                    return
+            if OUTPUT.last_right < 0 and right < 0:
+                if (right*-1) - (OUTPUT.last_right*-1) > STATIC.motor_max_change:
+                    return
+            if OUTPUT.last_right < 0 and right > 0:
+                if right + (OUTPUT.last_right*-1) > STATIC.motor_max_change:
+                    return
+
+        OUTPUT.last_left = left
+        OUTPUT.last_right = right
         # Cruise controll
         #if RADIO_SYNC.CLIENT.is_cruise_on:
         #    GLOBAL.cruise_enabled = True
@@ -759,9 +963,7 @@ class OUTPUT(object):
             right = STATIC.motor_max
         elif right<STATIC.motor_max*-1:
             right = STATIC.motor_max*-1
-        steelsquid_pi.diablo_motor_1(left*-1)
-        steelsquid_pi.diablo_motor_2(right*-1)
-
+        steelsquid_pi.sabertooth_motor_speed(left, right, the_port="/dev/ttyUSB0")
 
 
 
@@ -803,7 +1005,7 @@ class GLOBAL(object):
         '''
         Read main in voltage
         '''
-        v = steelsquid_pi.po12_adc_volt(8, samples=8) / 0.137
+        v = steelsquid_pi.po12_adc_volt(8, samples=8) / 0.1195
         v = Decimal(v)
         v = round(v, 1)
         return v
@@ -815,18 +1017,38 @@ class GLOBAL(object):
         Read main in ampere
         '''
         v = steelsquid_pi.po12_adc(7, samples=100)
-        v = v - 443
-        v = v * -1
+        v = v - 503
         v = v * 0.003225806
-        v = v / 0.066
-        #if v <= 0.8:
-        #    v=0.5
-        #elif v < 1:
-        #    v=1.0
-        #else:
+        v = v / 0.026
+
         v = Decimal(v)
         v = round(v, 1)
         return v
+
+        
+
+    @staticmethod
+    def set_net_status(con):
+        '''
+        Set with way to control rover
+        1=radio 2=wifi 3=3g4g
+        '''        
+        # Enable wifi but disable usb0 (3G/4G modem)
+        if con==1:
+            steelsquid_utils.execute_system_command_blind(["killall", "gst-launch-1.0"])
+            steelsquid_utils.execute_system_command_blind(["ip", "link", "set", "wlan0", "up"])
+            steelsquid_utils.execute_system_command_blind(["ip", "link", "set", "usb0", "down"])
+        # Enable wifi but disable usb0 (3G/4G modem)
+        elif con==2:
+            steelsquid_utils.execute_system_command_blind(["killall", "gst-launch-1.0"])
+            steelsquid_utils.execute_system_command_blind(["ip", "link", "set", "wlan0", "up"])
+            steelsquid_utils.execute_system_command_blind(["ip", "link", "set", "usb0", "down"])
+        # Disable wifi but enable usb0 (3G/4G modem)
+        elif con==3:
+            steelsquid_utils.execute_system_command_blind(["killall", "gst-launch-1.0"])
+            steelsquid_utils.execute_system_command_blind(["ip", "link", "set", "wlan0", "down"])
+            steelsquid_utils.execute_system_command_blind(["ip", "link", "set", "usb0", "up"])
+
 
 
 

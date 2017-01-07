@@ -11,11 +11,10 @@ import steelsquid_piio
 import steelsquid_utils
 import steelsquid_kiss_global
 import steelsquid_nrf24
+import steelsquid_nm
+import steelsquid_tcp_radio
+import socket
+import steelsquid_ht16k33 as lmatrix
 
-start = time.time()
 
-time.sleep(2)  # or do something more productive
-
-done = time.time()
-elapsed = done - start
-print(elapsed)
+print steelsquid_pi._dht11_temp_hum(10)

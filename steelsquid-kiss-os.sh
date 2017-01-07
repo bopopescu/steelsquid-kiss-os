@@ -89,6 +89,10 @@ python_downloads[35]="$base/modules/kiss_irrbloss_remote.py"
 python_downloads[36]="$base/steelsquid_hmtrlrs.py"
 python_downloads[37]="$base/steelsquid_rmcs220x.py"
 python_downloads[38]="$base/steelsquid_ht16k33.py"
+python_downloads[39]="$base/steelsquid_tcp_radio.py"
+
+# C file downloads (build and install)
+c_downloads[1]="$base/dht.c"
 
 # Links to python_downloads
 python_links[1]="/usr/bin/steelsquid-boot"
@@ -143,6 +147,7 @@ web_root_downloads[9]="$base/web/nrf24rover.html"
 web_root_downloads[10]="$base/web/expand.html"
 web_root_downloads[11]="$base/web/template.html"
 web_root_downloads[12]="$base/web/speak.html"
+web_root_downloads[13]="$base/web/irrbloss.html"
 
 # Download to web img folder
 web_img_downloads[1]="$base/img/back.png"
@@ -692,10 +697,10 @@ function help_system()
     if [ $(is-raspberry-pi) == "true" ]; then
         echo 
         echb "steelsquid gpu-mem"
-        echo "Get the GPU memory (16 to 448) default 64"
+        echo "Get the GPU memory (16 to 448) default 128"
         echo 
         echb "steelsquid gpu-mem <mem>"
-        echo "Set the GPU memory (16 to 448) default 64"
+        echo "Set the GPU memory (16 to 448) default 128"
         echo "ARM (CPU) gets the remaining memory"
         echo "Will take effect on next reboot...."
     fi
@@ -1160,21 +1165,18 @@ function help_develop()
     echo 
     echb "set-flag <flagName>"
     echo "Set flag"
-    echo "The steelsquid daemon must be running for this to work"
     echo 
     echb "get-flag <flagName>"
     echo "Has flag"
     echo 
     echb "del-flag <flagName>"
     echo "Delete flag"
-    echo "The steelsquid daemon must be running for this to work"
     echo 
     echb "list-parameters"
     echo "Set flag"
     echo 
     echb "set-parameter <name> <value>"
     echo "Set paramater value"
-    echo "The steelsquid daemon must be running for this to work"
     echo 
     echb "get-parameter <name>"
     echo "Get paramater value"
@@ -1184,7 +1186,6 @@ function help_develop()
     echo 
     echb "del-parameter <name>"
     echo "Delete a parameter"
-    echo "The steelsquid daemon must be running for this to work"
     echo 
     echb "event <event>"
     echo "Broadcast event without parameters"
@@ -1990,8 +1991,8 @@ function disable_camera()
     sed -i '/^start_file/ d' /boot/config.txt
     sed -i '/^fixup_file/ d' /boot/config.txt
     sed -i '/^disable_camera_led/ d' /boot/config.txt
-    echo "gpu_mem=64" >> /boot/config.txt
-    set-parameter "gpu_mem" "64"
+    echo "gpu_mem=128" >> /boot/config.txt
+    set-parameter "gpu_mem" "128"
     log-reboot
 }
 if [ "$in_parameter_1" == "camera-off" ]; then
@@ -2007,8 +2008,8 @@ function monitor_180()
 {
     log "Rotate monitor 180"
     set-flag "monitor_rotate_180"
-    sed -i '/^display_rotate/ d' /boot/config.txt
-    echo "display_rotate=2" >> /boot/config.txt 
+    sed -i '/^lcd_rotate/ d' /boot/config.txt
+    echo "lcd_rotate=2" >> /boot/config.txt 
     log-reboot
 }
 if [ "$in_parameter_1" == "monitor-180" ]; then
@@ -2026,7 +2027,7 @@ function monitor_0()
 {
     log "Do not rotate monitor"
     del-flag "monitor_rotate_180"
-    sed -i '/^display_rotate/ d' /boot/config.txt
+    sed -i '/^lcd_rotate/ d' /boot/config.txt
     log-reboot
 }
 if [ "$in_parameter_1" == "monitor-0" ]; then
@@ -2379,17 +2380,18 @@ function browser_on()
     log "Enable start browser  in fullscreen"
     useradd browser
     mkhomedir_helper browser
-    aptitude install -R xserver-xorg-video-fbturbo xserver-xorg xinit gconf-service libgconf-2-4 libgnome-keyring0 libxss1 xserver-xorg-input-multitouch xdg-utils lsb-release libexif12 libexif-gtk5 nodm
-    wget http://ftp.us.debian.org/debian/pool/main/libg/libgcrypt11/libgcrypt11_1.5.0-5+deb7u3_armhf.deb
-    wget http://launchpadlibrarian.net/218525709/chromium-browser_45.0.2454.85-0ubuntu0.14.04.1.1097_armhf.deb
-    wget http://launchpadlibrarian.net/218525711/chromium-codecs-ffmpeg-extra_45.0.2454.85-0ubuntu0.14.04.1.1097_armhf.deb
-    dpkg -i libgcrypt11_1.5.0-5+deb7u3_armhf.deb
-    dpkg -i chromium-codecs-ffmpeg-extra_45.0.2454.85-0ubuntu0.14.04.1.1097_armhf.deb
-    dpkg -i chromium-browser_45.0.2454.85-0ubuntu0.14.04.1.1097_armhf.deb
+    aptitude install -R xserver-xorg-video-fbturbo xserver-xorg xinit gconf-service libgconf-2-4 libgnome-keyring0 libxss1 xserver-xorg-input-multitouch xdg-utils lsb-release libexif12 libexif-gtk5 xdotool unclutter nodm chromium-browser 
+    #wget http://ftp.us.debian.org/debian/pool/main/libg/libgcrypt11/libgcrypt11_1.5.0-5+deb7u4_armhf.deb
+    #wget http://launchpadlibrarian.net/218525709/chromium-browser_45.0.2454.85-0ubuntu0.14.04.1.1097_armhf.deb
+    #wget http://launchpadlibrarian.net/218525711/chromium-codecs-ffmpeg-extra_45.0.2454.85-0ubuntu0.14.04.1.1097_armhf.deb
+    #dpkg -i libgcrypt11_1.5.0-5+deb7u4_armhf.deb
+    #dpkg -i chromium-codecs-ffmpeg-extra_45.0.2454.85-0ubuntu0.14.04.1.1097_armhf.deb
+    #dpkg -i chromium-browser_45.0.2454.85-0ubuntu0.14.04.1.1097_armhf.deb
     
     echo "#"\!"/bin/bash" > /home/browser/.xsession
     echo "xset s off &" >> /home/browser/.xsession
     echo "xset dpms 0 0 0 &" >> /home/browser/.xsession
+    echo "sleep 6" >> /home/browser/.xsession
     echo "exec /usr/bin/chromium-browser --noerrdialogs --incognito --touch-events=enabled --enable-pinch --kiosk $in_parameter_2" >> /home/browser/.xsession
     chmod +x /home/browser/.xsession
     
@@ -2451,11 +2453,12 @@ function mbrowser_on()
     log "Enable start browser  in fullscreen (midori)"
     useradd browser
     mkhomedir_helper browser
-    aptitude install -R midori matchbox-window-manager xserver-xorg-video-fbturbo xserver-xorg xinit gconf-service libgconf-2-4 libgnome-keyring0 libxss1 xserver-xorg-input-multitouch xdg-utils lsb-release libexif12 libexif-gtk5 nodm
+    aptitude install -R midori matchbox-window-manager xserver-xorg-video-fbturbo xserver-xorg xinit gconf-service libgconf-2-4 libgnome-keyring0 libxss1 xserver-xorg-input-multitouch xdg-utils unclutter xdotool lsb-release libexif12 libexif-gtk5 nodm
     
     echo "#"\!"/bin/bash" > /home/browser/.xsession
     echo "xset s off &" >> /home/browser/.xsession
     echo "xset dpms 0 0 0 &" >> /home/browser/.xsession
+    echo "sleep 6" >> /home/browser/.xsession
     echo "/usr/bin/midori -e Fullscreen -a $in_parameter_2 &" >> /home/browser/.xsession
     echo "exec matchbox-window-manager -use_cursor no -use_titlebar no" >> /home/browser/.xsession
     chmod +x /home/browser/.xsession
@@ -3402,6 +3405,27 @@ function python_list()
     done
     echo
 }
+##################################################################################
+# Download and install python scripts
+##################################################################################
+function install_c_files()
+{
+    log "Download, build and install C-files"
+    for var in "${c_downloads[@]}"
+    do
+        sudo wget --progress=dot:giga --no-check-certificate -O /tmp/$(basename $var) $var
+        if [ $? -ne 0 ]; then
+            do-err-exit "Unable to download from $var"
+        else
+            rm /usr/bin/$var > /dev/null 2>&1
+            cd /tmp
+            cc -Wall dht.c -o dht -lwiringPi
+            cp dht /usr/bin/dht
+            log "$var downloaded and installed"
+        fi
+    done
+    log "C-files installed"
+}
 
 
 ##################################################################################
@@ -3451,6 +3475,10 @@ function install_web_files_first()
 
 if [ "$in_parameter_1" == "update-web" ]; then
     install_web_files
+    exit 0
+fi
+if [ "$in_parameter_1" == "update-c" ]; then
+    install_c_files
     exit 0
 fi
 if [ "$in_parameter_1" == "update-web-first" ]; then
@@ -3882,8 +3910,8 @@ function gpu_mem()
 {
     mem=$(get-parameter "gpu_mem")
     if [ -z "$mem" ]; then
-        mem="64"
-        set-parameter "gpu_mem" "64"
+        mem="128"
+        set-parameter "gpu_mem" "128"
         sed -i '/^gpu_mem/ d' /boot/config.txt
         echo "gpu_mem=$mem" >> /boot/config.txt
     fi
@@ -4220,6 +4248,7 @@ fi
 install_steelsquid_python
 install_web_files
 install_img_files
+install_c_files
 
 
 
@@ -4251,8 +4280,8 @@ if [ $(get_installed) == "false" ]; then
     aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install telnet secure-delete beep sysstat openssh-client cifs-utils smbclient keyutils sshfs curl samba-common lsof mc fgetty ftp htop elinks screenie nload mtr-tiny lzma zip unzip unrar-free p7zip-full bzip2 whiptail parted lua5.1 aria2 python-serial python-numpy python2.7-numpy python-paramiko zlib1g zlib1g-dev libfreetype6-dev ttf-anonymous-pro python-picamera espeak python-espeak
     aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install telnet secure-delete beep sysstat openssh-client cifs-utils smbclient keyutils sshfs curl samba-common lsof mc fgetty ftp htop elinks screenie nload mtr-tiny lzma zip unzip unrar-free p7zip-full bzip2 whiptail parted lua5.1 aria2 python-serial python-numpy python2.7-numpy python-paramiko zlib1g zlib1g-dev libfreetype6-dev ttf-anonymous-pro python-picamera espeak python-espeak
     exit-check 
-    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install gstreamer1.0-x gstreamer1.0-tools gstreamer1.0-plugins-bad gstreamer1.0-plugins-good gstreamer1.0-plugins-ugly gstreamer1.0-libav gstreamer1.0-pulseaudio gstreamer1.0-omx
-    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install gstreamer1.0-x gstreamer1.0-tools gstreamer1.0-plugins-bad gstreamer1.0-plugins-good gstreamer1.0-plugins-ugly gstreamer1.0-libav gstreamer1.0-pulseaudio gstreamer1.0-omx
+    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install gstreamer1.0-x gstreamer1.0-tools gstreamer1.0-plugins-bad gstreamer1.0-plugins-good gstreamer1.0-plugins-ugly gstreamer1.0-libav gstreamer1.0-pulseaudio gstreamer1.0-omx sg3-utils gstreamer1.0-alsa
+    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install gstreamer1.0-x gstreamer1.0-tools gstreamer1.0-plugins-bad gstreamer1.0-plugins-good gstreamer1.0-plugins-ugly gstreamer1.0-libav gstreamer1.0-pulseaudio gstreamer1.0-omx sg3-utils gstreamer1.0-alsa
     exit-check 
     aptitude -y purge cron ifupdown rsyslog vim-common vim-tiny hdparm keyboard-configuration console-setup console-setup-linux
     aptitude -y purge cron ifupdown rsyslog vim-common vim-tiny hdparm keyboard-configuration console-setup console-setup-linux
@@ -4285,6 +4314,14 @@ log "System upgraded"
 #    sudo curl -L --output /usr/bin/rpi-update https://raw.github.com/Hexxeh/rpi-update/master/rpi-update && sudo chmod +x /usr/bin/rpi-update
 #    rpi-update
 #fi
+
+
+
+##################################################################################
+# Fix gstreamer
+##################################################################################
+ln -s -f /opt/vc/lib/libGLESv2.so /usr/lib/arm-linux-gnueabihf/libGLESv2.so.2
+ln -s -f /opt/vc/lib/libEGL.so /usr/lib/arm-linux-gnueabihf/libEGL.so.1
 
 
 
@@ -5228,10 +5265,10 @@ echo "if [ -z \"\$1\" ]; then" >> /usr/bin/set-flag
 echo "    echo " >> /usr/bin/set-flag
 echo "    echb \"set-flag <name-of-flag>\"" >> /usr/bin/set-flag
 echo "    echo \"Set a system flag\"" >> /usr/bin/set-flag
-echo "    echo \"The steelsquid daemon must be running for this to work\"" >> /usr/bin/set-flag
 echo "    echo" >> /usr/bin/set-flag
 echo "    exit 0" >> /usr/bin/set-flag
 echo "fi" >> /usr/bin/set-flag
+echo "echo \"\" > /opt/steelsquid/flags/\$1" >> /usr/bin/set-flag
 echo "event flag set \$1" >> /usr/bin/set-flag
 echo "exit 0" >> /usr/bin/set-flag
 chmod +x /usr/bin/set-flag
@@ -5267,10 +5304,10 @@ echo "if [ -z \"\$1\" ]; then" >> /usr/bin/del-flag
 echo "    echo " >> /usr/bin/del-flag
 echo "    echb \"del-flag <name-of-flag>\"" >> /usr/bin/del-flag
 echo "    echo \"Delete a flag\"" >> /usr/bin/del-flag
-echo "    echo \"The steelsquid daemon must be running for this to work\"" >> /usr/bin/set-flag
 echo "    echo" >> /usr/bin/del-flag
 echo "    exit 0" >> /usr/bin/del-flag
 echo "fi" >> /usr/bin/del-flag
+echo "rm -f /opt/steelsquid/flags/\$1 > /dev/null 2>&1" >> /usr/bin/del-flag
 echo "event flag del \$1" >> /usr/bin/del-flag
 echo "exit 0" >> /usr/bin/del-flag
 chmod +x /usr/bin/del-flag
@@ -5296,10 +5333,10 @@ echo "if [ -z \"\$1\" ]; then" >> /usr/bin/set-parameter
 echo "    echo " >> /usr/bin/set-parameter
 echo "    echb \"set-parameter <name> <value>\"" >> /usr/bin/set-parameter
 echo "    echo \"Set a parameter\"" >> /usr/bin/set-parameter
-echo "    echo \"The steelsquid daemon must be running for this to work\"" >> /usr/bin/set-flag
 echo "    echo" >> /usr/bin/set-parameter
 echo "    exit 0" >> /usr/bin/set-parameter
 echo "fi" >> /usr/bin/set-parameter
+echo "echo \$2 > /opt/steelsquid/parameters/\$1" >> /usr/bin/set-parameter
 echo "event parameter set \$1 \$2" >> /usr/bin/set-parameter
 echo "exit 0" >> /usr/bin/set-parameter
 chmod +x /usr/bin/set-parameter
@@ -5357,10 +5394,10 @@ echo "if [ -z \"\$1\" ]; then" >> /usr/bin/del-parameter
 echo "    echo " >> /usr/bin/del-parameter
 echo "    echb \"del-parameter <name-of-paramater>\"" >> /usr/bin/del-parameter
 echo "    echo \"Delete a parameter\"" >> /usr/bin/del-parameter
-echo "    echo \"The steelsquid daemon must be running for this to work\"" >> /usr/bin/set-flag
 echo "    echo" >> /usr/bin/del-parameter
 echo "    exit 0" >> /usr/bin/del-parameter
 echo "fi" >> /usr/bin/del-parameter
+echo "rm -f /opt/steelsquid/parameters/\$1 > /dev/null 2>&1" >> /usr/bin/del-parameter
 echo "event parameter del \$1" >> /usr/bin/del-parameter
 echo "exit 0" >> /usr/bin/del-parameter
 chmod +x /usr/bin/del-parameter
@@ -5482,8 +5519,8 @@ fi
 ##################################################################################
 mem=$(get-parameter "gpu_mem")
 if [ -z "$mem" ]; then
-    mem="64"
-    set-parameter "gpu_mem" "64"
+    mem="128"
+    set-parameter "gpu_mem" "128"
 fi
 sed -i '/^gpu_mem/ d' /boot/config.txt
 echo "gpu_mem=$mem" >> /boot/config.txt

@@ -27,6 +27,7 @@ import Queue
 import exceptions
 import os
 import modules
+import steelsquid_tcp_radio
 from importlib import import_module
 
 
@@ -78,6 +79,9 @@ last_wifi_name = None
 # Last WIFI IP
 last_wifi_ip = None
 
+# Last USB IP
+last_usb_ip = None
+
 # Last LAN IP
 last_lan_ip = None
 
@@ -87,6 +91,10 @@ last_wan_ip = None
 # Radio
 radio_count_max = 30
 radio_count = 30
+
+# TCP radio
+tcp_radio_count_max = 30
+tcp_radio_count = 30
 
 
 def get_module(name):
@@ -323,16 +331,48 @@ def save_module_settings():
     steelsquid_kiss_boot._save_settings()
 
 
-def reboot():
+def reboot(delay=0):
     '''
     Reboot the computer
     '''    
-    try:
-        steelsquid_kiss_boot._cleanup()
-    except:
-        steelsquid_utils.shout()
-    os.system("reboot")
+    if delay == 0:
+        try:
+            steelsquid_kiss_boot._cleanup()
+        except:
+            steelsquid_utils.shout()
+        os.system("reboot")
+    else:
+        thread.start_new_thread(_reboot, (delay,))       
 
+
+def _reboot(delay=0):
+    '''
+    Reboot the computer
+    '''    
+    time.sleep(delay)
+    reboot()
+
+
+def restart(delay=0):
+    '''
+    Restart steelsquid daemon
+    '''    
+    if delay == 0:
+        try:
+            steelsquid_kiss_boot._cleanup()
+        except:
+            steelsquid_utils.shout()
+        os.system('systemctl restart steelsquid')
+    else:
+        thread.start_new_thread(_restart, (delay,))       
+
+
+def _restart(delay=0):
+    '''
+    Reboot the computer
+    '''    
+    time.sleep(delay)
+    restart()
 
 def stream_usb():
     '''
@@ -434,14 +474,62 @@ def hmtrlrs_status(status):
         steelsquid_utils.set_flag("hmtrlrs_client")
 
 
-def radio_interrupt():
+def tcp_radio_server(is_remote):
+    '''
+    Send and reseive messages with tcp radio 
+    Must reboot to implement
+    '''    
+    if is_remote:
+        steelsquid_utils.set_flag("tcp_radio_is_remote")
+    else:
+        steelsquid_utils.del_flag("tcp_radio_is_remote")
+    steelsquid_utils.set_flag("tcp_radio_server")
+    steelsquid_utils.del_flag("tcp_radio_client")
+
+
+def tcp_radio_client(is_remote, host):
+    '''
+    Send and reseive messages with tcp radio 
+    Must reboot to implement
+    '''    
+    if is_remote:
+        steelsquid_utils.set_flag("tcp_radio_is_remote")
+    else:
+        steelsquid_utils.del_flag("tcp_radio_is_remote")
+    steelsquid_utils.del_flag("tcp_radio_server")
+    steelsquid_utils.set_flag("tcp_radio_client")
+    steelsquid_utils.set_parameter("tcp_radio_host", host)
+
+
+def tcp_radio_disable():
+    '''
+    Send and reseive messages with tcp radio 
+    Must reboot to implement
+    '''    
+    steelsquid_utils.del_flag("tcp_radio_server")
+    steelsquid_utils.del_flag("tcp_radio_client")
+    
+
+def radio_interrupt(check_on_push=True):
     '''
     If you made changes to the RADIO_SYNC or RADIO_PUSH variables you can fire the sync or push with this method
     Otherwise you must wait about 1 second for it to fire....
     '''    
     global radio_count
     radio_count=radio_count_max
+    steelsquid_kiss_boot.check_on_push=check_on_push
     steelsquid_kiss_boot.radio_event.set()
+
+
+def tcp_radio_interrupt(check_on_push=True):
+    '''
+    If you made changes to the RADIO_SYNC or RADIO_PUSH variables you can fire the sync or push with this method
+    Otherwise you must wait about 1 second for it to fire....
+    '''    
+    global tcp_radio_count
+    tcp_radio_count=tcp_radio_count_max
+    steelsquid_kiss_boot.tcp_check_on_push=check_on_push
+    steelsquid_kiss_boot.tcp_radio_event.set()
 
 
 def _broadcast_event_handler():

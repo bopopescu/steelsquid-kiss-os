@@ -257,6 +257,17 @@ def connect_to_wifi_wep(ssid, password):
             break
 
 
+def disconnect():
+    '''
+    disconnect all connection
+    '''
+    connections = Settings.ListConnections()
+    for connection in connections:
+        ctype = connection.GetSettings()['connection']['type']
+        if "wireless" in ctype:
+            connection.Delete()
+
+
 def on_network_connect():
     '''
     This will trigger on network connect.
@@ -412,6 +423,7 @@ def vpn_disconnect():
             NetworkManager.DeactivateConnection(conn)
 
 
+
 def print_help():
     '''
     Print help to the screen
@@ -440,6 +452,9 @@ def print_help():
     print("")
     printb("net connect <number> <password>")
     print("Connect to protected wifi network.")
+    print("")
+    printb("net disconnect")
+    print("Disconnect from all network")
     print("")
     printb("net vpn-openvpn <ovpn_file> <username> <password>")
     print("Import a .ovpn file (configure vpn)")
@@ -551,6 +566,8 @@ def main():
             vpn_connect()
         elif sys.argv[1] == "vpn-disconnect":
             vpn_disconnect()            
+        elif sys.argv[1] == "disconnect":
+            disconnect()            
         elif sys.argv[1] == "enable":
             set_network_status(True)            
         elif sys.argv[1] == "disable":

@@ -563,7 +563,11 @@ def network_ip():
     """
     output = network_ip_wired()
     if output == '---':
-        return network_ip_wifi()
+        output = network_ip_usb()
+        if output == '---':
+            return network_ip_wifi()
+        else:
+            return output
     else:
         return output
 
@@ -575,10 +579,21 @@ def network_ip_wired():
     """
     for i in range(20):
         output = subprocess.check_output("/sbin/ifconfig eth"+str(i)+" | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'", shell=True, stderr=subprocess.STDOUT).strip('\n')
-        if len(output) > 4 and "eth" not in output:
+        if len(output) > 4 and "eth" not in output and not "error" in output:
             return output
     return "---"
 
+
+def network_ip_usb():
+    """
+    Get network information usb 3g/4g modem 
+    @return: string
+    """
+    for i in range(5):
+        output = subprocess.check_output("/sbin/ifconfig usb"+str(i)+" | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'", shell=True, stderr=subprocess.STDOUT).strip('\n')
+        if len(output) > 4 and "eth" not in output and not "error" in output:
+            return output
+    return "---"
 
 def network_ip_wifi():
     """
@@ -587,7 +602,7 @@ def network_ip_wifi():
     """
     for i in range(20):
         output = subprocess.check_output("/sbin/ifconfig wlan"+str(i)+" | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'", shell=True, stderr=subprocess.STDOUT).strip('\n')
-        if len(output) > 4 and "wlan" not in output:
+        if len(output) > 4 and "wlan" not in output and not "error" in output:
             return output
     return "---"
 
@@ -598,9 +613,9 @@ def network_ip_vpn():
     @return: string
     """
     output = subprocess.check_output("/sbin/ifconfig tun0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'", shell=True, stderr=subprocess.STDOUT).strip('\n')
-    if len(output) < 4 or "tun" in output:
+    if len(output) < 4 or "tun" in output and not "error" in output:
         output = subprocess.check_output("/sbin/ifconfig tun1 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'", shell=True, stderr=subprocess.STDOUT).strip('\n')
-        if len(output) < 4 or "tun" in output:
+        if len(output) < 4 or "tun" in output and not "error" in output:
             return "---"
         else:
             return output
@@ -608,7 +623,7 @@ def network_ip_vpn():
         return output
 
 
-def network_ip_wan(timeout = 4):
+def network_ip_wan(timeout = 16):
     """
     Get wan ip (internet)
     @return: the ip
@@ -1902,3 +1917,34 @@ def set_hostname(name):
     '''
     execute_system_command_blind(["steelsquid", "hostname", name])
 
+
+def is_empty(variable):
+    '''
+    Is varibale mepty
+    '''
+    if variable==None or variable=="None" or variable=="" or variable=="---":
+        return True
+    else:
+        return False
+
+
+def is_ip_number(variable):
+    '''
+    Is a ipnumber or empty
+    '''
+    if variable == None:
+        return False
+    elif variable == "":
+        return True
+    else:
+        for c in variable:
+            if not c.isdigit() and c != ".":
+                return False
+        return True
+
+
+def bin2dec(string_num):
+    '''
+    bin2dec
+    '''
+    return str(int(string_num, 2))
