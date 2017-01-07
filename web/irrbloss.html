@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" /> 
+        <title>Irrbloss Remote</title>
+        <meta name="Steelsquid Kiss OS" content="Administrate/Control/Configure steelsquid-kiss-os from web browser." />
+        <meta name="keywords" content="steelsquid, steelsquid-kiss-os, raspberry, pi, debian, linux, distribution, administrator, configure" />
+        <meta name="author" content="Andreas Nilsson (Steelsquid)" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+        <meta name="mobile-web-app-capable" content="yes"/>
+        <meta name="apple-mobile-web-app-capable" content="yes"/>
+        <link rel="icon" href="favicon.ico" type="image/x-icon"/>
+        <link rel="shortcut icon" href="favicon.ico" type="image/x-icon"/>
+        <link rel="stylesheet" type="text/css" href="steelsquid.css"/>
+        <script type="text/javascript" src="jquery.js"></script>
+        <script type="text/javascript" src="steelsquid.js"></script>
+        <script type="text/javascript">
+            //<![CDATA[ 
+    
+            /**
+             * When the page is loaded
+             */
+            function onPageLoad(){
+                submitSync('settings_get');
+
+                $('#speek_text').keypress(function(event) {
+                    if (event.keyCode == 13) {
+                        speek();
+                    }
+                });
+            }
+
+
+            function speek(){
+                submitAsyncFromInput('speek', 'speek_text')
+                $('#speek_text').val("");
+            }
+                      
+                      
+            /**
+             * This will execute every 1 second
+             */
+            function onEvery01s(){
+                if(isVisible()){
+                    submitNoPW('show');
+                }
+            }                      
+
+
+            /**
+             * On Get show
+             */
+            function on_show(paramaters){
+                sh = paramaters[0];
+                if(sh == "1"){
+                    showLayer('speek');
+                }
+                else if(sh == "2"){
+                    showLayer('settings');
+                }
+                else if(sh == "3"){
+                    showLayer('map');
+                }
+                else if(sh == "4"){
+                    showLayer('speek');
+                }
+            }
+            
+            
+            /**
+             * On Get settings
+             */
+            function on_settings_get(paramaters){
+                setValue("control_ip", paramaters[0]);
+                setValue("video_ip", paramaters[1]);
+                setValue("audio_ip", paramaters[2]);
+                setValue("resolution", paramaters[3]);
+                setValue("fps", paramaters[4]);
+                setValue("bitrate", paramaters[5]);
+            }
+               
+               
+             /**
+             * Get lan ip
+             */
+            function on_get_lan_ip(paramaters){
+                setValue("control_ip", paramaters[0]);
+                setValue("video_ip", paramaters[0]);
+                setValue("audio_ip", paramaters[0]);
+            }
+
+
+             /**
+             * Get WAN ip
+             */
+            function on_get_wan_ip(paramaters){
+                setValue("control_ip", paramaters[0]);
+                setValue("video_ip", paramaters[0]);
+                setValue("audio_ip", paramaters[0]);
+            }
+                                    
+            //]]>
+        </script>
+        
+    </head>
+    <body style="background-color: black;color: white;padding: 5px">
+        <div class="layer" id="speek">
+            <div style="border: 2px solid white; padding: 5px; text-align: center; margin-bottom: 10px; font-size: large;font-weight: bold">MAKE THE ROVER SPEEK</div>
+            Write a text that the rover shall speek
+            <input type="text" id="speek_text" autofocus />
+            <br><br>
+            <button onclick="javascript:speek()">Speek it</button>
+        </div>
+        <div class="layer" id="map">
+            <div style="border: 2px solid white; padding: 5px; text-align: center; margin-bottom: 10px; font-size: large;font-weight: bold">MAP SHOWING WHERE THE ROVER IS</div>
+        </div>
+        <div class="layer" id="settings">
+            <div style="border: 2px solid white; padding: 5px; text-align: center; margin-bottom: 10px; font-size: large;font-weight: bold">SETTINGS</div>
+            The Irrbloss Rover communicate with this remote control on port 6601, 6602 and 6603 using UDP.<br>
+            6601 is for commands, 6602 is for the video and 6603 is for audio.<br>
+            The IP numbers bellow must only be changed when Rover is in radio range (433Mhz) off the Remote.<br>
+            <br>
+            Ip number to the remote control (this unit) [port=6601]
+            <input type="text" id="control_ip" />
+            <br><br>
+            Ip number to the video stream receiver (this unit, but can be other) [port=6602]
+            <input type="text" id="video_ip" />
+            <br><br>
+            Ip number to the audio stream receiver (this unit, but can be other) [port=6603]
+            <input type="text" id="audio_ip" />
+            <br><br>
+            Bitrate for the video
+            <input type="text" id="bitrate" />
+            <br><br>
+            Video resolution and frame rate
+            <table>
+                <tr>
+                    <td>
+                        <select id="resolution">
+                            <option value="width=640,height=360">640x360</option>
+                            <option value="width=720,height=405">720x405</option>
+                            <option value="width=800,height=480">800x480</option>
+                            <option value="width=848,height=480">848x480</option>
+                            <option value="width=960,height=540">960x540</option>
+                            <option value="width=1024,height=576">1024x576</option>
+                            <option value="width=1280,height=720">1280x720</option>
+                            <option value="width=1366,height=768">1366x768</option>
+                            <option value="width=1600,height=900">1600x900</option>
+                            <option value="width=1920,height=1080">1920x1080</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select id="fps">
+                            <option value="1">1 fps</option>
+                            <option value="5">5 fps</option>
+                            <option value="10">10 fps</option>
+                            <option value="15">15 fps</option>
+                            <option value="20">20 fps</option>
+                            <option value="25">25 fps</option>
+                            <option value="30">30 fps</option>
+                        </select>
+                    </td>
+                </tr>
+            </table>            
+            <br>
+            When you save the settings this remote control and the rover will reboot...
+            <table>
+                <tr>
+                    <td><button onclick="javascript:submitSync('get_lan_ip')">Get LAN IP</button></td>
+                    <td><button onclick="javascript:submitSync('get_wan_ip')">Get WAN IP</button></td>
+                    <td><button onclick="javascript:submitSyncFromInputConfirm('Are you sure?', 'settings_save', 'control_ip', 'video_ip', 'audio_ip', 'resolution', 'fps', 'bitrate')">Save settings</button></td>
+                </tr>
+            </table>
+        </div>
+    </body>
+</html>
