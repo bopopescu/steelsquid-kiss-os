@@ -3415,7 +3415,7 @@ function install_c_files()
     for var in "${c_downloads[@]}"
     do
         rm /tmp/$(basename $var) > /dev/null 2>&1
-        sudo wget --progress=dot:giga --no-check-certificate -O /tmp/$(basename $var) $var
+        sudo wget --no-cache --progress=dot:giga --no-check-certificate -O /tmp/$(basename $var) $var
         if [ $? -ne 0 ]; then
             do-err-exit "Unable to download from $var"
         else

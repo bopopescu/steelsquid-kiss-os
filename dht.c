@@ -80,14 +80,15 @@ void read_dht_data()
             c = -c;
         }
         float f = c * 1.8f + 32;
-        printf( "%.1f\n%.1f\n%.1f", h, c, f );
+        printf( "%.1f\n%.1f\n%.1f\n", h, c, f );
     }else  {
-        printf("error");
+        printf("error\n");
     }
 }
 
 int main( void )
 {
+    wiringPiSetup();
     read_dht_data();
     return(0);
 }
