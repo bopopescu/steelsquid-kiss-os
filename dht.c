@@ -81,8 +81,12 @@ void read_dht_data()
         }
         float f = c * 1.8f + 32;
         printf(h);
+        printf('/n');
+        printf(c);
+        printf('/n');
+        printf(f);
     }else  {
-        return(0);
+        printf("error");
     }
 }
 
