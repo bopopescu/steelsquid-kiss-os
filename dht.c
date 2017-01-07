@@ -80,23 +80,14 @@ void read_dht_data()
             c = -c;
         }
         float f = c * 1.8f + 32;
-        printf( "%.1f\n%.1f\n%.1f", h, c, f );
+        printf(h);
     }else  {
-        printf( "error" );
+        eturn(0);
     }
 }
 
 int main( void )
 {
-
-    if ( wiringPiSetup() == -1 )
-        exit( 1 );
-
-    while ( 1 )
-    {
-        read_dht_data();
-        delay( 2000 ); /* wait 2 seconds before next read */
-    }
-
+    read_dht_data();
     return(0);
 }
