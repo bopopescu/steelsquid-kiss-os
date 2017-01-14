@@ -2453,7 +2453,7 @@ function mbrowser_on()
     log "Enable start browser  in fullscreen (midori)"
     useradd browser
     mkhomedir_helper browser
-    aptitude install -R midori matchbox-window-manager xserver-xorg-video-fbturbo xserver-xorg xinit gconf-service libgconf-2-4 libgnome-keyring0 libxss1 xserver-xorg-input-multitouch xdg-utils unclutter xdotool lsb-release libexif12 libexif-gtk5 nodm
+    aptitude install -R midori matchbox-window-manager xserver-xorg-video-fbturbo xserver-xorg xinit gconf-service libgconf-2-4 libgnome-keyring0 libxss1 xdg-utils unclutter xdotool lsb-release libexif12 libexif-gtk5 nodm
     
     echo "#"\!"/bin/bash" > /home/browser/.xsession
     echo "xset s off &" >> /home/browser/.xsession
