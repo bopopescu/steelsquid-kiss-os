@@ -70,6 +70,8 @@ BEL = chr(0x06)
 # Last OK send/reseive 
 last_sync = datetime.datetime.now()
 
+# Timeout on connection read
+TIMEOUT = 2
 
 def setup(is_the_remote, host=None, port=6601):
     '''
@@ -139,6 +141,7 @@ def connect():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.connect((server_ip, port_nr))
+    sock.settimeout(TIMEOUT)
     con = sock
 
 
@@ -148,6 +151,7 @@ def listen_for_connection():
     '''
     global con
     new_con, _ = sock.accept()
+    new_con.settimeout(TIMEOUT)
     close_connection()
     con = new_con
 
@@ -202,7 +206,7 @@ def _write_error(typ, error):
     if error==None:
         _write(typ+"\n")
     else:
-        _write(typ+str(message)+"\n")
+        _write(typ+str(error)+"\n")
 
 
 def _write_command(typ, command, data):
@@ -231,9 +235,7 @@ def _write_char(char):
     '''
     if con == None:
         raise socket.error("socket connection broken")
-    sent = con.send(char)
-    if sent == 0:
-        raise socket.error("socket connection broken")
+    con.sendall(char)
         
         
 def _read_chr():
@@ -241,10 +243,12 @@ def _read_chr():
     Read a char from the remote host
     '''
     if con == None:
-        raise socket.error("socket connection broken")
+        raise socket.error("socket connection is None")
     chunk = con.recv(1)
-    if chunk==None or chunk == '':
-        raise socket.error("socket connection broken")        
+    if chunk==None:
+        raise socket.error("socket connection broken: None")        
+    if chunk == '':
+        raise socket.error("socket connection broken: ''")        
     return chunk
 
         

@@ -19,11 +19,13 @@ import steelsquid_nm
 import steelsquid_kiss_boot
 import time
 import datetime
+import thread
 import steelsquid_hmtrlrs
 from decimal import Decimal
 import os
 import steelsquid_tcp_radio
-
+import steelsquid_oled_ssd1306
+import math
 
 # Is this module started
 # This is set by the system automatically.
@@ -82,12 +84,12 @@ class STATIC(object):
     
     # Remote voltages(lipo 3s) 
     remote_voltage_max = 12.6      # 4.2V
-    remote_voltage_warning = 10.5  # 3.5V
+    remote_voltage_warning = 10.8  # 3.6V
     remote_voltage_min = 9.6       # 3.2V
 
     # Rover voltages(lipo 4s)
     rover_voltage_max = 16.8        # 4.2V
-    rover_voltage_warning = 14      # 3.5V
+    rover_voltage_warning = 14.4    # 3.6V
     rover_voltage_min = 12.8        # 3.2V
     
     # interrup GPIO for mcp23017
@@ -99,7 +101,7 @@ class STATIC(object):
     gpio_hmtrlrs_reset = 23
 
     # When system start move servo here
-    servo_position_pan_start = 452
+    servo_position_pan_start = 459
 
     # Max Servo position
     servo_position_pan_max = 700
@@ -118,6 +120,9 @@ class STATIC(object):
     
     # Max motor speed
     motor_max = 80
+
+
+
 
 
 
@@ -154,7 +159,13 @@ class DYNAMIC(object):
     timer = False
     timer_start = None
     timer_stop = None
-    
+        
+    # Is cruise control enabled (this is the speed)
+    cruise = 0
+
+    # Save to disk
+    save = False
+
 
 
 
@@ -200,14 +211,23 @@ class SETTINGS(object):
     audio_ip = ""
 
     # Width/height for the stream
-    resolution = "width=800,height=480"
+    width = "800"
+    height = "480"
 
     # Width for the stream
     fps = "20"
 
     # Bitrate for the stream
     bitrate = "800000"
-
+    
+    # GPS home lat
+    gps_home_lat = 0.0
+    
+    # GPS home longitud
+    gps_home_long = 0.0
+    
+    # GPS home altitud
+    gps_home_alt = 0
 
     
 
@@ -232,6 +252,7 @@ class SYSTEM(object):
         This will execute when system starts
         Do not execute long running stuff here, do it in on_loop...
         '''
+        steelsquid_oled_ssd1306.use_fix_font()
         # Startup message
         steelsquid_utils.shout("Steelsquid Irrbloss Remote start")
         # Load some settings
@@ -247,7 +268,7 @@ class SYSTEM(object):
         OUTPUT.sum_flash(led=False)
         OUTPUT.led_connected(False)
         OUTPUT.led_error(False)
-        OUTPUT.led_video_audio(False)
+        OUTPUT.led_gps_connected(False)
         OUTPUT.led_headlight(False)
         OUTPUT.led_laser(False)
         OUTPUT.led_siren(True)
@@ -255,6 +276,8 @@ class SYSTEM(object):
         OUTPUT.led_cruise(False)
         OUTPUT.led_audio(False)
         OUTPUT.led_timer(False)
+        OUTPUT.led_save(False)
+        OUTPUT.led_gps(False)
         try:
             GLOBAL.show(1)
         except:
@@ -279,7 +302,9 @@ class SYSTEM(object):
         steelsquid_pi.mcp23017_click(20, 4, INPUT.button_center, pullup=True, rpi_gpio=STATIC.gpio_mcp23017_20_trig)
         steelsquid_pi.mcp23017_click(20, 9, INPUT.button_fpv, pullup=True, rpi_gpio=STATIC.gpio_mcp23017_20_trig)
         steelsquid_pi.mcp23017_click(21, 2, INPUT.button_audio, pullup=True, rpi_gpio=STATIC.gpio_mcp23017_21_trig)
-        steelsquid_pi.mcp23017_click(21, 4, INPUT.button_timer, pullup=True, rpi_gpio=STATIC.gpio_mcp23017_21_trig)
+        steelsquid_pi.mcp23017_click(21, 4, INPUT.button_save, pullup=True, rpi_gpio=STATIC.gpio_mcp23017_21_trig)
+        steelsquid_pi.mcp23017_click(21, 13, INPUT.button_timer, pullup=True, rpi_gpio=STATIC.gpio_mcp23017_21_trig)
+        steelsquid_pi.mcp23017_click(21, 15, INPUT.button_gps, pullup=True, rpi_gpio=STATIC.gpio_mcp23017_21_trig)
 
         steelsquid_pi.mcp23017_click(20, 11, INPUT.button_settings, pullup=True, rpi_gpio=STATIC.gpio_mcp23017_20_trig)
         steelsquid_pi.mcp23017_click(21, 0, INPUT.button_map, pullup=True, rpi_gpio=STATIC.gpio_mcp23017_20_trig)
@@ -325,16 +350,24 @@ class LOOP(object):
     camera_pan = 0
     camera_tilt = 0
 
-    # drive/steer
+    # drive/steer/turn
     drive = 0
     steer = 0
-
+    turn = 0
+    
+    # time_count
+    time_count = 0
+    
     #
-    warning_flash_1 = True
-    warning_flash_2 = True
+    audio_killed = False
+    video_killed = False
+    hud_killed = False
+    hud_txt = ""
+    E = '.'
+    D = ':'
     
     @staticmethod
-    def update_lcd():
+    def update_lcd_and_other():
         '''
         Update the LCD
         Light LED
@@ -343,66 +376,139 @@ class LOOP(object):
             # Wite to LCD
             if not DYNAMIC.stop_next_lcd_message:
                 print_this = []
-                if DYNAMIC.timer_start == None or DYNAMIC.timer_stop == None:
-                    print_this.append("Timer: Not started")
+                print_this_hud = []
+                # Time
+                if LOOP.time_count==0 or LOOP.time_count==1 or LOOP.time_count==2:
+                    tt = steelsquid_utils.get_date_time()
+                    print_this.append(tt)
+                    print_this.append('\n')
+                    print_this_hud.append(tt)
+                    print_this_hud.append(" .... ")
                 else:
-                    if DYNAMIC.timer:
-                        diff = datetime.datetime.now() - DYNAMIC.timer_start
-                        hours, remainder = divmod(diff.total_seconds(), 3600)
-                        minutes, seconds = divmod(remainder, 60) 
-                        if hours>9:
-                            OUTPUT.led_timer(False)
-                            DYNAMIC.timer_stop = datetime.datetime.now()
-                            DYNAMIC.timer = False
-                        else:
-                            print_this.append("Timer: %d:%02d:%02d" % (int(hours), int(minutes), int(seconds)))
+                    # Timer
+                    if DYNAMIC.timer_start == None:
+                        print_this.append("TIME ---\n")
+                        print_this_hud.append("MISSION ................ \n")
                     else:
-                        diff = DYNAMIC.timer_stop - DYNAMIC.timer_start
-                        hours, remainder = divmod(diff.total_seconds(), 3600)
-                        minutes, seconds = divmod(remainder, 60) 
-                        print_this.append("Timer: %d:%02d:%02d" % (int(hours), int(minutes), int(seconds)))
-                connected = False
-                # Get network status
-                if steelsquid_kiss_global.last_net:
-                    if steelsquid_kiss_global.last_wifi_name!="---":
-                        print_this.append(steelsquid_kiss_global.last_wifi_name+": "+steelsquid_kiss_global.last_wifi_ip.replace("192.168", ""))
-
-                        connected=True
-                    if steelsquid_kiss_global.last_lan_ip!="---":
-                        print_this.append(steelsquid_kiss_global.last_lan_ip)
-                        connected=True
+                        if DYNAMIC.timer:
+                            diff = datetime.datetime.now() - DYNAMIC.timer_start
+                            hours, remainder = divmod(diff.total_seconds(), 3600)
+                            minutes, seconds = divmod(remainder, 60) 
+                            if hours>9:
+                                OUTPUT.led_timer(False)
+                                DYNAMIC.timer_stop = datetime.datetime.now()
+                                DYNAMIC.timer = False
+                            else:
+                                tt = "%d:%02d:%02d " % (int(hours), int(minutes), int(seconds))
+                                print_this.append("TIME ")
+                                print_this.append(tt)
+                                print_this.append('\n')
+                                print_this_hud.append("MISSION")
+                                print_this_hud.append(LOOP.D)
+                                print_this_hud.append(tt.ljust(16, LOOP.E))
+                                print_this_hud.append(" ")
+                        else:
+                            diff = DYNAMIC.timer_stop - DYNAMIC.timer_start
+                            hours, remainder = divmod(diff.total_seconds(), 3600)
+                            minutes, seconds = divmod(remainder, 60) 
+                            tt = "%d:%02d:%02d " % (int(hours), int(minutes), int(seconds))
+                            print_this.append("TIME ")
+                            print_this.append(tt)
+                            print_this.append('\n')
+                            print_this_hud.append("MISSION")
+                            print_this_hud.append(LOOP.D)
+                            print_this_hud.append(tt.ljust(16, LOOP.E))
+                            print_this_hud.append(" ")
+                LOOP.time_count = LOOP.time_count + 1
+                if LOOP.time_count>=6:
+                    LOOP.time_count=0
+                # net/disk usage
+                for name in os.listdir("/media"):
+                    directory = os.path.join("/media", name)
+                    if not os.path.isdir(directory) or name == "HiLink":
+                        directory = None
+                    else:
+                        break
+                if directory == None:
+                    tt = "DATA " + RADIO_SYNC.SERVER.data_usage + "G "
+                    print_this.append(tt)
+                    print_this.append('\n')
+                    tt = "DATA"+ LOOP.D + RADIO_SYNC.SERVER.data_usage + "G "
+                    print_this_hud.append(tt.ljust(9, LOOP.E))
+                else:
+                    print_this.append("DATA " + (RADIO_SYNC.SERVER.data_usage + "G").ljust(6) + "USB " + str(steelsquid_utils.get_disk_usage(directory))+"%")
+                    print_this.append('\n')
+                    tt = "DATA" +LOOP.D + (RADIO_SYNC.SERVER.data_usage + "G ").ljust(9, LOOP.E) + " USB"+ LOOP.D + str(steelsquid_utils.get_disk_usage(directory))+"% "
+                    print_this_hud.append(tt.ljust(27, LOOP.E))
+                # Temp humidity
+                print_this.append("TEMP " + (RADIO_SYNC.SERVER.temperature + "C").ljust(6)+"HUM " + RADIO_SYNC.SERVER.humidity + "%")
+                print_this.append('\n')
+                print_this_hud.append(" TEMP"+LOOP.D + (RADIO_SYNC.SERVER.temperature + "C ").ljust(8, LOOP.E)+" HUM"+LOOP.D + (RADIO_SYNC.SERVER.humidity + "% ").ljust(8, LOOP.E))
                 # Voltage/Amp for the remote
                 if DYNAMIC.remote_voltage != -1 and DYNAMIC.remote_ampere != -1:
-                    if DYNAMIC.remote_voltage<STATIC.remote_voltage_warning:
-                        if LOOP.warning_flash_1:
-                            LOOP.warning_flash_1 = False
-                            print_this.append("Statin: " + str(DYNAMIC.remote_voltage) + "V  " + str(DYNAMIC.remote_ampere) + "A  LOW!")
-                        else:
-                            LOOP.warning_flash_1 = True
-                            print_this.append("Statin: " + str(DYNAMIC.remote_voltage) + "V  " + str(DYNAMIC.remote_ampere) + "A ")
-                    else:
-                        print_this.append("Statin: " + str(DYNAMIC.remote_voltage) + "V  " + str(DYNAMIC.remote_ampere) + "A")
+                    print_this.append("REMO "+(str(steelsquid_utils.get_lipo_percentage(DYNAMIC.remote_voltage, 3))+"%").ljust(6)+ (str(DYNAMIC.remote_voltage) + "V").ljust(6) + str(DYNAMIC.remote_ampere) + "A")
+                    print_this.append('\n')
                 # Voltage/Amp for the rover
                 if RADIO_SYNC.SERVER.rover_voltage != -1 and RADIO_SYNC.SERVER.rover_ampere != -1:
-                    if RADIO_SYNC.SERVER.rover_voltage<STATIC.rover_voltage_warning:
-                        if LOOP.warning_flash_2:
-                            LOOP.warning_flash_2 = False
-                            print_this.append("Rover: " + str(RADIO_SYNC.SERVER.rover_voltage) + "V  " + str(RADIO_SYNC.SERVER.rover_ampere) + "A  LOW!")
-                        else:
-                            LOOP.warning_flash_2 = True
-                            print_this.append("Rover: " + str(RADIO_SYNC.SERVER.rover_voltage) + "V  " + str(RADIO_SYNC.SERVER.rover_ampere) + "A")
-                    else:
-                        print_this.append("Rover: " + str(RADIO_SYNC.SERVER.rover_voltage) + "V  " + str(RADIO_SYNC.SERVER.rover_ampere) + "A")
+                    print_this.append("ROVE "+(str(steelsquid_utils.get_lipo_percentage(RADIO_SYNC.SERVER.rover_voltage, 4))+"%").ljust(6)+(str(RADIO_SYNC.SERVER.rover_voltage) + "V").ljust(6) + str(RADIO_SYNC.SERVER.rover_ampere) + "A  ")
+                    print_this.append('\n')
+                    print_this_hud.append((" BAT"+LOOP.D+(str(steelsquid_utils.get_lipo_percentage(RADIO_SYNC.SERVER.rover_voltage, 4))+"%")+LOOP.D+(str(RADIO_SYNC.SERVER.rover_voltage) + "V")+LOOP.D + (str(RADIO_SYNC.SERVER.rover_ampere) + "A ")).ljust(22, LOOP.E))
+                # Cruise controll
+                if DYNAMIC.cruise > 0:
+                    print_this_hud.append((" CRUISE"+LOOP.D + str(DYNAMIC.cruise) + "%").ljust(18, LOOP.E))
+                    OUTPUT.led_cruise(True)
+                else:
+                    print_this_hud.append(" CRUISE"+LOOP.D+"0% .... ")
+                    OUTPUT.led_cruise(False)
+
+                print_this_hud.append("CAMLIGHT")
+                print_this_hud.append(LOOP.D)
+                print_this_hud.append(GLOBAL.to_on_off(RADIO_SYNC.CLIENT.cam_light))
+
+                print_this_hud.append("HEADLIGHT")
+                print_this_hud.append(LOOP.D)
+                print_this_hud.append(GLOBAL.to_on_off(RADIO_SYNC.CLIENT.headlight))
+
+                print_this_hud.append("HIGHBEAM")
+                print_this_hud.append(LOOP.D)
+                print_this_hud.append(GLOBAL.to_on_off(RADIO_SYNC.CLIENT.highbeam))
+
+                # GPS
+                if RADIO_SYNC.SERVER.gps_long!=0 and RADIO_SYNC.SERVER.gps_lat!=0 and SETTINGS.gps_home_lat != 0:
+                    RADIO_SYNC.CLIENT.gps_from_home = steelsquid_utils.distance(RADIO_SYNC.SERVER.gps_lat, RADIO_SYNC.SERVER.gps_long, SETTINGS.gps_home_lat, SETTINGS.gps_home_long)
+                    print_this.append(("DIST " + str(RADIO_SYNC.CLIENT.gps_from_home)+"m").ljust(11))
+                    print_this.append(str(RADIO_SYNC.SERVER.gps_speed))
+                    print_this.append("km/h")                    
+                    print_this_hud.append("DISTANCE")
+                    print_this_hud.append(LOOP.D)
+                    print_this_hud.append((str(RADIO_SYNC.CLIENT.gps_from_home)+"m ").ljust(10, LOOP.E))
+                    print_this_hud.append(" DISTANCE")
+                    print_this_hud.append(LOOP.D)
+                    print_this_hud.append(str(RADIO_SYNC.SERVER.gps_speed)+"km/h")
+
+                if RADIO_SYNC.CLIENT.mood==1:
+                    print_this_hud.append(":-) ")
+                elif RADIO_SYNC.CLIENT.mood==2:
+                    print_this_hud.append(":-| ")
+                elif RADIO_SYNC.CLIENT.mood==3:
+                    print_this_hud.append(":-( ")
+                elif RADIO_SYNC.CLIENT.mood==4:
+                    print_this_hud.append(">:-(")
+                else:
+                    print_this_hud.append("    ")
+
+                LOOP.hud_txt = "".join(print_this_hud)
+                #print LOOP.hud_txt
                 # Write text to LCD
                 if len(print_this)>0:
-                    new_lcd_message = "\n".join(print_this)
+                    new_lcd_message = "".join(print_this)
                     if new_lcd_message!=DYNAMIC.last_lcd_message:
                         DYNAMIC.last_lcd_message = new_lcd_message
                         steelsquid_pi.ssd1306_write(new_lcd_message, 0)
             else:
                 DYNAMIC.stop_next_lcd_message=False       
             # Set Network LED status
-            OUTPUT.led_network(connected)
+            OUTPUT.led_network(steelsquid_kiss_global.last_net)
             # Check connection
             if SETTINGS.control == 1:
                 OUTPUT.led_connected(steelsquid_hmtrlrs.is_linked())
@@ -443,10 +549,11 @@ class LOOP(object):
         if p>=-515 and p<=515 and t>=-515 and t<=515:
             LOOP.camera_pan = p
             LOOP.camera_tilt = t
-        d, s = GLOBAL.read_drive_steer()
-        if d>=-515 and d<=515 and s>=-515 and s<=515:
-            LOOP.drive = d
+        d, s, t= GLOBAL.read_drive_steer()
+        if d>=-515 and d<=515 and s>=-515 and s<=515 and t>=-515 and t<=515:
+            LOOP.drive = d;
             LOOP.steer = s
+            LOOP.turn = t
         return 0
 
 
@@ -456,15 +563,39 @@ class LOOP(object):
         Audio stream
         ''' 
         if DYNAMIC.audio == True:
-            steelsquid_utils.execute_system_command_blind(["pkill", "-f", "gst-launch-1.0 udpsrc port=6603"])
-            time.sleep(0.5)
-            try:
-                steelsquid_utils.execute_system_command(["gst-launch-1.0", "udpsrc", "port=6603", "caps=application/x-rtp", "!", "rtppcmudepay", "!", "mulawdec", "!", "alsasink", "sync=true"]) 
-            except:
-                steelsquid_utils.shout()
-        else:
-            steelsquid_utils.execute_system_command_blind(["pkill", "-f", "gst-launch-1.0 udpsrc port=6603"])
-        return 1
+            LOOP.audio_killed = False
+            if DYNAMIC.save:
+                try:
+                    for name in os.listdir("/media"):
+                        directory = os.path.join("/media", name)
+                        if not os.path.isdir(directory) or name == "HiLink":
+                            directory = None
+                        else:
+                            break
+                    if directory != None:
+                        d = os.path.join(directory, steelsquid_utils.get_date())
+                        t = os.path.join(d, steelsquid_utils.get_time(delemitter="")+"_audio.wav")
+                        try:
+                            os.mkdir(d);
+                        except:
+                            pass
+                    steelsquid_utils.execute_system_command_blind(["pkill", "-f", "gst-launch-1.0 -e udpsrc port=6603"])
+                    try:
+                        steelsquid_utils.execute_system_command(["nice", "-n", "8", "gst-launch-1.0", "-e", "udpsrc", "port=6603", "caps=application/x-rtp", "!", "rtppcmudepay", "!", "mulawdec", "!", "tee", "name=myt", "!", "queue", "!", "alsasink", "sync=true", "myt.", "!", "queue", "!", "audioconvert", "!", "audioresample", "!", "wavenc", "!", "filesink", "location="+t]) 
+                    except:
+                        thread.start_new_thread(GLOBAL._save_flash, (DYNAMIC.save,)) 
+                except:
+                    steelsquid_utils.shout()
+            else:
+                steelsquid_utils.execute_system_command_blind(["pkill", "-f", "gst-launch-1.0 -e udpsrc port=6603"])
+                try:
+                    steelsquid_utils.execute_system_command(["nice", "-n", "8", "gst-launch-1.0", "-e", "udpsrc", "port=6603", "caps=application/x-rtp", "!", "rtppcmudepay", "!", "mulawdec", "!", "alsasink", "sync=true"]) 
+                except:
+                    pass
+        elif not LOOP.audio_killed:
+            steelsquid_utils.execute_system_command_blind(["pkill", "-f", "gst-launch-1.0 -e udpsrc port=6603"])
+            LOOP.audio_killed = True
+        return 0.5
 
 
     @staticmethod
@@ -473,16 +604,86 @@ class LOOP(object):
         Video stream
         ''' 
         if DYNAMIC.show == 4:
-            steelsquid_utils.execute_system_command_blind(["pkill", "-f", "gst-launch-1.0 tcpserversrc host=0.0.0.0 port=6602"])
-            time.sleep(0.5)
-            try:
-                steelsquid_utils.execute_system_command(["gst-launch-1.0", "tcpserversrc", "host=0.0.0.0", "port=6602", "!", "h264parse", "!", "omxh264dec", "!", "glimagesink", "sync=true"]) 
-            except:
-                steelsquid_utils.shout()
-        else:
-            steelsquid_utils.execute_system_command_blind(["pkill", "-f", "gst-launch-1.0 tcpserversrc host=0.0.0.0 port=6602"])
-        return 1
+            LOOP.video_killed = False
+            if DYNAMIC.save:
+                try:
+                    for name in os.listdir("/media"):
+                        directory = os.path.join("/media", name)
+                        if not os.path.isdir(directory) or name == "HiLink":
+                            directory = None
+                        else:
+                            break
+                    if directory != None:
+                        d = os.path.join(directory, steelsquid_utils.get_date())
+                        t = os.path.join(d, steelsquid_utils.get_time(delemitter="")+"_video.mp4")
+                        try:
+                            os.mkdir(d);
+                        except:
+                            pass
+                    steelsquid_utils.execute_system_command_blind(["pkill", "-f", "gst-launch-1.0 -e tcpserversrc host=0.0.0.0 port=6602"])
+                    try:
+                        steelsquid_utils.execute_system_command(["nice", "-n", "5", "gst-launch-1.0", "-e", "tcpserversrc", "host=0.0.0.0", "port=6602", "!", "tee", "name=t", "!", "h264parse", "!", "omxh264dec", "!", "glimagesink", "sync=true", "t.", "!", "queue", "!", "video/x-h264,width="+SETTINGS.width+",height="+SETTINGS.height+",framerate=" + SETTINGS.fps + "/1,profile=constrained-baseline", "!", "h264parse", "!", "mp4mux", "!", "filesink", "location="+t]) 
+                    except:
+                        thread.start_new_thread(GLOBAL._save_flash, (DYNAMIC.save,)) 
+                except:
+                    steelsquid_utils.shout()
+            else:
+                steelsquid_utils.execute_system_command_blind(["pkill", "-f", "gst-launch-1.0 -e tcpserversrc host=0.0.0.0 port=6602"])
+                time.sleep(0.5)
+                try:
+                    steelsquid_utils.execute_system_command(["nice", "-n", "5", "gst-launch-1.0", "-e", "tcpserversrc", "host=0.0.0.0", "port=6602", "!", "h264parse", "!", "omxh264dec", "!", "glimagesink", "sync=true"]) 
+                except:
+                    pass
+        elif not LOOP.video_killed:
+            steelsquid_utils.execute_system_command_blind(["pkill", "-f", "gst-launch-1.0 -e tcpserversrc host=0.0.0.0 port=6602"])
+            LOOP.video_killed = True
+        return 0.5
         
+        
+    @staticmethod
+    def hud_stream():
+        '''
+        HUD stream
+        ''' 
+        if DYNAMIC.show == 4:
+            LOOP.hud_killed = False
+            if DYNAMIC.save:
+                try:
+                    for name in os.listdir("/media"):
+                        directory = os.path.join("/media", name)
+                        if not os.path.isdir(directory) or name == "HiLink":
+                            directory = None
+                        else:
+                            break
+                    if directory != None:
+                        d = os.path.join(directory, steelsquid_utils.get_date())
+                        t = os.path.join(d, steelsquid_utils.get_time(delemitter="")+"_hud.mp4")
+                        try:
+                            os.mkdir(d);
+                        except:
+                            pass
+                    steelsquid_utils.execute_system_command_blind(["pkill", "-f", "gst-launch-1.0 videotestsrc"])
+                    steelsquid_utils.execute_system_command_blind(["pkill", "-f", "gst-launch-1.0 -e udpsrc port=1234"])
+                    try:
+                        steelsquid_utils.execute_system_command_blind(["nice", "-n", "10", "gst-launch-1.0", "-e", "udpsrc", "port=1234", "!", "application/x-rtp,media=video,clock-rate=90000,encoding-name=H264", "!", "rtph264depay", "!", "h264parse", "!", "mp4mux", "dts-method=0", "!", "filesink", "location="+t], wait_for_finish=False)
+                        time.sleep(0.2)
+                        while DYNAMIC.save:
+                            
+                            steelsquid_utils.execute_system_command_blind(["nice", "-n", "10", "gst-launch-1.0", "videotestsrc", "pattern=black", "!", "video/x-raw,width=" + SETTINGS.width + ",height=80,framerate=" + SETTINGS.fps + "/1", "!", "textoverlay", "text="+LOOP.hud_txt, "wrap-mode=0", "valignment=bottom", "halignment=center", "font-desc=FreeMono 10", "xpad=0", "ypad=0", "!", "omxh264enc", "target-bitrate="+SETTINGS.bitrate, "control-rate=3", "!", "rtph264pay", "!", "udpsink", "host=127.0.0.1", "port=1234"], wait_for_finish=False) 
+                            time.sleep(2)
+                            steelsquid_utils.execute_system_command_blind(["pkill", "-f", "gst-launch-1.0 videotestsrc"])
+                    except:
+                        steelsquid_utils.shout()
+                except:
+                    steelsquid_utils.shout()
+        elif not LOOP.hud_killed:
+            steelsquid_utils.execute_system_command_blind(["pkill", "-f", "gst-launch-1.0 videotestsrc"])
+            steelsquid_utils.execute_system_command_blind(["pkill", "-f", "gst-launch-1.0 -e udpsrc port=1234"])
+            LOOP.hud_killed = True
+        return 0.5
+        
+
+
 
 
 
@@ -516,7 +717,11 @@ class RADIO_SYNC(object):
         Will fire after every sync on the client (ones a second or when steelsquid_kiss_global.radio_interrupt() is executed)
         This will also be executed on server (When sync is reseived or about every seconds when no activity from the client).
         '''
-        pass
+        # Stop drive if no commadn in 1 second
+        if seconds_since_last_ok_ping>3:
+            DYNAMIC.cruise = 0
+        # Is GPS connected
+        OUTPUT.led_gps_connected(RADIO_SYNC.SERVER.gps_con)
         
         
     class CLIENT(object):
@@ -537,9 +742,9 @@ class RADIO_SYNC(object):
 
         # Cam light
         cam_light = False
-        
-        # Is cruise control enabled
-        cruise = False
+
+        # GPS how long from home
+        gps_from_home = 0
 
         
     class SERVER(object):
@@ -550,8 +755,34 @@ class RADIO_SYNC(object):
         rover_voltage = -1.0
 
         # Rover ampere (this rover)
-        rover_ampere = -1.0
+        rover_ampere = -1
 
+        # Temp
+        temperature = "---"
+
+        # Humidity
+        humidity = "---"
+
+        # data_usage
+        data_usage = "---"
+
+        # GPS connection
+        gps_con = False
+
+        # GPS longitud
+        gps_long = 0.0
+
+        # GPS latitid
+        gps_lat = 0.0
+
+        # GPS Altitude
+        gps_alt = 0
+
+        # GPS speed
+        gps_speed = 0
+
+        
+        
 
 
 class RADIO_PUSH_1(object):
@@ -587,17 +818,65 @@ class RADIO_PUSH_1(object):
         True=send update to server, False=Do not send anything to server
         On server it will fire on every push received
         '''
-        if LOOP.drive != 0 or LOOP.steer!=0:
+        # If move youstick stop cruisecontroll
+        if LOOP.drive > 40 or LOOP.steer > 40 or LOOP.drive < -40 or LOOP.steer < -40:
+            DYNAMIC.cruise=0
+        # Cruise controll
+        if DYNAMIC.cruise>0:
+            RADIO_PUSH_1._sent_zero_count = 0
+            # Remap the joystick range
+            turn = int(steelsquid_utils.remap(LOOP.turn, -510, 510, STATIC.motor_max*-1, STATIC.motor_max))
+            # Drive 
+            turn = turn/4
+            motor_left = DYNAMIC.cruise + turn
+            motor_right = DYNAMIC.cruise - turn
+
+            # Chack that the waluses is in range (-100 to 100)
+            if motor_right>STATIC.motor_max:
+                motor_right = STATIC.motor_max
+            elif motor_right<STATIC.motor_max*-1:
+                motor_right = STATIC.motor_max*-1
+            if motor_left>STATIC.motor_max:
+                motor_left = STATIC.motor_max
+            elif motor_left<STATIC.motor_max*-1:
+                motor_left = STATIC.motor_max*-1
+            # Set the value that will be sent to the server
+            RADIO_PUSH_1.motor_left=motor_left
+            RADIO_PUSH_1.motor_right=motor_right
+            
+            return True
+        elif LOOP.turn != 0:
+            RADIO_PUSH_1._sent_zero_count = 0
+            # Remap the joystick range
+            turn = int(steelsquid_utils.remap(LOOP.turn, -510, 510, STATIC.motor_max*-1, STATIC.motor_max))
+            # Drive 
+            turn = turn/2
+            motor_left = turn
+            motor_right = turn*-1
+
+            # Chack that the waluses is in range (-100 to 100)
+            if motor_right>STATIC.motor_max:
+                motor_right = STATIC.motor_max
+            elif motor_right<STATIC.motor_max*-1:
+                motor_right = STATIC.motor_max*-1
+            if motor_left>STATIC.motor_max:
+                motor_left = STATIC.motor_max
+            elif motor_left<STATIC.motor_max*-1:
+                motor_left = STATIC.motor_max*-1
+                
+            # Set the value that will be sent to the server
+            RADIO_PUSH_1.motor_left=motor_left
+            RADIO_PUSH_1.motor_right=motor_right
+            
+            return True
+        elif LOOP.drive != 0 or LOOP.steer!=0:
             RADIO_PUSH_1._sent_zero_count = 0
             # Remap the joystick range
             drive = int(steelsquid_utils.remap(LOOP.drive, -510, 510, STATIC.motor_max*-1, STATIC.motor_max))
             steer = int(steelsquid_utils.remap(LOOP.steer, -510, 510, STATIC.motor_max*-1, STATIC.motor_max))
             
             # Drive 
-            if drive > 10 or drive < -10:
-                steer = steer/4
-            else:
-                steer = steer/2
+            steer = steer/4
             motor_left = drive
             motor_right = drive
             motor_left = motor_left - steer
@@ -707,16 +986,36 @@ class WEB(object):
         '''
         Set the control/video/audio ip
         '''
+        para = []
         SETTINGS.control_ip = parameters[0]
+        para.append(parameters[0])
         SETTINGS.video_ip = parameters[1]
+        para.append(parameters[1])
         SETTINGS.audio_ip = parameters[2]
-        SETTINGS.resolution = parameters[3]
+        para.append(parameters[2])
+        resolution = parameters[3]
+        r= resolution.split(':')
+        SETTINGS.width = r[0]
+        para.append(r[0])
+        SETTINGS.height = r[1]
+        para.append(r[1])
         SETTINGS.fps = parameters[4]
+        para.append(parameters[4])
         SETTINGS.bitrate = parameters[5]
-        parameters.append("1234567")
+        para.append(parameters[5])
+        para.append("1234567")
         steelsquid_kiss_global.save_module_settings()
-        steelsquid_hmtrlrs.request("settings_save", parameters)
-        steelsquid_kiss_global.reboot(delay=4)
+        try:
+            steelsquid_hmtrlrs.request("settings_save", para)
+        except:
+            try:
+                steelsquid_hmtrlrs.request("settings_save", para)
+            except:
+                try:
+                    steelsquid_hmtrlrs.request("settings_save", para)
+                except:
+                    pass
+        steelsquid_kiss_global.restart(delay=2)
         return []
 
 
@@ -725,7 +1024,8 @@ class WEB(object):
         '''
         Get the control/video/audio ip
         '''
-        return [SETTINGS.control_ip, SETTINGS.video_ip, SETTINGS.audio_ip, SETTINGS.resolution, SETTINGS.fps, SETTINGS.bitrate]
+        SETTINGS.width, SETTINGS.height
+        return [SETTINGS.control_ip, SETTINGS.video_ip, SETTINGS.audio_ip, SETTINGS.width+":"+SETTINGS.height, SETTINGS.fps, SETTINGS.bitrate]
 
     
     @staticmethod
@@ -752,6 +1052,15 @@ class WEB(object):
         return [DYNAMIC.show]
 
 
+
+    @staticmethod
+    def gps(session_id, parameters):
+        '''
+        Get the map
+        '''
+        return [SETTINGS.gps_home_lat, SETTINGS.gps_home_long, RADIO_SYNC.SERVER.gps_lat, RADIO_SYNC.SERVER.gps_long]
+
+
     @staticmethod
     def speek(session_id, parameters):
         '''
@@ -761,6 +1070,15 @@ class WEB(object):
             steelsquid_hmtrlrs.request("speek", parameters)
         else:
             steelsquid_tcp_radio.request("speek", parameters)
+
+        
+
+    @staticmethod
+    def network(session_id, parameters):
+        '''
+        Get network
+        '''
+        return [steelsquid_kiss_global.last_wifi_name, steelsquid_kiss_global.last_wifi_ip, steelsquid_kiss_global.last_lan_ip, steelsquid_kiss_global.last_wan_ip]
         
 
 
@@ -905,8 +1223,9 @@ class INPUT(object):
         '''
         Camera loght
         '''        
-        RADIO_SYNC.CLIENT.cruise = not RADIO_SYNC.CLIENT.cruise
-        OUTPUT.led_cruise(RADIO_SYNC.CLIENT.cruise)
+        OUTPUT.led_cruise(DYNAMIC.cruise>0)
+        if DYNAMIC.cruise < STATIC.motor_max:
+            DYNAMIC.cruise = DYNAMIC.cruise + 5
 
 
     @staticmethod
@@ -950,7 +1269,7 @@ class INPUT(object):
         '''
         Toggle use of audio
         '''        
-        GLOBAL.toggle_audio()
+        GLOBAL.audio(not DYNAMIC.audio)
         
         
     @staticmethod
@@ -967,6 +1286,28 @@ class INPUT(object):
             OUTPUT.led_timer(True)
             DYNAMIC.timer_start = datetime.datetime.now()
             DYNAMIC.timer = True
+
+
+    @staticmethod
+    def button_save(address, pin):
+        '''
+        button_timer
+        '''        
+        GLOBAL.save(not DYNAMIC.save)
+
+
+    @staticmethod
+    def button_gps(address, pin):
+        '''
+        button_timer
+        '''        
+        OUTPUT.led_gps()
+        SETTINGS.gps_home_lat=RADIO_SYNC.SERVER.gps_lat
+        SETTINGS.gps_home_long=RADIO_SYNC.SERVER.gps_long
+        SETTINGS.gps_home_alt=SETTINGS.gps_home_alt
+        steelsquid_kiss_global.save_module_settings()
+
+
 
 
 
@@ -996,7 +1337,7 @@ class OUTPUT(object):
 
 
     @staticmethod
-    def led_video_audio(status):
+    def led_gps_connected(status):
         '''
         Connected to rover
         ''' 
@@ -1198,7 +1539,26 @@ class OUTPUT(object):
         '''
         led_timer
         ''' 
+        steelsquid_pi.mcp23017_set(21, 12, status)
+
+
+    @staticmethod
+    def led_save(status):
+        '''
+        led_timer
+        ''' 
         steelsquid_pi.mcp23017_set(21, 5, status)  
+
+
+    @staticmethod
+    def led_gps(status=None):
+        '''
+        Use external hdmi monitor LED
+        ''' 
+        if status==None:
+            steelsquid_pi.mcp23017_flash(21, 14)
+        else:
+            steelsquid_pi.mcp23017_set(21, 14, status)
         
         
  
@@ -1260,8 +1620,8 @@ class GLOBAL(object):
         v = v * 0.003225806
         v = v / 0.027
         v = Decimal(v)
-        v = round(v, 1)
-        return v
+        v = math.ceil(v)
+        return int(v)
 
 
     @staticmethod
@@ -1293,7 +1653,11 @@ class GLOBAL(object):
         steer = 515 - steer
         if steer > -20 and steer < 20:
             steer = 0
-        return drive, steer
+        turn = steelsquid_pi.po12_adc(3, samples=3)
+        turn = 515 - turn
+        if turn > -50 and turn < 50:
+            turn = 0
+        return drive, steer, turn
         
 
     @staticmethod
@@ -1320,7 +1684,18 @@ class GLOBAL(object):
         Set with way to control rover
         1=radio 2=wifi 3=3g4g
         '''        
-        steelsquid_hmtrlrs.request("set_control", [con, "1234567"])
+        try:
+            steelsquid_hmtrlrs.request("set_control", [con, "1234567"])
+        except:
+            time.sleep(1)
+            try:
+                steelsquid_hmtrlrs.request("set_control", [con, "1234567"])
+            except:
+                time.sleep(1)
+                try:
+                    steelsquid_hmtrlrs.request("set_control", [con, "1234567"])
+                except:
+                    pass
         OUTPUT.led_control(con)
         SETTINGS.control = con
         steelsquid_kiss_global.save_module_settings()
@@ -1352,25 +1727,28 @@ class GLOBAL(object):
 
 
     @staticmethod
-    def toggle_audio():
+    def audio(on, do_save=True):
         '''
-        Audio
+        Audiohttps://www.google.se/url?sa=t&rct=j&q=&esrc=s&source=web&cd=1&ved=0ahUKEwji77mO9brRAhWB_iwKHX_ID90QFggdMAA&url=http%3A%2F%2Fstackoverflow.com%2Fquestions%2F8814383%2Fsending-sigint-ctrl-c-to-program-running-in-eclipse-console&usg=AFQjCNEPAt6pEUEgpOOCO5nnLxJFC2m6Aw&sig2=4NouXbTWRRmu7wwZNd4jnA&bvm=bv.143423383,d.bGg
         '''        
         if SETTINGS.control == 1:
-            steelsquid_hmtrlrs.request("stream_audio", [not DYNAMIC.audio])
+            steelsquid_hmtrlrs.request("stream_audio", [on])
         else:
-            steelsquid_tcp_radio.request("stream_audio", [not DYNAMIC.audio])
-        DYNAMIC.audio = not DYNAMIC.audio
-        steelsquid_utils.execute_system_command_blind(["pkill", "-f", "gst-launch-1.0 tcpserversrc host=0.0.0.0 port=6603"])
+            steelsquid_tcp_radio.request("stream_audio", [on])
+        DYNAMIC.audio = on
+        if do_save and DYNAMIC.save:            
+            GLOBAL.save(Falsee)
+        steelsquid_utils.execute_system_command_blind(["pkill", "-f", "gst-launch-1.0 -e udpsrc port=6603"])
         OUTPUT.led_audio(DYNAMIC.audio)
 
 
     @staticmethod
-    def show(this):
+    def show(this, do_save=True):
         '''
         Show this on screen
         1 = Speek   2 = settings   3 = Map   4 = FPV
         '''        
+        do_screen = DYNAMIC.save
         if this == 4:
             if SETTINGS.control == 1:
                 steelsquid_hmtrlrs.request("stream_video", [True])
@@ -1381,7 +1759,9 @@ class GLOBAL(object):
                 steelsquid_hmtrlrs.request("stream_video", [False])
             else:
                 steelsquid_tcp_radio.request("stream_video", [False])
-        steelsquid_utils.execute_system_command_blind(["pkill", "-f", "gst-launch-1.0 tcpserversrc host=0.0.0.0 port=6602"])
+            if do_save and DYNAMIC.save:            
+                GLOBAL.save(False)
+        steelsquid_utils.execute_system_command_blind(["pkill", "-INT", "gst-launch-1.0"])
         DYNAMIC.show = this
         if DYNAMIC.show == 1:
             OUTPUT.led_settings(False)
@@ -1395,7 +1775,91 @@ class GLOBAL(object):
             OUTPUT.led_settings(False)
             OUTPUT.led_map(True)
             OUTPUT.led_fpv(False)
+            if do_screen:
+                t = GLOBAL.get_save_file("_map.png")
+                steelsquid_utils.execute_delay(2, steelsquid_utils.execute_system_command, (["/root/screen", t],))
         elif DYNAMIC.show == 4:
             OUTPUT.led_settings(False)
             OUTPUT.led_map(False)
             OUTPUT.led_fpv(True)
+
+
+    @staticmethod
+    def save(on):
+        '''
+        Save to disk
+        '''        
+        for name in os.listdir("/media"):
+            directory = os.path.join("/media", name)
+            if not os.path.isdir(directory) or name == "HiLink":
+                directory = None
+            else:
+                break
+        if directory == None:
+            thread.start_new_thread(GLOBAL._save_flash, ()) 
+        else:
+            DYNAMIC.save = on
+            OUTPUT.led_save(DYNAMIC.save)
+            if DYNAMIC.save:
+                try:
+                    GLOBAL.show(4, do_save=False)
+                except:
+                    pass
+                try:
+                    GLOBAL.audio(True, do_save=False)
+                except:
+                    pass
+            else:
+                try:
+                    GLOBAL.show(1, do_save=False)
+                except:
+                    pass
+                try:
+                    GLOBAL.audio(False, do_save=False)
+                except:
+                    pass
+
+
+
+    @staticmethod
+    def _save_flash(leav_on=False):
+        '''
+        Flash LED
+        '''        
+        for i in range(20):
+            steelsquid_pi.mcp23017_set(21, 5, i%2==0)  
+            time.sleep(0.1)
+        steelsquid_pi.mcp23017_set(21, 5, leav_on)  
+        
+        
+    @staticmethod
+    def to_on_off(boolean):
+        '''
+        to_on_off
+        '''
+        if boolean:
+            return "On ..... "
+        else:
+            return "Off .... "        
+            
+            
+    @staticmethod
+    def get_save_file(fname):
+        '''
+        get_save_file
+        '''
+        for name in os.listdir("/media"):
+            directory = os.path.join("/media", name)
+            if not os.path.isdir(directory) or name == "HiLink":
+                directory = None
+            else:
+                break
+        if directory != None:
+            d = os.path.join(directory, steelsquid_utils.get_date())
+            t = os.path.join(d, steelsquid_utils.get_time(delemitter="")+fname)
+            try:
+                os.mkdir(d);
+            except:
+                pass
+        return t
+            

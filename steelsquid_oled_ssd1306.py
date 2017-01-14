@@ -54,6 +54,7 @@ i2c_bus = None
 image = None
 draw = None
 font = None
+fix_font=False
 
 def init():
     '''
@@ -63,6 +64,7 @@ def init():
     global image
     global draw
     global font
+    global fix_font
     if i2c_bus == None:
         i2c_bus = I2C.get_i2c_device(0x3C)
         command(SSD1306_DISPLAYOFF)                    # 0xAE
@@ -91,9 +93,19 @@ def init():
         command(SSD1306_NORMALDISPLAY)                 # 0xA6
         command(SSD1306_DISPLAYON)
         image = Image.new('1', (WIDTH, HEIGHT))
-        draw = ImageDraw.Draw(image)        
-        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 9)
+        draw = ImageDraw.Draw(image)       
+        if fix_font:
+            font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", 10)
+        else:
+            font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 9)
     draw.rectangle((0, 0, WIDTH, HEIGHT), outline=0, fill=0)
+    
+    
+def use_fix_font():
+    global font
+    global fix_font
+    fix_font = True
+    font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", 10)
     
     
 def write(text, width, height):

@@ -3411,17 +3411,16 @@ function python_list()
 function install_c_files()
 {
     log "Download, build and install C-files"
-    cd /tmp
+    cd /usr/bin/
     for var in "${c_downloads[@]}"
     do
-        rm /tmp/$(basename $var) > /dev/null 2>&1
-        sudo wget --no-cache --progress=dot:giga --no-check-certificate -O /tmp/$(basename $var) $var
+        rm /usr/bin/$(basename $var) > /dev/null 2>&1
+        sudo wget --no-cache --progress=dot:giga --no-check-certificate -O /usr/bin/$(basename $var) $var
         if [ $? -ne 0 ]; then
             do-err-exit "Unable to download from $var"
         else
-            rm /usr/bin/$(basename $var) > /dev/null 2>&1
             cc -Wall $(basename $var) -o dht -lwiringPi
-            cp $(basename $var) /usr/bin/$(basename $var)
+            rm $(basename $var) > /dev/null 2>&1
             log "$var downloaded and installed"
         fi
     done
@@ -4903,6 +4902,7 @@ echo "[Service]" >> /etc/systemd/system/steelsquid.service
 echo "ExecStart=/usr/bin/steelsquid-boot start" >> /etc/systemd/system/steelsquid.service
 echo "ExecStop=/usr/bin/steelsquid-boot stop" >> /etc/systemd/system/steelsquid.service
 echo "ExecStopPost=/usr/bin/shout \"Steelsquid service closed.\nIf you shutdown the computer or restart the steelsquid service this is OK.\nIf this is a error (nothing more happens) it is probably in steelsquid_kiss_boot.py\nYou can enable logging for more info: steelsquid log-on\nAlso sheck if steelsquid-boot proces is running: ps -ef|grep steelsquid-boot\nIf not try: steelsquid-boot start\nAnd check for errors...\"" >> /etc/systemd/system/steelsquid.service
+echo "Nice=-10" >> /etc/systemd/system/steelsquid.service
 #echo "KillMode=mixed" >> /etc/systemd/system/steelsquid.service
 echo "" >> /etc/systemd/system/steelsquid.service
 echo "[Install]" >> /etc/systemd/system/steelsquid.service

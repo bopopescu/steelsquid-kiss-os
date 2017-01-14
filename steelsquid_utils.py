@@ -35,7 +35,11 @@ from email import Encoders
 import re
 from sets import Set
 import types
-
+import math
+from math import sin
+from math import cos
+from math import atan2
+from math import sqrt
 
 STEELSQUID_FOLDER = "/opt/steelsquid"
 cach_credentionals = []
@@ -56,6 +60,23 @@ lock = threading.Lock()
 on_ok_callback_method = None
 on_err_callback_method = None
 
+voltage_matrix = [[ 4.20, 100],
+                  [ 4.15, 96 ],
+                  [ 4.10, 89 ],
+                  [ 4.05, 83 ],
+                  [ 4.00, 77 ],
+                  [ 3.95, 69 ],
+                  [ 3.90, 60 ],
+                  [ 3.85, 50 ],
+                  [ 3.80, 34 ],
+                  [ 3.75, 22 ],
+                  [ 3.70, 15 ],
+                  [ 3.65, 9  ],
+                  [ 3.60, 7  ],
+                  [ 3.55, 5  ],
+                  [ 3.50, 3  ],
+                  [ 3.45, 1  ],
+                  [ 3.40, 0  ]]
 
 def get_pi_revision():
     '''
@@ -113,11 +134,11 @@ def make_log_string(message):
     return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " " + message
 
 
-def get_time():
+def get_time(delemitter=":"):
     '''
     Get time in string
     '''
-    return datetime.datetime.now().strftime("%H:%M:%S")
+    return datetime.datetime.now().strftime("%H"+delemitter+"%M"+delemitter+"%S")
 
 
 def get_date():
@@ -292,7 +313,7 @@ def make_err_answer_string(command, parameters=None, useStartStop=False):
     return ''.join(answer_string)
 
 
-def execute_system_command(system_command, ok_exit_code=0):
+def execute_system_command(system_command, ok_exit_code=0, use_shell=False):
     '''
     Execute a system command 
     Throw exception if exit status from command other than 0
@@ -300,7 +321,7 @@ def execute_system_command(system_command, ok_exit_code=0):
     @param ok_exit_code: The exit code that eans the kommand is OK (None = do not check)
     @return: Answer will be returned as a array
     '''
-    proc=Popen(system_command, stdout = PIPE, stderr = STDOUT  )
+    proc=Popen(system_command, stdout = PIPE, stderr = STDOUT, shell=use_shell)
     answer = []
     for line in iter(proc.stdout.readline, b''):
         line = line.strip('\n').strip()
@@ -316,14 +337,14 @@ def execute_system_command(system_command, ok_exit_code=0):
             raise RuntimeError(str(answer[0]))
 
             
-def execute_system_command_blind(system_command, wait_for_finish=True):
+def execute_system_command_blind(system_command, wait_for_finish=True, use_shell=False):
     '''
     Execute a system command and do not read answer or throw exception.
     @param system_command: The system command to execute
     '''
     try:
         if type(system_command) is list:
-            proc=Popen(system_command, stdout = PIPE, stderr = STDOUT)
+            proc=Popen(system_command, stdout = PIPE, stderr = STDOUT, shell=use_shell)
             if wait_for_finish:
                 proc.wait()
         else:
@@ -1935,7 +1956,7 @@ def is_ip_number(variable):
     if variable == None:
         return False
     elif variable == "":
-        return True
+        return False
     else:
         for c in variable:
             if not c.isdigit() and c != ".":
@@ -1948,3 +1969,42 @@ def bin2dec(string_num):
     bin2dec
     '''
     return str(int(string_num, 2))
+
+
+def get_lipo_percentage(v, s):
+    '''
+    get lipo percentage from volt and the lipo s number
+    '''
+    v = v/s
+    for r in voltage_matrix:
+        if v >= r[0]:
+            return r[1]
+    return 0
+
+
+def get_disk_usage(directory):
+    '''
+    Getdiskusage in %
+    '''
+    st = os.statvfs(directory)
+    total = st.f_blocks * st.f_frsize
+    used = (st.f_blocks - st.f_bfree) * st.f_frsize
+    free = st.f_bavail * st.f_frsize
+    return int(round(float(used)/float(total)*100, 0))
+
+
+def distance(lat1, lng1, lat2, lng2):
+    '''
+    return distance between two gps cordinates in meter
+    '''
+    radius = 6371 * 1000 
+
+    dLat = (lat2-lat1) * math.pi / 180
+    dLng = (lng2-lng1) * math.pi / 180
+
+    lat1 = lat1 * math.pi / 180
+    lat2 = lat2 * math.pi / 180
+
+    val = sin(dLat/2) * sin(dLat/2) + sin(dLng/2) * sin(dLng/2) * cos(lat1) * cos(lat2)    
+    ang = 2 * atan2(sqrt(val), sqrt(1-val))
+    return int(radius * ang)

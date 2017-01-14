@@ -18,15 +18,18 @@ import steelsquid_kiss_global
 import steelsquid_nm
 import steelsquid_kiss_boot
 import time
+import stat
 import datetime
 import thread  
 import steelsquid_hmtrlrs
 import steelsquid_ht16k33 as lmatrix
 import steelsquid_tcp_radio
+import math
 from decimal import Decimal
 import os
 from espeak import espeak
 espeak.set_voice("sv+f5")
+import gps
 
 # Is this module started
 # This is set by the system automatically.
@@ -85,12 +88,12 @@ class STATIC(object):
     
     # Remote voltages(lipo 3s) 
     remote_voltage_max = 12.6      # 4.2V
-    remote_voltage_warning = 10.5  # 3.5V
+    remote_voltage_warning = 10.8  # 3.6V
     remote_voltage_min = 9.6       # 3.2V
 
     # Rover voltages(lipo 4s)
     rover_voltage_max = 16.8        # 4.2V
-    rover_voltage_warning = 14      # 3.5V
+    rover_voltage_warning = 14.4    # 3.6V
     rover_voltage_min = 12.8        # 3.2V
     
     # interrup GPIO for mcp23017
@@ -101,7 +104,7 @@ class STATIC(object):
     gpio_hmtrlrs_reset = 23
 
     # When system start move servo here
-    servo_position_pan_start = 452
+    servo_position_pan_start = 459
 
     # Max Servo position
     servo_position_pan_max = 700
@@ -172,6 +175,7 @@ class STATIC(object):
 
 
 
+
 class DYNAMIC(object):
     '''
     Put dynamic variables here.
@@ -232,7 +236,8 @@ class SETTINGS(object):
     audio_ip = ""
 
     # Width/height for the stream
-    resolution = "width=800,height=480"
+    width = "800"
+    height = "480"
 
     # Width for the stream
     fps = "20"
@@ -273,7 +278,7 @@ class SYSTEM(object):
             co = "3G/4G"
         else:
             co = "Not saved"
-        steelsquid_utils.shout("Control: " + co + "\n" + "Control IP: " + SETTINGS.control_ip + "\n" + "Video stream IP: " + SETTINGS.video_ip + "\n" + "Audio stream IP: " + SETTINGS.audio_ip + "\n" + "Resolution: " + SETTINGS.resolution + "\n" + "FPS: " + SETTINGS.fps + "\n")
+        steelsquid_utils.shout("Control: " + co + "\n" + "Control IP: " + SETTINGS.control_ip + "\n" + "Video stream IP: " + SETTINGS.video_ip + "\n" + "Audio stream IP: " + SETTINGS.audio_ip + "\n" + "Resolution: " + SETTINGS.width+"x"+SETTINGS.height+ "\n" + "FPS: " + SETTINGS.fps + "\n")
         GLOBAL.set_net_status(SETTINGS.control)
         # Reset some GPIO
         OUTPUT.sum_flash()
@@ -323,14 +328,28 @@ class LOOP(object):
     last_speek=None
     connection_lost=False
     connection_lost_count=0
-
+    temp_count=0
+    data_count=0
+    gpsd = None
     
     @staticmethod
-    def update_lcd():
+    def update_lcd_and_other():
         '''
-        Update the LCD
+        Update the LCD and other stuff
         ''' 
         try:            
+            # Read temp and humidity
+            if LOOP.temp_count==0:
+                try:
+                    RADIO_SYNC.SERVER.temperature, RADIO_SYNC.SERVER.humidity = steelsquid_pi.dht_temp_hum()
+                except:
+                    RADIO_SYNC.SERVER.temperature = "---"
+                    RADIO_SYNC.SERVER.humidity = "---"
+                LOOP.temp_count = LOOP.temp_count+1
+            elif LOOP.temp_count > 10:
+                LOOP.temp_count=0 
+            else:
+                LOOP.temp_count = LOOP.temp_count+1
             # Wite to LCD
             if not DYNAMIC.stop_next_lcd_message:
                 print_this = []
@@ -367,7 +386,7 @@ class LOOP(object):
                         steelsquid_pi.ssd1306_write(new_lcd_message, 0)
             else:
                 DYNAMIC.stop_next_lcd_message=False       
-               
+            
             # Connection lost
             if LOOP.connection_lost:
                 if LOOP.connection_lost_count == 0:
@@ -377,11 +396,59 @@ class LOOP(object):
                 elif LOOP.connection_lost_count>=2:
                     LOOP.connection_lost_count = 0
                 else:
-                    LOOP.connection_lost_count = LOOP.connection_lost_count + 1
+                    LOOP.connection_lost_count = LOOP.connection_lost_count + 1            
+            # Rean network usage
+            try:
+                if LOOP.data_count == 0:
+                    card = "wlan0"
+                    if SETTINGS.control == 3:
+                        card = "usb0"       
+                    answer=steelsquid_utils.execute_system_command(["ifconfig", card])[-1] 
+                    answer = answer.split(":")
+                    answer = float(int(answer[1].split(" ")[0]) + int(answer[2].split(" ")[0]))
+                    RADIO_SYNC.SERVER.data_usage = str(round(answer/1073741824, 1))
+                    LOOP.data_count = LOOP.data_count + 1
+                elif LOOP.data_count>=10:
+                    LOOP.data_count = 0
+                else:
+                    LOOP.data_count = LOOP.data_count + 1            
+            except:
+                pass            
         except:
             steelsquid_utils.shout()
         return 1 # Execute this method again in 1 second
 
+
+
+    @staticmethod
+    def read_gps():
+        '''
+        read_gps
+        ''' 
+        try:
+            if LOOP.gpsd==None:
+                LOOP.gpsd = gps.gps(mode=gps.WATCH_ENABLE)
+            LOOP.gpsd.next()
+            ok = 0
+            if LOOP.gpsd.fix.longitude < 0 or LOOP.gpsd.fix.longitude > 0:
+                RADIO_SYNC.SERVER.gps_long= LOOP.gpsd.fix.longitude
+                ok = ok + 1
+            if LOOP.gpsd.fix.latitude < 0 or LOOP.gpsd.fix.latitude > 0:
+                RADIO_SYNC.SERVER.gps_lat = LOOP.gpsd.fix.latitude
+                ok = ok + 1
+            if LOOP.gpsd.fix.altitude >= 0:
+                RADIO_SYNC.SERVER.gps_alt = int(LOOP.gpsd.fix.altitude)
+            if LOOP.gpsd.fix.speed >= 0:
+                RADIO_SYNC.SERVER.gps_speed = int(LOOP.gpsd.fix.speed*3.6)
+            RADIO_SYNC.SERVER.gps_con = ok==2
+        except:
+            steelsquid_utils.shout()
+            try:
+                LOOP.gpsd = gps.gps(mode=gps.WATCH_ENABLE)
+            except:
+                pass
+        return 1
+        
 
     @staticmethod
     def check_stuff():
@@ -442,16 +509,18 @@ class LOOP(object):
         if not steelsquid_utils.is_empty(SETTINGS.video_ip):
             if DYNAMIC.video:
                 try:
-                    steelsquid_utils.execute_system_command_blind(["pkill", "-f", "gst-launch-1.0 v4l2src"])
+                    steelsquid_utils.execute_system_command_blind(["pkill", "-f", "raspivid"])
+                    steelsquid_utils.execute_system_command_blind(["pkill", "-f", "gst-launch-1.0 -e v4l2src"])
                     time.sleep(0.5)
                     steelsquid_utils.execute_system_command(["modprobe", "bcm2835-v4l2", "gst_v4l2src_is_broken=1"])
-                    steelsquid_utils.execute_system_command(["gst-launch-1.0", "v4l2src", "device=/dev/video0", "!", "video/x-raw," + SETTINGS.resolution + ",framerate=" + SETTINGS.fps + "/1", "!", "omxh264enc", "target-bitrate="+SETTINGS.bitrate, "control-rate=3", "!", "tcpclientsink", "host="+SETTINGS.video_ip, "port=6602"])
-                    #steelsquid_utils.execute_system_command(["gst-launch-1.0", "v4l2src", "do-timestamp=false", "device=/dev/video0", "!", "video/x-raw,width=1280,height=720,framerate=25/1", "!", "omxh264enc", "!", "tcpclientsink", "host="+SETTINGS.video_ip, "port=6602"])
+                    #steelsquid_utils.execute_system_command(["/root/stream_video"])
+                    steelsquid_utils.execute_system_command(["nice", "-n", "5", "gst-launch-1.0", "-e", "v4l2src", "device=/dev/video0", "!", "video/x-raw,width="+SETTINGS.width+",height="+SETTINGS.height+",framerate=" + SETTINGS.fps + "/1", "!", "omxh264enc", "target-bitrate="+SETTINGS.bitrate, "control-rate=3", "!", "tcpclientsink", "host="+SETTINGS.video_ip, "port=6602"])
                 except:
-                    steelsquid_utils.shout()
+                    pass
             else:
-                steelsquid_utils.execute_system_command_blind(["pkill", "-f", "gst-launch-1.0 v4l2src"])
-        return 1
+                steelsquid_utils.execute_system_command_blind(["pkill", "-f", "raspivid"])
+                steelsquid_utils.execute_system_command_blind(["pkill", "-f", "gst-launch-1.0 -e v4l2src"])
+        return 2
 
 
     @staticmethod
@@ -462,14 +531,14 @@ class LOOP(object):
         if not steelsquid_utils.is_empty(SETTINGS.audio_ip):
             if DYNAMIC.audio:
                 try:
-                    steelsquid_utils.execute_system_command_blind(["pkill", "-f", "gst-launch-1.0 alsasrc"])
+                    steelsquid_utils.execute_system_command_blind(["pkill", "-f", "gst-launch-1.0 -e alsasrc"])
                     time.sleep(0.5)
-                    steelsquid_utils.execute_system_command(["gst-launch-1.0", "alsasrc", "device=sysdefault:CARD=1", "!", "mulawenc", "!", "rtppcmupay", "!", "udpsink", "host="+SETTINGS.audio_ip, "port=6603"])
+                    steelsquid_utils.execute_system_command(["nice", "-n", "8", "gst-launch-1.0", "-e", "alsasrc", "device=sysdefault:CARD=1", "!", "mulawenc", "!", "rtppcmupay", "!", "udpsink", "host="+SETTINGS.audio_ip, "port=6603"])
                 except:
-                    steelsquid_utils.shout()
+                    pass
             else:
-                steelsquid_utils.execute_system_command_blind(["pkill", "-f", "gst-launch-1.0 alsasrc"])
-        return 4
+                steelsquid_utils.execute_system_command_blind(["pkill", "-f", "gst-launch-1.0 -e alsasrc"])
+        return 2
         
         
     @staticmethod
@@ -558,20 +627,27 @@ class RADIO(object):
         '''
         A request from client to save settings
         '''
-        if len(parameters)==7:
-            if parameters[6]=="1234567":
+        if len(parameters)==8:
+            if parameters[7]=="1234567":
                 if steelsquid_utils.is_ip_number(parameters[0]) and steelsquid_utils.is_ip_number(parameters[1]) and steelsquid_utils.is_ip_number(parameters[2]):
-                    if parameters[3] != None and parameters[4] != None:
-                        SETTINGS.control_ip = parameters[0]
-                        SETTINGS.video_ip = parameters[1]
-                        SETTINGS.audio_ip = parameters[2]
-                        SETTINGS.resolution = parameters[3]
-                        SETTINGS.fps = parameters[4]
-                        SETTINGS.bitrate = parameters[5]
-                        steelsquid_utils.set_parameter("tcp_radio_host", SETTINGS.control_ip)
-                        steelsquid_kiss_global.save_module_settings()
-                        steelsquid_kiss_global.reboot(delay=4)
-                        return []
+                    SETTINGS.control_ip = parameters[0]
+                    SETTINGS.video_ip = parameters[1]
+                    SETTINGS.audio_ip = parameters[2]
+                    SETTINGS.width = parameters[3]
+                    SETTINGS.height = parameters[4]
+                    SETTINGS.fps = parameters[5]
+                    SETTINGS.bitrate = parameters[6]
+                    steelsquid_utils.set_parameter("tcp_radio_host", SETTINGS.control_ip)
+                    
+                    exec_s = "#!/bin/bash\nraspivid -pf baseline -vs -n -t 0 -w " + SETTINGS.width + " -h " + SETTINGS.height + " -fps " + SETTINGS.fps + " -b " + SETTINGS.bitrate + " -o - | gst-launch-1.0 fdsrc ! tcpclientsink host=" + SETTINGS.video_ip + " port=6602\n"
+                    print exec_s
+                    steelsquid_utils.write_to_file("/root/stream_video", exec_s)
+                    st = os.stat('/root/stream_video')
+                    os.chmod('/root/stream_video', st.st_mode | stat.S_IEXEC)
+                    
+                    steelsquid_kiss_global.save_module_settings()
+                    steelsquid_kiss_global.restart(delay=2)
+                    return []
 
 
     @staticmethod
@@ -619,11 +695,12 @@ class RADIO(object):
         '''
         A request from client to stream or not to stream video
         '''
-        if steelsquid_utils.is_empty(SETTINGS.video_ip):
+        if  parameters[0]=="True" and steelsquid_utils.is_empty(SETTINGS.video_ip):
             raise Exception("IP not set")
         else:
             DYNAMIC.video = parameters[0]=="True"
-            steelsquid_utils.execute_system_command_blind(["pkill", "-f", "gst-launch-1.0 v4l2src"])
+            steelsquid_utils.execute_system_command_blind(["pkill", "-f", "raspivid"])
+            steelsquid_utils.execute_system_command_blind(["pkill", "-f", "gst-launch-1.0 -e v4l2src"])
             return []
         
         
@@ -634,11 +711,11 @@ class RADIO(object):
         '''
         A request from client to stream or not to stream audio
         '''
-        if steelsquid_utils.is_empty(SETTINGS.audio_ip):
+        if parameters[0]=="True" and steelsquid_utils.is_empty(SETTINGS.audio_ip):
             raise Exception("IP not set")
         else:
             DYNAMIC.audio = parameters[0]=="True"
-            steelsquid_utils.execute_system_command_blind(["pkill", "-f", "gst-launch-1.0 alsasrc"])
+            steelsquid_utils.execute_system_command_blind(["pkill", "-f", "gst-launch-1.0 -e alsasrc"])
             return []
 
 
@@ -676,7 +753,6 @@ class RADIO_SYNC(object):
         '''
         # Stop drive if no commadn in 1 second
         if seconds_since_last_ok_ping>1:
-            RADIO_SYNC.CLIENT.cruise = False
             RADIO_PUSH_1.motor_left = 0
             RADIO_PUSH_1.motor_right = 0
             OUTPUT.drive(RADIO_PUSH_1.motor_left, RADIO_PUSH_1.motor_right)
@@ -685,6 +761,10 @@ class RADIO_SYNC(object):
             LOOP.connection_lost=True
         else:
             LOOP.connection_lost=False
+        # If no connection in 90 seconds...reboot
+        if SETTINGS.control == 3 and seconds_since_last_ok_ping>60:
+            steelsquid_utils.shout("Force reboot")
+            steelsquid_kiss_global.reboot()
         LOOP.check_stuff()
         
         
@@ -706,9 +786,9 @@ class RADIO_SYNC(object):
 
         # Cam light
         cam_light = False
-        
-        # Is cruise control enabled
-        cruise = False
+
+        # GPS how long from home
+        gps_from_home = 0
 
         
     class SERVER(object):
@@ -719,7 +799,32 @@ class RADIO_SYNC(object):
         rover_voltage = -1.0
 
         # Rover ampere (this rover)
-        rover_ampere = -1.0
+        rover_ampere = -1
+
+        # Temp
+        temperature = "---"
+
+        # Humidity
+        humidity = "---"
+
+        # data_usage
+        data_usage = "---"
+
+        # GPS connection
+        gps_con = False
+        
+        # GPS longitud
+        gps_long = 0.0
+
+        # GPS latitid
+        gps_lat = 0.0
+
+        # GPS Altitude
+        gps_alt = 0
+
+        # GPS speed
+        gps_speed = 0
+
 
 
 
@@ -943,18 +1048,6 @@ class OUTPUT(object):
 
         OUTPUT.last_left = left
         OUTPUT.last_right = right
-        # Cruise controll
-        #if RADIO_SYNC.CLIENT.is_cruise_on:
-        #    GLOBAL.cruise_enabled = True
-        #    if left > right:
-        #        diff = left - right
-        #        left = STATIC.motor_max
-        #        right = STATIC.motor_max - diff/2
-        #    else:
-        #        diff = right - left
-        #        left = STATIC.motor_max - diff/2
-        #       right = STATIC.motor_max
-        # Check values
         if left>STATIC.motor_max:
             left = STATIC.motor_max
         elif left<STATIC.motor_max*-1:
@@ -1020,10 +1113,9 @@ class GLOBAL(object):
         v = v - 503
         v = v * 0.003225806
         v = v / 0.026
-
         v = Decimal(v)
-        v = round(v, 1)
-        return v
+        v = math.ceil(v)
+        return int(v)
 
         
 

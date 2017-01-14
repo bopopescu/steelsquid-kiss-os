@@ -73,8 +73,8 @@ class Logger(object):
         Redirect sys.stdout to shout
         '''
         if message != None:
-            if len(str(message).strip())>0:
-                steelsquid_utils.shout(message, always_show=True, to_lcd=False)    
+            if len(str(message))>0:
+                subprocess.call(["/usr/bin/shout", message])
 
 
 def import_file_dyn(obj):
@@ -469,6 +469,7 @@ def _cleanup():
                                 steelsquid_utils.set_list(var_name, the_var)
                             else:
                                 steelsquid_utils.set_parameter(var_name, str(the_var))
+            steelsquid_utils.execute_system_command_blind(["sync"], wait_for_finish=True)
         except:
             steelsquid_utils.shout()
         if steelsquid_utils.get_flag("nrf24_master") or steelsquid_utils.get_flag("nrf24_slave"):
@@ -526,6 +527,7 @@ def _save_settings():
                             steelsquid_utils.set_list(var_name, the_var)
                         else:
                             steelsquid_utils.set_parameter(var_name, str(the_var))
+        steelsquid_utils.execute_system_command_blind(["sync"], wait_for_finish=True)
     except:
         steelsquid_utils.shout()
 
@@ -1050,7 +1052,6 @@ def tcp_radio_make_connection_thread(sync_class, sync_class_client, sync_class_c
                     tcp_radio_listen(sync_class, sync_class_client, sync_class_client_members, sync_class_server, sync_class_server_members, push_classes, push_class_1, push_class_2, push_class_3, push_class_4, members_class_1, members_class_2, members_class_3, members_class_4)
         except:
             if running:
-                steelsquid_utils.shout()
                 steelsquid_tcp_radio.close_connection()
                 time.sleep(0.5)
 
@@ -1062,7 +1063,7 @@ def tcp_radio_check_connection_thread():
     count = 0
     while running:
         try:
-            if steelsquid_tcp_radio.get_last_link() > 30:
+            if steelsquid_tcp_radio.get_last_link() > 20:
                 if count == 0:
                     steelsquid_utils.shout("Force reconnect")
                     steelsquid_tcp_radio.close_connection()
@@ -1091,7 +1092,6 @@ def tcp_radio_handle_connection_thread(sync_class, sync_class_client, sync_class
                     tcp_radio_listen(sync_class, sync_class_client, sync_class_client_members, sync_class_server, sync_class_server_members, push_classes, push_class_1, push_class_2, push_class_3, push_class_4, members_class_1, members_class_2, members_class_3, members_class_4)
             except:
                 if running:
-                    steelsquid_utils.shout()
                     steelsquid_tcp_radio.close_connection()
         else:
             time.sleep(0.1)
@@ -1252,14 +1252,31 @@ def tcp_radio_listen(sync_class, sync_class_client, sync_class_client_members, s
                         push_class.on_push()
         else:
             # Execute a method with the same name as the command i module RADIO class
-            if data == None:
-                answer = steelsquid_kiss_global._execute_first_modules_and_return("RADIO", command, ([],))
-                if answer!=None:
-                    steelsquid_tcp_radio.response(answer)
-            else:
-                answer = steelsquid_kiss_global._execute_first_modules_and_return("RADIO", command, (data,))
-                if answer!=None:
-                    steelsquid_tcp_radio.response(answer)
+                if data == None:
+                    answer = None
+                    try:
+                        answer = steelsquid_kiss_global._execute_first_modules_and_return("RADIO", command, ([],))
+                    except Exception, e:
+                        if running:
+                            s = str(e)
+                            if chr(16) not in s:
+                                steelsquid_utils.shout()
+                                steelsquid_hmtrlrs.error(e.message)
+                    if answer!=None:
+                        steelsquid_tcp_radio.response(answer)
+                else:
+                    answer = None
+                    try:
+                        answer = steelsquid_kiss_global._execute_first_modules_and_return("RADIO", command, (data,))
+                    except Exception, e:
+                        if running:
+                            s = str(e)
+                            if chr(16) not in s:
+                                steelsquid_utils.shout()
+                                steelsquid_tcp_radio.error(e.message)
+                    if answer!=None:
+                        steelsquid_tcp_radio.response(answer)
+                        
                                 
 
 def main():
@@ -1273,6 +1290,9 @@ def main():
             command = sys.argv[1]
             # Start the system
             if command == "start":
+                # Fix gstreamer 
+                steelsquid_utils.execute_system_command_blind(["ln", "-s", "-f", "/opt/vc/lib/libGLESv2.s" ,"/usr/lib/arm-linux-gnueabihf/libGLESv2.so.2"], wait_for_finish=False)
+                steelsquid_utils.execute_system_command_blind(["ln", "-s", "-f", "/opt/vc/lib/libEGL.so" ,"/usr/lib/arm-linux-gnueabihf/libEGL.so.1"], wait_for_finish=False)
                 # Set keyboard to use
                 steelsquid_utils.execute_system_command_blind(["/usr/bin/termfix", steelsquid_utils.get_parameter("keyboard")], wait_for_finish=True)
                 # Redirect sys.stdout to shout

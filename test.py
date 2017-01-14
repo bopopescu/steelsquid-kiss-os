@@ -17,4 +17,11 @@ import socket
 import steelsquid_ht16k33 as lmatrix
 
 
-print steelsquid_pi._dht11_temp_hum(10)
+st = os.statvfs('/media/9936-9676')
+
+total = st.f_blocks * st.f_frsize
+used = (st.f_blocks - st.f_bfree) * st.f_frsize
+free = st.f_bavail * st.f_frsize
+
+
+print str(int(round(float(used)/float(total)*100, 0)))

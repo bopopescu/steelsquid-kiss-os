@@ -1905,12 +1905,18 @@ def mcp_event_callback_method(address, pin, status):
     steelsquid_utils.log("Address " + str(address) + ", Pin" + str(pin) + " = " + str(status))
     
     
-def _dht11_temp_hum(gpio): 
+def dht_temp_hum(): 
     '''
     Read temperatur and humidity from a DHT11 sensor
+    Must be connected to gpio 10
     Using this: http://www.uugear.com/portfolio/read-dht1122-temperature-humidity-sensor-from-raspberry-pi/
     '''
-
+    for i in range(0, 100):
+        answer = steelsquid_utils.execute_system_command(["dht"])
+        if len(answer)==3:
+            return answer[1].replace(".0", ""), answer[0].replace(".0", "")
+        time.sleep(0.01)
+    raise Exception("Unable to read temp")
     
 
 if __name__ == '__main__':

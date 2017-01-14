@@ -14,9 +14,21 @@
         <link rel="stylesheet" type="text/css" href="steelsquid.css"/>
         <script type="text/javascript" src="jquery.js"></script>
         <script type="text/javascript" src="steelsquid.js"></script>
+        <style>
+           #gmap {
+            height: 400px;
+            width: 100%;
+           }            
+        </style>
         <script type="text/javascript">
             //<![CDATA[ 
-    
+            var homeLocation = {lat: 62.3957625, lng: 17.1522478};
+            var homeMarker = null;
+            var posLocation = null
+            var posMarker = null;
+            var map = null;
+            var zoom = 16;
+
             /**
              * When the page is loaded
              */
@@ -44,8 +56,17 @@
                 if(isVisible()){
                     submitNoPW('show');
                 }
-            }                      
-
+            } 
+                                 
+            /**
+             * This will execute every 5 second
+             */
+            function onEvery05s(){
+                if(isVisible()){
+                    submitNoPW('network');
+                    submitNoPW('gps');
+                }
+            } 
 
             /**
              * On Get show
@@ -60,9 +81,31 @@
                 }
                 else if(sh == "3"){
                     showLayer('map');
+                    if(map==null){
+                        initMap();
+                    }
                 }
                 else if(sh == "4"){
                     showLayer('speek');
+                }
+            }
+
+
+            /**
+             * On gps
+             */
+            function on_gps(paramaters){
+                if(isLayerShowing("map")){
+                    home_lat = parseFloat(paramaters[0]);
+                    home_long = parseFloat(paramaters[1]);
+                    pos_lat = parseFloat(paramaters[2]);
+                    pos_long = parseFloat(paramaters[3]);
+                    if(home_lat!=0 && home_long!=0){
+                        setHomeMarker(home_lat, home_long);
+                    }
+                    if(pos_lat!=0 && pos_long!=0){
+                        setPosMarker(pos_lat, pos_long);
+                    }
                 }
             }
             
@@ -78,6 +121,7 @@
                 setValue("fps", paramaters[4]);
                 setValue("bitrate", paramaters[5]);
             }
+
                
                
              /**
@@ -98,7 +142,80 @@
                 setValue("video_ip", paramaters[0]);
                 setValue("audio_ip", paramaters[0]);
             }
-                                    
+            
+            /**
+             * On network
+             */
+            function on_network(paramaters){
+                setContent("wifi_name", paramaters[0]);
+                setContent("wifi_ip", paramaters[1]);
+                setContent("lan_ip", paramaters[2]);
+                setContent("wan_ip", paramaters[3]);
+            }
+
+            function initMap() {
+                
+                document.getElementById('gmap').setAttribute("style","height:"+(window.innerHeight-10)+"px");
+                map = new google.maps.Map(document.getElementById('gmap'), {
+                    zoom: zoom,
+                    center: homeLocation,
+                    streetViewControl: false,
+                    mapTypeId: 'satellite'
+                });
+                homeMarker = new google.maps.Marker({
+                    position: homeLocation,
+                    icon: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png',
+                    map: map
+                });
+                posMarker = new google.maps.Marker({
+                    position: homeLocation,
+                    icon: 'http://maps.google.com/mapfiles/ms/icons/yellow-dot.png',
+                    map: map
+                });
+            }
+      
+            function inc(){
+                setPosMarker(homeLocation.lat+0.001, homeLocation.lng);
+            }
+
+            function setHomeMarker(lat, longe) {
+                homeLocation = {lat: lat, lng: longe};
+                homeMarker.setPosition(homeLocation);
+            }
+
+            function setPosMarker(lat, longe) {
+                posLocation = {lat: lat, lng: longe};
+                posMarker.setPosition(posLocation);
+                map.panTo(posLocation);   
+            }
+    
+            function zoomIn() {
+                if (zoom<19){
+                    zoom = zoom + 1;
+                }
+                map.setZoom(zoom);
+            }
+
+
+            function zoomOut() {
+                if (zoom>0){
+                    zoom = zoom - 1;
+                }
+                map.setZoom(zoom);
+            }
+      
+            document.onkeypress = function(e) {
+                var code = (e.keyCode ? e.keyCode : e.which);
+                switch (code) {
+                    case 39:
+                        zoomIn();
+                    break;
+                    case 228:
+                        zoomOut();
+                    break;
+                }
+            };              
+
             //]]>
         </script>
         
@@ -112,23 +229,49 @@
             <button onclick="javascript:speek()">Speek it</button>
         </div>
         <div class="layer" id="map">
-            <div style="border: 2px solid white; padding: 5px; text-align: center; margin-bottom: 10px; font-size: large;font-weight: bold">MAP SHOWING WHERE THE ROVER IS</div>
+            <div id="gmap"></div>
         </div>
         <div class="layer" id="settings">
             <div style="border: 2px solid white; padding: 5px; text-align: center; margin-bottom: 10px; font-size: large;font-weight: bold">SETTINGS</div>
             The Irrbloss Rover communicate with this remote control on port 6601, 6602 and 6603 using UDP.<br>
             6601 is for commands, 6602 is for the video and 6603 is for audio.<br>
-            The IP numbers bellow must only be changed when Rover is in radio range (433Mhz) off the Remote.<br>
+            The settings bellow must only be changed when Rover is in radio range (433Mhz) off the Remote.<br>
             <br>
-            Ip number to the remote control (this unit) [port=6601]
-            <input type="text" id="control_ip" />
-            <br><br>
-            Ip number to the video stream receiver (this unit, but can be other) [port=6602]
-            <input type="text" id="video_ip" />
-            <br><br>
-            Ip number to the audio stream receiver (this unit, but can be other) [port=6603]
-            <input type="text" id="audio_ip" />
-            <br><br>
+            <table>
+                <tr>
+                    <td>
+                        IP for remote control [port=6601]
+                        <input type="text" id="control_ip" />
+                        <br><br>
+                        IP for video stream receiver [port=6602]
+                        <input type="text" id="video_ip" />
+                        <br><br>
+                        IP for audio stream receiver [port=6603]
+                        <input type="text" id="audio_ip" />
+                        <br><br>
+                    </td>
+                    <td>
+                        <div style="border: 1px solid white; padding: 5px; text-align: left; margin: 10px; height:135px; width:250px">
+                            <br>
+                            <br>
+                            <table>
+                                <tr>
+                                    <td>WIFI-NAME</td><td><b><span id="wifi_name">---</span></b></td>
+                                </tr>
+                                <tr>
+                                    <td>WIFI-IP</td><td><b><span id="wifi_ip">---</span></b></td>
+                                </tr>
+                                <tr>
+                                    <td>LAN-IP</td><td><b><span id="lan_ip">---</span></b></td>
+                                </tr>
+                                <tr>
+                                    <td>WAN-IP</td><td><b><span id="wan_ip">---</span></b></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </td>
+                </tr>
+            </table>
             Bitrate for the video
             <input type="text" id="bitrate" />
             <br><br>
@@ -137,16 +280,16 @@
                 <tr>
                     <td>
                         <select id="resolution">
-                            <option value="width=640,height=360">640x360</option>
-                            <option value="width=720,height=405">720x405</option>
-                            <option value="width=800,height=480">800x480</option>
-                            <option value="width=848,height=480">848x480</option>
-                            <option value="width=960,height=540">960x540</option>
-                            <option value="width=1024,height=576">1024x576</option>
-                            <option value="width=1280,height=720">1280x720</option>
-                            <option value="width=1366,height=768">1366x768</option>
-                            <option value="width=1600,height=900">1600x900</option>
-                            <option value="width=1920,height=1080">1920x1080</option>
+                            <option value="640:360">640x360</option>
+                            <option value="720:405">720x405</option>
+                            <option value="800:480">800x480</option>
+                            <option value="848:480">848x480</option>
+                            <option value="960:540">960x540</option>
+                            <option value="1024:576">1024x576</option>
+                            <option value="1280:720">1280x720</option>
+                            <option value="1366:768">1366x768</option>
+                            <option value="1600:900">1600x900</option>
+                            <option value="1920:1080">1920x1080</option>
                         </select>
                     </td>
                     <td>
@@ -172,5 +315,7 @@
                 </tr>
             </table>
         </div>
+        <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCI79KDz9XT9jnp63A9pNRLMVUBnDR_ypE">
+        </script>
     </body>
 </html>
