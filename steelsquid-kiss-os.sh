@@ -3360,7 +3360,7 @@ function install_steelsquid_python()
                 fi
             fi        
         else
-            sudo --cache=off wget --progress=dot:giga --no-check-certificate -O /opt/steelsquid/python$expandf/$(basename $var) $var
+            sudo wget --cache=off --progress=dot:giga --no-check-certificate -O /opt/steelsquid/python$expandf/$(basename $var) $var
             if [ $? -ne 0 ]; then
                 do-err-exit "Unable to download from $var"
             else
