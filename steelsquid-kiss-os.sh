@@ -3288,7 +3288,7 @@ fi
 ##################################################################################
 if [ "$in_parameter_1" == "download-img" ]; then
     log "Start to download"
-    wget -C off --progress=dot:giga --no-check-certificate -O ${project_name}_download.gz $img_iso
+    wget --cache=off --progress=dot:giga --no-check-certificate -O ${project_name}_download.gz $img_iso
     if [ $? -ne 0 ]; then
         rm ${project_name}_download.gz > /dev/null 2>&1
         do-err-exit "Unable to download from $img_iso"
@@ -3348,7 +3348,7 @@ function install_steelsquid_python()
         
         if [ $(get-flag "expanded") == "true" ]; then
             if [[ $var != *_expand* ]]; then
-                sudo wget -C off --progress=dot:giga --no-check-certificate -O /opt/steelsquid/python$expandf/$(basename $var) $var
+                sudo wget --cache=off --progress=dot:giga --no-check-certificate -O /opt/steelsquid/python$expandf/$(basename $var) $var
                 if [ $? -ne 0 ]; then
                     do-err-exit "Unable to download from $var"
                 else
@@ -3360,7 +3360,7 @@ function install_steelsquid_python()
                 fi
             fi        
         else
-            sudo -C off wget --progress=dot:giga --no-check-certificate -O /opt/steelsquid/python$expandf/$(basename $var) $var
+            sudo --cache=off wget --progress=dot:giga --no-check-certificate -O /opt/steelsquid/python$expandf/$(basename $var) $var
             if [ $? -ne 0 ]; then
                 do-err-exit "Unable to download from $var"
             else
@@ -3382,7 +3382,7 @@ function install_steelsquid_python_one()
     if [[ $var == */modules/* ]]; then
         expandf="/modules"
     fi
-    sudo wget -C off --progress=dot:giga --no-check-certificate -O /opt/steelsquid/python$expandf/$(basename $var) $var
+    sudo wget --cache=off --progress=dot:giga --no-check-certificate -O /opt/steelsquid/python$expandf/$(basename $var) $var
     if [ $? -ne 0 ]; then
         do-err-exit "Unable to download from $var"
     else
@@ -3416,7 +3416,7 @@ function install_c_files()
     for var in "${c_downloads[@]}"
     do
         rm /usr/bin/$(basename $var) > /dev/null 2>&1
-        sudo wget -C off --no-cache --progress=dot:giga --no-check-certificate -O /usr/bin/$(basename $var) $var
+        sudo wget --cache=off --no-cache --progress=dot:giga --no-check-certificate -O /usr/bin/$(basename $var) $var
         if [ $? -ne 0 ]; then
             do-err-exit "Unable to download from $var"
         else
@@ -3442,7 +3442,7 @@ function install_web_files()
     do
         if [ $(get-flag "expanded") == "true" ]; then
             if [[ $var != *expand.html* ]]; then
-                sudo wget -C off --progress=dot:giga --no-check-certificate -O $steelsquid_folder/web/$(basename $var) $var
+                sudo wget --cache=off --progress=dot:giga --no-check-certificate -O $steelsquid_folder/web/$(basename $var) $var
                 index=$[$index +1]
                 if [ $? -ne 0 ]; then
                     do-err-exit "Unable to download from $var"
@@ -3451,7 +3451,7 @@ function install_web_files()
                 fi
             fi
         else
-            sudo wget -C off --progress=dot:giga --no-check-certificate -O $steelsquid_folder/web/$(basename $var) $var
+            sudo wget --cache=off --progress=dot:giga --no-check-certificate -O $steelsquid_folder/web/$(basename $var) $var
             index=$[$index +1]
             if [ $? -ne 0 ]; then
                 do-err-exit "Unable to download from $var"
@@ -3466,7 +3466,7 @@ function install_web_files_first()
 {
     log "Download and install first web files"
     var=${web_root_downloads[0]}
-    sudo wget -C off --progress=dot:giga --no-check-certificate -O $steelsquid_folder/web/$(basename $var) $var
+    sudo wget --cache=off --progress=dot:giga --no-check-certificate -O $steelsquid_folder/web/$(basename $var) $var
     if [ $? -ne 0 ]; then
         do-err-exit "Unable to download from $var"
     else
@@ -3514,7 +3514,7 @@ function install_img_files()
     index=0
     for var in "${web_img_downloads[@]}"
     do
-        sudo wget -C off --progress=dot:giga --no-check-certificate -O $steelsquid_folder/web/img/$(basename $var) $var
+        sudo wget --cache=off --progress=dot:giga --no-check-certificate -O $steelsquid_folder/web/img/$(basename $var) $var
         index=$[$index +1]
         if [ $? -ne 0 ]; then
             do-err-exit "Unable to download from $var"
@@ -4145,7 +4145,7 @@ function version_check()
     case $download in
         *.sh)
             log "Download and copy $project_name to $download"
-            sudo wget -C off --progress=dot:giga --no-check-certificate -O $home_folder/$project_name.sh_down $download
+            sudo wget --cache=off --progress=dot:giga --no-check-certificate -O $home_folder/$project_name.sh_down $download
             if [ $? -ne 0 ]; then
                 sudo rm $home_folder/$project_name.sh_down > /dev/null 2>&1
                 do-err-exit "Unable to download from $download"
@@ -4167,7 +4167,7 @@ function version_check()
         ;;
         *.gz)
             log "Download, extract and copy $project_name to $download"
-            sudo wget -C off --progress=dot:giga --no-check-certificate -O $project_name.gz $download
+            sudo wget --cache=off --progress=dot:giga --no-check-certificate -O $project_name.gz $download
             if [ $? -ne 0 ]; then
                 sudo rm $project_name.gz > /dev/null 2>&1
                 do-err-exit "Unable to download from $download"
@@ -4404,7 +4404,7 @@ fi
 if [ $(is-raspberry-pi) == "true" ]; then
     log "Install Piborg diable"
     cd /usr/local/lib/python2.7/dist-packages
-    wget -C off http://www.piborg.org/downloads/diablo/examples.zip
+    wget --cache=off http://www.piborg.org/downloads/diablo/examples.zip
     unzip examples.zip
     log "Piborg diable installed"
 fi
@@ -4547,7 +4547,7 @@ echo "POWERDOWN_TIME=0" >> /etc/kbd/config
 ##################################################################################
 if [ $(is-raspberry-pi) == "true" ]; then
     log "Download and install omxplayer"
-    wget -C off --progress=dot:giga --no-check-certificate -O /tmp/omxplayer.deb http://omxplayer.sconde.net/builds/omxplayer_0.3.5~git20140409~46616c5_armhf.deb
+    wget --cache=off --progress=dot:giga --no-check-certificate -O /tmp/omxplayer.deb http://omxplayer.sconde.net/builds/omxplayer_0.3.5~git20140409~46616c5_armhf.deb
     if [ $? -ne 0 ]; then
         do-err-exit "Unable to download omxplayer"
     fi
