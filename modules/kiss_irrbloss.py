@@ -825,9 +825,9 @@ class RADIO_SYNC(object):
         # GPS speed
         gps_speed = 0
 
-
-
-
+        
+        
+        
 
 
 class RADIO_PUSH_1(object):

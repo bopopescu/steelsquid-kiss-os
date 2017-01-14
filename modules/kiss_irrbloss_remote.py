@@ -485,6 +485,7 @@ class LOOP(object):
                     print_this_hud.append(" DISTANCE")
                     print_this_hud.append(LOOP.D)
                     print_this_hud.append(str(RADIO_SYNC.SERVER.gps_speed)+"km/h")
+                    
 
                 if RADIO_SYNC.CLIENT.mood==1:
                     print_this_hud.append(":-) ")
@@ -819,7 +820,7 @@ class RADIO_PUSH_1(object):
         On server it will fire on every push received
         '''
         # If move youstick stop cruisecontroll
-        if LOOP.drive > 40 or LOOP.steer > 40 or LOOP.drive < -40 or LOOP.steer < -40:
+        if LOOP.drive > 100 or LOOP.steer > 100 or LOOP.drive < -100 or LOOP.steer < -100:
             DYNAMIC.cruise=0
         # Cruise controll
         if DYNAMIC.cruise>0:
@@ -827,7 +828,7 @@ class RADIO_PUSH_1(object):
             # Remap the joystick range
             turn = int(steelsquid_utils.remap(LOOP.turn, -510, 510, STATIC.motor_max*-1, STATIC.motor_max))
             # Drive 
-            turn = turn/4
+            turn = turn/10
             motor_left = DYNAMIC.cruise + turn
             motor_right = DYNAMIC.cruise - turn
 

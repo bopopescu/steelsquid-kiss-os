@@ -1350,11 +1350,14 @@ function help_build()
     echb "############################################################################"
     echo 
     echb "1.  Download and extract the installer image"
-    echo "wget https://github.com/FooDeas/raspberrypi-ua-netinst/releases/download/v1.4.1/raspberrypi-ua-netinst-v1.4.1.img.xz"
-    echo "unxz raspberrypi-ua-netinst-v1.4.1.img.xz"
+    echo "wget https://github.com/FooDeas/raspberrypi-ua-netinst/releases/download/v1.5.0/raspberrypi-ua-netinst-v1.5.0.img.xz"
+    echo "unxz raspberrypi-ua-netinst-v1.5.0.img.xz"
     echo 
     echb "2.  Copy to sdcard"
-    echo "dd bs=4M if=raspberrypi-ua-netinst-v1.4.1.img of=/dev/sdb"
+    echo "dd bs=4M if=raspberrypi-ua-netinst-v1.5.0.img of=/dev/sdb"
+    echo 
+    echo "cretae installer-config.txt"
+    echo "rootsize=+3400M"
     echo 
     echb "3.  Insert sdcard into raspberry and boot"
     echo "Must have the networkcabel connected (internet access)"
@@ -1396,11 +1399,9 @@ function help_build()
     echo "rm /root/.bash_history"
     echo "rm /root/.nano_history"
     echo 
-    echb "11. Shutdown and mount on computer"
+    echb "11. cuck root filesystem is 3400MB"
     echo 
-    echb "12. Resize to 3.4G with gparted"
-    echo 
-    echb "13. Boot the raspberry pi again."
+    echb "13. Reboot the raspberry pi again."
     echo 
     echb "14. Download script"
     echo "wget --no-check-certificate http://www.steelsquid.org/steelsquid-kiss-os.sh"
@@ -1718,7 +1719,7 @@ function log_on()
     log "Enable systemd logging"
     set-flag "log"
     sed -i '/VERBOSE=/c\VERBOSE=yes' /etc/default/rcS
-    echo "dwc_otg.fiq_fix_enable dwc_otg.lpm_enable=0 root=/dev/mmcblk0p2 rootfstype=ext4 rootflags=commit=1 elevator=noop noatime nodiratime rootwait logo.nologo" > /boot/cmdline.txt
+    echo "dwc_otg.lpm_enable=0 elevator=noop noatime nodiratime fsck.repair=yes net.ifnames=0 root=/dev/mmcblk0p2 rootfstype=f2fs rootwait logo.nologo" > /boot/cmdline.txt
     sed -i 's/^Storage.*/Storage=persistent/' /etc/systemd/journald.conf
     sed -i 's/^LogLevel.*/#LogLevel=/' /etc/systemd/system.conf
     sed -i 's/^LogTarget.*/#LogTarget=/' /etc/systemd/system.conf
@@ -1748,7 +1749,7 @@ function log_off()
     log "Disable systemd logging"
     del-flag "log"
     sed -i '/VERBOSE=/c\VERBOSE=no' /etc/default/rcS
-    echo "dwc_otg.fiq_fix_enable dwc_otg.lpm_enable=0 root=/dev/mmcblk0p2 rootfstype=ext4 rootflags=commit=10,data=writeback elevator=noop noatime nodiratime data=writeback rootwait quiet loglevel=0 logo.nologo consoleblank=0" > /boot/cmdline.txt
+    echo "dwc_otg.lpm_enable=0 elevator=noop noatime nodiratime fsck.repair=yes net.ifnames=0 root=/dev/mmcblk0p2 rootfstype=f2fs rootwait quiet loglevel=0 logo.nologo consoleblank=0" > /boot/cmdline.txt
     sed -i 's/^Storage.*/Storage=none/' /etc/systemd/journald.conf
     sed -i 's/^#LogLevel.*/LogLevel=emerg/' /etc/systemd/system.conf
     sed -i 's/^#LogTarget.*/LogTarget=null/' /etc/systemd/system.conf
@@ -4268,8 +4269,8 @@ log "Repository updated"
 ##################################################################################
 if [ $(get_installed) == "false" ]; then
     log "Remove and install packages"
-    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv i2c-tools alsa-firmware-loaders alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree expeyes-firmware-dev firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-samsung firmware-ti-connectivity firmware-zd1211 libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer sigrok-firmware-fx2lafw libraspberrypi-bin libraspberrypi-dev fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw console-data read-edid apt-utils libraspberrypi0 python-spidev netcat
-    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv i2c-tools alsa-firmware-loaders alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree expeyes-firmware-dev firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-samsung firmware-ti-connectivity firmware-zd1211 libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer sigrok-firmware-fx2lafw libraspberrypi-bin libraspberrypi-dev fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw console-data read-edid apt-utils libraspberrypi0 python-spidev netcat
+    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv i2c-tools alsa-firmware-loaders alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree expeyes-firmware-dev firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-samsung firmware-ti-connectivity firmware-zd1211 libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer sigrok-firmware-fx2lafw libraspberrypi-bin libraspberrypi-dev fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw console-data read-edid apt-utils libraspberrypi0 python-spidev
+    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install systemd systemd-sysv i2c-tools alsa-firmware-loaders alsa-firmware-loaders atmel-firmware bluez-firmware dahdi-firmware-nonfree expeyes-firmware-dev firmware-adi firmware-atheros firmware-bnx2 firmware-bnx2x firmware-brcm80211 firmware-crystalhd firmware-intelwimax firmware-ipw2x00 firmware-ivtv firmware-iwlwifi firmware-libertas firmware-linux firmware-linux-free firmware-linux-nonfree firmware-myricom firmware-netxen firmware-qlogic firmware-ralink firmware-realtek firmware-samsung firmware-ti-connectivity firmware-zd1211 libertas-firmware linux-wlan-ng-firmware midisport-firmware prism2-usb-firmware-installer sigrok-firmware-fx2lafw libraspberrypi-bin libraspberrypi-dev fonts-freefont-ttf libjpeg8-dev imagemagick libv4l-dev build-essential cmake subversion dnsutils fping usbutils lshw console-data read-edid apt-utils libraspberrypi0 python-spidev
     exit-check 
     aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install build-essential python-dbus python-pexpect python-dev python-setuptools python-pip python-pam python-smbus psmisc git libudev-dev libmount-dev python-imaging pkg-config libglib2.0-dev whois
     aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install build-essential python-dbus python-pexpect python-dev python-setuptools python-pip python-pam python-smbus psmisc git libudev-dev libmount-dev python-imaging pkg-config libglib2.0-dev whois
@@ -4704,8 +4705,7 @@ echo "LC_TYPE=en_US.UTF-8" >> /etc/environment
 # Optimize boot
 ##################################################################################
 log "Optimize boot"
-rm /boot/cmdline.txt > /dev/null 2>&1
-echo "dwc_otg.fiq_fix_enable dwc_otg.lpm_enable=0 root=/dev/mmcblk0p2 rootfstype=ext4 rootflags=commit=10,data=writeback elevator=noop noatime nodiratime data=writeback rootwait quiet loglevel=0 logo.nologo consoleblank=0" >> /boot/cmdline.txt
+echo "dwc_otg.lpm_enable=0 elevator=noop noatime nodiratime fsck.repair=yes net.ifnames=0 root=/dev/mmcblk0p2 rootfstype=f2fs rootwait quiet loglevel=0 logo.nologo consoleblank=0" > /boot/cmdline.txt
 log "Boot optimized"
 
 
@@ -5554,11 +5554,6 @@ fi
 # Clean
 ##################################################################################
 log "Clean files and history"
-aptitude -y autoclean
-aptitude -y clean
-apt-get -y remove --purge $(deborphan)
-apt-get -y remove --purge $(deborphan)
-apt-get -y remove --purge $(deborphan)
 rm /root/steelsquid-kiss-os.sh
 find / -type f -name "*-old" |xargs sudo rm -rf
 rm -rf /var/backups/* /var/lib/apt/lists/* ~/.bash_history
