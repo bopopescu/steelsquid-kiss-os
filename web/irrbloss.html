@@ -19,6 +19,12 @@
             height: 400px;
             width: 100%;
            }            
+           .hud {
+            color:#c9c9c9;
+            padding:0px;
+            border:0px;
+            
+           }            
         </style>
         <script type="text/javascript">
             //<![CDATA[ 
@@ -28,24 +34,15 @@
             var posMarker = null;
             var map = null;
             var zoom = 16;
+            var follow = true
 
             /**
              * When the page is loaded
              */
             function onPageLoad(){
-                submitSync('settings_get');
-
-                $('#speek_text').keypress(function(event) {
-                    if (event.keyCode == 13) {
-                        speek();
-                    }
-                });
-            }
-
-
-            function speek(){
-                submitAsyncFromInput('speek', 'speek_text')
-                $('#speek_text').val("");
+                $('#low_band').hide();
+                submitSync('load_settings');
+                $('#follow_text').html("Follow");
             }
                       
                       
@@ -55,16 +52,17 @@
             function onEvery01s(){
                 if(isVisible()){
                     submitNoPW('show');
+                    submitNoPW('get_hud');
                 }
             } 
                                  
             /**
              * This will execute every 5 second
              */
-            function onEvery05s(){
+            function onEvery10s(){
                 if(isVisible()){
                     submitNoPW('network');
-                    submitNoPW('gps');
+                    submitNoPW('get_gps');
                 }
             } 
 
@@ -73,20 +71,18 @@
              */
             function on_show(paramaters){
                 sh = paramaters[0];
-                if(sh == "1"){
-                    showLayer('speek');
-                }
-                else if(sh == "2"){
+                if(sh == "2" && !isLayerShowing("settings")){
                     showLayer('settings');
+                    submitSync('load_settings');
                 }
-                else if(sh == "3"){
+                else if(sh == "3" && !isLayerShowing("map")){
                     showLayer('map');
                     if(map==null){
                         initMap();
                     }
                 }
-                else if(sh == "4"){
-                    showLayer('speek');
+                else if(sh == "4" && !isLayerShowing("map")){
+                    showLayer('map');
                 }
             }
 
@@ -94,7 +90,7 @@
             /**
              * On gps
              */
-            function on_gps(paramaters){
+            function on_get_gps(paramaters){
                 if(isLayerShowing("map")){
                     home_lat = parseFloat(paramaters[0]);
                     home_long = parseFloat(paramaters[1]);
@@ -108,12 +104,30 @@
                     }
                 }
             }
+
+
+            /**
+             * On gps
+             */
+            function on_get_hud(paramaters){
+                if(isLayerShowing("map")){
+                    $('#hud_text').html(paramaters[0]);
+                    $('#bit_text').html(paramaters[1]);
+                    if (paramaters[2]=="True"){
+                        $('#low_band').show();
+                        setTimeout( function(){ 
+                            $('#low_band').hide();
+                        }  , 6000 );
+                    }
+                }
+            }
+            
             
             
             /**
              * On Get settings
              */
-            function on_settings_get(paramaters){
+            function on_load_settings(paramaters){
                 setValue("control_ip", paramaters[0]);
                 setValue("video_ip", paramaters[1]);
                 setValue("audio_ip", paramaters[2]);
@@ -152,30 +166,48 @@
                 setContent("lan_ip", paramaters[2]);
                 setContent("wan_ip", paramaters[3]);
             }
+            
+             /**
+             * Screenshot
+             */
+            function on_screenshot(paramaters){
+                $.delay(2000, function(){
+                    showAlert(paramater[0]);
+                });                
+            }
+            
+            
+             /**
+             * 
+             */
+            function on_set_home(paramaters){
+                showAlert(paramater[0]);
+            }            
 
             function initMap() {
                 
                 document.getElementById('gmap').setAttribute("style","height:"+(window.innerHeight-10)+"px");
                 map = new google.maps.Map(document.getElementById('gmap'), {
                     zoom: zoom,
+                    disableDefaultUI:true,
                     center: homeLocation,
                     streetViewControl: false,
                     mapTypeId: 'satellite'
                 });
                 homeMarker = new google.maps.Marker({
                     position: homeLocation,
-                    icon: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png',
+                    icon: '/img/marker-home.png',
                     map: map
                 });
                 posMarker = new google.maps.Marker({
                     position: homeLocation,
-                    icon: 'http://maps.google.com/mapfiles/ms/icons/yellow-dot.png',
+                    icon: '/img/marker-pos.png',
                     map: map
                 });
             }
       
             function inc(){
-                setPosMarker(homeLocation.lat+0.001, homeLocation.lng);
+                setPosMarker(homeLocation.lat, homeLocation.lng);
             }
 
             function setHomeMarker(lat, longe) {
@@ -186,7 +218,10 @@
             function setPosMarker(lat, longe) {
                 posLocation = {lat: lat, lng: longe};
                 posMarker.setPosition(posLocation);
-                map.panTo(posLocation);   
+                if(follow){
+                    posLocation = {lat: lat, lng: longe-0.0004};
+                    map.panTo(posLocation);   
+                }
             }
     
             function zoomIn() {
@@ -204,14 +239,66 @@
                 map.setZoom(zoom);
             }
       
+            var lastDate = new Date();
+            
             document.onkeypress = function(e) {
                 var code = (e.keyCode ? e.keyCode : e.which);
                 switch (code) {
+                    case 229:
+                        follow = !follow;
+                        if (follow){
+                            $('#follow_text').html("Follow");
+                        }
+                        else{
+                            $('#follow_text').html("Locked");
+                        }
+                    break;
                     case 39:
                         zoomIn();
                     break;
+                    case 167:
+                        submitSync('set_home');
+                    break;
                     case 228:
                         zoomOut();
+                    break;
+                    case 44:
+                        $('#speek_text').append("å");
+                        e.preventDefault();
+                    break;
+                    case 46:
+                        $('#speek_text').append("ä");
+                        e.preventDefault();
+                    break;
+                    case 45:
+                        submitSync('screenshot');
+                        e.preventDefault();
+                    break;
+                    case 13:
+                        submitAsync("speek", $('#speek_text').html());
+                        $('#speek_text').html("");
+                        showAlertShort("Sending");
+                        e.preventDefault();
+                    break;
+                    case 8:
+                        try{
+                            $('#speek_text').html($('#speek_text').html().slice(0, -1));
+                        }
+                        catch(w){
+                        }   
+                        e.preventDefault();
+                    break;
+                    default:
+                        $('#speek_text').append(String.fromCharCode(code));
+                        if(isLayerShowing("map")){
+                            var newDate = new Date();
+                            var dif = (newDate.getTime() - lastDate.getTime())/1000;
+                            if (dif > 9){
+                                lastDate = new Date();
+                                submitAsync("typing");
+                            }
+                        }
+                        e.preventDefault();
                     break;
                 }
             };              
@@ -221,32 +308,30 @@
         
     </head>
     <body style="background-color: black;color: white;padding: 5px">
-        <div class="layer" id="speek">
-            <div style="border: 2px solid white; padding: 5px; text-align: center; margin-bottom: 10px; font-size: large;font-weight: bold">MAKE THE ROVER SPEEK</div>
-            Write a text that the rover shall speek
-            <input type="text" id="speek_text" autofocus />
-            <br><br>
-            <button onclick="javascript:speek()">Speek it</button>
-        </div>
         <div class="layer" id="map">
-            <div id="gmap"></div>
+            <div id="speek_text" style="position: absolute;top: 0px;left: 215px;z-index: 10; background-color: rgba(0, 0, 0, 0.5);font-weight: bold; width:calc(100% - 530px); height:16px;padding-left:9px;padding-top:6px;padding-bottom:3px;padding-right:6px;"></div>
+            <div id="follow_text" style="text-align: right;position: absolute;top: 0px;left: calc(100% - 100px);z-index: 10; background-color: rgba(0, 0, 0, 0.5);font-weight: bold; width:80px; height:16px;padding-left:9px;padding-top:6px;padding-bottom:3px;padding-right:6px;"></div>
+            <div id="bit_text" style="text-align: right;position: absolute;top: 0px;left: calc(100% - 300px);z-index: 10; background-color: rgba(0, 0, 0, 0.5);font-weight: bold; width:185px; height:16px;padding-left:9px;padding-top:6px;padding-bottom:3px;padding-right:6px;"></div>
+            <div id="hud_text" style="position: absolute;top: 0px;left: 0px;z-index: 10; background-color: rgba(0, 0, 0, 0.5);font-weight: bold; font-size: 14px; line-height: 20px; width:200px; height:calc(100% - 14px);padding-left:9px;padding-top:6px;padding-bottom:3px;padding-right:6px;"></div>
+            <div style="padding:0px"id="gmap"></div>
+            <div id="low_band" style="border:2px solid black; background-color: red;color:white;font-weight:bold;padding:8px;position:absolute; z-index:9999; top:calc(100% - 70px); left: calc(100% - 320px);">No connection, streams closed!</div>
         </div>
         <div class="layer" id="settings">
             <div style="border: 2px solid white; padding: 5px; text-align: center; margin-bottom: 10px; font-size: large;font-weight: bold">SETTINGS</div>
-            The Irrbloss Rover communicate with this remote control on port 6601, 6602 and 6603 using UDP.<br>
-            6601 is for commands, 6602 is for the video and 6603 is for audio.<br>
-            The settings bellow must only be changed when Rover is in radio range (433Mhz) off the Remote.<br>
+            The Irrbloss Rover will connect to the remote on ports 6601, 6602, 6603, 6604, 6605, 6606 using TCP.<br>
+            Also 6607 is used for video over TCP and 6608 for audio over UDP.<br>
+            So all this port must be open in the firewall where the remote controll is...<br>
             <br>
             <table>
                 <tr>
                     <td>
-                        IP for remote control [port=6601]
+                        Remote control IP [ports=6601, 6602, 6603, 6604, 6605, 6606]
                         <input type="text" id="control_ip" />
                         <br><br>
-                        IP for video stream receiver [port=6602]
+                        IP for video stream receiver [port=6607]
                         <input type="text" id="video_ip" />
                         <br><br>
-                        IP for audio stream receiver [port=6603]
+                        IP for audio stream receiver [port=6608]
                         <input type="text" id="audio_ip" />
                         <br><br>
                     </td>
@@ -311,7 +396,7 @@
                 <tr>
                     <td><button onclick="javascript:submitSync('get_lan_ip')">Get LAN IP</button></td>
                     <td><button onclick="javascript:submitSync('get_wan_ip')">Get WAN IP</button></td>
-                    <td><button onclick="javascript:submitSyncFromInputConfirm('Are you sure?', 'settings_save', 'control_ip', 'video_ip', 'audio_ip', 'resolution', 'fps', 'bitrate')">Save settings</button></td>
+                    <td><button onclick="javascript:submitSyncFromInputConfirm('Are you sure?', 'save_settings', 'control_ip', 'video_ip', 'audio_ip', 'resolution', 'fps', 'bitrate')">Save settings</button></td>
                 </tr>
             </table>
         </div>

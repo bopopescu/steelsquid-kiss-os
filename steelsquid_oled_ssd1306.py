@@ -131,16 +131,14 @@ def command(c):
     Send command byte to display.
     '''
     control = 0x00   # Co = 0, DC = 0
-    with steelsquid_i2c.Lock():
-        i2c_bus.write8(control, c)
+    i2c_bus.write8(control, c)
 
 def data(c):
     '''
     Send byte of data to display.
     '''
     control = 0x40   # Co = 0, DC = 0
-    with steelsquid_i2c.Lock():
-        i2c_bus.write8(control, c)
+    i2c_bus.write8(control, c)
 
 def display():
     '''
@@ -154,8 +152,7 @@ def display():
     command(PAGES-1)  # Page end address.
     for i in range(0, len(buffer), 16):
         control = 0x40   # Co = 0, DC = 0
-        with steelsquid_i2c.Lock():
-            i2c_bus.writeList(control, buffer[i:i+16])
+        i2c_bus.writeList(control, buffer[i:i+16])
 
 def img_to_buf(image):
     '''

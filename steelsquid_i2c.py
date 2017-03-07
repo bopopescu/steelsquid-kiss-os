@@ -22,70 +22,31 @@ This will only lock if use_lock(True) (default false)
 '''
 
 import steelsquid_utils
-from multiprocessing import RLock
 import smbus
 import re
 
 
-# Lock the bus when in use
-mutex = RLock()
 bus = smbus.SMBus(steelsquid_utils.get_pi_i2c_bus_number())
-use_lock = False
-
-
-class Lock:
-    ''' 
-    Lock the i2c bus
-    This will only lock if use_lock = True
-    Usage: with steelsquid_i2c.Lock():
-    '''
-    def __enter__(self):
-        if use_lock:
-            mutex.acquire()
-    def __exit__(self, type, value, traceback):
-        if use_lock:
-            mutex.release()
-
-
-def enable_locking(enable_lock):
-    '''
-    Enable or disable locking
-    '''
-    use_lock = enable_lock
 
 
 def read_8_bit_raw(address, signed=False):
     '''
     Read signed or unsigned 8-bit from a device, without specifying a device register.
     '''
-    if use_lock:
-        with(mutex):
-            value = bus.read_byte(address)
-            if signed:
-                if result > 127: result -= 256
-            return value
-    else:
-        value = bus.read_byte(address)
-        if signed:
-            if result > 127: result -= 256
-        return value
+    value = bus.read_byte(address)
+    if signed:
+        if result > 127: result -= 256
+    return value
 
 
 def read_8_bit(address, register, signed=False):
     '''
     Read signed or unsigned 8-bit from a device register
     '''
-    if use_lock:
-        with(mutex):
-            result = bus.read_byte_data(address, register)
-            if signed:
-                if result > 127: result -= 256 
-            return result
-    else:
-        result = bus.read_byte_data(address, register)
-        if signed:
-            if result > 127: result -= 256
-        return result
+    result = bus.read_byte_data(address, register)
+    if signed:
+        if result > 127: result -= 256
+    return result
 
 
 def read_16_bit(address, register, signed=False, little_endian=True):
@@ -97,21 +58,12 @@ def read_16_bit(address, register, signed=False, little_endian=True):
     Big Endian: Most significant byte in the smallest address
     Little Endian: Least significant byte in the smallest address
     '''
-    if use_lock:
-        with(mutex):
-            result = bus.read_word_data(address, register)
-            if not little_endian:
-                result = ((result << 8) & 0xFF00) + (result >> 8)
-            if signed:
-                if result > 32767: result -= 65536
-            return result
-    else:
-        result = bus.read_word_data(address, register)
-        if not little_endian:
-            result = ((result << 8) & 0xFF00) + (result >> 8)
-        if signed:
-            if result > 32767: result -= 65536
-        return result
+    result = bus.read_word_data(address, register)
+    if not little_endian:
+        result = ((result << 8) & 0xFF00) + (result >> 8)
+    if signed:
+        if result > 32767: result -= 65536
+    return result
 
 
 def read_16_bit_command(address, register, command_bytes, signed=False, little_endian=True):
@@ -125,25 +77,14 @@ def read_16_bit_command(address, register, command_bytes, signed=False, little_e
     Big Endian: Most significant byte in the smallest address
     Little Endian: Least significant byte in the smallest address
     '''
-    if use_lock:
-        with(mutex):
-            by = read_bytes_command(address, register, command_bytes, 2)
-            if little_endian:
-                result = steelsquid_utils.hight_low_byte_to_int(by[1], by[0])
-            else:
-                result = steelsquid_utils.hight_low_byte_to_int(by[0], by[1])
-            if signed:
-                if result > 32767: result -= 65536
-            return result
+    by = read_bytes_command(address, register, command_bytes, 2)
+    if little_endian:
+        result = steelsquid_utils.hight_low_byte_to_int(by[1], by[0])
     else:
-        by = read_bytes_command(address, register, command_bytes, 2)
-        if little_endian:
-            result = steelsquid_utils.hight_low_byte_to_int(by[1], by[0])
-        else:
-            result = steelsquid_utils.hight_low_byte_to_int(by[0], by[1])
-        if signed:
-            if result > 32767: result -= 65536
-        return result        
+        result = steelsquid_utils.hight_low_byte_to_int(by[0], by[1])
+    if signed:
+        if result > 32767: result -= 65536
+    return result        
 
 
 def read_bytes(address, register, number_of_bytes_to_read, signed=False):
@@ -152,21 +93,12 @@ def read_bytes(address, register, number_of_bytes_to_read, signed=False):
     number_of_bytes_to_read = Number of bytes to read
     Return = a list of bytes
     '''
-    if use_lock:
-        with(mutex):
-            result = bus.read_i2c_block_data(address, register, number_of_bytes_to_read)
-            if signed:
-                for i, b in result:
-                    if b > 127:
-                        result[i] = b - 256
-            return result
-    else:
-        result = bus.read_i2c_block_data(address, register, number_of_bytes_to_read)
-        if signed:
-            for i, b in result:
-                if b > 127:
-                    result[i] = b - 256
-        return result
+    result = bus.read_i2c_block_data(address, register, number_of_bytes_to_read)
+    if signed:
+        for i, b in result:
+            if b > 127:
+                result[i] = b - 256
+    return result
 
 
 def read_bytes_command(address, register, command_bytes, number_of_bytes_to_read, signed=False):
@@ -178,67 +110,41 @@ def read_bytes_command(address, register, command_bytes, number_of_bytes_to_read
     number_of_bytes_to_read = Number of bytes to read
     Return = a list of bytes
     '''
-    if use_lock:
-        with(mutex):
-            write_bytes(address, register, command_bytes)
-            byte_l = []
-            for i in range(number_of_bytes_to_read):
-                byte_l.append(read_8_bit_raw(address, signed))
-            return byte_l
-    else:
-        write_bytes(address, register, command_bytes)
-        byte_l = []
-        for i in range(number_of_bytes_to_read):
-            byte_l.append(read_8_bit_raw(address, signed))
-        return byte_l
+    write_bytes(address, register, command_bytes)
+    byte_l = []
+    for i in range(number_of_bytes_to_read):
+        byte_l.append(read_8_bit_raw(address, signed))
+    return byte_l
 
 
 def write_8_bit_raw(address, byte):
     '''
     Writes an 8-bit value to a device, without specifying a device register.
     '''
-    if use_lock:
-        with(mutex):
-            bus.write_byte(address, byte)
-    else:
-        bus.write_byte(address, byte)
+    bus.write_byte(address, byte)
 
 
 def write_8_bit(address, register, byte):
     '''
     Writes an 8-bit value to a device register
     '''
-    if use_lock:
-        with(mutex):
-            bus.write_byte_data(address, register, byte)
-    else:
-        bus.write_byte_data(address, register, byte)
+    bus.write_byte_data(address, register, byte)
 
 
 def write_16_bit(address, register, char_to_send, reverse_byte_order=False):
     '''
     Writes an 16-bit value to a device register
     '''
-    if use_lock:
-        with(mutex):
-            if reverse_byte_order:
-                char_to_send = steelsquid_utils.reverse_byte_order(char_to_send)
-            return bus.write_word_data(address, register, char_to_send)
-    else:
-        if reverse_byte_order:
-            char_to_send = steelsquid_utils.reverse_byte_order(char_to_send)
-        return bus.write_word_data(address, register, char_to_send)
+    if reverse_byte_order:
+        char_to_send = steelsquid_utils.reverse_byte_order(char_to_send)
+    return bus.write_word_data(address, register, char_to_send)
 
 
 def write_bytes(address, register, bytes_to_send):
     '''
     Writes several bytes to a device register
     '''
-    if use_lock:
-        with(mutex):
-            bus.write_i2c_block_data(address, register, bytes_to_send)
-    else:
-        bus.write_i2c_block_data(address, register, bytes_to_send)
+    bus.write_i2c_block_data(address, register, bytes_to_send)
 
 
     

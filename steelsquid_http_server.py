@@ -2918,7 +2918,7 @@ class SteelsquidHttpServer(steelsquid_server.SteelsquidServer):
                             self.send_headers_data(self.HTTP_BAD_REQUEST, self.MIME_PLAIN, len(data), None, use_cache=False)
                             self.wfile.write(data)
             except Exception, err:
-                steelsquid_utils.shout(debug=True)
+                steelsquid_utils.shout(debug=False)
                 data = steelsquid_utils.encode_string(str(err.message).encode('utf8'))
                 self.send_headers_data(self.HTTP_SERVER_ERROR, self.MIME_PLAIN, len(data), None, use_cache=False)
                 self.wfile.write(data)

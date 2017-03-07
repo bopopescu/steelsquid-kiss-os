@@ -25,11 +25,16 @@ import sys
 import importlib
 import Queue
 import exceptions
+import datetime
 import os
 import modules
 import steelsquid_tcp_radio
+import steelsquid_hmtrlrs
 from importlib import import_module
 
+
+# Execute event her
+system_event_dir = "/run/shm/steelsquid"
 
 # Number of eventdata and brodecast handler threads
 NUMBER_OF_EVENT_HANDLERS = 3
@@ -74,27 +79,143 @@ last_voltage = None
 last_net = False
 
 # Last WIFI name
-last_wifi_name = None
+last_wifi_name = "---"
 
 # Last WIFI IP
-last_wifi_ip = None
+last_wifi_ip = "---"
 
 # Last USB IP
-last_usb_ip = None
+last_usb_ip = "---"
 
 # Last LAN IP
-last_lan_ip = None
+last_lan_ip = "---"
 
 # Last WAN IP
-last_wan_ip = None
+last_wan_ip = "---"
 
-# Radio
-radio_count_max = 30
-radio_count = 30
+# With radio type hmtrlrs/tcp
+TYPE_HMTRLRS = "hmtrlrs"
+TYPE_TCP = "tcp"
+radio_type = TYPE_HMTRLRS
 
-# TCP radio
-tcp_radio_count_max = 30
-tcp_radio_count = 30
+# Steelsquid daemon start time
+start_time = datetime.datetime.now()
+
+
+def seconds_since_start():
+    '''
+    Seconds since steelsquid daemon started
+    '''
+    return (datetime.datetime.now() - start_time).total_seconds()
+
+
+def radio_hmtrlrs(is_server):
+    '''
+    Send and reseive messages with HM-TRLR-S transmitter 
+    http://www.digikey.com/product-detail/en/HM-TRLR-S-868/HM-TRLR-S-868-ND/5051756
+    Must restart to implement
+    is_server: None = Disable
+               True=Enable as server
+               False=Enable as client
+    '''    
+    if is_server==None:
+        steelsquid_utils.del_flag("radio_hmtrlrs_server")
+        steelsquid_utils.del_flag("radio_hmtrlrs_client")
+    elif is_server:
+        steelsquid_utils.set_flag("radio_hmtrlrs_server")
+        steelsquid_utils.del_flag("radio_hmtrlrs_client")
+    else:
+        steelsquid_utils.del_flag("radio_hmtrlrs_server")
+        steelsquid_utils.set_flag("radio_hmtrlrs_client")
+
+
+def radio_tcp(is_the_remote, host=None):
+    '''
+    Send and reseive messages with TCP (same way is with HM-TRLR-S transmitter)
+    is_the_remote = this one send the push and request to the other 
+    is_the_remote = none, disable tcp server
+    if host==None (this is a server, listen for connections)
+    If host!=None this is the client  (connect to server)  
+    '''    
+    # Disable
+    if is_the_remote==None:
+        steelsquid_utils.del_flag("radio_tcp_server")
+        steelsquid_utils.del_flag("radio_tcp_client")
+        steelsquid_utils.del_flag("radio_tcp_remote")
+        steelsquid_utils.del_parameter("radio_tcp_host")
+    # Server
+    elif host==None:
+        steelsquid_utils.set_flag("radio_tcp_server")
+        steelsquid_utils.del_flag("radio_tcp_client")
+        if is_the_remote:
+            steelsquid_utils.set_flag("radio_tcp_remote")
+        else:
+            steelsquid_utils.del_flag("radio_tcp_remote")
+        steelsquid_utils.del_parameter("radio_tcp_host")
+    # Client
+    else:
+        steelsquid_utils.del_flag("radio_tcp_server")
+        steelsquid_utils.set_flag("radio_tcp_client")
+        if is_the_remote:
+            steelsquid_utils.set_flag("radio_tcp_remote")
+        else:
+            steelsquid_utils.del_flag("radio_tcp_remote")
+        steelsquid_utils.set_parameter("radio_tcp_host", host)
+
+
+def radio_switch(the_type):
+    '''
+    if hmtrlrs: hmtrlrs will be used
+    if tcp: TCPIP will be used
+    '''    
+    global radio_type
+    radio_type = the_type
+    steelsquid_utils.set_parameter("radio_type", the_type)
+    save_module_settings()
+
+
+def radio_interrupt():
+    '''
+    If you made changes to the RADIO.LOCAL variables you can fire the sync with this method
+    Otherwise you must wait about half second for it to fire....
+    '''    
+    steelsquid_kiss_boot.radio_event.set()
+    steelsquid_kiss_boot.last_sync_send = datetime.datetime.now()-datetime.timedelta(days=1)
+    steelsquid_kiss_boot.radio_event.set()
+
+
+def radio_force():
+    '''
+    Force send of push requests, even if on_push says other
+    '''    
+    steelsquid_kiss_boot.radio_event.set()
+    steelsquid_kiss_boot.force_push = 4
+    steelsquid_kiss_boot.radio_event.set()
+
+
+def radio_request(command, data=None):
+    '''
+    Send a command to the server and wait for answer, will only wait for 3.2 seconds then timeout (return None)
+    This wil eider use hmtrlrs or tcp, depending on wat is set by radio_use_hmtrlrs
+    command: The command
+    data: Data to the server  (data is a list of strings)
+    Return: data (data is a list of strings from the server)
+    Raise exception if error from server or timeout on response
+    '''    
+    if radio_type==TYPE_HMTRLRS:
+        try:
+            steelsquid_hmtrlrs.request(command, data)
+        except RuntimeError as e:
+            raise e
+        except:
+            steelsquid_tcp_radio.command_request(command, data)
+    else:
+        try:
+            steelsquid_tcp_radio.command_request(command, data)
+        except RuntimeError as e:
+            raise e
+        except:
+            steelsquid_hmtrlrs.request(command, data)
 
 
 def get_module(name):
@@ -205,8 +326,39 @@ def module_status(name, status, argument = None, restart=True):
     except:
         steelsquid_utils.shout()
         return False
+        
+        
+def broadcast_task_event(event, parameters_to_event=None):
+    '''
+    Broadcast a event to the steelsquid daemon (steelsquid program)
+    Will first try all system events, like mount, umount, shutdown...
+    and then send the event to the modules...
+    
+    @param event: The event name
+    @param parameters_to_event: List of parameters that accompany the event (None or 0 length list if no paramaters)
+    '''
+    if parameters_to_event != None:
+        pa = os.path.join(system_event_dir, event)
+        f = open(pa, "w")
+        try:
+            f.write("\n".join(parameters_to_event))
+        finally:
+            try:
+                f.close()
+            except:
+                pass
+    else:
+        pa = os.path.join(system_event_dir, event)
+        f = open(pa, "w")
+        try:
+            f.write("")
+        finally:
+            try:
+                f.close()
+            except:
+                pass
 
-
+        
 def broadcast_event(event, parameters_to_event=None):
     '''
     Will broadcast a event, execute methods in the classes inside "broadcast_event_callback_classes"
@@ -453,84 +605,6 @@ def nrf24_status(status):
         steelsquid_utils.del_flag("nrf24_master")
         steelsquid_utils.set_flag("nrf24_slave")
     
-    
-def hmtrlrs_status(status):
-    '''
-    Send and reseive messages with HM-TRLR-S transmitter 
-    http://www.digikey.com/product-detail/en/HM-TRLR-S-868/HM-TRLR-S-868-ND/5051756
-    Must reboot to implement
-    status: server=Enable as server
-            client=Enable as client
-            None=Disable
-    '''    
-    if status==None:
-        steelsquid_utils.del_flag("hmtrlrs_server")
-        steelsquid_utils.del_flag("hmtrlrs_client")
-    elif status=="server":
-        steelsquid_utils.set_flag("hmtrlrs_server")
-        steelsquid_utils.del_flag("hmtrlrs_client")
-    elif status=="client":
-        steelsquid_utils.del_flag("hmtrlrs_server")
-        steelsquid_utils.set_flag("hmtrlrs_client")
-
-
-def tcp_radio_server(is_remote):
-    '''
-    Send and reseive messages with tcp radio 
-    Must reboot to implement
-    '''    
-    if is_remote:
-        steelsquid_utils.set_flag("tcp_radio_is_remote")
-    else:
-        steelsquid_utils.del_flag("tcp_radio_is_remote")
-    steelsquid_utils.set_flag("tcp_radio_server")
-    steelsquid_utils.del_flag("tcp_radio_client")
-
-
-def tcp_radio_client(is_remote, host):
-    '''
-    Send and reseive messages with tcp radio 
-    Must reboot to implement
-    '''    
-    if is_remote:
-        steelsquid_utils.set_flag("tcp_radio_is_remote")
-    else:
-        steelsquid_utils.del_flag("tcp_radio_is_remote")
-    steelsquid_utils.del_flag("tcp_radio_server")
-    steelsquid_utils.set_flag("tcp_radio_client")
-    steelsquid_utils.set_parameter("tcp_radio_host", host)
-
-
-def tcp_radio_disable():
-    '''
-    Send and reseive messages with tcp radio 
-    Must reboot to implement
-    '''    
-    steelsquid_utils.del_flag("tcp_radio_server")
-    steelsquid_utils.del_flag("tcp_radio_client")
-    
-
-def radio_interrupt(check_on_push=True):
-    '''
-    If you made changes to the RADIO_SYNC or RADIO_PUSH variables you can fire the sync or push with this method
-    Otherwise you must wait about 1 second for it to fire....
-    '''    
-    global radio_count
-    radio_count=radio_count_max
-    steelsquid_kiss_boot.check_on_push=check_on_push
-    steelsquid_kiss_boot.radio_event.set()
-
-
-def tcp_radio_interrupt(check_on_push=True):
-    '''
-    If you made changes to the RADIO_SYNC or RADIO_PUSH variables you can fire the sync or push with this method
-    Otherwise you must wait about 1 second for it to fire....
-    '''    
-    global tcp_radio_count
-    tcp_radio_count=tcp_radio_count_max
-    steelsquid_kiss_boot.tcp_check_on_push=check_on_push
-    steelsquid_kiss_boot.tcp_radio_event.set()
-
 
 def _broadcast_event_handler():
     '''
@@ -670,7 +744,18 @@ def _get_first_modules_class(class_name, inner_class_name=None):
             return mod
     return None
         
-        
+def _get_first_modules_inner_class(class_name, inner_class_name=None):
+    '''
+    Get class from first module
+    '''
+    for name, mod in loaded_modules.iteritems():
+        if hasattr(mod, class_name):
+            mod = getattr(mod, class_name)
+            if inner_class_name!=None:
+                if hasattr(mod, inner_class_name):
+                    mod = getattr(mod, inner_class_name)
+                    return mod
+    return None        
         
 def _has_modules_method(class_name, method_name):
     '''

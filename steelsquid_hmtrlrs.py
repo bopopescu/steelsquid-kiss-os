@@ -49,7 +49,7 @@ import steelsquid_pi
 LINK_LOST_SUGGESTION = 4
 
 # Sleep this long after a request/broadcast or other transaction is sent...
-STRANS_SLEEP = 0.01
+STRANS_SLEEP = 0.02
 
 # Long range but slow speed
 MODE_SLOW = "MODE_SLOW"
@@ -64,7 +64,7 @@ MODE_MEDIUM_FAST = "MODE_MEDIUM_FAST"
 MODE_FAST = "MODE_FAST"
 
 # Try to resend a request this number of times if get timout
-NUMBER_OF_RETRY = 3
+NUMBER_OF_RETRY = 16
 
 # Only one thread can use this at a time    
 lock = threading.RLock()
@@ -109,17 +109,15 @@ DC4 = chr(0x14)
 SYN = chr(0x16)
 
 # Last OK send/reseive 
-last_sync = datetime.datetime.now()
+last_sync = datetime.datetime.now()-datetime.timedelta(days=1)
 
 # If no command in a while try to init the device again
 resetup_count = 0
 resetup_count_max = 4
 
-# Temporary disable the request and broadcast
-disable = False
 
 
-def setup(serial_port="/dev/ttyAMA0", config_gpio=25, reset_gpio=23, baudrate=38400, mode=MODE_MEDIUM_FAST, timeout_mutipple=1):
+def setup(serial_port="/dev/ttyS0", config_gpio=18, reset_gpio=23, baudrate=38400, mode=MODE_MEDIUM_FAST, timeout_mutipple=1):
     '''
     Setup the serial interface
     serial_port: The serial port (/dev/ttyAMA0, /dev/ttyUSB1...)
@@ -166,9 +164,9 @@ def setup(serial_port="/dev/ttyAMA0", config_gpio=25, reset_gpio=23, baudrate=38
     if mode==MODE_SLOW:
         ser = serial.Serial(serial_port, baudrate, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=8, writeTimeout=0, dsrdtr=True, timeout=7*timeout_mutipple)
     elif mode==MODE_MEDIUM or mode==MODE_MEDIUM_FAST:
-        ser = serial.Serial(serial_port, baudrate, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=8, writeTimeout=0, dsrdtr=True, timeout=0.8*timeout_mutipple)
+        ser = serial.Serial(serial_port, baudrate, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=8, writeTimeout=0, dsrdtr=True, timeout=1*timeout_mutipple)
     elif mode==MODE_FAST:
-        ser = serial.Serial(serial_port, baudrate, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=8, writeTimeout=0, dsrdtr=True, timeout=0.4*timeout_mutipple)
+        ser = serial.Serial(serial_port, baudrate, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, bytesize=8, writeTimeout=0, dsrdtr=True, timeout=1*timeout_mutipple)
     time.sleep(STRANS_SLEEP)
     # Set the HM-TRLR-S in communication mode
     steelsquid_pi.gpio_set(config_gpio, True)
@@ -179,6 +177,8 @@ def setup(serial_port="/dev/ttyAMA0", config_gpio=25, reset_gpio=23, baudrate=38
     # Syncworld
     _send_command("AT+SYNL=2")
     _send_command("AT+SYNW=3412")
+    # set channel
+    set_chanel(11)
     # Set mode
     if mode==MODE_SLOW:
         # Set LoRa
@@ -215,6 +215,14 @@ def is_linked():
     '''
     diff = datetime.datetime.now()-last_sync
     return diff.total_seconds()<resetup_count_max
+
+
+def get_last_link():
+    '''
+    How long sinse last synk
+    '''
+    diff = datetime.datetime.now()-last_sync
+    return diff.total_seconds()
 
 
 def set_chanel(channel):
@@ -273,6 +281,7 @@ def _read_line():
     Return: string (None = error/timeout)
     '''
     global resetup_count
+    #time.sleep(STRANS_SLEEP)
     by = ser.readline()
     if len(by)>0:
         resetup_count = 0
@@ -296,6 +305,7 @@ def _read_chr():
     Return: chr (None = error/timeout)
     '''
     global resetup_count
+    #time.sleep(STRANS_SLEEP)
     by = ser.read(1)
     if len(by)>0:
         resetup_count = 0
@@ -323,8 +333,6 @@ def listen():
     with lock:
         # Read request
         req = _read_chr()
-        if req == None:
-            req = _read_chr()
         if req==None:
             return None, None
         elif req==SUB:
@@ -425,7 +433,7 @@ def response_sync(data):
     with lock:
         # Write push answer
         ser.write(SYN)
-        if data!=None:
+        if data!=None and len(data)>0:
             data = '|'.join([str(mli) for mli in data])
             ser.write(data)
         ser.write("\n")
@@ -441,7 +449,7 @@ def response(data=None):
     with lock:
         # Write ok answer
         ser.write(ACK)
-        if data!=None:
+        if data!=None and len(data)>0:
             data = '|'.join([str(mli) for mli in data])
             ser.write(data)
         ser.write("\n")
@@ -457,7 +465,7 @@ def error(message=None):
     with lock:
         # Write error answer
         ser.write(NAK)
-        if message!=None:
+        if message!=None and len(message)>0:
             ser.write(str(message))
         ser.write("\n")
         ser.flush()
@@ -471,49 +479,31 @@ def request(command, data=None, _do_not_use=0):
     Return: data (data is a list of strings from the server)
     Raise exception if error from server or timeout on response
     '''
-    if disable:
-        raise Exception("The transceiver is dissabled")
-    else:
-        global last_sync
-        with lock:
-            time.sleep(STRANS_SLEEP)
+    global last_sync
+    with lock:
+        for i in range(NUMBER_OF_RETRY):
             # Write a request
             ser.write(ENQ)
             ser.write(command)
             ser.write("\n")
-            if data!=None:
+            if data!=None and len(data)>0:
                 _data = '|'.join([str(mli) for mli in data])
                 ser.write(_data)
             ser.write("\n")
             ser.flush()
             # Listen for response
             req = _read_chr()
-            if req==None:
-                # Try one more time...
-                if _do_not_use<NUMBER_OF_RETRY:
-                    dnu = _do_not_use + 1
-                    return request(command, data, _do_not_use=dnu)
-                else:
-                    raise Exception(command +": Request timeout (ACK/NAC)")
-            elif req == ACK:
+            if req == ACK:
                 le = _read_line()
-                if le == None:
-                    # Try one more time...
-                    if _do_not_use<NUMBER_OF_RETRY:
-                        dnu = _do_not_use + 1
-                        return request(command, data, _do_not_use=dnu)
+                if le != None:
+                    if len(le)==0:
+                        last_sync = datetime.datetime.now()
+                        return []
                     else:
-                        raise Exception(command +": Request timeout (Data)")
-                elif len(le)==0:
-                    last_sync = datetime.datetime.now()
-                    return []
-                else:
-                    last_sync = datetime.datetime.now()
-                    return le.split("|")
+                        last_sync = datetime.datetime.now()
+                        return le.split("|")
             elif req == NAK:
-                raise Exception(command +": "+ _read_line())
-            else:
-                raise Exception("Unknown response: "+str(req))
+                raise RuntimeError(command +": "+ _read_line())
  
  
 def request_sync(data=None, _do_not_use=0):
@@ -524,15 +514,12 @@ def request_sync(data=None, _do_not_use=0):
     Return: data (data is a list of strings from the server)
     Raise exception if error from server or timeout on response
     '''
-    if disable:
-        raise Exception("The transceiver is dissabled")
-    else:
-        global last_sync
-        with lock:
-            time.sleep(STRANS_SLEEP)
+    global last_sync
+    with lock:
+        for i in range(NUMBER_OF_RETRY):
             # Write a sync request
             ser.write(SYN)
-            if data!=None:
+            if data!=None and len(data)>0:
                 _data = '|'.join([str(mli) for mli in data])
                 ser.write(_data)
             ser.write("\n")
@@ -540,31 +527,17 @@ def request_sync(data=None, _do_not_use=0):
             # Listen for response
             # start = datetime.datetime.now()
             req = _read_chr()
-            if req==None:
-                # Try one more time...
-                if _do_not_use<NUMBER_OF_RETRY:
-                    dnu = _do_not_use + 1
-                    return request_sync(data, _do_not_use=dnu)
-                else:
-                    raise Exception("Sync Request timeout (SYN)")
-            elif req == SYN:
+            if req == SYN:
                 le = _read_line()
                 #print (datetime.datetime.now()-start).total_seconds()
-                if le == None:
-                    # Try one more time...
-                    if _do_not_use<NUMBER_OF_RETRY:
-                        dnu = _do_not_use + 1
-                        return request_sync(data, _do_not_use=dnu)
+                if le != None:
+                    if len(le)==0:
+                        last_sync = datetime.datetime.now()
+                        return []
                     else:
-                        raise Exception("Sync Request timeout (Data)")
-                elif len(le)==0:
-                    last_sync = datetime.datetime.now()
-                    return []
-                else:
-                    last_sync = datetime.datetime.now()
-                    return le.split("|")
-            else:
-                raise Exception("Unknown sync response...")
+                        last_sync = datetime.datetime.now()
+                        return le.split("|")
+        raise Exception("Unknown sync response...")
 
             
 
@@ -574,21 +547,18 @@ def broadcast(command, data=None):
     command: The command
     data: Data to the server  (data is a list of strings)
     '''
-    if disable:
-        raise Exception("The transceiver is dissabled")
-    else:
-        global last_sync
-        with lock:
-            # Write a broadcast
-            ser.write(SUB)
-            ser.write(command)
-            ser.write("\n")
-            if data!=None:
-                data = '|'.join([str(mli) for mli in data])
-                ser.write(data)
-            ser.write("\n")
-            ser.flush()
-            time.sleep(STRANS_SLEEP)
+    global last_sync
+    with lock:
+        # Write a broadcast
+        ser.write(SUB)
+        ser.write(command)
+        ser.write("\n")
+        if data!=None and len(data)>0:
+            data = '|'.join([str(mli) for mli in data])
+            ser.write(data)
+        ser.write("\n")
+        ser.flush()
+        #time.sleep(STRANS_SLEEP)
             
             
 def broadcast_push(push_nr, data=None):
@@ -597,26 +567,23 @@ def broadcast_push(push_nr, data=None):
     This will send a push requst...steelsquid_kiss_os using this....
     data: Data to the server  (data is a list of strings)
     '''
-    if disable:
-        raise Exception("The transceiver is dissabled")
-    else:
-        global last_sync
-        with lock:
-            # Write a push broadcast
-            if push_nr==1:
-                ser.write(DC1)
-            if push_nr==2:
-                ser.write(DC2)
-            if push_nr==3:
-                ser.write(DC3)
-            if push_nr==4:
-                ser.write(DC4)
-            if data!=None:
-                data = '|'.join([str(mli) for mli in data])
-                ser.write(data)
-            ser.write("\n")
-            ser.flush()
-            time.sleep(STRANS_SLEEP)
+    global last_sync
+    with lock:
+        # Write a push broadcast
+        if push_nr==1:
+            ser.write(DC1)
+        if push_nr==2:
+            ser.write(DC2)
+        if push_nr==3:
+            ser.write(DC3)
+        if push_nr==4:
+            ser.write(DC4)
+        if data!=None and len(data)>0:
+            data = '|'.join([str(mli) for mli in data])
+            ser.write(data)
+        ser.write("\n")
+        ser.flush()
+        #time.sleep(STRANS_SLEEP)
             
 
 def stop():

@@ -25,26 +25,49 @@ import sys
 import steelsquid_pi
 import StringIO
 
-# The socket
-sock = None
-con = None
+# Port nuumbers
+PORT_SYNC = 6601
+PORT_COMMAND = 6602
+PORT_PUSH = [0, 6603, 6604, 6605, 6606]
+
+# Timeout on send data
+TIMEOUT = 4
+
+# Number of seconds meaning that the connection is lost
+CONNECTION_LOST = 4
+
+# The socket listen/connect (sync)
+lis_sync = None
+con_sync = None
+
+# The socket listen/connat (commands)
+lis_command = None
+con_command = None
+
+# The socket listen/connat (push)
+lis_push = [None] * 6
+con_push = [None] * 6
+
+#Read buffers
+buff_sync = None
+buff_command = None
+buff_push = [None] * 6
 
 # Server/port
 is_t_remote = False
 server_ip = None
-port_nr = None
 
-# Try to resend a request this number of times if get timout
-NUMBER_OF_RETRY = 3
+# Last Sync
+last_sync = datetime.datetime.now()
 
-# Only one thread can use this at a time    
-lock = threading.RLock()
+# Last command
+last_command = datetime.datetime.now()
 
-# Request
-ENQ = chr(0x05)
+# Last push
+last_push = [datetime.datetime.now()] * 6
 
-# Broadcast
-SUB = chr(0x1A)
+# End of package
+ETB = chr(0x17)
 
 # OK response
 ACK = chr(0x06)
@@ -52,46 +75,98 @@ ACK = chr(0x06)
 # ERROR response
 NAK = chr(0x15)
 
-# Push broadcasts
-# steelsquid kiss os using this when push variables from client to server
-DC1 = chr(0x11)
-DC2 = chr(0x12)
-DC3 = chr(0x13)
-DC4 = chr(0x14)
+# Ping request
+BEL = chr(0x7)
 
-# Sync request
-# steelsquid kiss os using this when sync variables between client and server
-SYN = chr(0x16)
+# Lock when send request
+lock = threading.Lock()
 
-# Bell
-# Using this to check that connection is open...
-BEL = chr(0x06)
+# How long is the ping time
+ping_time = -1
 
-# Last OK send/reseive 
-last_sync = datetime.datetime.now()
 
-# Timeout on connection read
-TIMEOUT = 2
-
-def setup(is_the_remote, host=None, port=6601):
+def setup_server(is_the_remote):
     '''
-    Setup the interface
-    is_the_remote = this one send the push to the other 
-    if host==None (this is a server, listen for connections)
-    
+    Setup this as the sever.
+    The server will listen for connections from the client
+    is_the_remote = this one send the push and request to the other 
     '''
-    global sock
+    global lis_sync
+    global lis_command
     global server_ip
-    global port_nr
     global is_t_remote
+    global buff_sync
+    global buff_command
+    close()
+    buff_sync = StringIO.StringIO()
+    buff_command = StringIO.StringIO()
+    buff_push[1] = StringIO.StringIO()
+    buff_push[2] = StringIO.StringIO()
+    buff_push[3] = StringIO.StringIO()
+    buff_push[4] = StringIO.StringIO()
+    server_ip = None
+    is_t_remote = is_the_remote
+    socket.setdefaulttimeout(TIMEOUT)
+    # Create sync socket
+    lis_sync = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    lis_sync.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    lis_sync.bind(('', PORT_SYNC))    
+    lis_sync.listen(3)
+    lis_sync.settimeout(TIMEOUT)
+    # Create command socket
+    lis_command = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    lis_command.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    lis_command.bind(('', PORT_COMMAND))    
+    lis_command.listen(3)
+    lis_command.settimeout(TIMEOUT)
+    # Create push 1 socket
+    lis_push[1] = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    lis_push[1].setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    lis_push[1].bind(('', PORT_PUSH[1]))    
+    lis_push[1].listen(3)
+    lis_push[1].settimeout(TIMEOUT)
+    # Create push 2 socket
+    lis_push[2] = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    lis_push[2].setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    lis_push[2].bind(('', PORT_PUSH[2]))    
+    lis_push[2].listen(3)
+    lis_push[2].settimeout(TIMEOUT)
+    # Create push 3 socket
+    lis_push[3] = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    lis_push[3].setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    lis_push[3].bind(('', PORT_PUSH[3]))    
+    lis_push[3].listen(3)
+    lis_push[3].settimeout(TIMEOUT)
+    # Create push 4 socket
+    lis_push[4] = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    lis_push[4].setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    lis_push[4].bind(('', PORT_PUSH[4]))    
+    lis_push[4].listen(3)
+    lis_push[4].settimeout(TIMEOUT)
+
+
+def setup_client(is_the_remote, host):
+    '''
+    Setup this as the client.
+    The client will try to connect to the server
+    is_the_remote = this one send the push and request to the other 
+    '''
+    global con_sync
+    global con_command
+    global server_ip
+    global is_t_remote
+    global buff_sync
+    global buff_command
+    close()
+    buff_sync = StringIO.StringIO()
+    buff_command = StringIO.StringIO()
+    buff_push[1] = StringIO.StringIO()
+    buff_push[2] = StringIO.StringIO()
+    buff_push[3] = StringIO.StringIO()
+    buff_push[4] = StringIO.StringIO()
     server_ip = host
     is_t_remote = is_the_remote
-    port_nr = port
-    if is_server:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.bind(('', port_nr))    
-        sock.listen(3)
+    socket.setdefaulttimeout(TIMEOUT)
         
 
 def is_server():
@@ -113,10 +188,17 @@ def is_linked():
     After about 4 seconds without sync the link is probably lost
     '''
     diff = datetime.datetime.now()-last_sync
-    return diff.total_seconds()<4
+    return diff.total_seconds()<CONNECTION_LOST
+    
 
+def get_last_ping_time():
+    '''
+    How long did last response of ping take
+    '''
+    return ping_time
+    
 
-def get_last_link():
+def get_last_sync():
     '''
     How long sinse last synk
     '''
@@ -124,381 +206,586 @@ def get_last_link():
     return diff.total_seconds()
 
 
-def is_connected():
+def get_last_command():
     '''
-    Is connected
+    How long sinse last command
     '''
-    return con != None
+    diff = datetime.datetime.now()-last_command
+    return diff.total_seconds()
 
 
-def connect():
+def get_last_push(nr):
     '''
-    Connect to server
+    How long sinse last push
     '''
-    global sock
-    global con
-    close_connection()
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.connect((server_ip, port_nr))
-    sock.settimeout(TIMEOUT)
-    con = sock
+    diff = datetime.datetime.now()-last_push[nr]
+    return diff.total_seconds()
 
 
-def listen_for_connection():
+def sync_connected():
     '''
-    Listen for connections from client
+    Is it connected to remote host
     '''
-    global con
-    new_con, _ = sock.accept()
+    return con_sync!=None
+
+
+def sync_disconnect():
+    '''
+    diconnect from host
+    '''
+    global con_sync
+    try:
+        con_sync.close()
+    except:
+        pass
+    con_sync = None
+
+
+def sync_listen():
+    '''
+    Listen on sync socket 
+    '''
+    global lis_sync
+    global con_sync
+    global last_sync
+    new_con, _ = lis_sync.accept()
+    try:
+        con_sync.close()
+    except:
+        pass
+    last_sync = datetime.datetime.now()
+    con_sync = new_con
+
+
+def sync_connect():
+    '''
+    Connect the sync socket
+    '''
+    global con_sync
+    global last_sync
+    try:
+        con_sync.close()
+    except:
+        pass
+    con_sync = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    con_sync.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    con_sync.settimeout(TIMEOUT)
+    con_sync.connect((server_ip, PORT_SYNC))
+    last_sync = datetime.datetime.now()
+    
+
+def command_connected():
+    '''
+    Is it connected to remote host
+    '''
+    return con_command!=None
+
+
+def command_disconnect():
+    '''
+    diconnect from host
+    '''
+    global con_command
+    try:
+        con_command.close()
+    except:
+        pass
+    con_command = None
+
+
+def command_listen():
+    '''
+    Listen on command socket 
+    '''
+    global lis_command
+    global con_command
+    global last_command
+    new_con, _ = lis_command.accept()
     new_con.settimeout(TIMEOUT)
-    close_connection()
-    con = new_con
-
-
-def close_connection():
-    '''
-    Close connecxtion
-    '''
-    global con
     try:
-        con.close()
+        con_command.close()
     except:
         pass
-    con = None
+    last_command = datetime.datetime.now()
+    con_command = new_con
 
 
-def close_listener():
+def command_connect():
     '''
-    Close listener
+    Connect the command socket
     '''
-    global sock
+    global con_command
+    global last_command
     try:
-        sock.close()
+        con_command.close()
     except:
         pass
-    sock = None
+    con_command = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    con_command.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    con_command.settimeout(TIMEOUT)
+    con_command.connect((server_ip, PORT_COMMAND))
+    last_command = datetime.datetime.now()
+    
 
-
-def stop():
+def push_listen(nr):
     '''
-    Close 
+    Listen on push_1 socket 
     '''
-    close_listener()
-    close_connection()
+    new_con, _ = lis_push[nr].accept()
+    new_con.settimeout(TIMEOUT)
+    try:
+        con_push[nr].close()
+    except:
+        pass
+    last_push[nr] = datetime.datetime.now()
+    con_push[nr] = new_con
 
 
-def _write_data(typ, data):
+def push_connected(nr):
+    '''
+    Is it connected to remote host
+    '''
+    return con_push[nr]!=None
+
+
+def push_disconnect(nr):
+    '''
+    diconnect from host
+    '''
+    try:
+        con_push[nr].close()
+    except:
+        pass
+    con_push[nr] = None
+
+
+def push_connect(nr):
+    '''
+    Connect the push_1 socket
+    '''
+    try:
+        con_push[nr].close()
+    except:
+        pass
+    con_push[nr] = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    con_push[nr].setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    con_push[nr].settimeout(TIMEOUT)
+    
+    con_push[nr].connect((server_ip, PORT_PUSH[nr]))
+    last_push[nr] = datetime.datetime.now()
+    
+
+def sync_request(data):
+    '''
+    Write a sync request and wait for response
+    data: is a list of strings
+    Return data (is a list of strings from the response) 
+    Raise: exception (connection lost)
+    '''
+    global last_sync
+    _write_data(con_sync, data)
+    answer = _read_data(con_sync, buff_sync)
+    last_sync = datetime.datetime.now()
+    return answer
+
+
+def sync_read():
+    '''
+    Listen for sync request
+    Return data (is a list of strings) (Can be None)
+    Raise: socket.Timeouterror (Do nothing)
+    Raise: other exception (connection lost)
+    '''
+    global last_sync
+    answer = _read_data(con_sync, buff_sync)
+    last_sync = datetime.datetime.now()
+    return answer
+
+
+def sync_response(data):
+    '''
+    Write a sync response
+    data: is a list of strings
+    Raise: exception (connection lost)
+    '''
+    _write_data(con_sync, data)
+
+    
+def command_request(command, data):
+    '''
+    Write a command request and wait for response
+    data: is a list of strings
+    Return data (is a list of strings from the response)
+    Raise: exception (error on request)
+    '''
+    
+    with(lock):
+        global last_command
+        _write_command(con_command, command, data)
+        status, answer = _read_ok_err(con_command, buff_command)
+        last_command = datetime.datetime.now()
+        if status:
+            return answer
+        else:
+            raise RuntimeError(command + ": "+answer) 
+
+
+def command_read():
+    '''
+    Listen for command request
+    Return command, data (is a list of strings)
+    Raise: socket.Timeouterror (Do nothing)
+    Raise: other exception (connection lost)
+    '''
+    global last_command
+    command, answer = _read_command(con_command, buff_command)
+    last_command = datetime.datetime.now()
+    return command, answer
+
+
+def command_response_ok(data):
+    '''
+    Write a OK command response
+    data: is a list of strings 
+    Raise: exception (connection lost)
+    '''
+    _write_ok(con_command, data)
+
+
+def command_response_err(error_string):
+    '''
+    Write a ERROR command response
+    Raise: exception (connection lost)
+    '''
+    _write_err(con_command, error_string)
+
+
+def command_ping():
+    '''
+    Send ping
+    Raise: exception (connection lost)
+    '''
+    global last_command
+    global ping_time
+    with(lock):
+        try:
+            start = datetime.datetime.now()
+            con_command.sendall(BEL)
+            data = con_command.recv(1)
+            ping_time = (datetime.datetime.now() - start).total_seconds()
+            con_command.sendall(BEL)
+            last_command = datetime.datetime.now()
+        except Exception as e:
+            ping_time = 99
+            raise e
+
+
+def push_request(nr, data):
+    '''
+    Write a push_1 request
+    data: is a list of strings
+    Raise: exception (connection lost)
+    '''
+    _write_data(con_push[nr], data)
+    last_push[nr] = datetime.datetime.now()
+
+
+def push_read(nr):
+    '''
+    Listen for push_1 request
+    Return data (is a list of strings)
+    Raise: socket.Timeouterror (Do nothing)
+    Raise: other exception (connection lost)
+    '''
+    answer = _read_data(con_push[nr], buff_sync, is_push=nr)
+    last_push[nr] = datetime.datetime.now()
+    return answer
+
+
+def push_ping(nr):
+    '''
+    Send ping
+    Raise: exception (connection lost)
+    '''
+    _write_ping(con_push[nr])
+    last_push[nr] = datetime.datetime.now()
+
+
+
+
+
+
+
+
+
+
+def _write_data(con, data):
     '''
     Send a package
     '''
     if data==None:
-        _write(typ+"\n")
+        con.sendall(ETB)
     else:
         data = '|'.join([str(mli) for mli in data])
-        _write(typ+data+"\n")
+        h = steelsquid_utils.mini_hash(data)
+        con.sendall(data + ETB + h)
 
 
-def _write_error(typ, error):
+def _write_command(con, command, data):
+    '''
+    Send a package
+    '''
+    if data==None:
+        con.sendall(command + ETB + ETB)
+    else:
+        data = '|'.join([str(mli) for mli in data])
+        h = steelsquid_utils.mini_hash(data)
+        con.sendall(command + ETB + data + ETB + h)
+
+
+def _write_ok(con, data):
+    '''
+    Send a package
+    '''
+    if data==None:
+        con.sendall(ACK + ETB)
+    else:
+        data = '|'.join([str(mli) for mli in data])
+        h = steelsquid_utils.mini_hash(data)
+        con.sendall(ACK + data + ETB + h)
+
+
+def _write_ping(con):
+    '''
+    Send a package
+    '''
+    con.sendall(BEL)
+
+
+def _write_err(con, error):
     '''
     Send a package
     '''
     if error==None:
-        _write(typ+"\n")
+        con.sendall(NAK + ETB)
     else:
-        _write(typ+str(error)+"\n")
+        h = steelsquid_utils.mini_hash(error)
+        con.sendall(NAK + error + ETB + h)
 
 
-def _write_command(typ, command, data):
+def _read_data(con, buff, is_push=0):
     '''
-    Send a package
+    Read a package
     '''
-    if data==None:
-        _write(typ+command+"\n\n")
+    global last_sync
+    buff.truncate(0)
+    buff.seek(0)
+    while True:
+        data = con.recv(1)
+        if data==None or data == '':
+            raise socket.error("socket connection broken")        
+        if data == ETB: 
+            break       
+        if data == BEL: 
+            last_push[is_push] = datetime.datetime.now()
+            raise socket.timeout("PING")        
+        else:     
+            buff.write(data)
+    if buff.len>0:
+        ca = con.recv(1)
+        data = buff.getvalue()
+        h = steelsquid_utils.mini_hash(data)
+        if h == ca:
+            data = data.split("|")
+            return data
+        else:
+            return None
     else:
-        data = '|'.join([str(mli) for mli in data])
-        _write(typ+command+"\n"+data+"\n")
-
-             
-def _write(string):
-    '''
-    Send a string to the remote host
-    '''
-    if con == None:
-        raise socket.error("socket connection broken")
-    con.sendall(string)
-        
-        
-def _write_char(char):
-    '''
-    Send a char to the remote host
-    '''
-    if con == None:
-        raise socket.error("socket connection broken")
-    con.sendall(char)
-        
-        
-def _read_chr():
-    '''
-    Read a char from the remote host
-    '''
-    if con == None:
-        raise socket.error("socket connection is None")
-    chunk = con.recv(1)
-    if chunk==None:
-        raise socket.error("socket connection broken: None")        
-    if chunk == '':
-        raise socket.error("socket connection broken: ''")        
-    return chunk
-
-        
-        
-def _read_1_line():
-    '''
-    Read one line
-    '''
-    if con == None:
-        raise socket.error("socket connection broken")
-    buff = StringIO.StringIO()
-    try:
-        while True:
-            data = con.recv(1)
-            if data==None or data == '':
-                raise socket.error("socket connection broken")        
-            if data == '\n': 
-                break       
-            else:     
-                buff.write(data)
-        chunk = buff.getvalue()
-        return chunk
-    finally:
-        buff.close()
+        return []
 
 
-def _read_2_lines():
+def _read_command(con, buff):
     '''
-    Read two lines
+    Read a package
     '''
-    if con == None:
-        raise socket.error("socket connection broken")
-    buff = StringIO.StringIO()
-    try:
-        while True:
-            data = con.recv(1)
-            if data==None or data == '':
-                raise socket.error("socket connection broken")        
-            if data == '\n': 
-                break       
-            else:     
-                buff.write(data)
-        nr1 = buff.getvalue()
-        buff.close()
-        buff = StringIO.StringIO()
-        while True:
-            data = con.recv(1)
-            if data==None or data == '':
-                raise socket.error("socket connection broken")        
-            if data == '\n': 
-                break       
-            else:     
-                buff.write(data)
-        
-        nr2 = buff.getvalue()
-        if len(nr2)==0:
-            nr2=""
-        return nr1, nr2
-    finally:
-        buff.close()
+    global last_command
+    global ping_time
+    buff.truncate(0)
+    buff.seek(0)
+    while True:
+        data = con.recv(1)
+        if data==None or data == '':
+            raise socket.error("socket connection broken")        
+        if data == ETB: 
+            break       
+        if data == BEL: 
+            last_command = datetime.datetime.now()
+            try:
+                start = datetime.datetime.now()
+                con.sendall(BEL)
+                data = con.recv(1)
+                ping_time = (datetime.datetime.now() - start).total_seconds()
+            except Exception as e:
+                ping_time = 99
+                raise e
+            raise socket.timeout("PING")        
+        else:     
+            buff.write(data)
+    
+    command = buff.getvalue()
+    
+    buff.truncate(0)
+    buff.seek(0)
+    while True:
+        data = con.recv(1)
+        if data==None or data == '':
+            raise socket.error("socket connection broken")        
+        if data == ETB: 
+            break       
+        buff.write(data)
+    if buff.len>0:
+        ca = con.recv(1)
+        data = buff.getvalue()
+        h = steelsquid_utils.mini_hash(data)
+        if h == ca:
+            data = data.split("|")
+            return command, data
+        else:
+            return None, None        
+    else:
+        return command, []
+
+
+def _read_ok_err(con, buff):
+    '''
+    Read a package
+    '''
+    global last_command
+    buff.truncate(0)
+    buff.seek(0)
+    is_ok = None
+    while True:
+        data = con.recv(1)
+        if data==None or data == '':
+            raise socket.error("socket connection broken")        
+        if data == ETB: 
+            break       
+        if is_ok==None:
+            if data == ACK: 
+                is_ok = True
+            if data == NAK: 
+                is_ok = False
+        else:     
+            buff.write(data)
+    if buff.len>0:
+        ca = con.recv(1)
+        data = buff.getvalue()
+        h = steelsquid_utils.mini_hash(data)
+        if h == ca:
+            if is_ok:
+                return True, data.split("|")
+            else:
+                return False, data
+        else:
+            raise socket.timeout("CRC error")        
+    else:
+        if is_ok:
+            return True, []
+        else:
+            return False, ""
+
          
-            
-def listen():
-    '''
-    Listen for command from the client
-    Return tuple with (command, data)  data is a list of strings
-    Return None = do nothing
-    '''
-    with lock:
-        global last_sync
-        # Read request
-        req = _read_chr()
-        if req==SUB:
-            # Read broadcast command
-            command, data = _read_2_lines()
-            if len(data)==0:
-                data = []
-            else:
-                data = data.split("|")
-            last_sync = datetime.datetime.now()
-            return command, data
-        elif req==ENQ:
-            # Read request command
-            command, data = _read_2_lines()
-            if len(data)==0:
-                data = []
-            else:
-                data = data.split("|")
-            last_sync = datetime.datetime.now()
-            return command, data
-        elif req==DC1:
-            # Read push data (steelsquid-kiss os using this...)
-            data = _read_1_line()
-            if len(data)==0:
-                data = []
-            else:
-                data = data.split("|")
-            last_sync = datetime.datetime.now()
-            return 1, data # 1 indicate that it is a push broadcast
-        elif req==DC2:
-            # Read push data (steelsquid-kiss os using this...)
-            data = _read_1_line()
-            if len(data)==0:
-                data = []
-            else:
-                data = data.split("|")
-            last_sync = datetime.datetime.now()
-            return 2, data # 2 indicate that it is a push broadcast
-        elif req==DC3:
-            # Read push data (steelsquid-kiss os using this...)
-            data = _read_1_line()
-            if len(data)==0:
-                data = []
-            else:
-                data = data.split("|")
-            last_sync = datetime.datetime.now()
-            return 3, data # 3 indicate that it is a push broadcast
-        elif req==DC4:
-            # Read push data (steelsquid-kiss os using this...)
-            data = _read_1_line()
-            if len(data)==0:
-                data = []
-            else:
-                data = data.split("|")
-            last_sync = datetime.datetime.now()
-            return 4, data # 4 indicate that it is a push broadcast
-        elif req==SYN:
-            # Read sync data (steelsquid-kiss os using this...)
-            data = _read_1_line()
-            if len(data)==0:
-                data = []
-            else:
-                data = data.split("|")
-            last_sync = datetime.datetime.now()
-            return 0, data # False indicate that it is a sync request
-        else:
-            return None, None
 
 
-def response_sync(data):
-    '''
-    Return a sync answer to the client
-    data: Data to responde back to client with (data is a list of strings)
-    '''
-    with lock:
-        # Write push answer
-        _write_data(SYN, data)
 
 
-def response(data=None):
-    '''
-    Return a OK answer to to client
-    data: Data to responde back to client with (data is a list of strings)
-    '''
-    with lock:
-        # Write ok answer
-        _write_data(ACK, data)
-        
 
-def error(message=None):
-    '''
-    Return a ERROR answer to to client
-    message: The error message to send back to client (a string)
-    '''
-    with lock:
-        # Write error answer
-        _write_error(NAK, message)
-        
 
-def request(command, data=None):
+
+
+
+def close():
     '''
-    Send a command to the server and wait for answer,
-    command: The command
-    data: Data to the server  (data is a list of strings)
-    Return: data (data is a list of strings from the server)
+    Close all
     '''
-    global last_sync
-    with lock:
-        # Write a request
-        _write_command(ENQ, command, data)
-        # Listen for response
-        req = _read_chr()
-        if req == ACK:
-            le = _read_1_line()
-            if len(le)==0:
-                last_sync = datetime.datetime.now()
-                return []
-            else:
-                last_sync = datetime.datetime.now()
-                return le.split("|")
-        elif req == NAK:
-            raise Exception(command +": "+ _read_1_line())
-        else:
-            raise socket.error("Unknown response: "+str(req))
+    close_listeners()
+    close_connections()
+    try:
+        buff_sync.close()
+    except:
+        pass
+    try:
+        buff_command.close()
+    except:
+        pass
+    try:
+        buff_push[0].close()
+    except:
+        pass
+    try:
+        buff_push[1].close()
+    except:
+        pass
+    try:
+        buff_push[2].close()
+    except:
+        pass
+    try:
+        buff_push[3].close()
+    except:
+        pass
+    
  
- 
-def request_sync(data=None):
+def close_listeners():
     '''
-    Send a command to the server and wait for answer
-    This will send a sync request...steelsquid_kiss_os using this...
-    data: Data to the server  (data is a list of strings)
-    Return: data (data is a list of strings from the server)
+    Close all listeners
     '''
-    global last_sync
-    with lock:
-        # Write a sync request
-        _write_data(SYN, data)
-        # Listen for response
-        req = _read_chr()
-        if req == SYN:
-            le = _read_1_line()
-            if len(le)==0:
-                last_sync = datetime.datetime.now()
-                return []
-            else:
-                last_sync = datetime.datetime.now()
-                return le.split("|")
-        else:
-            raise socket.error("Unknown sync response...")
-            
+    global lis_sync
+    global lis_command
+    try:
+        lis_sync.close()
+    except:
+        pass
+    lis_sync = None
+    try:
+        lis_command.close()
+    except:
+        pass
+    lis_command = None
+    try:
+        lis_push[0].close()
+    except:
+        pass
+    lis_push[0] = None
+    try:
+        lis_push[1].close()
+    except:
+        pass
+    lis_push[1] = None
+    try:
+        lis_push[2].close()
+    except:
+        pass
+    lis_push[2] = None
+    try:
+        lis_push[3].close()
+    except:
+        pass
+    lis_push[3] = None
 
-def broadcast(command, data=None):
+
+def close_connections():
     '''
-    Broadcast to the server...do not wait for any answer
-    command: The command
-    data: Data to the server  (data is a list of strings)
+    Close all connections
     '''
-    global last_sync
-    with lock:
-        # Write a broadcast
-        _write_command(SUB, command, data)
-            
-            
-def broadcast_push(push_nr, data=None):
-    '''
-    Broadcast to the server...do not wait for any answer
-    This will send a push requst...steelsquid_kiss_os using this....
-    data: Data to the server  (data is a list of strings)
-    '''
-    with lock:
-        # Write a push broadcast
-        if push_nr==1:
-            _write_data(DC1, data)
-        if push_nr==2:
-            _write_data(DC2, data)
-        if push_nr==3:
-            _write_data(DC3, data)
-        if push_nr==4:
-            _write_data(DC4, data)
-            
+    sync_disconnect()
+    command_disconnect()
+    push_disconnect(1)
+    push_disconnect(2)
+    push_disconnect(3)
+    push_disconnect(4)
+
+
 
 
 

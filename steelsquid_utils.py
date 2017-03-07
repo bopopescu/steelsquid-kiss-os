@@ -59,24 +59,32 @@ flash_name_list =[]
 lock = threading.Lock()
 on_ok_callback_method = None
 on_err_callback_method = None
-
+methods = {}
+methods_t = {}
+methods_o = []
+lock = threading.Lock()
 voltage_matrix = [[ 4.20, 100],
-                  [ 4.15, 96 ],
-                  [ 4.10, 89 ],
-                  [ 4.05, 83 ],
-                  [ 4.00, 77 ],
-                  [ 3.95, 69 ],
-                  [ 3.90, 60 ],
-                  [ 3.85, 50 ],
-                  [ 3.80, 34 ],
-                  [ 3.75, 22 ],
-                  [ 3.70, 15 ],
-                  [ 3.65, 9  ],
-                  [ 3.60, 7  ],
-                  [ 3.55, 5  ],
-                  [ 3.50, 3  ],
-                  [ 3.45, 1  ],
-                  [ 3.40, 0  ]]
+                  [ 4.15, 95 ],
+                  [ 4.11, 90 ],
+                  [ 4.08, 85 ],
+                  [ 4.02, 80 ],
+                  [ 3.98, 75 ],
+                  [ 3.95, 70 ],
+                  [ 3.91, 65 ],
+                  [ 3.87, 60 ],
+                  [ 3.85, 55 ],
+                  [ 3.84, 50 ],
+                  [ 3.82, 45 ],
+                  [ 3.80, 40 ],
+                  [ 3.79, 35 ],
+                  [ 3.77, 30 ],
+                  [ 3.75, 25 ],
+                  [ 3.73, 20 ],
+                  [ 3.75, 15 ],
+                  [ 3.71, 15 ],
+                  [ 3.69, 10 ],
+                  [ 3.61, 5  ],
+                  [ 3.27, 0  ]]
 
 def get_pi_revision():
     '''
@@ -402,7 +410,14 @@ def debug(message):
     shout(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " " + message, to_lcd=False, debug=True, is_error=False, always_show=True, leave_on_lcd = False)
 
 
-def shout(string=None, to_lcd=True, debug=False, is_error=False, always_show=False, leave_on_lcd = False, wait_for_finish=True):
+def error(string=None):
+    '''
+    Shout a error message
+    '''
+    shout(string=string, to_lcd=True, debug=False, is_error=True, always_show=True, leave_on_lcd = False, wait_for_finish=True, stack_on_error=False)
+
+
+def shout(string=None, to_lcd=True, debug=False, is_error=False, always_show=False, leave_on_lcd = False, wait_for_finish=True, stack_on_error=True):
     '''
     Send message to tty1, wall notify-send
     If a raspberry-pi try to write to LCD
@@ -421,7 +436,7 @@ def shout(string=None, to_lcd=True, debug=False, is_error=False, always_show=Fal
         global last_shout_time
         global on_ok_callback_method
         global on_err_callback_method
-        if string == None or is_error==True:
+        if (string == None or is_error==True) and stack_on_error:
             is_error = True
             exc_type, exc_value, exc_tb = sys.exc_info()
             ex = traceback.format_exception(exc_type, exc_value, exc_tb)
@@ -454,28 +469,29 @@ def shout(string=None, to_lcd=True, debug=False, is_error=False, always_show=Fal
             last_shout_time = now
             last_shout_message = string
             execute_system_command_blind(['shout', string], wait_for_finish=wait_for_finish)
-            if to_lcd:
-                if leave_on_lcd:
-                    mestime = 0
-                else:
-                    mestime = LCD_MESSAGE_TIME
-                if get_flag("hdd"):
-                    try:
-                        steelsquid_pi.hdd44780_write(string, mestime, force_setup = False)
-                    except:
-                        pass
-                elif get_flag("nokia"):
-                    try:
-                        steelsquid_pi.nokia5110_write(string, mestime, force_setup = False)
-                    except:
-                        pass
-                elif get_flag("ssd"):
-                    try:
-                        steelsquid_pi.ssd1306_write(string, mestime)
-                    except:
-                        pass
-                elif get_flag("auto"):
-                    steelsquid_pi.lcd_auto_write(string, mestime, force_setup = False)
+            if "steelsquid_pi" in sys.modules:
+                if to_lcd:
+                    if leave_on_lcd:
+                        mestime = 0
+                    else:
+                        mestime = LCD_MESSAGE_TIME
+                    if get_flag("hdd"):
+                        try:
+                            steelsquid_pi.hdd44780_write(string, mestime, force_setup = False)
+                        except:
+                            pass
+                    elif get_flag("nokia"):
+                        try:
+                            steelsquid_pi.nokia5110_write(string, mestime, force_setup = False)
+                        except:
+                            pass
+                    elif get_flag("ssd"):
+                        try:
+                            steelsquid_pi.ssd1306_write(string, mestime)
+                        except:
+                            pass
+                    elif get_flag("auto"):
+                        steelsquid_pi.lcd_auto_write(string, mestime, force_setup = False)
             try:
                 if not is_error and on_ok_callback_method!=None:
                     on_ok_callback_method(string)
@@ -1551,7 +1567,7 @@ def del_list(name):
         pass
 
 
-def execute_delay(seconds, function, paramters, name=None, print_error=True, dummy=False):
+def execute_delay(seconds, function, paramters=None, name=None, print_error=True, dummy=False):
     '''
     Execute a function after number of seconds
     @param seconds: Delay for this number of seconds
@@ -1569,7 +1585,7 @@ def execute_delay(seconds, function, paramters, name=None, print_error=True, dum
                     delay_name_list.remove(name)
                 except:
                     pass
-            if isinstance(paramters, tuple):
+            if paramters!=None and isinstance(paramters, tuple):
                 function(*paramters)
             else:
                 function()
@@ -1585,7 +1601,7 @@ def execute_delay(seconds, function, paramters, name=None, print_error=True, dum
             shout()
         
         
-def execute_flash(name, status, seconds, function1, paramters1, function2, paramters2):
+def execute_flash(name, status, seconds, function1, paramters1, function2, paramters2, seconds2=None):
     '''
     Execute a 2 functions alternately to to achieve a flashing
     @param name: Give this a name so you can enable or disable it.
@@ -1596,6 +1612,8 @@ def execute_flash(name, status, seconds, function1, paramters1, function2, param
     @param function2: Second function to execute
     @param paramters2: Paramater to the second function (tuple)
     '''
+    if seconds2==None:
+        seconds2 = seconds
     global flash_name_list
     if status==None and name not in flash_name_list:
         def method_thread():
@@ -1615,12 +1633,7 @@ def execute_flash(name, status, seconds, function1, paramters1, function2, param
     elif status and name not in flash_name_list:
         def method_thread():
             try:
-                first_time=True
                 while(name in flash_name_list):
-                    if first_time:
-                        first_time=False
-                    else:
-                        time.sleep(seconds)
                     if isinstance(paramters1, tuple):
                         function1(*paramters1)
                     else:
@@ -1630,6 +1643,7 @@ def execute_flash(name, status, seconds, function1, paramters1, function2, param
                         function2(*paramters2)
                     else:
                         function2()
+                    time.sleep(seconds2)
             except:
                 shout()
         flash_name_list.append(name)
@@ -1639,6 +1653,21 @@ def execute_flash(name, status, seconds, function1, paramters1, function2, param
             flash_name_list.remove(name)
         except:
             pass
+        
+        
+def execute_blink(name, status, function1=None, paramters1=None, seconds1=None, function2=None, paramters2=None, seconds2=None):
+    '''
+    Execute a 2 functions alternately to to achieve a flashing
+    @param name: Give this a name so you can enable or disable it.
+    @param status: Start or stop the flashing (None = only flash ones).
+    @param function1: First function to execute
+    @param paramters1: Paramater to the first function (tuple)
+    @param seconds1: Delay after function1
+    @param function2: Second function to execute
+    @param paramters2: Paramater to the second function (tuple)
+    @param seconds2: Delay after function2
+    '''
+    execute_flash(name=name, status=status, seconds=seconds1, function1=function1, paramters1=paramters1, function2=function2, paramters2=paramters2, seconds2=seconds2)
         
 
 def is_ip(string):
@@ -1802,17 +1831,11 @@ def median(data_list):
     '''
     Finds the median in a list of numbers.
     '''
-    data_list = map(float, data_list)
-    n = len(data_list)
+    half = len(data_list) // 2
     data_list.sort()
-    if n & 1:
-        index = n / 2 
-        return data_list[index]
-    else:
-        low_index = n / 2 - 1
-        high_index = n / 2
-        average = (data_list[low_index] + data_list[high_index]) / 2
-        return average
+    if not len(data_list) % 2:
+        return (data_list[half - 1] + data_list[half]) / 2.0
+    return data_list[half]
 
 
 def to_boolean(value):
@@ -1839,7 +1862,11 @@ def to_boolean(value):
 
 
 if is_raspberry_pi():
-    import steelsquid_pi
+    try:
+        import steelsquid_pi
+    except:
+        pass
+        
 
 
 def get_hight_byte(integer):
@@ -1995,7 +2022,7 @@ def get_disk_usage(directory):
 
 def distance(lat1, lng1, lat2, lng2):
     '''
-    return distance between two gps cordinates in meter
+    return distance between two gps cordinates in km
     '''
     radius = 6371 * 1000 
 
@@ -2007,4 +2034,180 @@ def distance(lat1, lng1, lat2, lng2):
 
     val = sin(dLat/2) * sin(dLat/2) + sin(dLng/2) * sin(dLng/2) * cos(lat1) * cos(lat2)    
     ang = 2 * atan2(sqrt(val), sqrt(1-val))
-    return int(radius * ang)
+    m = int(radius * ang)
+    if m < 1000:
+        return m, "m"
+    else:
+        return round(float(m)/1000, 2) , "km"
+
+
+def execute_if_changed(method, value, extra_value=None, execute_first_time=True):
+    '''
+    Only execute the method if value i changed from last time or if it is first time
+    Return True/False if it was executed
+    '''    
+    
+    last_value = methods.get(method)
+    #print str(last_value) + "-" + str(value)
+    if last_value == None:
+        #print arguments
+        methods[method] = None
+        if execute_first_time:
+            if extra_value == None:
+                method(value)
+            else:
+                method(value, extra_value)
+        methods[method] = value
+        return True
+    elif last_value != value:
+        #print arguments
+        methods[method] = None
+        if extra_value == None:
+            method(value)
+        else:
+            method(value, extra_value)
+        methods[method] = value
+        return True
+    else:
+        return False
+        
+
+
+def execute_min_time(method, arguments, min_seconds):
+    '''
+    Only execute the method if value i changed from last time or if it is first time
+    arguments is a tuple containing all arguments to the method
+    min_seconds is minimum seconds between execution...
+    Return True/False if it was executed
+    '''    
+    
+    last_time = methods_t.get(method)
+    new_time = datetime.datetime.now()
+    if last_time == None or (new_time-last_time).total_seconds()>min_seconds:
+        methods_t[method] = new_time
+        if arguments == None:
+            method()
+        else:
+            method(*arguments)
+        return True
+    else:
+        return False
+
+
+def check_min_time(id_string, min_seconds):
+    '''
+    Ony do something one time every min_seconds
+    min_seconds is minimum seconds between execution...
+    Return True/False if it should be executed
+    '''    
+    last_time = methods_t.get(id_string)
+    new_time = datetime.datetime.now()
+    if last_time == None or (new_time-last_time).total_seconds()>min_seconds:
+        methods_t[id_string] = new_time
+        return True
+    else:
+        return False
+        
+        
+def do_someting(id_string, seconds=0):
+    '''
+    do_someting(id_string, 3)  Start timer for 3 seconds
+    do_someting(id_string) Will return False for 3 seconds
+    do_someting(id_string) Then return True one time
+    do_someting(id_string) Then back to return None
+    '''    
+    if seconds>0:
+        timeout = datetime.datetime.now() + datetime.timedelta(seconds=seconds)
+        methods_t[id_string] = timeout
+    else:
+        timeout = methods_t.get(id_string)
+        now = datetime.datetime.now()
+        if timeout == None:
+            return None
+        elif now>timeout:
+            del methods_t[id_string]
+            return True
+        else:
+            return False
+                
+        
+def execute_one_time_clean():
+    '''
+    '''
+    global methods_o
+    methods_o = []    
+
+
+def execute_one_time(method, arguments):
+    '''
+    Only execute the method one time
+    arguments is a tuple containing all arguments to the method
+    Return True/False if it was executed
+    '''    
+    if arguments == None:
+        key = method.__name__
+        if key not in methods_o:
+            methods_o.append(key)
+            method()
+            return True
+        else:
+            return False
+    else:
+        key = method.__name__ + str(arguments)
+        if key not in methods_o:
+            methods_o.append(key)
+            method(*arguments)
+            return True
+        else:
+            return False
+
+
+def get_time_diff(start, stop):
+    '''
+    Get time differense in hour minutes and seconds
+    '''    
+    diff = stop - start
+    hours, remainder = divmod(diff.total_seconds(), 3600)
+    minutes, seconds = divmod(remainder, 60) 
+    return hours, minutes, seconds
+    tt = "%02d:%02d:%02d " % (int(hours), int(minutes), int(seconds))
+
+
+def get_time_diff_string(start, stop):
+    '''
+    Get time differense in hour minutes and seconds in string
+    '''    
+    hours, minutes, seconds = get_time_diff(start, stop)
+    return "%02d:%02d:%02d " % (int(hours), int(minutes), int(seconds))
+
+
+def mini_hash(string):
+    '''
+    Will convert a string to a one byte hash (super simple...)
+    '''    
+    h = 127
+    b = True
+    for s in string:
+        i = ord(s)
+        if b:
+            b = False
+            h = h + i
+        else:
+            b = True
+            h = h - i
+        if h > 254 or h < 0:
+            h = 127
+    return chr(h)
+
+
+def bandwidth(interface = "eth0"):
+    '''
+    Get current bandwidth in/out
+    '''    
+    lines = execute_system_command(["ifstat", "-i", interface, "-q", "1", "1"])
+    head = lines[1].split()
+    body = lines[2].split()
+    kb = float(body[0]) + float(body[1])
+    return kb
+    
+    

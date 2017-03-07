@@ -1,4 +1,5 @@
 #!/usr/bin/python -OO
+# -*- coding: latin-1 -*-
 import os
 import sys
 import time
@@ -15,13 +16,17 @@ import steelsquid_nm
 import steelsquid_tcp_radio
 import socket
 import steelsquid_ht16k33 as lmatrix
+import steelsquid_hmtrlrs
+import logging
+import sys
+import time
+
+import steelsquid_bno0055
 
 
-st = os.statvfs('/media/9936-9676')
 
-total = st.f_blocks * st.f_frsize
-used = (st.f_blocks - st.f_bfree) * st.f_frsize
-free = st.f_bavail * st.f_frsize
-
-
-print str(int(round(float(used)/float(total)*100, 0)))
+while True:
+    heading, roll, pitch = steelsquid_bno0055.read(switch_roll_pitch=True)
+    #if steelsquid_bno0055.is_initialized():
+    print('Heading={0:0.2F} Roll={1:0.2F} Pitch={2:0.2F}'.format(heading, roll, pitch))
+    time.sleep(0.01)

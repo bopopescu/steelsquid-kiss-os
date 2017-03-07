@@ -75,21 +75,19 @@ python_downloads[21]="$base/steelsquid_i2c.py"
 python_downloads[22]="$base/steelsquid_nrf24.py"
 python_downloads[23]="$base/MCP23017.py"
 python_downloads[24]="$base/nrf24.py"
-python_downloads[25]="$base/modules/kiss_expand.py"
-python_downloads[26]="$base/modules/kiss_alarm.py"
-python_downloads[27]="$base/modules/kiss_piio.py"
-python_downloads[28]="$base/modules/kiss_rover.py"
-python_downloads[29]="$base/modules/kiss_nrf24rover.py"
-python_downloads[30]="$base/modules/kiss_fpvrover.py"
-python_downloads[31]="$base/modules/kiss_station.py"
-python_downloads[32]="$base/modules/kiss_squidscout.py"
-python_downloads[33]="$base/modules/kiss_squidrover.py"
-python_downloads[34]="$base/modules/kiss_irrbloss.py"
-python_downloads[35]="$base/modules/kiss_irrbloss_remote.py"
-python_downloads[36]="$base/steelsquid_hmtrlrs.py"
-python_downloads[37]="$base/steelsquid_rmcs220x.py"
-python_downloads[38]="$base/steelsquid_ht16k33.py"
-python_downloads[39]="$base/steelsquid_tcp_radio.py"
+python_downloads[25]="$base/MPL3115A2.py"
+python_downloads[26]="$base/steelsquid_hmtrlrs.py"
+python_downloads[27]="$base/steelsquid_rmcs220x.py"
+python_downloads[28]="$base/steelsquid_ht16k33.py"
+python_downloads[29]="$base/steelsquid_tcp_radio.py"
+python_downloads[30]="$base/steelsquid_gstreamer.py"
+python_downloads[31]="$base/steelsquid_gps.py"
+python_downloads[32]="$base/steelsquid_mpu6050.py"
+python_downloads[33]="$base/steelsquid_bno0055.py"
+python_downloads[34]="$base/modules/kiss_expand.py"
+python_downloads[35]="$base/modules/kiss_piio.py"
+python_downloads[36]="$base/modules/kiss_irrbloss.py"
+python_downloads[37]="$base/modules/kiss_irrbloss_remote.py"
 
 # C file downloads (build and install)
 c_downloads[1]="$base/dht.c"
@@ -120,9 +118,9 @@ python_links[22]="/usr/bin/dummy"
 python_links[23]="/usr/bin/dummy"
 python_links[24]="/usr/bin/dummy"
 python_links[25]="/usr/bin/dummy"
-python_links[26]="/usr/bin/dummy"
-python_links[27]="/usr/bin/dummy"
-python_links[28]="/usr/bin/dummy"
+python_links[26]="/usr/bin/hmtrlrs"
+python_links[27]="/usr/bin/rmcs220x"
+python_links[28]="/usr/bin/lmatrix"
 python_links[29]="/usr/bin/dummy"
 python_links[30]="/usr/bin/dummy"
 python_links[31]="/usr/bin/dummy"
@@ -130,9 +128,8 @@ python_links[32]="/usr/bin/dummy"
 python_links[33]="/usr/bin/dummy"
 python_links[34]="/usr/bin/dummy"
 python_links[35]="/usr/bin/dummy"
-python_links[36]="/usr/bin/hmtrlrs"
-python_links[37]="/usr/bin/rmcs220x"
-python_links[38]="/usr/bin/lmatrix"
+python_links[36]="/usr/bin/dummy"
+python_links[37]="/usr/bin/dummy"
 
 # Download to web root folder
 web_root_downloads[1]="$base/web/top_bar.html"
@@ -142,12 +139,9 @@ web_root_downloads[4]="$base/web/play.html"
 web_root_downloads[5]="$base/web/download.html"
 web_root_downloads[6]="$base/web/file.html"
 web_root_downloads[7]="$base/web/utils.html"
-web_root_downloads[8]="$base/web/rover.html"
-web_root_downloads[9]="$base/web/nrf24rover.html"
-web_root_downloads[10]="$base/web/expand.html"
-web_root_downloads[11]="$base/web/template.html"
-web_root_downloads[12]="$base/web/speak.html"
-web_root_downloads[13]="$base/web/irrbloss.html"
+web_root_downloads[8]="$base/web/expand.html"
+web_root_downloads[9]="$base/web/template.html"
+web_root_downloads[10]="$base/web/irrbloss.html"
 
 # Download to web img folder
 web_img_downloads[1]="$base/img/back.png"
@@ -187,6 +181,20 @@ web_img_downloads[34]="$base/img/time.png"
 web_img_downloads[35]="$base/img/upgrade.png"
 web_img_downloads[36]="$base/img/alarm.png"
 web_img_downloads[37]="$base/img/alarm-panel.png"
+web_img_downloads[38]="$base/img/marker-home.png"
+web_img_downloads[39]="$base/img/marker-pin.png"
+web_img_downloads[40]="$base/img/marker-pos.png"
+
+# Download to soundfolder
+snd_downloads[1]="$base/snd/angry.wav"
+snd_downloads[2]="$base/snd/away.wav"
+snd_downloads[3]="$base/snd/connected.wav"
+snd_downloads[4]="$base/snd/ding.wav"
+snd_downloads[5]="$base/snd/move.wav"
+snd_downloads[6]="$base/snd/reboot.wav"
+snd_downloads[7]="$base/snd/reconnect.wav"
+snd_downloads[8]="$base/snd/warning.wav"
+
 
 
 # Must have packages will install if necessary
@@ -697,10 +705,10 @@ function help_system()
     if [ $(is-raspberry-pi) == "true" ]; then
         echo 
         echb "steelsquid gpu-mem"
-        echo "Get the GPU memory (16 to 448) default 128"
+        echo "Get the GPU memory (16 to 448) default 256"
         echo 
         echb "steelsquid gpu-mem <mem>"
-        echo "Set the GPU memory (16 to 448) default 128"
+        echo "Set the GPU memory (16 to 448) default 256"
         echo "ARM (CPU) gets the remaining memory"
         echo "Will take effect on next reboot...."
     fi
@@ -1964,12 +1972,12 @@ function enable_camera()
     sed -i '/^start_file/ d' /boot/config.txt
     sed -i '/^fixup_file/ d' /boot/config.txt
     sed -i '/^disable_camera_led/ d' /boot/config.txt
-    echo "gpu_mem=128" >> /boot/config.txt
+    echo "gpu_mem=320" >> /boot/config.txt
     echo "start_x=1" >> /boot/config.txt
     echo "start_file=start_x.elf" >> /boot/config.txt
     echo "fixup_file=fixup_x.dat" >> /boot/config.txt 
     echo "disable_camera_led=1" >> /boot/config.txt 
-    set-parameter "gpu_mem" "128"
+    set-parameter "gpu_mem" "320"
     log-reboot
 }
 if [ "$in_parameter_1" == "camera-on" ]; then
@@ -1992,8 +2000,8 @@ function disable_camera()
     sed -i '/^start_file/ d' /boot/config.txt
     sed -i '/^fixup_file/ d' /boot/config.txt
     sed -i '/^disable_camera_led/ d' /boot/config.txt
-    echo "gpu_mem=128" >> /boot/config.txt
-    set-parameter "gpu_mem" "128"
+    echo "gpu_mem=320" >> /boot/config.txt
+    set-parameter "gpu_mem" "320"
     log-reboot
 }
 if [ "$in_parameter_1" == "camera-off" ]; then
@@ -2390,11 +2398,41 @@ function browser_on()
     #dpkg -i chromium-browser_45.0.2454.85-0ubuntu0.14.04.1.1097_armhf.deb
     
     echo "#"\!"/bin/bash" > /home/browser/.xsession
+    echo "xbindkeys" >> /home/browser/.xsession
     echo "xset s off &" >> /home/browser/.xsession
     echo "xset dpms 0 0 0 &" >> /home/browser/.xsession
     echo "sleep 6" >> /home/browser/.xsession
     echo "exec /usr/bin/chromium-browser --noerrdialogs --incognito --touch-events=enabled --enable-pinch --kiosk $in_parameter_2" >> /home/browser/.xsession
     chmod +x /home/browser/.xsession
+    
+    echo "\"event xkey F1\"" > /home/browser/.xbindkeysrc
+    echo "F1" >> /home/browser/.xbindkeysrc
+    echo "\"event xkey F2\"" >> /home/browser/.xbindkeysrc
+    echo "F2" >> /home/browser/.xbindkeysrc
+    echo "\"event xkey F3\"" >> /home/browser/.xbindkeysrc
+    echo "F3" >> /home/browser/.xbindkeysrc
+    echo "\"event xkey F4\"" >> /home/browser/.xbindkeysrc
+    echo "F4" >> /home/browser/.xbindkeysrc
+    echo "\"event xkey F5\"" >> /home/browser/.xbindkeysrc
+    echo "F5" >> /home/browser/.xbindkeysrc
+    echo "\"event xkey F6\"" >> /home/browser/.xbindkeysrc
+    echo "F6" >> /home/browser/.xbindkeysrc
+    echo "\"event xkey F7\"" >> /home/browser/.xbindkeysrc
+    echo "F7" >> /home/browser/.xbindkeysrc
+    echo "\"event xkey F8\"" >> /home/browser/.xbindkeysrc
+    echo "F8" >> /home/browser/.xbindkeysrc
+    echo "\"event xkey F9\"" >> /home/browser/.xbindkeysrc
+    echo "F9" >> /home/browser/.xbindkeysrc
+    echo "\"event xkey F10\"" >> /home/browser/.xbindkeysrc
+    echo "F10" >> /home/browser/.xbindkeysrc
+    echo "\"event xkey F11\"" >> /home/browser/.xbindkeysrc
+    echo "F11" >> /home/browser/.xbindkeysrc
+    echo "\"event xkey F12\"" >> /home/browser/.xbindkeysrc
+    echo "F12" >> /home/browser/.xbindkeysrc
+    echo "\"event xkey DEL\"" >> /home/browser/.xbindkeysrc
+    echo "Delete" >> /home/browser/.xbindkeysrc
+    echo "\"event xkey ESC\"" >> /home/browser/.xbindkeysrc
+    echo "Escape" >> /home/browser/.xbindkeysrc
     
     sed -i 's/.*NODM_ENABLED=.*/NODM_ENABLED=true/' /etc/default/nodm
     sed -i 's/.*NODM_USER=.*/NODM_USER=browser/' /etc/default/nodm
@@ -2451,12 +2489,13 @@ fi
 ##################################################################################
 function mbrowser_on()
 {
-    log "Enable start browser  in fullscreen (midori)"
+    log "Enable start browser  in fullscreen (midori)"https://www.google.se/url?sa=t&rct=j&q=&esrc=s&source=web&cd=1&ved=0ahUKEwjD5LiczP7RAhVBCSwKHTWhBBcQFggcMAA&url=https%3A%2F%2Fwiki.archlinux.org%2Findex.php%2FXbindkeys&usg=AFQjCNEj6O1aXeouIq05-pImqh2gGaUTdA&sig2=21FlrqUQkHAkfhVaIOQFgw
     useradd browser
     mkhomedir_helper browser
-    aptitude install -R midori matchbox-window-manager xserver-xorg-video-fbturbo xserver-xorg xinit gconf-service libgconf-2-4 libgnome-keyring0 libxss1 xdg-utils unclutter xdotool lsb-release libexif12 libexif-gtk5 nodm
+    aptitude install -R midori matchbox-window-manager xserver-xorg-video-fbturbo xserver-xorg xinit gconf-service libgconf-2-4 libgnome-keyring0 libxss1 xdg-utils unclutter xdotool lsb-release libexif12 libexif-gtk5 nodm libgles2
     
     echo "#"\!"/bin/bash" > /home/browser/.xsession
+    echo "xbindkeys" >> /home/browser/.xsession
     echo "xset s off &" >> /home/browser/.xsession
     echo "xset dpms 0 0 0 &" >> /home/browser/.xsession
     echo "sleep 6" >> /home/browser/.xsession
@@ -2464,11 +2503,43 @@ function mbrowser_on()
     echo "exec matchbox-window-manager -use_cursor no -use_titlebar no" >> /home/browser/.xsession
     chmod +x /home/browser/.xsession
     
+    
+    echo "\"event xkey F1\"" > /home/browser/.xbindkeysrc
+    echo "F1" >> /home/browser/.xbindkeysrc
+    echo "\"event xkey F2\"" >> /home/browser/.xbindkeysrc
+    echo "F2" >> /home/browser/.xbindkeysrc
+    echo "\"event xkey F3\"" >> /home/browser/.xbindkeysrc
+    echo "F3" >> /home/browser/.xbindkeysrc
+    echo "\"event xkey F4\"" >> /home/browser/.xbindkeysrc
+    echo "F4" >> /home/browser/.xbindkeysrc
+    echo "\"event xkey F5\"" >> /home/browser/.xbindkeysrc
+    echo "F5" >> /home/browser/.xbindkeysrc
+    echo "\"event xkey F6\"" >> /home/browser/.xbindkeysrc
+    echo "F6" >> /home/browser/.xbindkeysrc
+    echo "\"event xkey F7\"" >> /home/browser/.xbindkeysrc
+    echo "F7" >> /home/browser/.xbindkeysrc
+    echo "\"event xkey F8\"" >> /home/browser/.xbindkeysrc
+    echo "F8" >> /home/browser/.xbindkeysrc
+    echo "\"event xkey F9\"" >> /home/browser/.xbindkeysrc
+    echo "F9" >> /home/browser/.xbindkeysrc
+    echo "\"event xkey F10\"" >> /home/browser/.xbindkeysrc
+    echo "F10" >> /home/browser/.xbindkeysrc
+    echo "\"event xkey F11\"" >> /home/browser/.xbindkeysrc
+    echo "F11" >> /home/browser/.xbindkeysrc
+    echo "\"event xkey F12\"" >> /home/browser/.xbindkeysrc
+    echo "F12" >> /home/browser/.xbindkeysrc
+    echo "\"event xkey DEL\"" >> /home/browser/.xbindkeysrc
+    echo "Delete" >> /home/browser/.xbindkeysrc
+    echo "\"event xkey ESC\"" >> /home/browser/.xbindkeysrc
+    echo "Escape" >> /home/browser/.xbindkeysrc
+        
+    ln -s /opt/vc/lib/libGLESv2.so /usr/lib/libGLESv2.so.2
+    
     sed -i 's/.*NODM_ENABLED=.*/NODM_ENABLED=true/' /etc/default/nodm
     sed -i 's/.*NODM_USER=.*/NODM_USER=browser/' /etc/default/nodm
     systemctl enable nodm
     systemctl start nodm
-        
+    
     del-flag "web_authentication"
     set-parameter "browser" $in_parameter_2
     log-reboot
@@ -3309,7 +3380,7 @@ fi
 ##################################################################################
 if [ "$in_parameter_1" == "read" ]; then
     log "Start to create a <project name>.img from drive"
-    dd if=$in_parameter_2 of=./$project_name.img bs=4M count=875
+    dd if=$in_parameter_2 of=./$project_name.img bs=4M count=890
     exit-check
     do-ok-exit "Img created: $project_name.img"
 fi
@@ -3526,6 +3597,33 @@ function install_img_files()
 }
 if [ "$in_parameter_1" == "update-img" ]; then
     install_img_files
+    exit 0
+fi
+
+
+##################################################################################
+# Download and install snd root
+##################################################################################
+function install_snd_files()
+{
+    log "Download and install snd files"
+    mkdir -p $steelsquid_folder/web/snd
+    
+    index=0
+    for var in "${snd_downloads[@]}"
+    do
+        sudo wget --cache=off --progress=dot:giga --no-check-certificate -O $steelsquid_folder/web/snd/$(basename $var) $var
+        index=$[$index +1]
+        if [ $? -ne 0 ]; then
+            do-err-exit "Unable to download from $var"
+        else
+            log "$var downloaded and installed"
+        fi
+    done
+    log "Snd files installed"
+}
+if [ "$in_parameter_1" == "update-snd" ]; then
+    install_snd_files
     exit 0
 fi
 
@@ -3911,8 +4009,8 @@ function gpu_mem()
 {
     mem=$(get-parameter "gpu_mem")
     if [ -z "$mem" ]; then
-        mem="128"
-        set-parameter "gpu_mem" "128"
+        mem="320"
+        set-parameter "gpu_mem" "320"
         sed -i '/^gpu_mem/ d' /boot/config.txt
         echo "gpu_mem=$mem" >> /boot/config.txt
     fi
@@ -4250,7 +4348,7 @@ install_steelsquid_python
 install_web_files
 install_img_files
 install_c_files
-
+install_snd_files
 
 
 
@@ -4281,8 +4379,8 @@ if [ $(get_installed) == "false" ]; then
     aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install telnet secure-delete beep sysstat openssh-client cifs-utils smbclient keyutils sshfs curl samba-common lsof mc fgetty ftp htop elinks screenie nload mtr-tiny lzma zip unzip unrar-free p7zip-full bzip2 whiptail parted lua5.1 aria2 python-serial python-numpy python2.7-numpy python-paramiko zlib1g zlib1g-dev libfreetype6-dev ttf-anonymous-pro python-picamera espeak python-espeak
     aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install telnet secure-delete beep sysstat openssh-client cifs-utils smbclient keyutils sshfs curl samba-common lsof mc fgetty ftp htop elinks screenie nload mtr-tiny lzma zip unzip unrar-free p7zip-full bzip2 whiptail parted lua5.1 aria2 python-serial python-numpy python2.7-numpy python-paramiko zlib1g zlib1g-dev libfreetype6-dev ttf-anonymous-pro python-picamera espeak python-espeak
     exit-check 
-    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install gstreamer1.0-x gstreamer1.0-tools gstreamer1.0-plugins-bad gstreamer1.0-plugins-good gstreamer1.0-plugins-ugly gstreamer1.0-libav gstreamer1.0-pulseaudio gstreamer1.0-omx sg3-utils gstreamer1.0-alsa
-    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install gstreamer1.0-x gstreamer1.0-tools gstreamer1.0-plugins-bad gstreamer1.0-plugins-good gstreamer1.0-plugins-ugly gstreamer1.0-libav gstreamer1.0-pulseaudio gstreamer1.0-omx sg3-utils gstreamer1.0-alsa
+    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install gstreamer1.0-x gstreamer1.0-tools gstreamer1.0-plugins-bad gstreamer1.0-plugins-good gstreamer1.0-plugins-ugly gstreamer1.0-libav gstreamer1.0-omx sg3-utils gstreamer1.0-alsa scrot autoconf automake libtool pkg-config libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libraspberrypi-dev xbindkeys libav-tools ifstat comgt
+    aptitude -R -o Aptitude::Cmdline::ignore-trust-violations=true -y install gstreamer1.0-x gstreamer1.0-tools gstreamer1.0-plugins-bad gstreamer1.0-plugins-good gstreamer1.0-plugins-ugly gstreamer1.0-libav gstreamer1.0-omx sg3-utils gstreamer1.0-alsa scrot autoconf automake libtool pkg-config libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libraspberrypi-dev xbindkeys libav-tools ifstat comgt
     exit-check 
     aptitude -y purge cron ifupdown rsyslog vim-common vim-tiny hdparm keyboard-configuration console-setup console-setup-linux
     aptitude -y purge cron ifupdown rsyslog vim-common vim-tiny hdparm keyboard-configuration console-setup console-setup-linux
@@ -4394,6 +4492,12 @@ if [ $(is-raspberry-pi) == "true" ]; then
     git clone https://github.com/adafruit/Adafruit_Nokia_LCD.git
     cd Adafruit_Nokia_LCD
     python setup.py install -f -O2
+    
+    cd /tmp
+    git clone https://github.com/adafruit/Adafruit_Python_BNO055.git
+    cd Adafruit_Python_BNO055
+    python setup.py install -f -O2
+    
     log "Adafruit-Raspberry-Pi-Python-Code installed"
 fi
 
@@ -4918,6 +5022,7 @@ log "Enable networkmanager"
 rm /etc/network/interfaces > /dev/null 2>&1
 echo "auto lo" >> /etc/network/interfaces
 echo "iface lo inet loopback" >> /etc/network/interfaces
+echo "wireless-power off" >> /etc/network/interfaces
 echo "[Adding or changing system-wide NetworkManager connections]" > /etc/polkit-1/localauthority/10-vendor.d/org.freedesktop.NetworkManager.pkla
 echo "Identity=unix-group:netdev;unix-group:sudo" >> /etc/polkit-1/localauthority/10-vendor.d/org.freedesktop.NetworkManager.pkla
 echo "Action=org.freedesktop.NetworkManager.*" >> /etc/polkit-1/localauthority/10-vendor.d/org.freedesktop.NetworkManager.pkla
@@ -5501,6 +5606,14 @@ echo "match=\$(python -c 'import crypt; print crypt.crypt(\"'\"\${password}\"'\"
 echo "[ \${match} == \${epassword} ] && echo \"true\" || echo \"false\"" >> /usr/bin/checkuser
 chmod +x /usr/bin/checkuser
 
+##################################################################################
+# Generate screenshot tool
+##################################################################################
+log "Generate screenshot tool"
+echo "#"\!"/bin/bash" > /usr/bin/screenshot
+echo "DISPLAY=:0 scrot \$1" >> /usr/bin/screenshot
+echo "" >> /usr/bin/screenshot
+chmod +x /usr/bin/screenshot
 
 
 ##################################################################################
@@ -5520,11 +5633,27 @@ fi
 ##################################################################################
 mem=$(get-parameter "gpu_mem")
 if [ -z "$mem" ]; then
-    mem="128"
-    set-parameter "gpu_mem" "128"
+    mem="320"
+    set-parameter "gpu_mem" "320"
 fi
 sed -i '/^gpu_mem/ d' /boot/config.txt
 echo "gpu_mem=$mem" >> /boot/config.txt
+
+
+
+
+##################################################################################
+# gst-rpicamsrc
+##################################################################################
+cd /root
+git clone https://github.com/thaytan/gst-rpicamsrc.git
+cd gst-rpicamsrc
+./autogen.sh --prefix=/usr --libdir=/usr/lib/arm-linux-gnueabihf/
+make
+make install
+cd ..
+rm -r gst-rpicamsrc
+
 
 
 
