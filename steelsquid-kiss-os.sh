@@ -18,7 +18,7 @@
 
 ##################################################################################
 # Settings (Modify to meet your requirements)
-##################################################################################
+################################################################################## 
 
 # In paramater
 in_parameter_1=$1
@@ -84,10 +84,11 @@ python_downloads[30]="$base/steelsquid_gstreamer.py"
 python_downloads[31]="$base/steelsquid_gps.py"
 python_downloads[32]="$base/steelsquid_mpu6050.py"
 python_downloads[33]="$base/steelsquid_bno0055.py"
-python_downloads[34]="$base/modules/kiss_expand.py"
-python_downloads[35]="$base/modules/kiss_piio.py"
-python_downloads[36]="$base/modules/kiss_irrbloss.py"
-python_downloads[37]="$base/modules/kiss_irrbloss_remote.py"
+python_downloads[34]="$base/steelsquid_digole.py"
+python_downloads[35]="$base/modules/kiss_expand.py"
+python_downloads[36]="$base/modules/kiss_piio.py"
+python_downloads[37]="$base/modules/kiss_irrbloss.py"
+python_downloads[38]="$base/modules/kiss_irrbloss_remote.py"
 
 # C file downloads (build and install)
 c_downloads[1]="$base/dht.c"
@@ -126,10 +127,11 @@ python_links[30]="/usr/bin/dummy"
 python_links[31]="/usr/bin/dummy"
 python_links[32]="/usr/bin/dummy"
 python_links[33]="/usr/bin/dummy"
-python_links[34]="/usr/bin/dummy"
+python_links[34]="/usr/bin/digole"
 python_links[35]="/usr/bin/dummy"
 python_links[36]="/usr/bin/dummy"
 python_links[37]="/usr/bin/dummy"
+python_links[38]="/usr/bin/dummy"
 
 # Download to web root folder
 web_root_downloads[1]="$base/web/top_bar.html"
@@ -194,6 +196,8 @@ snd_downloads[5]="$base/snd/move.wav"
 snd_downloads[6]="$base/snd/reboot.wav"
 snd_downloads[7]="$base/snd/reconnect.wav"
 snd_downloads[8]="$base/snd/warning.wav"
+snd_downloads[9]="$base/snd/horn.wav"
+snd_downloads[10]="$base/snd/whistle.wav"
 
 
 
@@ -2010,6 +2014,7 @@ if [ "$in_parameter_1" == "camera-off" ]; then
 fi
 
 
+
 ##################################################################################
 # Rotate monitor 180
 ##################################################################################
@@ -2086,6 +2091,39 @@ if [ "$in_parameter_1" == "monitor-csi-off" ]; then
 fi
 
 
+##################################################################################
+# set resoultion
+##################################################################################
+function hdmi_res()
+{
+    log "Set hdmi resolution"
+    sed -i '/^hdmi_group/ d' /boot/config.txt
+    sed -i '/^hdmi_mode/ d' /boot/config.txt
+    sed -i '/^hdmi_cvt/ d' /boot/config.txt
+    echo "hdmi_group=2" >> /boot/config.txt 
+    echo "hdmi_mode=87" >> /boot/config.txt 
+    echo "hdmi_cvt=$in_parameter_2 $in_parameter_3 60 3 0 0 0" >> /boot/config.txt 
+    log-reboot
+}
+function hdmi_res_off()
+{
+    $in_parameter_1
+    log "Remove hdmi resolution"
+    sed -i '/^hdmi_group/ d' /boot/config.txt
+    sed -i '/^hdmi_mode/ d' /boot/config.txt
+    sed -i '/^hdmi_cvt/ d' /boot/config.txt
+    log-reboot
+}
+
+if [ "$in_parameter_1" == "hdmi-res" ]; then
+    hdmi_res
+    exit 0
+fi
+if [ "$in_parameter_1" == "hdmi-res-off" ]; then
+    hdmi_res_off
+    exit 0
+fi
+hdmi_group = 2
 
 ##################################################################################
 # Show status streaming of USB camera
@@ -2433,6 +2471,8 @@ function browser_on()
     echo "Delete" >> /home/browser/.xbindkeysrc
     echo "\"event xkey ESC\"" >> /home/browser/.xbindkeysrc
     echo "Escape" >> /home/browser/.xbindkeysrc
+    echo "\"event xkey MINUS\"" >> /home/browser/.xbindkeysrc
+    echo "plus" >> /home/browser/.xbindkeysrc
     
     sed -i 's/.*NODM_ENABLED=.*/NODM_ENABLED=true/' /etc/default/nodm
     sed -i 's/.*NODM_USER=.*/NODM_USER=browser/' /etc/default/nodm
@@ -4446,6 +4486,10 @@ pip install pillow
 pip install --upgrade pillow 
 
 
+pip install tsl2561
+
+
+
 ##################################################################################
 # Install inotifyx
 ##################################################################################
@@ -4471,6 +4515,11 @@ if [ $(is-raspberry-pi) == "true" ]; then
     cd /tmp
     git clone https://github.com/adafruit/Adafruit_Python_GPIO.git    
     cd Adafruit_Python_GPIO
+    python setup.py install -f -O2
+
+    cd /tmp
+    git clone https://github.com/adafruit/Adafruit_Python_PureIO.git    
+    cd Adafruit_Python_PureIO
     python setup.py install -f -O2
 
     cd /tmp

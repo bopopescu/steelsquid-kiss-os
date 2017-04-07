@@ -28,6 +28,7 @@ class SteelsquidSabertooth():
     '''
     left = 0
     right = 0
+    ramping = True
 
     def __init__(self, serial_port="/dev/ttyS0", baudrate=2400, speed_min_add = 0):
         '''
@@ -46,29 +47,35 @@ class SteelsquidSabertooth():
         last_left = 0
         last_right = 0
         while True:
+            sleep = 0.012
             try:
                 left = self.left
                 right = self.right
                 if left != last_left or right != last_right:
-                    if left > -10 and left < 10:
-                        if last_left > left:
-                            left = last_left - 1
-                        elif last_left < left:
-                            left = last_left + 1
-                    if right > -10 and right < 10:
-                        if last_right > right:
-                            right = last_right - 1
-                        elif last_right < right:
-                            right = last_right + 1
+                    diff_left = abs(last_left - left)
+                    diff_right = abs(last_right - left)
+                    if self.ramping or diff_left > 30 or diff_right > 30:
+                        if diff_left > 10:
+                            if last_left > left:
+                                left = last_left - 1
+                            elif last_left < left:
+                                left = last_left + 1
+                        if diff_right > 10:
+                            if last_right > right:
+                                right = last_right - 1
+                            elif last_right < right:
+                                right = last_right + 1
                     self._set_dc_speed(left, right)
                     last_left = left
                     last_right = right
+                else:
+                    sleep = 0.012
             except:
                 steelsquid_utils.shout()
-            time.sleep(0.01)
+            time.sleep(sleep)
 
 
-    def set_dc_speed(self, left, right):
+    def set_dc_speed(self, left, right, ramping = True):
         '''
         Set the speed.
         from -100 to +100
@@ -78,6 +85,7 @@ class SteelsquidSabertooth():
         '''
         self.left = left
         self.right = right
+        self.ramping = ramping
  
 
     def _set_dc_speed(self, left, right):

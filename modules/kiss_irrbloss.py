@@ -45,6 +45,7 @@ def enable(argument=None):
     Maybe you need create some files or enable other stuff.
     argument: Send data to the enable or disable method in the module
               Usually a string to tell the start/stop something
+              (execute: steelsquid module XXX on theArgument)
     '''
     # Clear any saved settings for this module
     steelsquid_kiss_global.clear_modules_settings("kiss_irrbloss")
@@ -126,26 +127,16 @@ class STATIC(object):
     gpio_hmtrlrs_reset = 23
 
     # When system start move servo here
-    servo_position_pan_start = 480
+    servo_position_tilt_start = 400
 
     # Max Servo position
-    servo_position_pan_max = 660
+    servo_position_tilt_max = 470
 
     # Min Servo position
-    servo_position_pan_min = 290
+    servo_position_tilt_min = 320
 
-    # When system start move servo here
-    servo_position_tilt_start = 450
-
-    # Max Servo position
-    servo_position_tilt_max = 507
-
-    # Min Servo position
-    servo_position_tilt_min = 250
-
-    # Max motor speed
-    motor_max = 80 
-
+    # Max gyro drive straight value
+    max_drive_straight = 20
 
 
 
@@ -160,12 +151,12 @@ class DYNAMIC(object):
     '''
     Put dynamic variables here.
     If you have variables holding some data that you use and change in this module, you can put them here.
-    Maybe toy enable something in the WEB class and want to use it from the LOOP class.
+    Maybe to enable something in the WEB class and want to use it from the LOOP class.
     Instead of adding it to either WEB or LOOP you can add it here.
     It is not necessary to put it her, but i think it is kind of nice to have it inside this class.
     '''
 
-
+    
 
 
 
@@ -190,9 +181,8 @@ class SETTINGS(object):
     System try to read: steelsquid_utils.get_parameter("this_is_a_parameter", "a_default_value")
     System try to read: steelsquid_utils.get_list("this_is_a_list", [])
     If you want to disable save and read the settings from disk add a variable like this.
-    This is usefull under development if you wan to test different values when you restart the module,
-    otherwise the value from the first execution to be used ...
       _persistent_off = True
+    This is usefull under development if you wan to test different values when you restart the module,
     To sum up: Variables in class SETTINGS that has value: Boolean, Array, Integer, Float, String will be will be persistent.
     '''
     
@@ -220,7 +210,12 @@ class SETTINGS(object):
 
     # Bitrate for the stream
     bitrate = "800000"
-        
+
+    # TCP for video stream
+    tcp_video = False 
+    
+    # use low light settings for camera
+    low_light = False       
 
 
 
@@ -232,14 +227,27 @@ class SETTINGS(object):
 class SYSTEM(object):
     '''
     Methods in this class will be executed by the system if module is enabled
-    on_start() exist it will be executed when system starts (boot)
-    on_stop() exist it will be executed when system stops (shutdown)
-    on_network(status, wired, wifi_ssid, wifi, wan) exist it will be execute on network up or down
-    on_vpn(status, name, ip) This will fire when a VPN connection is enabled/disabled.
-    on_bluetooth(status) exist it will be execute on bluetooth enabled
-    on_mount(type_of_mount, remote, local) This will fire when USB, Samba(windows share) or SSH is mounted.
-    on_umount(type_of_mount, remote, local) This will fire when USB, Samba(windows share) or SSH is unmounted.
-    on_event_data(key, value) exist it will execute when data is changed with steelsquid_kiss_global.set_event_data(key, value)
+    You may remove the methods you do not want to use
+    on_start() 
+        Will be executed when system starts (boot)
+    on_stop() 
+        Will be executed when system stops (shutdown)
+    on_network(status, wired, wifi_ssid, wifi, wan) 
+        Will be execute on network up or down
+    on_vpn(status, name, ip) 
+        This will fire when a VPN connection is enabled/disabled.
+    on_bluetooth(status) 
+        Will be execute on bluetooth enabled
+    on_mount(type_of_mount, remote, local) 
+        This will fire when USB, Samba(windows share) or SSH is mounted.
+    on_umount(type_of_mount, remote, local)
+        This will fire when USB, Samba(windows share) or SSH is unmounted.
+    on_event_data(key, value) 
+        Will execute when data is changed with steelsquid_kiss_global.set_event_data(key, value)
+    on_xkey(key) 
+        If steelsquid browser-on or mbrowser-on is activated
+        Some keys is catched and a then is executed her instead.
+        Key can be: ESC, DEL, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12
     '''
 
     @staticmethod
@@ -270,13 +278,12 @@ class SYSTEM(object):
         # Enable and disable networkcards
         UTILS.set_net_status(SETTINGS.control)
         # Reset some GPIO
-        OUTPUT.sum_flash()
+        IO.OUTPUT.sum_flash()
         IO.UNITS.headlight(False)
         IO.UNITS.highbeam(False)
-        IO.UNITS.ir(False)
         IO.UNITS.siren(False)
-        IO.UNITS.cam_light(False)
-        OUTPUT.mood(0)
+        IO.UNITS.speeker(True)
+        IO.OUTPUT.mood(0)
         # Way ???
         steelsquid_pi.gpio_set(26, True)        
         # Max volume
@@ -284,14 +291,9 @@ class SYSTEM(object):
         steelsquid_utils.execute_system_command_blind(["amixer", "set", "PCM", "100%"], wait_for_finish=True)
         steelsquid_utils.execute_system_command_blind(["alsactl", "store"], wait_for_finish=True)
         # Center camera
-        IO.UNITS.camera(STATIC.servo_position_pan_start, STATIC.servo_position_tilt_start)
+        IO.UNITS.camera(0, STATIC.servo_position_tilt_start, False)
         # Setup gstreamer
-        steelsquid_gstreamer.setup_camera_mic(SETTINGS.video_ip, 6607, SETTINGS.audio_ip, 6608, SETTINGS.width, SETTINGS.height, SETTINGS.fps, SETTINGS.bitrate)
-        # Listen for signals fromPIR sensors
-        steelsquid_pi.gpio_event(13, INPUT.pir_front, resistor=steelsquid_pi.PULL_NONE)
-        steelsquid_pi.gpio_event(26, INPUT.pir_left, resistor=steelsquid_pi.PULL_NONE)
-        steelsquid_pi.gpio_event(19, INPUT.pir_right, resistor=steelsquid_pi.PULL_NONE)
-        steelsquid_pi.gpio_event(6, INPUT.pir_back, resistor=steelsquid_pi.PULL_NONE)
+        steelsquid_gstreamer.setup_camera_mic(SETTINGS.video_ip, 6607, SETTINGS.audio_ip, 6608, SETTINGS.width, SETTINGS.height, SETTINGS.fps, SETTINGS.bitrate, SETTINGS.tcp_video, SETTINGS.low_light)
 
 
     @staticmethod
@@ -303,6 +305,7 @@ class SYSTEM(object):
         RADIO.PUSH_1.motor_left = 0
         RADIO.PUSH_1.motor_right = 0
         IO.UNITS.drive(0, 0)
+        steelsquid_bno0055.zero_heading()
         steelsquid_pi.cleanup()
        
 
@@ -326,8 +329,9 @@ class LOOP(object):
     # Using this for check speekers on for 2 minutes then turn off
     last_speek=None
     
+    
     @staticmethod
-    def lte_speek_gps_data_temp_alti():
+    def lte_gps_data_temp_alti():
         '''
         Check that the LTE dongle is disabled when not in use
         Also read GPS
@@ -340,12 +344,7 @@ class LOOP(object):
                 if "usb0" in line:
                     UTILS.set_net_status(SETTINGS.control)
                     break;
-        # Turn of speeker
-        if LOOP.last_speek != None:
-            if time.time() - LOOP.last_speek > STATIC.speeker_timeout:
-                IO.UNITS.speeker(False)
-                LOOP.last_speek = None
-        # read GPS
+
         RADIO.LOCAL.gps_con = steelsquid_gps.connected()
         RADIO.LOCAL.gps_lat = steelsquid_gps.latitude()
         RADIO.LOCAL.gps_long= steelsquid_gps.longitude()
@@ -361,16 +360,18 @@ class LOOP(object):
         answer = answer.split(":")
         answer = float(int(answer[1].split(" ")[0]) + int(answer[2].split(" ")[0]))
         RADIO.LOCAL.data_usage = str(round(answer/1073741824, 1))
-        # Read temp and altitude
-        temp, pres, alti = steelsquid_pi.mpl3115A2()
-        RADIO.LOCAL.temperature = str(int(temp))
-        RADIO.LOCAL.pressure = str(int(pres))
-        RADIO.LOCAL.altitude = str(int(alti))
         # Core temp
         tm = steelsquid_utils.execute_system_command(["vcgencmd", "measure_temp"])[0]
         tm = tm.replace("temp=", "")
         tm = tm.replace("'C", "")
         RADIO.LOCAL.temperature_core = str(int(round(float(tm), 0)))
+        # Calcultae max value for the drive (not over 12V)
+        if RADIO.LOCAL.rover_voltage != -1:
+            v = int((12.0/RADIO.LOCAL.rover_voltage)*100)
+            if v >100:
+                RADIO.LOCAL.motor_max = 100
+            else:
+                RADIO.LOCAL.motor_max = v
         return 6  
 
 
@@ -388,7 +389,9 @@ class LOOP(object):
         # Check PIR
         if RADIO.REMOTE.mood == 5:
             if RADIO.LOCAL.pir_front or RADIO.LOCAL.pir_left or RADIO.LOCAL.pir_right or RADIO.LOCAL.pir_back:
-                steelsquid_utils.execute_min_time(DO.speek, ("The driver is temporarily away. Please do not touch the robot", False, True,), 20)
+                if LOOP.last_speek == None or (datetime.datetime.now()-LOOP.last_speek).total_seconds() > 20:
+                    LOOP.last_speek = datetime.datetime.now()
+                    UTILS.play("away.wav")
         return 1
 
 
@@ -403,18 +406,11 @@ class LOOP(object):
 ##############################################################################################################################################################################################
 class RADIO(object):
     '''
-    This is the new RADIO functionality.
-    This is similar to tho old but can handle HM-TRLR-S transceiver and TCP socket connections.
-
-    HM-TRLR-S
-        Enable the HM-TRLR-S server functionality in command line: set-flag radio_hmtrlrs_server
-        On client device: set-flag radio_hmtrlrs_client
-        Must restart the steelsquid daeomon for it to take effect.
-        In python you can do: steelsquid_kiss_global.radio_hmtrlrs(status)
-        status: True=Enable as server
-                False=Enable as client
-                None=Disable
+    Two devices can communicate. It is ment to be used as a remote controll over TCP
+    To enable this device as remote controll execute: steelsquid_kiss_global.radio_tcp(true)
+    To enable this device as reseiver of remote signals execute: steelsquid_kiss_global.radio_tcp(false, "ip to remote")
     '''
+    
     
     @staticmethod
     def on_check(last_ping, ping_time, ping_time_median):
@@ -435,6 +431,7 @@ class RADIO(object):
                 RADIO.PUSH_1.motor_left = 0
                 RADIO.PUSH_1.motor_right = 0
                 IO.UNITS.drive(0, 0)
+                steelsquid_bno0055.zero_heading()
             # Flash and sount when connection lost
             if last_ping<STATIC.connection_lost_timeout:
                 steelsquid_utils.execute_if_changed(DO.connected, True, execute_first_time=False)
@@ -442,20 +439,21 @@ class RADIO(object):
                 steelsquid_utils.execute_if_changed(DO.connected, False, execute_first_time=True)
             # Close streams
             if last_ping>STATIC.connection_lost_streams:
-                doit = steelsquid_utils.execute_min_time(DO.show, (3, ), STATIC.connection_lost_timeout_reboot)
+                doit = steelsquid_utils.execute_min_time(steelsquid_gstreamer.low_bandwidth, (), STATIC.connection_lost_streams)
             # Help is on its way
             if last_ping>STATIC.help_timeout and last_ping < STATIC.connection_lost_timeout_reboot-3:
-                steelsquid_utils.execute_min_time(DO.speek, ("No connection. If i'm in the way please move me to the side of the road", False, True, ), 10)
+                steelsquid_utils.execute_min_time(UTILS.play, ("move.wav", ), 15)
             # If no connection in 90 seconds...reboot
             if last_ping>STATIC.connection_lost_timeout_reboot:
-                doit = steelsquid_utils.execute_one_time(DO.speek, ("No connection in 90 seconds. Reboot in progress", False, True, ))
+                doit = steelsquid_utils.execute_min_time(UTILS.play, ("reboot.wav", ), 15)
                 if doit:
                     steelsquid_kiss_global.reboot(6) 
         else:
             RADIO.PUSH_1.motor_left = 0
             RADIO.PUSH_1.motor_right = 0
             IO.UNITS.drive(0, 0)
-
+            steelsquid_bno0055.zero_heading()
+            
     
     @staticmethod
     def on_sync():
@@ -466,11 +464,7 @@ class RADIO(object):
         # Change show
         steelsquid_utils.execute_if_changed(DO.show, RADIO.REMOTE.show)
         # Set mood
-        steelsquid_utils.execute_if_changed(OUTPUT.mood, RADIO.REMOTE.mood)
-        # Set ir
-        steelsquid_utils.execute_if_changed(IO.UNITS.ir, RADIO.REMOTE.ir)
-        # Set cam light
-        steelsquid_utils.execute_if_changed(IO.UNITS.cam_light, RADIO.REMOTE.cam_light)
+        steelsquid_utils.execute_if_changed(IO.OUTPUT.mood, RADIO.REMOTE.mood)
         # highbeam
         steelsquid_utils.execute_if_changed(IO.UNITS.highbeam, RADIO.REMOTE.highbeam)
         # headlight
@@ -502,6 +496,9 @@ class RADIO(object):
         
         # pressure
         pressure = "---"
+        
+        # pressure
+        humidity = 0
 
         # data_usage
         data_usage = "---"
@@ -542,6 +539,12 @@ class RADIO(object):
         # Back PIR
         pir_back = False
 
+        # Ambient lighting
+        light = 0.0
+    
+        # Max motor speed
+        motor_max = 80
+
 
 
     class REMOTE(object):
@@ -563,16 +566,16 @@ class RADIO(object):
         # Use high beam
         highbeam = False
 
-        # Cam light
-        cam_light = False
-
-        # IR light
-        ir = False
-
         # Show this on screen
         # 1 = save   2 = settings   3 = Map   4 = FPV
         show = 3         
-    
+
+        # Is cruise control enabled (this is the speed)
+        cruise = 0
+        
+        # Drive forward and backwardto turn
+        spec_turn = False
+
 
     class PUSH_1(object):
         '''
@@ -599,11 +602,11 @@ class RADIO(object):
             left = RADIO.PUSH_1.motor_left
             right = RADIO.PUSH_1.motor_right
             diff = abs(left-right)
-            if left != 0 and diff<4:
+            if left != 0 and diff<4 and IO.last_drive_left!=0:
                 diff = int(abs(math.ceil(IO.heading)))
                 diff = diff * 3
-                if diff>40:
-                    diff = 40
+                if diff>STATIC.max_drive_straight:
+                    diff = STATIC.max_drive_straight
                 if left > 20 or left < -20:
                     if IO.heading < 0:
                         left = left - diff
@@ -614,9 +617,13 @@ class RADIO(object):
                         right = right + diff
                     elif IO.heading > 0:
                         left = left + diff
+                if left>30:
+                    IO.UNITS.drive(left, right, ramping=True)        
+                else:
+                    IO.UNITS.drive(left, right)        
             else:
                 steelsquid_bno0055.zero_heading()
-            IO.UNITS.drive(left, right)        
+                IO.UNITS.drive(left, right)        
             return 0.01
 
             
@@ -629,8 +636,9 @@ class RADIO(object):
         The variables can only be int, float, bool or string.
         '''
         # tilt/pan
-        camera_pan = STATIC.servo_position_pan_start
+        camera_pan = 0
         camera_tilt = STATIC.servo_position_tilt_start
+        can_pan = False
 
         @staticmethod
         def on_push():
@@ -644,7 +652,7 @@ class RADIO(object):
                 This will execute when the client send a push to the server
                 Will ignore the return....
             '''
-            IO.UNITS.camera(RADIO.PUSH_2.camera_pan, RADIO.PUSH_2.camera_tilt)
+            IO.UNITS.camera(RADIO.PUSH_2.camera_pan, RADIO.PUSH_2.camera_tilt, RADIO.PUSH_2.can_pan)
         
         
         
@@ -701,6 +709,26 @@ class RADIO(object):
 
 
         @staticmethod
+        def tcp_video(parameters):
+            '''
+            A request from enable/disable TCP video
+            '''
+            SETTINGS.tcp_video = steelsquid_utils.to_boolean(parameters[0])
+            steelsquid_kiss_global.save_module_settings()
+            steelsquid_gstreamer.video_tcp(SETTINGS.tcp_video)
+
+
+        @staticmethod
+        def low_light(parameters):
+            '''
+            A request from enable/disable low light camera
+            '''
+            SETTINGS.low_light = steelsquid_utils.to_boolean(parameters[0])
+            steelsquid_kiss_global.save_module_settings()
+            steelsquid_gstreamer.low_light(SETTINGS.low_light)
+
+
+        @staticmethod
         def save_settings(parameters):
             '''
             A request from client to save settings
@@ -746,107 +774,6 @@ class RADIO(object):
 
 
 
-##############################################################################################################################################################################################
-class INPUT(object):
-    '''
-    User related stuff...
-    Put input stuff her, maybe method to execute when a button is pressed.
-    It is not necessary to put it her, but i think it is kind of nice to have it inside this class
-    '''
- 
-    @staticmethod
-    def pir_front(gpio, status):
-        '''
-        Front PIR
-        '''
-        RADIO.LOCAL.pir_front = status
-
-
-    @staticmethod
-    def pir_left(gpio, status):
-        '''
-        Left PIR
-        '''
-        RADIO.LOCAL.pir_left = status
-
-
-    @staticmethod
-    def pir_right(gpio, status):
-        '''
-        Right PIR
-        '''
-        RADIO.LOCAL.pir_right = status
-
-
-    @staticmethod
-    def pir_back(gpio, status):
-        '''
-        Back PIR
-        '''
-        RADIO.LOCAL.pir_back = status
-
-
-
-
-
-
-
-
-
-
-
-##############################################################################################################################################################################################
-class OUTPUT(object):
-    '''
-    User related stuff...
-    Put input stuff her, maybe method to execute when a button is pressed.
-    Put output stuff her, maybe method that light a LED.
-    It is not necessary to put it her, but i think it is kind of nice to have it inside this class
-    '''
-    
-    @staticmethod
-    def sum_flash(dummy=False):
-        '''
-        Sound the summer for short time
-        ''' 
-        if not dummy:
-            thread.start_new_thread(OUTPUT.sum_flash, (True,))
-        else:
-            steelsquid_pi.po12_digital_out(1, True)
-            steelsquid_pi.po12_digital_out(2, True)
-            steelsquid_pi.po12_digital_out(3, True)
-            time.sleep(0.02)
-            steelsquid_pi.po12_digital_out(1, False)
-            steelsquid_pi.po12_digital_out(2, False)
-            steelsquid_pi.po12_digital_out(3, False)
-
-
-    @staticmethod
-    def mood(nr):
-        '''
-        Set smiley in led array
-        0=off 1=heart 2=smile 3=sad 4=wave
-        ''' 
-        lmatrix.animate_stop()
-        if nr == 1:
-            lmatrix.animate_heart(True)
-            UTILS.play("/root/whistle.wav", sleep=0.5)
-        elif nr == 2:
-            lmatrix.paint(lmatrix.matrix_smile, 3)
-        elif nr == 3:
-            lmatrix.paint(lmatrix.matrix_sad, 3)
-        elif nr == 4:
-            lmatrix.animate_wave(True)
-            UTILS.play("/root/horn.wav", times=2, sleep=0.5)
-        elif nr == 5:
-            steelsquid_utils.execute_blink("away_flash", True, IO.UNITS.headlight, (True,), 0.01, IO.UNITS.headlight, (False,), 4)
-            lmatrix.animate_wait(True)
-        else:
-            steelsquid_utils.execute_blink("away_flash", False)
-            lmatrix.animate_stop()
-            
-        
-        
         
 
 
@@ -856,17 +783,44 @@ class OUTPUT(object):
 ##############################################################################################################################################################################################
 class IO(object):
     '''
-    Put IO stuff her, maybe read stuff from sensors.
+    Put IO stuff her, maybe read stuff from sensors or listen for button press.
     It is not necessary to put it her, but i think it is kind of nice to have it inside this class
-    And you can use the reader thread...
+    Maybe use on_start() to start listen on GPIO or enable sensors...
+    reader_1 to reader_4 is threads that execute in separate threads.
     '''
 
     # IMU
     heading = 0.0
+    
+    # Last
+    last_drive_left = 0
+    last_drive_right = 0
+
+    # Alterback and forward
+    _forward_timer = datetime.datetime.now()
+    _f_shift = 0
+    _left = 0
+    _right = 0
+    left = 0
+    right = 0
 
 
     @staticmethod
-    def reader():
+    def on_start():
+        '''
+        This will execute when system starts, it is the same as on_start in SYSTEM but put IO stuff her.
+        Do not execute long running stuff here, do it in on_loop...
+        Maybe use this to start listen on GPIO or enable sensors
+        '''
+        # Listen for signals fromPIR sensors
+        steelsquid_pi.gpio_event(13, IO.INPUT.pir_front, resistor=steelsquid_pi.PULL_NONE)
+        steelsquid_pi.gpio_event(26, IO.INPUT.pir_left, resistor=steelsquid_pi.PULL_NONE)
+        steelsquid_pi.gpio_event(19, IO.INPUT.pir_right, resistor=steelsquid_pi.PULL_NONE)
+        steelsquid_pi.gpio_event(6, IO.INPUT.pir_back, resistor=steelsquid_pi.PULL_NONE)
+    
+
+    @staticmethod
+    def reader_1():
         '''
         This will execute over and over again untill return -1 or None
         Use this to read from sensors in one place.
@@ -874,17 +828,120 @@ class IO(object):
         '''
         RADIO.LOCAL.rover_voltage = IO.UNITS.read_in_voltage()
         RADIO.LOCAL.rover_ampere = IO.UNITS.read_in_ampere()
-        IO.heading, RADIO.LOCAL.roll, RADIO.LOCAL.pitch = steelsquid_bno0055.read(switch_roll_pitch=True)
+        IO.heading, RADIO.LOCAL.roll, p = steelsquid_bno0055.read(switch_roll_pitch=True)
+        RADIO.LOCAL.pitch = p+3
+        return 0
+
+
+    @staticmethod
+    def reader_2():
+        '''
+        This will execute over and over again untill return -1 or None
+        Use this to read from sensors in one place.
+        Return the number of seconds you want to sleep until next execution
+        '''
+        # Read humidity
+        hum = steelsquid_pi.si7021_hum()
+        RADIO.LOCAL.humidity = int(hum)
+        # Read temp and altitude
+        temp, pres, alti = steelsquid_pi.mpl3115A2()
+        RADIO.LOCAL.temperature = str(int(temp))
+        RADIO.LOCAL.pressure = str(int(pres))
+        RADIO.LOCAL.altitude = str(int(alti))
+        # Read light
+        RADIO.LOCAL.light = steelsquid_pi.tsl2561()
         return 0
     
     
+    @staticmethod
+    def reader_3():
+        '''
+        This will execute over and over again untill return -1 or None
+        Use this to read from sensors in one place.
+        Return the number of seconds you want to sleep until next execution
+        '''
+        # Turn the rover by driving forward and backward (not just turn on on the spot)
+        if RADIO.REMOTE.spec_turn and ((IO.left < 0 and IO.right > 0) or (IO.left > 0 and IO.right < 0)):
+            go_right = IO.left>0
+            turn = abs(IO.left)
+            turn_slow = int(turn)
+            turn_fast = int(turn*2)
+            inc = 5
+            now = datetime.datetime.now()
+            # Restart from drive forward
+            if IO._f_shift == 0:
+                IO._left = 0
+                IO._right = 0
+                IO._forward_timer = datetime.datetime.now()               
+            diff = (now - IO._forward_timer).total_seconds()
+            # Drive forward
+            if diff < 0.5:
+                IO._f_shift = 1
+                if go_right:
+                    if IO._left < turn_fast:
+                        IO._left = IO._left + inc
+                    if IO._right < turn_slow:
+                        IO._right = IO._right + inc
+                else:
+                    if IO._left < turn_slow:
+                        IO._left = IO._left + inc
+                    if IO._right < turn_fast:
+                        IO._right = IO._right + inc
+            # SLow down
+            elif diff < 1:
+                IO._f_shift = 2
+                if IO._left > 0:
+                    IO._left = IO._left - inc
+                if IO._right > 0:
+                    IO._right = IO._right - inc
+            # Drive backward
+            elif diff < 1.5:
+                if IO._f_shift != 3:
+                    IO._left = 0
+                    IO._right = 0
+                IO._f_shift = 3
+                if go_right:
+                    if IO._left > turn_slow*-1:
+                        IO._left = IO._left - inc
+                    if IO._right > turn_fast*-1:
+                        IO._right = IO._right - inc
+                else:
+                    if IO._left > turn_fast*-1:
+                        IO._left = IO._left - inc
+                    if IO._right > turn_slow*-1:
+                        IO._right = IO._right - inc
+            # Slow down
+            elif diff < 2:
+                IO._f_shift = 4
+                if IO._left < 0:
+                    IO._left = IO._left + inc
+                if IO._right < 0:
+                    IO._right = IO._right + inc
+            else:
+                IO._f_shift = 0
+            # Sen signal to motor controller    
+            steelsquid_pi.sabertooth_motor_speed(IO._left*-1, IO._right*-1, the_port="/dev/ttyUSB0", ramping=False)
+        return 0.01
+    
+    
+    @staticmethod
+    def reader_4():
+        '''
+        This will execute over and over again untill return -1 or None
+        Use this to read from sensors in one place.
+        Return the number of seconds you want to sleep until next execution
+        '''
+        steelsquid_pi.pca9685_move(1, 410, address = 0x41)
+        return 0.5
+        
        
     class UNITS(object):
         '''
         In this class i puth static methods that example reads data from sensors.
         Often it is the reader thread that acces this methods.
         '''
-
+        
+        
         @staticmethod
         def read_in_voltage():
             '''
@@ -893,6 +950,8 @@ class IO(object):
             v = steelsquid_pi.po12_adc_volt_smooth(8, median_size=64) / 0.1190
             v = Decimal(v)
             v = round(v, 1)
+            if v > 20:
+                v = 16.8
             return v
 
 
@@ -907,6 +966,8 @@ class IO(object):
             v = v / 0.026
             v = Decimal(v)
             v = math.ceil(v)
+            if v > 90:
+                v = 40
             return int(v)
             
 
@@ -915,7 +976,8 @@ class IO(object):
             '''
             Enable headlights
             ''' 
-            steelsquid_pi.gpio_set(16, not status)
+            steelsquid_pi.gpio_set(16, not status)        
+            steelsquid_pi.gpio_set(20, not status)        
             
 
         @staticmethod
@@ -926,6 +988,7 @@ class IO(object):
             status = not status
             steelsquid_pi.gpio_set(7, status)
             steelsquid_pi.gpio_set(12, status)
+            steelsquid_pi.gpio_set(25, status) 
             
 
         @staticmethod
@@ -937,68 +1000,60 @@ class IO(object):
                 steelsquid_pi.mcp23017_flash(20, 5)
             else:
                 steelsquid_pi.mcp23017_set(20, 5, status)
-                
-                    
-
-        @staticmethod
-        def cam_light(status):
-            '''
-            Enable cam light
-            ''' 
-            steelsquid_pi.gpio_set(20, not status)
-
-
-        @staticmethod
-        def ir(status):
-            '''
-            Enable irlight
-            ''' 
-            steelsquid_pi.gpio_set(8, not status)
             
 
         @staticmethod
-        def camera(pan, tilt):
+        def camera(pan, tilt, can_pan):
             '''
             Move servo
             '''
             # Check the values...getting some crapp data some time....
-            if pan!=None:
-                if pan < 0 or pan > 800:
-                    return
             if tilt!=None:
                 if tilt < 0 or tilt > 800:
                     return
-
+            if can_pan:
+                steelsquid_pi.pca9685_move(2, 300, address = 0x41)
+            else:
+                steelsquid_pi.pca9685_move(2, 500, address = 0x41)
             if pan!=None:
-                if pan<STATIC.servo_position_pan_min:
-                    pan = STATIC.servo_position_pan_min
-                elif pan>STATIC.servo_position_pan_max:
-                    pan = STATIC.servo_position_pan_max
-                steelsquid_pi.pca9685_move(1, pan)
+                steelsquid_pi.pca9685_move(1, 410+(pan/3), address = 0x41)
             if tilt!=None:
                 if tilt<STATIC.servo_position_tilt_min:
                     tilt = STATIC.servo_position_tilt_min
                 elif tilt>STATIC.servo_position_tilt_max:
                     tilt = STATIC.servo_position_tilt_max
-                steelsquid_pi.pca9685_move(0, tilt)      
-
+                steelsquid_pi.pca9685_move(0, tilt, address = 0x41)      
             
 
         @staticmethod
-        def drive(left, right):
+        def drive(left, right, ramping = True):
             '''
             Drive
             '''
-            # Check value
-            if left>STATIC.motor_max:
-                left = STATIC.motor_max
-            elif left<STATIC.motor_max*-1:
-                left = STATIC.motor_max*-1
-            if right>STATIC.motor_max:
-                right = STATIC.motor_max
-            elif right<STATIC.motor_max*-1:
-                right = STATIC.motor_max*-1
-            steelsquid_pi.sabertooth_motor_speed(left*-1, right*-1, the_port="/dev/ttyUSB0")
+
+            if left>RADIO.LOCAL.motor_max:
+                left = RADIO.LOCAL.motor_max
+            elif left<RADIO.LOCAL.motor_max*-1:
+                left = RADIO.LOCAL.motor_max*-1
+            if right>RADIO.LOCAL.motor_max:
+                right = RADIO.LOCAL.motor_max
+            elif right<RADIO.LOCAL.motor_max*-1:
+                right = RADIO.LOCAL.motor_max*-1
+            IO.last_drive_left = left
+            IO.last_drive_right = right
+            IO.left = left
+            IO.right = right
+            # Turn the rover by driving forward and backward (not just turn on on the spot)
+            #This is made in the thread reader_3
+            if RADIO.REMOTE.spec_turn and ((left < 0 and right > 0) or (left > 0 and right < 0)):
+                pass
+            else:
+                IO._left = 0
+                IO._right = 0
+                IO._f_shift = 0
+                IO._forward_timer = datetime.datetime.now()               
+                # Sen signal to motor controller    
+                steelsquid_pi.sabertooth_motor_speed(left*-1, right*-1, the_port="/dev/ttyUSB0", ramping = ramping)
 
             
         @staticmethod
@@ -1007,7 +1062,99 @@ class IO(object):
             Turn on and off speekers
             '''
             steelsquid_pi.gpio_set(21, not status)
-            
+
+
+
+    class INPUT(object):
+        '''
+        Put input stuff her, maybe method to execute when a button is pressed.
+        It is not necessary to put it her, but i think it is kind of nice to have it inside this class
+        '''
+
+        @staticmethod
+        def pir_front(gpio, status):
+            '''
+            Front PIR
+            '''
+            RADIO.LOCAL.pir_front = status
+
+
+        @staticmethod
+        def pir_left(gpio, status):
+            '''
+            Left PIR
+            '''
+            RADIO.LOCAL.pir_left = status
+
+
+        @staticmethod
+        def pir_right(gpio, status):
+            '''
+            Right PIR
+            '''
+            RADIO.LOCAL.pir_right = status
+
+
+        @staticmethod
+        def pir_back(gpio, status):
+            '''
+            Back PIR
+            '''
+            RADIO.LOCAL.pir_back = status
+
+
+
+    class OUTPUT(object):
+        '''
+        Put output stuff her, maybe method that light a LED.
+        It is not necessary to put it her, but i think it is kind of nice to have it inside this class
+        '''
+        
+        @staticmethod
+        def sum_flash(dummy=False):
+            '''
+            Sound the summer for short time
+            ''' 
+            if not dummy:
+                thread.start_new_thread(IO.OUTPUT.sum_flash, (True,))
+            else:
+                steelsquid_pi.po12_digital_out(1, True)
+                steelsquid_pi.po12_digital_out(2, True)
+                steelsquid_pi.po12_digital_out(3, True)
+                time.sleep(0.02)
+                steelsquid_pi.po12_digital_out(1, False)
+                steelsquid_pi.po12_digital_out(2, False)
+                steelsquid_pi.po12_digital_out(3, False)
+
+
+        @staticmethod
+        def mood(nr):
+            '''
+            Set smiley in led array
+            0=off 1=heart 2=smile 3=sad 4=wave
+            ''' 
+            lmatrix.animate_stop()
+            if nr == 1:
+                lmatrix.animate_heart(True)
+                UTILS.play("whistle.wav", sleep=0.5)
+            elif nr == 2:
+                lmatrix.paint(lmatrix.matrix_smile)
+                UTILS.play("ding.wav", sleep=0.5)
+            elif nr == 3:
+                lmatrix.paint(lmatrix.matrix_sad)
+                UTILS.play("angry.wav", sleep=0.5)
+            elif nr == 4:
+                lmatrix.animate_wave(True)
+                UTILS.play("horn.wav", times=2, sleep=0.5)
+            elif nr == 5:
+                steelsquid_utils.execute_blink("away_flash", True, IO.UNITS.headlight, (True,), 0.01, IO.UNITS.headlight, (False,), 2)
+                lmatrix.animate_wait(True)
+            else:
+                steelsquid_utils.execute_blink("away_flash", False)
+                lmatrix.animate_stop()
+                
+        
+        
         
         
 
@@ -1034,11 +1181,11 @@ class DO(object):
         if not dummy:
             if status:
                 steelsquid_utils.execute_one_time_clean()
-                DO.speek("Connected to control station", False, True)
+                UTILS.play("connected.wav")
                 lmatrix.animate_stop()
             else:
-                DO.speek("Connection lost. Trying to reconnect", False, True)
-                lmatrix.animate_start(lmatrix.matrix_animate_connect, rotate=3, seconds=0.05)
+                UTILS.play("reconnect.wav")
+                lmatrix.animate_connect(True)
             steelsquid_utils.execute_blink("connected_flash_1", not status, DO.connected, (True, True,), 0.04, DO.connected, (False, True,), 2)
         else:
             steelsquid_pi.gpio_set(16, not status)
@@ -1072,13 +1219,13 @@ class DO(object):
         if dummy == None:
             thread.start_new_thread(DO.speek, (text, lcd, english, "",)) 
         else:
-            sleep = False
-            if LOOP.last_speek == None:
-                sleep = True
-            LOOP.last_speek = time.time()
-            IO.UNITS.speeker(True)
-            if sleep:
-                time.sleep(5)
+            #sleep = False
+            #if LOOP.last_speek == None:
+            #    sleep = True
+            #LOOP.last_speek = time.time()
+            #IO.UNITS.speeker(True)
+            #if sleep:
+            #    time.sleep(5)
             t = len(text)/10
             if t < 1:
                 t = 0.8
@@ -1166,18 +1313,19 @@ class UTILS(object):
         '''
         Play a sound
         ''' 
+        sound = "/opt/steelsquid/web/snd/"+sound
         thread.start_new_thread(UTILS._play, (sound, times, sleep))
         
 
     @staticmethod
     def _play(sound, times, sleep1):
-        sleep = False
-        if LOOP.last_speek == None:
-            sleep = True
-        LOOP.last_speek = time.time()
-        IO.UNITS.speeker(True)
-        if sleep:
-            time.sleep(5)
+        #sleep = False
+        #if LOOP.last_speek == None:
+        #    sleep = True
+        #LOOP.last_speek = time.time()
+        #IO.UNITS.speeker(True)
+        #if sleep:
+        #    time.sleep(5)
         time.sleep(sleep1)
         for i in range(times):
             steelsquid_utils.execute_system_command_blind(["aplay", sound])

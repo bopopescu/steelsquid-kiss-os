@@ -138,7 +138,22 @@ def import_file_dyn(obj):
                     thread.start_new_thread(do_on_loop, (m,))
         class_io = steelsquid_kiss_global._get_object(obj, "IO")
         if class_io!=None:
+            m = getattr(class_io, "on_start", None)
+            if m != None:
+                m()
             m = getattr(class_io, "reader", None)
+            if m != None:
+                thread.start_new_thread(io_reader_loop, (m,class_io,))
+            m = getattr(class_io, "reader_1", None)
+            if m != None:
+                thread.start_new_thread(io_reader_loop, (m,class_io,))
+            m = getattr(class_io, "reader_2", None)
+            if m != None:
+                thread.start_new_thread(io_reader_loop, (m,class_io,))
+            m = getattr(class_io, "reader_3", None)
+            if m != None:
+                thread.start_new_thread(io_reader_loop, (m,class_io,))
+            m = getattr(class_io, "reader_4", None)
             if m != None:
                 thread.start_new_thread(io_reader_loop, (m,class_io,))
     except:
@@ -228,6 +243,18 @@ def reload_file_dyn(obj):
         class_io = steelsquid_kiss_global._get_object(obj, "IO")
         if class_io!=None:
             m = getattr(class_io, "reader", None)
+            if m != None:
+                thread.start_new_thread(io_reader_loop, (m, class_io, ))
+            m = getattr(class_io, "reader_1", None)
+            if m != None:
+                thread.start_new_thread(io_reader_loop, (m, class_io, ))
+            m = getattr(class_io, "reader_2", None)
+            if m != None:
+                thread.start_new_thread(io_reader_loop, (m, class_io, ))
+            m = getattr(class_io, "reader_3", None)
+            if m != None:
+                thread.start_new_thread(io_reader_loop, (m, class_io, ))
+            m = getattr(class_io, "reader_4", None)
             if m != None:
                 thread.start_new_thread(io_reader_loop, (m, class_io, ))
     except:
@@ -411,14 +438,17 @@ def on_network(net, wired, usb, wifi, access_point, wan):
                 shout_string.append(bluetooth)
         else:
             if wired!="---":
-                shout_string.append("\nWIRED: ")
+                shout_string.append("WIRED: ")
                 shout_string.append(wired)
+                shout_string.append("\n")
             if usb!="---":
-                shout_string.append("\nUSB: ")
+                shout_string.append("USB: ")
                 shout_string.append(usb)
+                shout_string.append("\n")
             if wan != "---":
-                shout_string.append("\nWAN: ")
+                shout_string.append("WAN: ")
                 shout_string.append(wan)
+                shout_string.append("\n")
             if len(bluetooth)!=0:
                 shout_string.append(bluetooth)
         if steelsquid_kiss_global.is_module_enabled("kiss_piio"):
@@ -715,6 +745,25 @@ def task_event_thread(command, parameters=None):
                 on_network("up", steelsquid_kiss_global.last_lan_ip, steelsquid_kiss_global.last_usb_ip, steelsquid_kiss_global.last_wifi_ip, steelsquid_kiss_global.last_wifi_name, steelsquid_kiss_global.last_wan_ip)
             else:
                 on_network("down", steelsquid_kiss_global.last_lan_ip, steelsquid_kiss_global.last_usb_ip, steelsquid_kiss_global.last_wifi_ip, steelsquid_kiss_global.last_wifi_name, steelsquid_kiss_global.last_wan_ip)
+        elif command == "network-wan":
+            steelsquid_kiss_global.last_lan_ip = steelsquid_utils.network_ip_wired()
+            steelsquid_kiss_global.last_usb_ip = steelsquid_utils.network_ip_usb()
+            steelsquid_kiss_global.last_wifi_ip = steelsquid_utils.network_ip_wifi()
+            if steelsquid_kiss_global.last_wifi_ip != "---":
+                try:
+                    steelsquid_kiss_global.last_wifi_name = steelsquid_nm.get_connected_access_point_name()
+                except:
+                    steelsquid_kiss_global.last_wifi_name = "---"
+            else:
+                steelsquid_kiss_global.last_wifi_name = "---"
+            if steelsquid_kiss_global.last_lan_ip == "---" and steelsquid_kiss_global.last_wifi_ip == "---" and steelsquid_kiss_global.last_usb_ip == "---":
+                steelsquid_kiss_global.last_net = False
+            else:
+                steelsquid_kiss_global.last_net = True
+            if steelsquid_kiss_global.last_net:
+                on_network("up", steelsquid_kiss_global.last_lan_ip, steelsquid_kiss_global.last_usb_ip, steelsquid_kiss_global.last_wifi_ip, steelsquid_kiss_global.last_wifi_name, steelsquid_kiss_global.last_wan_ip)
+            else:
+                on_network("down", steelsquid_kiss_global.last_lan_ip, steelsquid_kiss_global.last_usb_ip, steelsquid_kiss_global.last_wifi_ip, steelsquid_kiss_global.last_wifi_name, steelsquid_kiss_global.last_wan_ip)
         elif command == "mount":
             the_type = parameters[0]
             the_remote = parameters[1]
@@ -741,9 +790,11 @@ def wan_background_stuff():
     '''
     Do wan background stuff thread
     '''
-    for i in range(10):
+    for i in range(20):
         steelsquid_kiss_global.last_wan_ip = steelsquid_utils.network_ip_wan()
         if steelsquid_kiss_global.last_wan_ip != "---":
+            # Execute a network event so the IP is shown
+            execute_task_event("network-wan")
             return
         time.sleep(2)
 
@@ -1090,20 +1141,33 @@ def radio_tcp_connection_check():
         median_value = 0
         # Wait for modules to start
         #time.sleep(4)
+        steelsquid_tcp_radio.ping_time=-1
+        no = datetime.datetime.now()
+        steelsquid_tcp_radio.last_sync = no
+        steelsquid_tcp_radio.last_command = no
+        steelsquid_tcp_radio.last_push = [no, no, no, no, no, no]
+        radio.on_check(-1, -1, -1)
+        last_command_time = -1
         while running:
             try:
                 last_sync = datetime.datetime.now()
                 # Execute the on_sync metod
                 radio.on_sync()
+                # Check if NTP has update the time
+                last_com = steelsquid_tcp_radio.get_last_command()
+                do_it = True
+                if last_command_time != -1:
+                    te = abs(last_com - last_command_time)
+                    do_it = te < 10000
                 # Execute the on_check metod
-                if steelsquid_kiss_global.seconds_since_start()>10:
+                if do_it and steelsquid_kiss_global.seconds_since_start()>10:
                     pt = steelsquid_tcp_radio.get_last_ping_time()
                     median_list[median_count] = pt
                     median_count = median_count + 1
                     if median_count >= 11:
                         median_value = steelsquid_utils.median(median_list)
                         median_count = 0
-                    radio.on_check(steelsquid_tcp_radio.get_last_command(), pt, median_value)
+                    radio.on_check(last_com, pt, median_value)
                 else:
                     steelsquid_tcp_radio.ping_time=-1
                     no = datetime.datetime.now()
@@ -1111,11 +1175,12 @@ def radio_tcp_connection_check():
                     steelsquid_tcp_radio.last_command = no
                     steelsquid_tcp_radio.last_push = [no, no, no, no, no, no]
                     radio.on_check(-1, -1, -1)
+                last_command_time = last_com
                 # Do the command connection checks
                 if steelsquid_tcp_radio.get_last_command() >= max_seconds:
                     if command_count==0:
                         command_count = command_count + 1 
-                        print "Force disconnect command"
+                        #print "Force disconnect command"
                         steelsquid_tcp_radio.command_disconnect()
                     elif command_count>=max_seconds:
                         command_count=0
@@ -1127,7 +1192,7 @@ def radio_tcp_connection_check():
                 if steelsquid_tcp_radio.get_last_sync() >= max_seconds:
                     if sync_count==0:
                         sync_count = sync_count + 1 
-                        print "Force disconnect sync"
+                        #print "Force disconnect sync"
                         steelsquid_tcp_radio.sync_disconnect()
                     elif sync_count>=max_seconds:
                         sync_count=0
@@ -1141,7 +1206,7 @@ def radio_tcp_connection_check():
                         cou = push_count[nr]
                         if cou==0:
                             push_count[nr] = cou + 1 
-                            print "Force disconnect push_1"
+                            #print "Force disconnect push_1"
                             steelsquid_tcp_radio.push_disconnect(nr)
                         elif cou>=max_seconds:
                             push_count[nr]=0

@@ -141,6 +141,7 @@ yl40_lock = threading.RLock()
 hdc1008_lock = threading.RLock()
 mean_po12 = [None, None, None, None, None, None, None, None, None]
 last_po12 = [None, None, None, None, None, None, None, None, None]
+tsl = None
 
 
 def cleanup():
@@ -1161,7 +1162,7 @@ def hcsr04_event(trig_gpio, echo_gpio, callback_method, min_change=2, sample_sle
             event_notificatin_list.append(post)
 
 
-def pca9685_move(servo, value):
+def pca9685_move(servo, value, address = 0x40):
     '''
     Move Adafruit 16-channel I2c servo to position (pwm value)
     @param servo: 0 to 15
@@ -1170,12 +1171,12 @@ def pca9685_move(servo, value):
     with pwm_lock:
         global pwm
         if pwm == None:
-            pwm = PWM(0x40)
+            pwm = PWM(address)
             pwm.set_pwm_freq(60) 
         pwm.set_pwm(int(servo), 0, int(value))
 
 
-def sabertooth_motor_speed(left, right, the_port="/dev/ttyAMA0"):
+def sabertooth_motor_speed(left, right, ramping = True, the_port="/dev/ttyAMA0"):
     '''
     Set the speed on a sabertooth dc motor controller.
     left and right:
@@ -1193,7 +1194,7 @@ def sabertooth_motor_speed(left, right, the_port="/dev/ttyAMA0"):
         if the_port == None:
             the_port = steelsquid_utils.get_parameter("sabertooth_port", "")
         sabertooth = steelsquid_sabertooth.SteelsquidSabertooth(serial_port=the_port)
-    sabertooth.set_dc_speed(left, right)
+    sabertooth.set_dc_speed(left, right, ramping)
     
 
 def trex_reset():
@@ -1674,7 +1675,7 @@ def po12_adc_smooth(channel, median_size=3):
 
 
 
-def po12_adc_smooth_max(channel, median_size=3, max_change=250, zero = 512):
+def po12_adc_smooth_max(channel, median_size=3, max_change=350, zero = 512):
     '''
     Read the analog value in on the P011/12 ADC
     Return 0 to 1023
@@ -2046,6 +2047,67 @@ def mpl3115A2():
     '''
     return MPL3115A2.read()
     
+    
+def si7021():
+    '''
+    Read temp and humidity from SI7021 sensor
+    https://www.adafruit.com/product/3251
+    This code is from: https://github.com/fabbronet/SI7021/blob/master/Python/SI7021.py
+    '''
+    
+    bus = steelsquid_i2c.bus
+    try:
+        rh = bus.read_i2c_block_data(0x40, 0xE5, 2) 
+        time.sleep(0.1)
+        humidity = ((rh[0] * 256 + rh[1]) * 125 / 65536.0) - 6
+        temp = bus.read_i2c_block_data(0x40, 0xE3, 2)
+        time.sleep(0.1)
+        cTemp = ((temp[0] * 256 + temp[1]) * 175.72 / 65536.0) - 46.85
+    except:
+        time.sleep(0.5)
+        rh = bus.read_i2c_block_data(0x40, 0xE5, 2) 
+        time.sleep(0.1)
+        humidity = ((rh[0] * 256 + rh[1]) * 125 / 65536.0) - 6
+        temp = bus.read_i2c_block_data(0x40, 0xE3,2)
+        time.sleep(0.1)
+        cTemp = ((temp[0] * 256 + temp[1]) * 175.72 / 65536.0) - 46.85
+    return humidity, cTemp
+
+
+def si7021_hum():
+    '''
+    Read temp and humidity from SI7021 sensor
+    https://www.adafruit.com/product/3251
+    This code is from: https://github.com/fabbronet/SI7021/blob/master/Python/SI7021.py
+    '''
+    
+    bus = steelsquid_i2c.bus
+    try:
+        rh = bus.read_i2c_block_data(0x40, 0xE5, 2) 
+        time.sleep(0.1)
+        humidity = ((rh[0] * 256 + rh[1]) * 125 / 65536.0) - 6 + 27
+    except:
+        time.sleep(0.5)
+        rh = bus.read_i2c_block_data(0x40, 0xE5, 2) 
+        time.sleep(0.1)
+        humidity = ((rh[0] * 256 + rh[1]) * 125 / 65536.0) - 6 + 27
+    return humidity
+
+
+
+
+def tsl2561():
+    '''
+    Adafruit TSL2561 Digital Luminosity/Lux/Light Sensor Breakout
+    https://www.adafruit.com/product/439
+    '''
+    global tsl
+    from tsl2561 import TSL2561
+    if tsl == None:
+        tsl = TSL2561()
+    return tsl.lux()
+        
+
 
 if __name__ == '__main__':
     if len(sys.argv)==1:
@@ -2405,6 +2467,8 @@ if __name__ == '__main__':
         elif command == "mpl3115A2":
             temp, pressure, altitude = mpl3115A2()
             print "Temperature: " + str(temp) + " C\nPressure: " + str(pressure) + " kPa\nAltitude: " + str(altitude) + " m"
+        elif command == "si7021":
+            print si7021()
         else:
             print "Unknown command!!!"
             

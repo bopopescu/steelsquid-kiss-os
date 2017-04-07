@@ -14,6 +14,7 @@
         <link rel="stylesheet" type="text/css" href="steelsquid.css"/>
         <script type="text/javascript" src="jquery.js"></script>
         <script type="text/javascript" src="steelsquid.js"></script>
+        <script type="text/javascript" src="http://beneposto.pl/jqueryrotate/js/jQueryRotateCompressed.js"></script>        
         <style>
            #gmap {
             height: 400px;
@@ -47,9 +48,9 @@
                       
                       
             /**
-             * This will execute every 1 second
+             * This will execute every 0.5 second
              */
-            function onEvery01s(){
+            function onEveryHalfS(){
                 if(isVisible()){
                     submitNoPW('show');
                     submitNoPW('get_hud');
@@ -105,6 +106,9 @@
                 }
             }
 
+            
+            var roll_over = false;
+            var pitch_over = false;
 
             /**
              * On gps
@@ -119,6 +123,30 @@
                             $('#low_band').hide();
                         }  , 6000 );
                     }
+                    roll = parseInt(paramaters[3]);
+                    pitch = parseInt(paramaters[4]);
+                    
+                    var front = $("#front");
+                    var side = $("#side");
+                    if(!roll_over && Math.abs(roll)>40){
+                        roll_over = true;
+                        front.attr("src", "img/front-w.png");
+                    }
+                    else if(roll_over){
+                        roll_over = false;
+                        front.attr("src", "img/front.png");
+                    }
+                    if(!pitch_over && Math.abs(pitch)>40){
+                        pitch_over = true;
+                        side.attr("src", "img/side-w.png");
+                    }
+                    else if(pitch_over){
+                        pitch_over = false;
+                        side.attr("src", "img/side.png");
+                    }
+                    
+                    front.rotate(roll);
+                    side.rotate(pitch);
                 }
             }
             
@@ -280,6 +308,10 @@
                         showAlertShort("Sending");
                         e.preventDefault();
                     break;
+                    case 43:
+                        submitAsync("vol_down");
+                        e.preventDefault();
+                    break;
                     case 8:
                         try{
                             $('#speek_text').html($('#speek_text').html().slice(0, -1));
@@ -287,6 +319,62 @@
                         catch(w){
                         }   
                         e.preventDefault();
+                    break;
+                    case 49:
+                        if(isLayerShowing("map")){
+                            submitAsync("speek", 'Ja');
+                            showAlertShort("Sending");
+                            e.preventDefault();
+                        }
+                    break;
+                    case 50:
+                        if(isLayerShowing("map")){
+                            submitAsync("speek", 'Nej');
+                            showAlertShort("Sending");
+                            e.preventDefault();
+                        }
+                    break;
+                    case 51:
+                        if(isLayerShowing("map")){
+                            submitAsync("speek", 'Hejsan');
+                            showAlertShort("Sending");
+                            e.preventDefault();
+                        }
+                    break;
+                    case 52:
+                        if(isLayerShowing("map")){
+                            submitAsync("speek", 'Jag är en robbot som styrs via 4G nätet');
+                            showAlertShort("Sending");
+                            e.preventDefault();
+                        }
+                    break;
+                    case 53:
+                        if(isLayerShowing("map")){
+                            submitAsync("speek", 'Vad heter du');
+                            showAlertShort("Sending");
+                            e.preventDefault();
+                        }
+                    break;
+                    case 54:
+                        if(isLayerShowing("map")){
+                            submitAsync("speek", 'Jag heter irrbloss');
+                            showAlertShort("Sending");
+                            e.preventDefault();
+                        }
+                    break;
+                    case 55:
+                        if(isLayerShowing("map")){
+                            submitAsync("speek", 'Hej då');
+                            showAlertShort("Sending");
+                            e.preventDefault();
+                        }
+                    break;
+                    case 56:
+                        if(isLayerShowing("map")){
+                            submitAsync("speek", '----');
+                            showAlertShort("Sending");
+                            e.preventDefault();
+                        }
                     break;
                     default:
                         $('#speek_text').append(String.fromCharCode(code));
@@ -302,7 +390,8 @@
                     break;
                 }
             };              
-
+            
+    
             //]]>
         </script>
         
@@ -315,11 +404,13 @@
             <div id="hud_text" style="position: absolute;top: 0px;left: 0px;z-index: 10; background-color: rgba(0, 0, 0, 0.5);font-weight: bold; font-size: 14px; line-height: 20px; width:200px; height:calc(100% - 14px);padding-left:9px;padding-top:6px;padding-bottom:3px;padding-right:6px;"></div>
             <div style="padding:0px"id="gmap"></div>
             <div id="low_band" style="border:2px solid black; background-color: red;color:white;font-weight:bold;padding:8px;position:absolute; z-index:9999; top:calc(100% - 70px); left: calc(100% - 320px);">No connection, streams closed!</div>
+            <img id="front" style="position:absolute; z-index:9999; top:calc(100% - 215px); left: calc(100% - 125px);" src="img/front.png">
+            <img id="side" style="position:absolute; z-index:9999; top:calc(100% - 100px); left: calc(100% - 125px);" src="img/side.png">
         </div>
         <div class="layer" id="settings">
             <div style="border: 2px solid white; padding: 5px; text-align: center; margin-bottom: 10px; font-size: large;font-weight: bold">SETTINGS</div>
             The Irrbloss Rover will connect to the remote on ports 6601, 6602, 6603, 6604, 6605, 6606 using TCP.<br>
-            Also 6607 is used for video over TCP and 6608 for audio over UDP.<br>
+            Also 6607 is used for video and 6608 for audio over UDP.<br>
             So all this port must be open in the firewall where the remote controll is...<br>
             <br>
             <table>

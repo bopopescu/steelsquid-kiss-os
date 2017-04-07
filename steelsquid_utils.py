@@ -2036,9 +2036,9 @@ def distance(lat1, lng1, lat2, lng2):
     ang = 2 * atan2(sqrt(val), sqrt(1-val))
     m = int(radius * ang)
     if m < 1000:
-        return m, "m"
+        return m, "m", "meter"
     else:
-        return round(float(m)/1000, 2) , "km"
+        return round(float(m)/1000, 2) , "km", "kilometer"
 
 
 def execute_if_changed(method, value, extra_value=None, execute_first_time=True):

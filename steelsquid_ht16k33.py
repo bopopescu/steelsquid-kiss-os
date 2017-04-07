@@ -284,98 +284,81 @@ connect_1 = [[ 0,0,0,0,0,0,0,0],
              [ 0,0,0,0,0,0,0,0],
              [ 0,0,0,0,0,0,0,0],
              [ 0,0,0,0,0,0,0,0],
-             [ 0,0,0,0,0,0,0,0],
-             [ 0,0,0,0,0,0,0,0],
-             [ 0,0,0,0,0,0,0,0],
-             [ 0,0,0,0,0,0,0,0]]
+             [ 0,0,0,1,0,0,0,0],
+             [ 0,0,0,1,0,0,0,0],
+             [ 0,0,0,1,0,0,0,0],
+             [ 0,0,0,1,0,0,0,0]]
 
 connect_2 = [[ 0,0,0,0,0,0,0,0],
              [ 0,0,0,0,0,0,0,0],
              [ 0,0,0,0,0,0,0,0],
-             [ 0,0,0,0,0,0,0,0],
-             [ 0,0,0,0,0,0,0,0],
-             [ 0,0,0,0,0,0,0,0],
-             [ 0,0,0,0,0,0,0,0],
-             [ 0,0,0,1,1,0,0,0]]
+             [ 0,0,0,1,0,0,0,0],
+             [ 0,0,1,1,1,0,0,0],
+             [ 0,0,0,1,0,0,0,0],
+             [ 0,0,0,1,0,0,0,0],
+             [ 0,0,0,1,0,0,0,0]]
 
 connect_3 = [[ 0,0,0,0,0,0,0,0],
              [ 0,0,0,0,0,0,0,0],
-             [ 0,0,0,0,0,0,0,0],
-             [ 0,0,0,0,0,0,0,0],
-             [ 0,0,0,0,0,0,0,0],
-             [ 0,0,0,0,0,0,0,0],
-             [ 0,0,0,1,1,0,0,0],
-             [ 0,0,1,0,0,1,0,0]]
+             [ 0,0,1,1,1,0,0,0],
+             [ 0,1,0,0,0,1,0,0],
+             [ 0,1,0,1,0,1,0,0],
+             [ 0,1,0,1,0,1,0,0],
+             [ 0,0,1,1,1,0,0,0],
+             [ 0,0,0,1,0,0,0,0]]
 
 connect_4 = [[ 0,0,0,0,0,0,0,0],
-             [ 0,0,0,0,0,0,0,0],
-             [ 0,0,0,0,0,0,0,0],
-             [ 0,0,0,0,0,0,0,0],
-             [ 0,0,0,0,0,0,0,0],
-             [ 0,0,0,1,1,0,0,0],
-             [ 0,0,1,0,0,1,0,0],
-             [ 0,0,0,0,0,0,0,0]]
+             [ 0,0,1,1,1,0,0,0],
+             [ 0,1,0,0,0,1,0,0],
+             [ 1,0,0,0,0,0,1,0],
+             [ 1,0,0,1,0,0,1,0],
+             [ 1,0,0,1,0,0,1,0],
+             [ 0,1,0,1,0,1,0,0],
+             [ 0,0,1,1,1,0,0,0]]
 
-connect_5 = [[ 0,0,0,0,0,0,0,0],
-             [ 0,0,0,0,0,0,0,0],
-             [ 0,0,0,0,0,0,0,0],
-             [ 0,0,0,0,0,0,0,0],
-             [ 0,0,1,1,1,1,0,0],
-             [ 0,1,1,0,0,1,1,0],
-             [ 0,0,0,0,0,0,0,0],
-             [ 0,0,0,0,0,0,0,0]]
+connect_5 = [[ 0,0,1,1,1,0,0,0],
+             [ 0,1,0,0,0,1,0,0],
+             [ 1,0,0,0,0,0,1,0],
+             [ 0,0,0,0,0,0,0,1],
+             [ 0,0,0,1,0,0,0,1],
+             [ 0,0,0,1,0,0,0,1],
+             [ 1,0,0,1,0,0,1,0],
+             [ 0,1,0,1,0,1,0,0]]
 
-connect_6 = [[ 0,0,0,0,0,0,0,0],
+connect_6 = [[ 0,1,0,0,0,1,0,0],
+             [ 1,0,0,0,0,0,1,0],
+             [ 0,0,0,0,0,0,0,1],
              [ 0,0,0,0,0,0,0,0],
-             [ 0,0,0,1,1,0,0,0],
-             [ 0,0,1,1,1,1,0,0],
-             [ 0,1,0,0,0,0,1,0],
-             [ 0,0,0,0,0,0,0,0],
-             [ 0,0,0,0,0,0,0,0],
-             [ 0,0,0,0,0,0,0,0]]
+             [ 0,0,0,1,0,0,0,0],
+             [ 0,0,0,1,0,0,0,0],
+             [ 0,0,0,1,0,0,0,1],
+             [ 1,0,0,1,0,0,1,0]]
 
-connect_7 = [[ 0,0,0,0,0,0,0,0],
-             [ 0,0,1,1,1,1,0,0],
-             [ 0,1,1,1,1,1,1,0],
-             [ 1,1,0,0,0,0,1,1],
-             [ 1,0,0,0,0,0,0,1],
+connect_7 = [[ 1,0,0,0,0,0,1,0],
+             [ 0,0,0,0,0,0,0,1],
              [ 0,0,0,0,0,0,0,0],
              [ 0,0,0,0,0,0,0,0],
-             [ 0,0,0,0,0,0,0,0]]
+             [ 0,0,0,1,0,0,0,0],
+             [ 0,0,0,1,0,0,0,0],
+             [ 0,0,0,1,0,0,0,0],
+             [ 0,0,0,1,0,0,0,1]]
 
-connect_8 = [[ 0,0,1,1,1,1,0,0],
-             [ 0,1,1,1,1,1,1,0],
-             [ 1,1,0,0,0,0,1,1],
-             [ 1,0,0,0,0,0,0,1],
+connect_8 = [[ 0,0,0,0,0,0,0,1],
              [ 0,0,0,0,0,0,0,0],
              [ 0,0,0,0,0,0,0,0],
              [ 0,0,0,0,0,0,0,0],
-             [ 0,0,0,0,0,0,0,0]]
+             [ 0,0,0,1,0,0,0,0],
+             [ 0,0,0,1,0,0,0,0],
+             [ 0,0,0,1,0,0,0,0],
+             [ 0,0,0,1,0,0,0,0]]
 
-connect_9 = [[ 0,1,1,1,1,1,1,0],
-             [ 1,1,1,0,0,1,1,1],
-             [ 1,0,0,0,0,0,0,1],
-             [ 0,0,0,0,0,0,0,0],
-             [ 0,0,0,0,0,0,0,0],
-             [ 0,0,0,0,0,0,0,0],
-             [ 0,0,0,0,0,0,0,0],
-             [ 0,0,0,0,0,0,0,0]]
-
-connect_10 = [[ 1,1,0,0,0,0,1,1],
-              [ 1,0,0,0,0,0,0,1],
-              [ 0,0,0,0,0,0,0,0],
-              [ 0,0,0,0,0,0,0,0],
-              [ 0,0,0,0,0,0,0,0],
-              [ 0,0,0,0,0,0,0,0],
-              [ 0,0,0,0,0,0,0,0],
-              [ 0,0,0,0,0,0,0,0]]
                           
 matrix_animate_typing = [matrix_type_1, matrix_type_2, matrix_type_3, matrix_type_4, matrix_type_5]
 matrix_animate_speak = [matrix_speak_1, matrix_speak_2, matrix_smile, matrix_speak_2]
 matrix_animate_heart = [matrix_empty, matrix_empty, matrix_empty, matrix_heart_1, matrix_heart_2, matrix_heart_3, matrix_heart_4, matrix_heart_4, matrix_heart_4, matrix_heart_4, matrix_heart_4, matrix_heart_4, matrix_heart_3, matrix_heart_2, matrix_heart_1]
 matrix_animate_wave = [matrix_wave_1, matrix_wave_2, matrix_wave_3, matrix_wave_2]
 matrix_animate_wait = [wait_1, wait_2, wait_3, wait_4, wait_5, wait_6, wait_7, wait_8]
-matrix_animate_connect = [connect_1, connect_2, connect_3, connect_4, connect_5, connect_6, connect_7, connect_8, connect_9, connect_10]
+matrix_animate_connect = [connect_1, connect_2, connect_3, connect_4, connect_5, connect_6, connect_7, connect_8]
 
 address_setup = []
 running = 0
@@ -420,7 +403,7 @@ def get_matrix():
     return [[0 for x in range(8)] for y in range(8)] 
 
 
-def paint_flash(matrix, rotate=0, address=0x70, seconds=1, status=None):
+def paint_flash(matrix, rotate=2, address=0x70, seconds=1, status=None):
     '''
     Light a pattern
     matrix= two dimensinal array 8*8  [ROW, COLUMN]
@@ -429,7 +412,7 @@ def paint_flash(matrix, rotate=0, address=0x70, seconds=1, status=None):
     steelsquid_utils.execute_flash("paint_flash", status, seconds, paint, (matrix, rotate, address,), paint, (empty, rotate, address,))
     
 
-def paint(matrix, rotate=0, address=0x70):
+def paint(matrix, rotate=2, address=0x70):
     '''
     Light a pattern
     matrix= two dimensinal array 8*8  [ROW, COLUMN]
@@ -454,7 +437,7 @@ def paint(matrix, rotate=0, address=0x70):
         i_row = i_row + 1
 
 
-def animate_start(matrix_list, rotate=0, seconds=1, address=0x70):
+def animate_start(matrix_list, rotate=2, seconds=1, address=0x70):
     '''
     Show all the matrix in a list
     sleep number of seconds between
@@ -475,7 +458,7 @@ def animate_stop():
     clear()
     
     
-def _animate_thread(r_id, matrix_list, rotate=0, seconds=1, address=0x70):
+def _animate_thread(r_id, matrix_list, rotate=2, seconds=1, address=0x70):
     while running==r_id:
         for matrix in matrix_list:
             paint(matrix, rotate, address)
@@ -490,7 +473,7 @@ def _animate_thread(r_id, matrix_list, rotate=0, seconds=1, address=0x70):
     
 
 
-def animate_typing(status, rotate=3, address=0x70):
+def animate_typing(status, rotate=2, address=0x70):
     '''
     Animate a typing icon
     status = boolean: start or stop animation
@@ -508,7 +491,7 @@ def animate_typing(status, rotate=3, address=0x70):
         steelsquid_utils.execute_delay(status, animate_stop)
 
 
-def animate_speak(status, leav_this=None, rotate=3, address=0x70):
+def animate_speak(status, leav_this=None, rotate=2, address=0x70):
     '''
     Animate a speaking mouth
     status = boolean: start or stop animation
@@ -527,7 +510,7 @@ def animate_speak(status, leav_this=None, rotate=3, address=0x70):
         steelsquid_utils.execute_delay(status, animate_stop)
 
 
-def animate_heart(status, rotate=3, address=0x70):
+def animate_heart(status, rotate=2, address=0x70):
     '''
     Animate a heart
     status = boolean: start or stop animation
@@ -546,7 +529,7 @@ def animate_heart(status, rotate=3, address=0x70):
         steelsquid_utils.execute_delay(status, animate_stop)
 
 
-def animate_wave(status, rotate=3, address=0x70):
+def animate_wave(status, rotate=2, address=0x70):
     '''
     Animate a waving man
     status = boolean: start or stop animation
@@ -565,7 +548,7 @@ def animate_wave(status, rotate=3, address=0x70):
         steelsquid_utils.execute_delay(status, animate_stop)
         
         
-def animate_wait(status, rotate=3, address=0x70):
+def animate_wait(status, rotate=2, address=0x70):
     '''
     Animate a wait clock
     status = boolean: start or stop animation
@@ -584,6 +567,24 @@ def animate_wait(status, rotate=3, address=0x70):
         steelsquid_utils.execute_delay(status, animate_stop)
 
 
+def animate_connect(status, rotate=2, address=0x70):
+    '''
+    Animate a connect
+    status = boolean: start or stop animation
+    status = int: aimate for this number of seconds
+    leav_this = Do not clear, paint this instead
+    '''
+    global leav_this_on_stop
+    leav_this_on_stop = None
+    if type(status) == types.BooleanType:
+        if status:
+            animate_start(matrix_animate_connect, rotate, 0.1)
+        else:
+            animate_stop()
+    else:
+        animate_start(matrix_animate_connect, rotate, 0.1)
+        steelsquid_utils.execute_delay(status, animate_stop)
+
 
 if __name__ == "__main__":
     if len(sys.argv)==1:
@@ -594,13 +595,7 @@ if __name__ == "__main__":
         print("")
     else:
         if sys.argv[1]=='test':
-            matrix = [[ 0,1,1,1,1,1,1,0],
-                      [ 1,0,0,0,0,0,0,1],
-                      [ 1,0,1,0,0,1,0,1],
-                      [ 1,0,0,0,0,0,0,1],
-                      [ 1,0,1,0,0,1,0,1],
-                      [ 1,0,0,1,1,0,0,1],
-                      [ 1,0,0,0,0,0,0,1],
-                      [ 0,1,1,1,1,1,1,0]]
-            paint(matrix, rotate=3)
+
+            animate_connect(True)
+            raw_input("Press Enter to continue...")
             

@@ -31,6 +31,9 @@ fps = "20"
 # Bitrate for the stream
 bitrate = "800000"
 
+# , tcp_video
+tcp_video = False
+
 # has this unit the mic and camera
 is_camera_mic = False
 
@@ -51,14 +54,21 @@ running = True
 # Save to this location
 save_function = None
 
+# low_light
+low_light_v = ""
+low_light_bool = False
 
-def setup_camera_mic(video_ip, video_port, audio_ip, audio_port, width, height, fps, bitrate):
+# Running
+low_bandwidth_mode = False
+
+
+def setup_camera_mic(video_ip, video_port, audio_ip, audio_port, width, height, fps, bitrate, tcp_video, low_light):
     '''
     Stream raspberry pi camera to host using TCP
     Also record with mic and stream using UDP
     ''' 
-    global is_camera_mic
-    is_camera_mic = True
+    global is_camera_mic 
+    is_camera_mic = True 
     globals()['video_ip'] = video_ip
     globals()['video_port'] = str(video_port)
     globals()['audio_ip'] = audio_ip
@@ -67,12 +77,14 @@ def setup_camera_mic(video_ip, video_port, audio_ip, audio_port, width, height, 
     globals()['height'] = str(height)
     globals()['fps'] = str(fps)
     globals()['bitrate'] = str(bitrate)
+    globals()['tcp_video'] = tcp_video
+    _low_light(low_light)
     steelsquid_utils.execute_system_command(["modprobe", "bcm2835-v4l2", "gst_v4l2src_is_broken=1"])
     thread.start_new_thread(_video_cam_thread, ())
     thread.start_new_thread(_audio_mic_thread, ())
 
 
-def setup_display_speaker(video_ip, video_port, audio_ip, audio_port, width, height, fps, save_function):
+def setup_display_speaker(video_ip, video_port, audio_ip, audio_port, width, height, fps, save_function, tcp_video, low_light):
     '''
     Listen for stream from host and display on screen
     Also listen for audio stream and play in speaker
@@ -88,6 +100,8 @@ def setup_display_speaker(video_ip, video_port, audio_ip, audio_port, width, hei
     globals()['height'] = str(height)
     globals()['fps'] = str(fps)
     globals()['save_function'] = save_function
+    globals()['tcp_video'] = tcp_video
+    _low_light(low_light)
     thread.start_new_thread(_video_display_thread, ())
     thread.start_new_thread(_audio_speaker_thread, ())
     thread.start_new_thread(_hud_thread, ())
@@ -97,6 +111,7 @@ def save(enable):
     '''
     Save to disk...will enable audio/video and hud...
     ''' 
+    globals()['low_bandwidth_mode'] = False
     globals()['save_to_disk'] = enable
     globals()['enable_video'] = enable
     globals()['enable_audio'] = enable
@@ -108,6 +123,7 @@ def video(enable):
     '''
     Enable the video stream or listen for stream
     ''' 
+    globals()['low_bandwidth_mode'] = False
     globals()['enable_video'] = enable
     kill_video()
 
@@ -116,14 +132,45 @@ def video_bitrate(new_bitrate):
     '''
     Change the bitrate of the video stream
     ''' 
+    globals()['low_bandwidth_mode'] = False
     globals()['bitrate'] = new_bitrate
     kill_video()
 
+
+def video_tcp(enable):
+    '''
+    Change the bitrate of the video stream
+    ''' 
+    globals()['low_bandwidth_mode'] = False
+    globals()['tcp_video'] = enable
+    kill_video()
     
+    
+def low_light(enable):
+    '''
+    Use low light camera
+    ''' 
+    globals()['low_bandwidth_mode'] = False
+    _low_light(enable)
+    kill_video()
+    
+    
+def _low_light(enable):
+    '''
+    Use low light camera
+    ''' 
+    globals()['low_light_bool'] = enable
+    if enable:
+        globals()['low_light_v'] = "image_stabilization=1,auto_exposure=0,auto_exposure_bias=24,iso_sensitivity=4,scene_mode=9,brightness=60,saturation=10"
+    else:
+        globals()['low_light_v'] = "image_stabilization=1,auto_exposure=0,auto_exposure_bias=12,iso_sensitivity=0,scene_mode=0,brightness=50,saturation=0"
+        
+        
 def audio(enable):
     '''
     Enable the audio stream or listen for stream
     ''' 
+    globals()['low_bandwidth_mode'] = False
     globals()['enable_audio'] = enable
     kill_audio()
     
@@ -135,6 +182,15 @@ def hud(enable):
     globals()['enable_hud'] = enable
     kill_hud()
 
+
+def low_bandwidth():  
+    '''
+    Set low bandwidth mode 
+    ''' 
+    globals()['low_bandwidth_mode'] = True
+    kill_video()
+    kill_audio()
+    
 
 def close():
     '''
@@ -164,8 +220,10 @@ def kill_video():
         steelsquid_utils.execute_system_command_blind(["pkill", "-f", "gst-launch-1.0 -e v4l2src"])
     elif save_to_disk:
         steelsquid_utils.execute_system_command_blind(["pkill", "-SIGINT", "-f", "gst-launch-1.0 -e tcpserversrc host=0.0.0.0 port="+video_port])
+        steelsquid_utils.execute_system_command_blind(["pkill", "-SIGINT", "-f", "gst-launch-1.0 -e udpsrc port="+video_port])
     else:
         steelsquid_utils.execute_system_command_blind(["pkill", "-SIGINT", "-f", "gst-launch-1.0 -e tcpserversrc host=0.0.0.0 port="+video_port])
+        steelsquid_utils.execute_system_command_blind(["pkill", "-SIGINT", "-f", "gst-launch-1.0 -e udpsrc port="+video_port])
     interrupt.set()
 
 
@@ -199,7 +257,16 @@ def _video_cam_thread():
         try:
             if enable_video:
                 kill_video()
-                steelsquid_utils.execute_system_command_blind(["gst-launch-1.0", "-e", "v4l2src", "device=/dev/video0", "!", "video/x-raw,width="+width+",height="+height+",framerate=" + fps + "/1", "!", "clockoverlay", "xpad=0", "ypad=0", "!", "omxh264enc", "target-bitrate="+bitrate, "control-rate=3", "!", "tcpclientsink", "host="+video_ip, "port="+video_port])
+                if low_bandwidth_mode:
+                    if tcp_video:
+                        steelsquid_utils.execute_system_command_blind(["gst-launch-1.0", "-e", "v4l2src", "extra-controls=\"c,vertical_flip=1,horizontal_flip=1," + low_light_v + "\"", "device=/dev/video0", "!", "video/x-raw,width="+width+",height="+height+",framerate=" + "5" + "/1", "!", "clockoverlay", "xpad=0", "ypad=0", "!", "omxh264enc", "target-bitrate="+"100000", "control-rate=3", "!", "tcpclientsink", "host="+video_ip, "port="+video_port])
+                    else:
+                        steelsquid_utils.execute_system_command_blind(["gst-launch-1.0", "-e", "v4l2src", "extra-controls=\"c,vertical_flip=1,horizontal_flip=1," + low_light_v + "\"", "device=/dev/video0", "!", "video/x-raw,width="+width+",height="+height+",framerate=" + "5" + "/1", "!", "clockoverlay", "xpad=0", "ypad=0", "!", "omxh264enc", "target-bitrate="+"100000", "control-rate=3", "!", "rtph264pay", "pt=96", "config-interval=1", "!", "udpsink", "sync=false", "host="+video_ip, "port="+video_port])
+                else:
+                    if tcp_video:
+                        steelsquid_utils.execute_system_command_blind(["gst-launch-1.0", "-e", "v4l2src", "extra-controls=\"c,vertical_flip=1,horizontal_flip=1," + low_light_v + "\"", "device=/dev/video0", "!", "video/x-raw,width="+width+",height="+height+",framerate=" + fps + "/1", "!", "clockoverlay", "xpad=0", "ypad=0", "!", "omxh264enc", "target-bitrate="+bitrate, "control-rate=3", "!", "tcpclientsink", "host="+video_ip, "port="+video_port])
+                    else:
+                        steelsquid_utils.execute_system_command_blind(["gst-launch-1.0", "-e", "v4l2src", "extra-controls=\"c,vertical_flip=1,horizontal_flip=1," + low_light_v + "\"", "device=/dev/video0", "!", "video/x-raw,width="+width+",height="+height+",framerate=" + fps + "/1", "!", "clockoverlay", "xpad=0", "ypad=0", "!", "omxh264enc", "target-bitrate="+bitrate, "control-rate=3", "!", "rtph264pay", "pt=96", "config-interval=1", "!", "udpsink", "sync=false", "host="+video_ip, "port="+video_port])
             else:
                 interrupt.wait(1)
                 interrupt.clear()
@@ -217,14 +284,20 @@ def _video_display_thread():
                 kill_video()
                 if save_to_disk:
                     f = get_file("video.mp4")
-                    steelsquid_utils.execute_system_command_blind(["gst-launch-1.0", "-e", "tcpserversrc", "host=0.0.0.0", "port="+video_port, "!", "tee", "name=t", "!", "h264parse", "!", "omxh264dec", "!", "autovideosink", "text-overlay=false", "sync=false", "t.", "!", "queue", "!", "video/x-h264,width="+width+",height="+height+",framerate=" + fps + "/1,profile=constrained-baseline", "!", "h264parse", "disable-passthrough=true", "!", "queue", "!", "mp4mux", "!", "filesink", "location="+f]) 
+                    if tcp_video:
+                        steelsquid_utils.execute_system_command_blind(["gst-launch-1.0", "-e", "tcpserversrc", "host=0.0.0.0", "port="+video_port, "!", "tee", "name=t", "!", "h264parse", "!", "omxh264dec", "!", "autovideosink", "text-overlay=false", "sync=false", "t.", "!", "queue", "!", "video/x-h264,width="+width+",height="+height+",framerate=" + fps + "/1,profile=constrained-baseline", "!", "h264parse", "disable-passthrough=true", "!", "queue", "!", "mp4mux", "!", "filesink", "location="+f]) 
+                    else:
+                        steelsquid_utils.execute_system_command_blind(["gst-launch-1.0", "-e", "udpsrc", "port="+video_port, "caps=application/x-rtp,media=video,clock-rate=90000,encoding-name=H264", "!", "rtpjitterbuffer", "!", "rtph264depay", "!", "video/x-h264,width="+width+",height="+height+",framerate="+fps+"/1", "!", "tee", "name=t", "!", "h264parse", "!", "omxh264dec", "!", "autovideosink", "text-overlay=false", "sync=false", "t.", "!", "queue", "!", "video/x-h264,width="+width+",height="+height+",framerate=" + fps + "/1,profile=constrained-baseline", "!", "h264parse", "disable-passthrough=true", "!", "queue", "!", "mp4mux", "!", "filesink", "location="+f]) 
                 else:
-                    steelsquid_utils.execute_system_command_blind(["gst-launch-1.0", "-e", "tcpserversrc", "host=0.0.0.0", "port="+video_port, "!", "h264parse", "!", "omxh264dec", "!", "autovideosink", "text-overlay=false", "sync=false"]) 
+                    if tcp_video:
+                        steelsquid_utils.execute_system_command_blind(["gst-launch-1.0", "-e", "tcpserversrc", "host=0.0.0.0", "port="+video_port, "!", "h264parse", "!", "omxh264dec", "!", "autovideosink", "text-overlay=false", "sync=false"]) 
+                    else:
+                        steelsquid_utils.execute_system_command(["gst-launch-1.0", "-e", "udpsrc", "port="+video_port, "caps=application/x-rtp,media=video,clock-rate=90000,encoding-name=H264", "!", "rtpjitterbuffer", "!", "rtph264depay", "!", "video/x-h264,width="+width+",height="+height+",framerate="+fps+"/1", "!", "h264parse", "!", "omxh264dec", "!", "autovideosink", "text-overlay=false", "sync=false"]) 
             else:
                 interrupt.wait(1)
                 interrupt.clear()
         except:
-            pass
+            steelsquid_utils.shout()
 
 
 def _audio_mic_thread():
@@ -235,8 +308,12 @@ def _audio_mic_thread():
         try:
             if enable_audio:
                 kill_audio()
-                steelsquid_utils.execute_system_command_blind(["gst-launch-1.0", "-e", "alsasrc", "latency-time=1", "device=sysdefault:CARD=1", "!", "mulawenc", "!", "rtppcmupay", "!", "udpsink", "host="+audio_ip, "port="+audio_port])
-                #steelsquid_utils.execute_system_command_blind(["gst-launch-1.0", "-e", "alsasrc", "latency-time=1", "device=sysdefault:CARD=1", "!", "audioconvert", "!", "audioresample", "!", "vorbisenc", "!", "udpsink", "host="+audio_ip, "port="+audio_port])
+                if low_bandwidth_mode:
+                    interrupt.wait(1)
+                    interrupt.clear()
+                else:
+                    steelsquid_utils.execute_system_command_blind(["gst-launch-1.0", "-e", "alsasrc", "latency-time=1", "device=sysdefault:CARD=1", "!", "audioconvert", "!", "audio/x-raw,channels=1,depth=16,width=16,rate=22000",  "!", "rtpL16pay", "!", "udpsink", "host="+audio_ip, "port="+audio_port])
+                    #steelsquid_utils.execute_system_command_blind(["gst-launch-1.0", "-e", "alsasrc", "latency-time=1", "device=sysdefault:CARD=1", "!", "mulawenc", "!", "rtppcmupay", "!", "udpsink", "host="+audio_ip, "port="+audio_port])
             else:
                 interrupt.wait(1)
                 interrupt.clear()
@@ -253,12 +330,13 @@ def _audio_speaker_thread():
             if enable_audio:
                 if save_to_disk:
                     f = get_file("audio.wav")
-                    steelsquid_utils.execute_system_command_blind(["nice", "-n", "8", "gst-launch-1.0", "-e", "udpsrc", "port="+audio_port, "caps=application/x-rtp", "!", "rtpjitterbuffer", "!", "rtppcmudepay", "!", "mulawdec", "!", "tee", "name=myt", "!", "queue", "!", "alsasink", "sync=false", "myt.", "!", "queue", "!", "audiorate", "!", "audioconvert", "!", "audioresample", "!", "wavenc", "!", "filesink", "location="+f]) 
+                    steelsquid_utils.execute_system_command_blind(["nice", "-n", "8", "gst-launch-1.0", "-e", "udpsrc", "port="+audio_port, "!", "application/x-rtp,media=audio,clock-rate=22000,width=16,height=16,encoding-name=L16,encoding-params=1,channels=1,channel-positions=1,payload=96", "!", "rtpjitterbuffer", "!", "rtpL16depay", "!", "audioconvert", "!", "tee", "name=myt", "!", "queue", "!", "alsasink", "sync=false", "myt.", "!", "queue", "!", "audiorate", "!", "audioconvert", "!", "audioresample", "!", "wavenc", "!", "filesink", "location="+f]) 
+                    #steelsquid_utils.execute_system_command_blind(["nice", "-n", "8", "gst-launch-1.0", "-e", "udpsrc", "port="+audio_port, "caps=application/x-rtp", "!", "rtpjitterbuffer", "!", "rtppcmudepay", "!", "mulawdec", "!", "tee", "name=myt", "!", "queue", "!", "alsasink", "sync=false", "myt.", "!", "queue", "!", "audiorate", "!", "audioconvert", "!", "audioresample", "!", "wavenc", "!", "filesink", "location="+f]) 
                     time.sleep(1)
                 else:
                     kill_audio()
-                    steelsquid_utils.execute_system_command_blind(["gst-launch-1.0", "-e", "udpsrc", "port="+audio_port, "caps=application/x-rtp", "!", "rtpjitterbuffer", "!", "rtppcmudepay", "!", "mulawdec", "!", "alsasink", "sync=false"]) 
-                    #steelsquid_utils.execute_system_command_blind(["gst-launch-1.0", "-e", "udpsrc", "port="+audio_port, "!", "vorbisdec", "!", "audioconvert", "!", "alsasink", "sync=false"]) 
+                    steelsquid_utils.execute_system_command_blind(["gst-launch-1.0", "-e", "udpsrc", "port="+audio_port, "!", "application/x-rtp,media=audio,clock-rate=22000,width=16,height=16,encoding-name=L16,encoding-params=1,channels=1,channel-positions=1,payload=96", "!", "rtpjitterbuffer", "!", "rtpL16depay", "!", "audioconvert", "!", "alsasink", "sync=false"]) 
+                    #steelsquid_utils.execute_system_command_blind(["gst-launch-1.0", "-e", "udpsrc", "port="+audio_port, "caps=application/x-rtp", "!", "rtpjitterbuffer", "!", "rtppcmudepay", "!", "mulawdec", "!", "alsasink", "sync=false"]) 
             else:
                 interrupt.wait(1)
                 interrupt.clear()
