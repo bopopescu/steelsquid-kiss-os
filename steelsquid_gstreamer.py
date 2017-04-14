@@ -161,7 +161,7 @@ def _low_light(enable):
     ''' 
     globals()['low_light_bool'] = enable
     if enable:
-        globals()['low_light_v'] = "image_stabilization=1,auto_exposure=0,auto_exposure_bias=24,iso_sensitivity=4,scene_mode=9,brightness=60,saturation=10"
+        globals()['low_light_v'] = "image_stabilization=1,auto_exposure=0,auto_exposure_bias=24,iso_sensitivity=4,scene_mode=9,brightness=55,saturation=5"
     else:
         globals()['low_light_v'] = "image_stabilization=1,auto_exposure=0,auto_exposure_bias=12,iso_sensitivity=0,scene_mode=0,brightness=50,saturation=0"
         

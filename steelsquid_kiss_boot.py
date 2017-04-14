@@ -138,24 +138,28 @@ def import_file_dyn(obj):
                     thread.start_new_thread(do_on_loop, (m,))
         class_io = steelsquid_kiss_global._get_object(obj, "IO")
         if class_io!=None:
+            suppress_error = False
+            m = getattr(class_io, "_suppress_error", None)
+            if m != None:
+                suppress_error = m
             m = getattr(class_io, "on_start", None)
             if m != None:
                 m()
             m = getattr(class_io, "reader", None)
             if m != None:
-                thread.start_new_thread(io_reader_loop, (m,class_io,))
+                thread.start_new_thread(io_reader_loop, (m,class_io,suppress_error,))
             m = getattr(class_io, "reader_1", None)
             if m != None:
-                thread.start_new_thread(io_reader_loop, (m,class_io,))
+                thread.start_new_thread(io_reader_loop, (m,class_io,suppress_error,))
             m = getattr(class_io, "reader_2", None)
             if m != None:
-                thread.start_new_thread(io_reader_loop, (m,class_io,))
+                thread.start_new_thread(io_reader_loop, (m,class_io,suppress_error,))
             m = getattr(class_io, "reader_3", None)
             if m != None:
-                thread.start_new_thread(io_reader_loop, (m,class_io,))
+                thread.start_new_thread(io_reader_loop, (m,class_io,suppress_error,))
             m = getattr(class_io, "reader_4", None)
             if m != None:
-                thread.start_new_thread(io_reader_loop, (m,class_io,))
+                thread.start_new_thread(io_reader_loop, (m,class_io,suppress_error,))
     except:
         steelsquid_utils.shout("Fatal error when load module: " +obj.__name__, is_error=True)
 
@@ -242,26 +246,33 @@ def reload_file_dyn(obj):
                     thread.start_new_thread(do_on_loop, (m,))
         class_io = steelsquid_kiss_global._get_object(obj, "IO")
         if class_io!=None:
+            suppress_error = False
+            m = getattr(class_io, "_suppress_error", None)
+            if m != None:
+                suppress_error = m
+            m = getattr(class_io, "on_start", None)
+            if m != None:
+                m()
             m = getattr(class_io, "reader", None)
             if m != None:
-                thread.start_new_thread(io_reader_loop, (m, class_io, ))
+                thread.start_new_thread(io_reader_loop, (m, class_io, suppress_error,))
             m = getattr(class_io, "reader_1", None)
             if m != None:
-                thread.start_new_thread(io_reader_loop, (m, class_io, ))
+                thread.start_new_thread(io_reader_loop, (m, class_io, suppress_error,))
             m = getattr(class_io, "reader_2", None)
             if m != None:
-                thread.start_new_thread(io_reader_loop, (m, class_io, ))
+                thread.start_new_thread(io_reader_loop, (m, class_io, suppress_error,))
             m = getattr(class_io, "reader_3", None)
             if m != None:
-                thread.start_new_thread(io_reader_loop, (m, class_io, ))
+                thread.start_new_thread(io_reader_loop, (m, class_io, suppress_error,))
             m = getattr(class_io, "reader_4", None)
             if m != None:
-                thread.start_new_thread(io_reader_loop, (m, class_io, ))
+                thread.start_new_thread(io_reader_loop, (m, class_io, suppress_error,))
     except:
         steelsquid_utils.shout("Fatal error when reload module: " + obj.__name__, is_error=True)
 
 
-def io_reader_loop(t_m_obj, class_io):
+def io_reader_loop(t_m_obj, class_io, suppress_error):
     '''
     Execute the io reader loop
     '''
@@ -274,7 +285,8 @@ def io_reader_loop(t_m_obj, class_io):
                 if event.is_set():
                     run=None
         except:
-            steelsquid_utils.shout()
+            if not suppress_error:
+                steelsquid_utils.shout()
             time.sleep(1)
         
 

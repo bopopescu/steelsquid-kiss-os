@@ -196,11 +196,9 @@ def radio_force():
 def radio_request(command, data=None):
     '''
     Send a command to the server and wait for answer, will only wait for 3.2 seconds then timeout (return None)
-    This wil eider use hmtrlrs or tcp, depending on wat is set by radio_use_hmtrlrs
+    This will either use hmtrlrs or tcp, depending on wat is set by radio_use_hmtrlrs
     command: The command
     data: Data to the server  (data is a list of strings)
-    Return: data (data is a list of strings from the server)
-    Raise exception if error from server or timeout on response
     '''    
     if radio_type==TYPE_HMTRLRS:
         try:

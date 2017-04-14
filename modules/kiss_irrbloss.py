@@ -232,7 +232,7 @@ class SYSTEM(object):
         Will be executed when system starts (boot)
     on_stop() 
         Will be executed when system stops (shutdown)
-    on_network(status, wired, wifi_ssid, wifi, wan) 
+    on_network(status, wired, usb, wifi_ssid, wifi, wan) 
         Will be execute on network up or down
     on_vpn(status, name, ip) 
         This will fire when a VPN connection is enabled/disabled.
@@ -308,6 +308,13 @@ class SYSTEM(object):
         steelsquid_bno0055.zero_heading()
         steelsquid_pi.cleanup()
        
+       
+    @staticmethod
+    def on_network(status, wired, usb, wifi_ssid, wifi, wan):
+        '''
+        Will be execute on network up or down
+        '''
+        RADIO.LOCAL.wan = wan
 
 
 
@@ -408,7 +415,7 @@ class RADIO(object):
     '''
     Two devices can communicate. It is ment to be used as a remote controll over TCP
     To enable this device as remote controll execute: steelsquid_kiss_global.radio_tcp(true)
-    To enable this device as reseiver of remote signals execute: steelsquid_kiss_global.radio_tcp(false, "ip to remote")
+    To enable this device as receiver of remote signals execute: steelsquid_kiss_global.radio_tcp(false, "ip to remote")
     '''
     
     
@@ -544,6 +551,9 @@ class RADIO(object):
     
         # Max motor speed
         motor_max = 80
+    
+        # WAN ip for the rover
+        wan = ""
 
 
 
@@ -579,7 +589,7 @@ class RADIO(object):
 
     class PUSH_1(object):
         '''
-        All varibales in this class will be synced from the client to the server when on_push(1) on the client return True
+        All varibales in this class (PUSH_1 to PUSH_4) will be synced from the remote control to the receiver when on_push() on the remote controll return True
         OBS! The variables most be in the same order on both the machines
         The variables can only be int, float, bool or string.
         '''
@@ -590,13 +600,13 @@ class RADIO(object):
         @staticmethod
         def on_push():
             '''
-            If this is the clent:
+            If this is the remote control:
                 This will execute over and over again..
                 Return True, 0.1 will push all variables in PUSH_1 to the server
                                  And then sleep for 0.1 number of seconds
                 Return False, 0.1 do not push anything and slepp 0.1 second
-            If this is the server:
-                This will execute when the client send a push to the server
+            If this is the receiver:
+                This will execute when the remote control send a push to the receiver
                 Will ignore the return....
             '''
             left = RADIO.PUSH_1.motor_left
@@ -631,10 +641,10 @@ class RADIO(object):
 
     class PUSH_2(object):
         '''
-        All varibales in this class will be synced from the client to the server when on_push(2) on the client return True
+        All varibales in this class (PUSH_1 to PUSH_4) will be synced from the remote control to the receiver when on_push() on the remote controll return True
         OBS! The variables most be in the same order on both the machines
         The variables can only be int, float, bool or string.
-        '''
+       '''
         # tilt/pan
         camera_pan = 0
         camera_tilt = STATIC.servo_position_tilt_start
@@ -643,13 +653,13 @@ class RADIO(object):
         @staticmethod
         def on_push():
             '''
-            If this is the clent:
+            If this is the remote control:
                 This will execute over and over again..
                 Return True, 0.1 will push all variables in PUSH_1 to the server
                                  And then sleep for 0.1 number of seconds
                 Return False, 0.1 do not push anything and slepp 0.1 second
-            If this is the server:
-                This will execute when the client send a push to the server
+            If this is the receiver:
+                This will execute when the remote control send a push to the receiver
                 Will ignore the return....
             '''
             IO.UNITS.camera(RADIO.PUSH_2.camera_pan, RADIO.PUSH_2.camera_tilt, RADIO.PUSH_2.can_pan)
@@ -658,14 +668,10 @@ class RADIO(object):
         
     class REQUEST(object):
         '''
-        HM-TRLR-S
-            If the clent execute: data = steelsquid_hmtrlrs.request("a_command", data)
-            A method with the name a_command(data) will execute on the server in this class.
-            The server then can return some data that the client will reseive...
-            You can also execute: steelsquid_hmtrlrs.broadcast("a_command", data)
-            If you do not want a response back from the server. 
-            The method on the server should then return None.
-            If server method raise exception the steelsquid_hmtrlrs.request("a_command", data) will also raise a exception.
+        If the remote control execute: data = steelsquid_kiss_global.radio_request("a_command", data)
+        A method with the name a_command(data) will execute on the receiver in this class.
+        The receiver then can return some data that the remote control will reseive...
+        If server method raise exception the steelsquid_hmtrlrs.request("a_command", data) will also raise a exception.
         '''
         @staticmethod
 
@@ -787,8 +793,12 @@ class IO(object):
     It is not necessary to put it her, but i think it is kind of nice to have it inside this class
     Maybe use on_start() to start listen on GPIO or enable sensors...
     reader_1 to reader_4 is threads that execute in separate threads.
+    _suppress_error = True Will not print error if reader_1 to 4 shrow error
     '''
 
+    # Print error if reader_1 to 4 shrow error
+    _suppress_error = True
+    
     # IMU
     heading = 0.0
     
@@ -816,7 +826,7 @@ class IO(object):
         steelsquid_pi.gpio_event(13, IO.INPUT.pir_front, resistor=steelsquid_pi.PULL_NONE)
         steelsquid_pi.gpio_event(26, IO.INPUT.pir_left, resistor=steelsquid_pi.PULL_NONE)
         steelsquid_pi.gpio_event(19, IO.INPUT.pir_right, resistor=steelsquid_pi.PULL_NONE)
-        steelsquid_pi.gpio_event(6, IO.INPUT.pir_back, resistor=steelsquid_pi.PULL_NONE)
+        #steelsquid_pi.gpio_event(6, IO.INPUT.pir_back, resistor=steelsquid_pi.PULL_NONE)
     
 
     @staticmethod
@@ -986,9 +996,10 @@ class IO(object):
             Enable highbeam
             ''' 
             status = not status
-            steelsquid_pi.gpio_set(7, status)
+            #steelsquid_pi.gpio_set(7, status)
             steelsquid_pi.gpio_set(12, status)
             steelsquid_pi.gpio_set(25, status) 
+            steelsquid_pi.gpio_set(24, status) 
             
 
         @staticmethod
@@ -1013,10 +1024,10 @@ class IO(object):
                     return
             if can_pan:
                 steelsquid_pi.pca9685_move(2, 300, address = 0x41)
+                if pan!=None:
+                    steelsquid_pi.pca9685_move(1, 410+(pan/3), address = 0x41)
             else:
                 steelsquid_pi.pca9685_move(2, 500, address = 0x41)
-            if pan!=None:
-                steelsquid_pi.pca9685_move(1, 410+(pan/3), address = 0x41)
             if tilt!=None:
                 if tilt<STATIC.servo_position_tilt_min:
                     tilt = STATIC.servo_position_tilt_min

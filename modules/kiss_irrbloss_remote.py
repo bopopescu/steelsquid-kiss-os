@@ -63,6 +63,8 @@ def enable(argument=None):
     steelsquid_utils.execute_system_command_blind(['steelsquid', 'mbrowser-on', 'http://localhost/irrbloss'])
     # Set hdmi resoulrion
     steelsquid_utils.execute_system_command_blind(['steelsquid', 'hdmi-res', '800', '480'])
+    # Do not print IP to LCD automaticaly
+    steelsquid_utils.set_flag("no_net_to_lcd")
 
 
 
@@ -255,7 +257,7 @@ class SYSTEM(object):
         Will be executed when system starts (boot)
     on_stop() 
         Will be executed when system stops (shutdown)
-    on_network(status, wired, wifi_ssid, wifi, wan) 
+    on_network(status, wired, usb, wifi_ssid, wifi, wan) 
         Will be execute on network up or down
     on_vpn(status, name, ip) 
         This will fire when a VPN connection is enabled/disabled.
@@ -452,7 +454,7 @@ class LOOP(object):
     '''
     
     @staticmethod
-    def voltage_current_oled():
+    def voltage_current_led():
         '''
         Read voltage and current
         Also print to LCD
@@ -681,7 +683,39 @@ class LOOP(object):
         return 0.4
        
         
-
+    @staticmethod
+    def ip_oled():
+        '''
+        RSMal OLED display
+        ''' 
+        shout_string = []
+        if steelsquid_kiss_global.last_net:
+            if steelsquid_kiss_global.last_wifi_name != "---":
+                shout_string.append("WIFI: ")
+                shout_string.append(steelsquid_kiss_global.last_wifi_name)
+                shout_string.append("\n")
+                shout_string.append(steelsquid_kiss_global.last_wifi_ip)
+                if steelsquid_kiss_global.last_lan_ip!="---":
+                    shout_string.append("\nWIRED: ")
+                    shout_string.append(steelsquid_kiss_global.last_lan_ip)
+                if steelsquid_kiss_global.last_wan_ip != "---":
+                    shout_string.append("\nWAN: ")
+                    shout_string.append(steelsquid_kiss_global.last_wan_ip)
+            else:
+                if steelsquid_kiss_global.last_lan_ip!="---":
+                    shout_string.append("WIRED: ")
+                    shout_string.append(steelsquid_kiss_global.last_lan_ip)
+                if steelsquid_kiss_global.last_wan_ip != "---":
+                    shout_string.append("\nWAN: ")
+                    shout_string.append(steelsquid_kiss_global.last_wan_ip)
+            if not steelsquid_utils.is_empty(RADIO.REMOTE.wan):
+                shout_string.append("\nROVER: ")
+                shout_string.append(RADIO.REMOTE.wan)
+        else:
+            shout_string.append("No network!\n")
+        mes = "".join(shout_string)
+        steelsquid_utils.shout(mes, leave_on_lcd = True)
+        time.sleep(1)
 
 
 
@@ -693,7 +727,7 @@ class RADIO(object):
     '''
     Two devices can communicate. It is ment to be used as a remote controll over TCP
     To enable this device as remote controll execute: steelsquid_kiss_global.radio_tcp(true)
-    To enable this device as reseiver of remote signals execute: steelsquid_kiss_global.radio_tcp(false, "ip to remote")
+    To enable this device as receiver of remote signals execute: steelsquid_kiss_global.radio_tcp(false, "ip to remote")
     '''
 
     @staticmethod
@@ -844,11 +878,14 @@ class RADIO(object):
     
         # Max motor speed
         motor_max = 80
+    
+        # WAN ip for the rover
+        wan = ""
         
 
     class PUSH_1(object):
         '''
-        All varibales in this class will be synced from the client to the server when on_push(1) on the client return True
+        All varibales in this class (PUSH_1 to PUSH_4) will be synced from the remote control to the receiver when on_push() on the remote controll return True
         OBS! The variables most be in the same order on both the machines
         The variables can only be int, float, bool or string.
         '''
@@ -862,13 +899,13 @@ class RADIO(object):
         @staticmethod
         def on_push():
             '''
-            If this is the clent:
+            If this is the remote control:
                 This will execute over and over again..
                 Return True, 0.1 will push all variables in PUSH_1 to the server
                                  And then sleep for 0.1 number of seconds
                 Return False, 0.1 do not push anything and slepp 0.1 second
-            If this is the server:
-                This will execute when the client send a push to the server
+            If this is the receiver:
+                This will execute when the remote control send a push to the receiver
                 Will ignore the return....
             '''
             # Read from stiks
@@ -943,7 +980,7 @@ class RADIO(object):
 
     class PUSH_2(object):
         '''
-        All varibales in this class will be synced from the client to the server when on_push(2) on the client return True
+        All varibales in this class (PUSH_1 to PUSH_4) will be synced from the remote control to the receiver when on_push() on the remote controll return True
         OBS! The variables most be in the same order on both the machines
         The variables can only be int, float, bool or string.
         '''
@@ -957,13 +994,13 @@ class RADIO(object):
         @staticmethod
         def on_push():
             '''
-            If this is the clent:
+            If this is the remote control:
                 This will execute over and over again..
                 Return True, 0.1 will push all variables in PUSH_1 to the server
                                  And then sleep for 0.1 number of seconds
                 Return False, 0.1 do not push anything and slepp 0.1 second
-            If this is the server:
-                This will execute when the client send a push to the server
+            If this is the receiver:
+                This will execute when the remote control send a push to the receiver
                 Will ignore the return....
             '''
             ts = datetime.datetime.now()
@@ -1450,12 +1487,14 @@ class IO(object):
             '''    
             if last_click_time<0.4:
                 if RADIO.LOCAL.cruise > 0:
-                    RADIO.LOCAL.cruise = RADIO.LOCAL.cruise - 10
+                    RADIO.LOCAL.cruise = RADIO.LOCAL.cruise - 20
                     if RADIO.LOCAL.cruise < 0:
                         RADIO.LOCAL.cruise=0
             else:
-                if RADIO.LOCAL.cruise < RADIO.REMOTE.motor_max:
-                    RADIO.LOCAL.cruise = RADIO.LOCAL.cruise + 5
+                if RADIO.LOCAL.cruise < 20:
+                    RADIO.LOCAL.cruise = 20
+                elif RADIO.LOCAL.cruise < RADIO.REMOTE.motor_max:
+                    RADIO.LOCAL.cruise = RADIO.LOCAL.cruise + 10
             IO.OUTPUT.led_cruise(RADIO.LOCAL.cruise>0)
 
 
