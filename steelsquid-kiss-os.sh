@@ -1368,7 +1368,7 @@ function help_build()
     echb "2.  Copy to sdcard"
     echo "dd bs=4M if=raspberrypi-ua-netinst-v1.5.0.img of=/dev/sdb"
     echo 
-    echo "cretae installer-config.txt"
+    echo "cretae raspberrypi-ua-netinst/config/installer-config.txt"
     echo "rootsize=+3400M"
     echo 
     echb "3.  Insert sdcard into raspberry and boot"
@@ -1384,7 +1384,7 @@ function help_build()
     echo "passwd  (raspberry)"
     echo 
     echb "7.  Change to 4.1 and uppgrade"
-    echo "echo \"deb http://mirrordirector.raspbian.org/raspbian/ jessie main contrib non-free rpi\" > /etc/apt/sources.list"
+    echo "echo \"deb http://mirrordirector.raspbian.org/raspbian/ jessie main contrib non-free rpi firmware\" > /etc/apt/sources.list"
     echo "echo \"deb http://archive.raspberrypi.org/debian/ jessie main ui untested staging\" >> /etc/apt/sources.list"
     echo "rm /etc/apt/sources.list.d/raspberrypi.org.list"
     echo "apt-get update"
@@ -2123,7 +2123,7 @@ if [ "$in_parameter_1" == "hdmi-res-off" ]; then
     hdmi_res_off
     exit 0
 fi
-hdmi_group = 2
+
 
 ##################################################################################
 # Show status streaming of USB camera
