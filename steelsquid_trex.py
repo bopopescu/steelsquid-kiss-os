@@ -15,7 +15,7 @@ smbus to send command
 quick2wire to read status
 I can not get both functions operate on one of the librarys.
 Smbus can not read multipple bytes from the bus without sending a register command.
-And I did not get quick2wire to work when write to the slave.
+And I did not get quick2wire to work when write to the subordinate.
 
 Dependencies
 ------------
@@ -86,7 +86,7 @@ def __trex_reset():
     trex_package[21] = 50  # Impact sensitivity low byte
     trex_package[22] = 2   # Battery voltage high byte
     trex_package[23] = 38  # Battery voltage low byte
-    trex_package[24] = 7   # I2C slave address
+    trex_package[24] = 7   # I2C subordinate address
     trex_package[25] = 0   # I2C clock frequency
 
 __trex_reset()

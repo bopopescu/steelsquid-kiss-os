@@ -383,18 +383,18 @@ class PIIO(object):
 
 class RADIO(object):
     '''
-    If you have a NRF24L01+ or HM-TRLR-S transceiver connected to this device you can use server/client or master/slave functionality.
+    If you have a NRF24L01+ or HM-TRLR-S transceiver connected to this device you can use server/client or main/subordinate functionality.
     NRF24L01+
         Enable the nrf24 server functionality in command line: set-flag  nrf24_server
         On client device: set-flag  nrf24_client
-        Master: set-flag  nrf24_master
-        Slave: set-flag  nrf24_slave
+        Main: set-flag  nrf24_main
+        Subordinate: set-flag  nrf24_subordinate
         Must restart the steelsquid daeomon for it to take effect.
         In python you can do: steelsquid_kiss_global.nrf24_status(status)
         status: server=Enable as server
                 client=Enable as client
-                master=Enable as master
-                slave=Enable as slave
+                main=Enable as main
+                subordinate=Enable as subordinate
                 None=Disable
         SERVER/CLIENT:
         If the clent execute: data = steelsquid_nrf24.request("a_command", data)
@@ -402,22 +402,22 @@ class RADIO(object):
         The server then can return some data that the client will reseive...
         If server method raise exception the steelsquid_nrf24.request("a_command", data) will also raise a exception.
         MASTER/SLAVE:
-        One of the devices is master and can send data to the slave (example a file or video stream).
+        One of the devices is main and can send data to the subordinate (example a file or video stream).
         The data is cut up into packages and transmitted.
-        The slave can transmitt short command back to the master on every package of data it get.
-        This is usefull if you want to send a low resolution and low framerate video from the master to the slave.
-        And the slave then can send command back to the master.
-        Master execute: steelsquid_nrf24.send(data)
+        The subordinate can transmitt short command back to the main on every package of data it get.
+        This is usefull if you want to send a low resolution and low framerate video from the main to the subordinate.
+        And the subordinate then can send command back to the main.
+        Main execute: steelsquid_nrf24.send(data)
         The method: on_receive(data) will be called on the client
-        Slave execute: steelsquid_nrf24.command("a_command", parameters)
-        A method with the name: a_command(parameters) will be called on the master
+        Subordinate execute: steelsquid_nrf24.command("a_command", parameters)
+        A method with the name: a_command(parameters) will be called on the main
                                 parameters is a list of strings
     '''
 
     @staticmethod
     def on_receive(data):
         '''
-        Data from the master to the slave
+        Data from the main to the subordinate
         '''
         pass
 

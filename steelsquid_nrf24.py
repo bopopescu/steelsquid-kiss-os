@@ -8,7 +8,7 @@ You also need the pynrf24 (https://github.com/jpbarraca/pynrf24)
 I also have pynrf24 on my github with some small changes, because Joao Paulo Barraca pynrf24 did not work with Raspberry Pi.
 https://github.com/steelsquid/steelsquid-kiss-os/blob/master/steelsquid_nrf24.py
 
-You can use this in 2 ways (server/client or master/slave).
+You can use this in 2 ways (server/client or main/subordinate).
 
 SERVER/CLIENT:
 One of the devices is server and the other client.
@@ -38,19 +38,19 @@ data = steelsquid_nrf24.request(command, data)
 ...
 
 MASTER/SLAVE:
-One of the devices is master and can send data to the slave (example a file or video stream).
+One of the devices is main and can send data to the subordinate (example a file or video stream).
 The data is cut up into packages and transmitted.
-The slave can transmitt short command back to the master on every package of data it get.
-This is usefull if you want to send a low resolution and low framerate video from the master to the slave.
-And the slave then can send command back to the master.
+The subordinate can transmitt short command back to the main on every package of data it get.
+This is usefull if you want to send a low resolution and low framerate video from the main to the subordinate.
+And the subordinate then can send command back to the main.
 
 MASTER:
-# Start as master and register a command_method
-# When slave send command to the master the command_method will execute
-# But this only work if the master continuously sedn data to the client
+# Start as main and register a command_method
+# When subordinate send command to the main the command_method will execute
+# But this only work if the main continuously sedn data to the client
 def command_method(command):
    ...
-steelsquid_nrf24.master(command_method)
+steelsquid_nrf24.main(command_method)
 # Send data to the client
 steelsquid_nrf24.send(data)
 steelsquid_nrf24.send(more_data)
@@ -58,14 +58,14 @@ steelsquid_nrf24.send(and_more_data)
 ...
 
 SLAVE:
-# start as slave
-steelsquid_nrf24.slave()
-# Listen for data from the master
+# start as subordinate
+steelsquid_nrf24.subordinate()
+# Listen for data from the main
 data = steelsquid_nrf24.receive()
 more_data = steelsquid_nrf24.receive()
 more_data = steelsquid_nrf24.receive()
 ...
-# Then in a nother thread the client can execute this to sned command to the master (max [package_size] characters long)
+# Then in a nother thread the client can execute this to sned command to the main (max [package_size] characters long)
 steelsquid_nrf24.command("a_command")
 
 @organization: Steelsquid
@@ -118,10 +118,10 @@ last_r_no = 0  # 0 and 1 = OK answer, no more data
 last_r = 2  # 2 and 3 = OK answer, more data
 last_e = 4  # 4 and 5 error answer
 
-# Method to execute when slave send commadn to master
+# Method to execute when subordinate send commadn to main
 command_callback_method=None
 
-# slave want to send command to master
+# subordinate want to send command to main
 command_to_send=None
 
 
@@ -381,10 +381,10 @@ def request(command, data=None, timeout=4):
             
             
             
-def master(command_method, channel=0x70, bit_rate=BR_2MBPS):
+def main(command_method, channel=0x70, bit_rate=BR_2MBPS):
     '''
-    Start as master and register a command_method
-    When slave send command to the master the command_method will execute with the command as argument
+    Start as main and register a command_method
+    When subordinate send command to the main the command_method will execute with the command as argument
     The argument is a string (max length=package_size)
     '''
     global command_callback_method
@@ -423,7 +423,7 @@ def send(data):
         # Send the chunk
         if radio.write(buff):
             radio.whatHappened()
-            # did it return with a payload (slave send back command)
+            # did it return with a payload (subordinate send back command)
             #if radio.isAckPayloadAvailable():   
             del buff[:] 
             radio.read(buff, radio.getDynamicPayloadSize())
@@ -440,9 +440,9 @@ def send(data):
     return True
             
 
-def slave(channel=0x70, bit_rate=BR_2MBPS):
+def subordinate(channel=0x70, bit_rate=BR_2MBPS):
     '''
-    Start this as slave.
+    Start this as subordinate.
     '''
     _init(channel, bit_rate)
     radio.enableAckPayload()
@@ -454,7 +454,7 @@ def slave(channel=0x70, bit_rate=BR_2MBPS):
 
 def receive(timeout=0):
     '''
-    Listen for data from the master
+    Listen for data from the main
     timeout: listen this long in seconds then return None (0 = listen forever)
     '''
     global command_to_send
@@ -483,7 +483,7 @@ def receive(timeout=0):
             # Rest of this package is data
             buff.pop(0)
             data.extend(bytearray(buff))            
-            # Is there some command to send to the master
+            # Is there some command to send to the main
             if command_to_send!=None:
                 cts = command_to_send
                 command_to_send=None
@@ -497,11 +497,11 @@ def receive(timeout=0):
    
 def command(the_command, parameters=None):
     '''
-    Then in a nother thread the slave can execute this to sned command to the master
+    Then in a nother thread the subordinate can execute this to sned command to the main
     the_command + parameters kan be max 32 charactors long
     Paramaters: List of strings
-    If you enter parameters the string to the master will lock like: the_command|parameters1|parameters2...
-    If parameters=None the string sent to master is only the_command
+    If you enter parameters the string to the main will lock like: the_command|parameters1|parameters2...
+    If parameters=None the string sent to main is only the_command
     '''
     global command_to_send
     if parameters==None:

@@ -581,7 +581,7 @@ def _cleanup():
             steelsquid_utils.execute_system_command_blind(["sync"], wait_for_finish=True)
         except:
             steelsquid_utils.shout()
-        if steelsquid_utils.get_flag("nrf24_master") or steelsquid_utils.get_flag("nrf24_slave"):
+        if steelsquid_utils.get_flag("nrf24_main") or steelsquid_utils.get_flag("nrf24_subordinate"):
             try:
                 steelsquid_nrf24.stop()
             except:
@@ -831,14 +831,14 @@ def nrf24_server_thread():
                 steelsquid_utils.shout()
 
 
-def nrf24_slave_thread():
+def nrf24_subordinate_thread():
     '''
-    Start slave thread for the NRF24L01 radio transiver
-    listen for data from the master and execute method in RADIO class
+    Start subordinate thread for the NRF24L01 radio transiver
+    listen for data from the main and execute method in RADIO class
     '''
     while running:
         try:
-            # Listen for data from master
+            # Listen for data from main
             data = steelsquid_nrf24.receive(timeout=2)
             if data!=None:
                 # Execute method on_receive in module RADIO class
@@ -849,7 +849,7 @@ def nrf24_slave_thread():
 
 def nrf24_callback(command):
     '''
-    Master get a command from the slave
+    Main get a command from the subordinate
     '''
     try:
         # Execute method on_receive in module RADIO class
@@ -1590,15 +1590,15 @@ def main():
                 elif steelsquid_utils.get_flag("nrf24_client"):
                     steelsquid_utils.shout("Enable NRF24L01+ client")
                     steelsquid_nrf24.client()
-                # Enable NRF24L01+ as master
-                if steelsquid_utils.get_flag("nrf24_master"):
-                    steelsquid_utils.shout("Enable NRF24L01+ master")
-                    steelsquid_nrf24.master(nrf24_callback)
-                # Enable NRF24L01+ as slave
-                elif steelsquid_utils.get_flag("nrf24_slave"):
-                    steelsquid_utils.shout("Enable NRF24L01+ slave")
-                    steelsquid_nrf24.slave()
-                    thread.start_new_thread(nrf24_slave_thread, ())
+                # Enable NRF24L01+ as main
+                if steelsquid_utils.get_flag("nrf24_main"):
+                    steelsquid_utils.shout("Enable NRF24L01+ main")
+                    steelsquid_nrf24.main(nrf24_callback)
+                # Enable NRF24L01+ as subordinate
+                elif steelsquid_utils.get_flag("nrf24_subordinate"):
+                    steelsquid_utils.shout("Enable NRF24L01+ subordinate")
+                    steelsquid_nrf24.subordinate()
+                    thread.start_new_thread(nrf24_subordinate_thread, ())
                 # Enable HM-TRLR-S as server (the new functionality)
                 if steelsquid_utils.get_flag("radio_hmtrlrs_server"):
                     config_gpio = int(steelsquid_utils.get_parameter("hmtrlrs_config_gpio", "25"))

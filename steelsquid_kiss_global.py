@@ -573,35 +573,35 @@ def nrf24_status(status):
     Must reboot to implement
     status: server=Enable as server
             client=Enable as client
-            master=Enable as master
-            slave=Enable as slave
+            main=Enable as main
+            subordinate=Enable as subordinate
             None=Disable
     '''    
     if status==None:
         steelsquid_utils.del_flag("nrf24_server")
         steelsquid_utils.del_flag("nrf24_client")
-        steelsquid_utils.del_flag("nrf24_master")
-        steelsquid_utils.del_flag("nrf24_slave")
+        steelsquid_utils.del_flag("nrf24_main")
+        steelsquid_utils.del_flag("nrf24_subordinate")
     elif status=="server":
         steelsquid_utils.set_flag("nrf24_server")
         steelsquid_utils.del_flag("nrf24_client")
-        steelsquid_utils.del_flag("nrf24_master")
-        steelsquid_utils.del_flag("nrf24_slave")
+        steelsquid_utils.del_flag("nrf24_main")
+        steelsquid_utils.del_flag("nrf24_subordinate")
     elif status=="client":
         steelsquid_utils.del_flag("nrf24_server")
         steelsquid_utils.set_flag("nrf24_client")
-        steelsquid_utils.del_flag("nrf24_master")
-        steelsquid_utils.del_flag("nrf24_slave")
-    elif status=="master":
+        steelsquid_utils.del_flag("nrf24_main")
+        steelsquid_utils.del_flag("nrf24_subordinate")
+    elif status=="main":
         steelsquid_utils.del_flag("nrf24_server")
         steelsquid_utils.del_flag("nrf24_client")
-        steelsquid_utils.set_flag("nrf24_master")
-        steelsquid_utils.del_flag("nrf24_slave")
-    elif status=="slave":
+        steelsquid_utils.set_flag("nrf24_main")
+        steelsquid_utils.del_flag("nrf24_subordinate")
+    elif status=="subordinate":
         steelsquid_utils.del_flag("nrf24_server")
         steelsquid_utils.del_flag("nrf24_client")
-        steelsquid_utils.del_flag("nrf24_master")
-        steelsquid_utils.set_flag("nrf24_slave")
+        steelsquid_utils.del_flag("nrf24_main")
+        steelsquid_utils.set_flag("nrf24_subordinate")
     
 
 def _broadcast_event_handler():
